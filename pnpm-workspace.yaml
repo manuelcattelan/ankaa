@@ -1,6 +1,8 @@
 packages:
   - "apps/*"
   - "packages/*"
+allowBuilds:
+  unrs-resolver: true
 minimumReleaseAgeExclude:
   - '@expo/cli@57.0.21'
   - '@expo/fingerprint@0.20.12'
