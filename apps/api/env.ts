@@ -10,8 +10,6 @@ try {
 
 export const env = z
   .object({
-    APP_SCHEME: z.string(),
-    BETTER_AUTH_SECRET: z.string().min(32),
-    BETTER_AUTH_URL: z.url(),
+    PORT: z.coerce.number(),
   })
   .parse(process.env);

@@ -15,7 +15,7 @@ export const auth = betterAuth({
   plugins: [expo()],
   secret: env.BETTER_AUTH_SECRET,
   trustedOrigins: [
-    "app://",
+    `${env.APP_SCHEME}://`,
 
     // Development mode - Expo's exp:// scheme with local IP ranges
     ...(process.env.NODE_ENV === "development"

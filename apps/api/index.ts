@@ -8,6 +8,8 @@ import {
 import { fromNodeHeaders } from "better-auth/node";
 import Fastify from "fastify";
 
+import { env } from "./env.ts";
+
 const fastify = Fastify({
   logger: true,
   routerOptions: {
@@ -72,10 +74,10 @@ fastify.register(fastifyTRPCPlugin, {
 });
 
 // Initialize server
-fastify.listen({ port: 8080 }, (err) => {
+fastify.listen({ port: env.PORT }, (err) => {
   if (err) {
     fastify.log.error(err);
     process.exit(1);
   }
-  console.log("Server running on port 8080");
+  console.log(`Server running on port ${env.PORT}`);
 });
