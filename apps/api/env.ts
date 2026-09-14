@@ -10,6 +10,8 @@ try {
 
 export const env = z
   .object({
-    NODE_PORT: z.coerce.number(),
+    CLIENT_ORIGIN: z.url(),
+    NODE_ENV: z.enum(["development", "production"]),
+    NODE_PORT: z.coerce.number().int().min(1),
   })
   .parse(process.env);

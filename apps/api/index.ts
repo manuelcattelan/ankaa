@@ -23,7 +23,7 @@ fastify.register(fastifyCors, {
   credentials: true,
   maxAge: 86400,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  origin: process.env.CLIENT_ORIGIN || "http://localhost:3000",
+  origin: env.CLIENT_ORIGIN,
 });
 
 // Register authentication endpoint
@@ -79,5 +79,4 @@ fastify.listen({ port: env.NODE_PORT }, (err) => {
     fastify.log.error(err);
     process.exit(1);
   }
-  console.log(`Server running on port ${env.NODE_PORT}`);
 });
