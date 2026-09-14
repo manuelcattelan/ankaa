@@ -22,7 +22,6 @@ export const protectedProcedure = t.procedure.use(function isAuthed(opts) {
   }
   return opts.next({
     ctx: {
-      // Infers the `session` as non-nullable
       session: opts.ctx.session,
     },
   });

@@ -4,7 +4,6 @@
     "@tsconfig/node-ts/tsconfig.json"
   ],
   "compilerOptions": {
-    // Required by tRPC
     "strict": true,
 
     // Treat files as modules even if it doesn't use import/export
