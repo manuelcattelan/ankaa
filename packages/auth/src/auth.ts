@@ -18,7 +18,7 @@ export const auth = betterAuth({
     `${env.APP_SCHEME}://`,
 
     // Development mode - Expo's exp:// scheme with local IP ranges
-    ...(process.env.NODE_ENV === "development"
+    ...(env.PROCESS_ENV === "development"
       ? [
           "exp://", // Trust any host of the exp:// scheme
           "exp://**", // Trust all Expo URLs (wildcard matching)

@@ -10,6 +10,6 @@ try {
 
 export const env = z
   .object({
-    PORT: z.coerce.number(),
+    PROCESS_PORT: z.coerce.number(),
   })
   .parse(process.env);

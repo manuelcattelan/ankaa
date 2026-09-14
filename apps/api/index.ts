@@ -74,10 +74,10 @@ fastify.register(fastifyTRPCPlugin, {
 });
 
 // Initialize server
-fastify.listen({ port: env.PORT }, (err) => {
+fastify.listen({ port: env.PROCESS_PORT }, (err) => {
   if (err) {
     fastify.log.error(err);
     process.exit(1);
   }
-  console.log(`Server running on port ${env.PORT}`);
+  console.log(`Server running on port ${env.PROCESS_PORT}`);
 });
