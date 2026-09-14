@@ -15,10 +15,10 @@ export const auth = betterAuth({
   plugins: [expo()],
   secret: env.BETTER_AUTH_SECRET,
   trustedOrigins: [
-    `${env.APP_SCHEME}://`,
+    "app://",
 
     // Development mode - Expo's exp:// scheme with local IP ranges
-    ...(env.PROCESS_ENV === "development"
+    ...(process.env.NODE_ENV === "development"
       ? [
           "exp://", // Trust any host of the exp:// scheme
           "exp://**", // Trust all Expo URLs (wildcard matching)
