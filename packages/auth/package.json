@@ -1,0 +1,20 @@
+{
+  "name": "@ankaa/auth",
+  "type": "module",
+  "exports": {
+    ".": "./src/auth.ts"
+  },
+  "scripts": {
+    "generate": "auth generate --config src/auth.ts --output ../db/src/schema/auth.ts"
+  },
+  "dependencies": {
+    "@ankaa/db": "workspace:*",
+    "@better-auth/drizzle-adapter": "^1.7.4",
+    "@better-auth/expo": "^1.7.4",
+    "better-auth": "^1.7.4",
+    "zod": "^4.6.4"
+  },
+  "devDependencies": {
+    "auth": "^1.7.4"
+  }
+}
