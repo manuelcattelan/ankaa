@@ -5,10 +5,6 @@
     ".": "./src/index.ts",
     "./schema": "./src/schema/index.ts"
   },
-  "scripts": {
-    "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate"
-  },
   "dependencies": {
     "drizzle-orm": "1.0.0-rc.4",
     "pg": "^8.23.0",
