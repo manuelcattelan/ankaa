@@ -8,7 +8,7 @@ import { env } from "./env.ts";
 
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
-  database: drizzleAdapter(db, { provider: "pg", schema }),
+  database: drizzleAdapter(db, { provider: "pg", schema, schemaName: "auth" }),
   emailAndPassword: {
     enabled: true,
   },
