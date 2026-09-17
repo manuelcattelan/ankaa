@@ -1,0 +1,26 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    // The tooling packages cannot depend on one another (Turborepo rejects task-graph
+    // cycles through ^lint and ^topo), so the root owns linting, formatting and
+    // type-checking for tooling/** and for the root files through these root tasks.
+    "//#check-types:root": {},
+    "//#format:root": {},
+    "//#lint:root": {},
+    "check-types": {
+      "dependsOn": ["topo"],
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+    },
+    "format": {},
+    "lint": {
+      "dependsOn": ["^lint"],
+    },
+    "topo": {
+      "dependsOn": ["^topo"],
+    },
+  },
+  "ui": "tui",
+}

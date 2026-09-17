@@ -1,27 +1,3 @@
 {
-  "extends": [
-    "@tsconfig/node26/tsconfig.json",
-    "@tsconfig/node-ts/tsconfig.json"
-  ],
-  "compilerOptions": {
-    "strict": true,
-
-    // Treat files as modules even if it doesn't use import/export
-    "moduleDetection": "force",
-
-    // Ignore module structure
-    "module": "Preserve",
-
-    // Allow JSON modules to be imported
-    "resolveJsonModule": true,
-
-    // Allow JS files to be imported from TS and vice versa
-    "allowJs": true,
-
-    // Use correct ESM import behavior
-    "esModuleInterop": true,
-
-    // Disallow features that require cross-file awareness
-    "isolatedModules": true
-  }
+  "extends": "@ankaa/typescript/api.json"
 }

@@ -1,12 +1,27 @@
 {
-  "name": "@ankaa/api",
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
-  },
   "dependencies": {
     "@ankaa/auth": "workspace:*",
     "@trpc/server": "^11.18.0",
     "better-auth": "^1.7.4"
-  }
+  },
+  "devDependencies": {
+    "@ankaa/eslint": "workspace:*",
+    "@ankaa/prettier": "workspace:*",
+    "@ankaa/typescript": "workspace:*",
+    "@types/node": "^26.4.1",
+    "eslint": "^10.10.0",
+    "jiti": "^2.7.0",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "name": "@ankaa/api",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "format": "prettier --check .",
+    "lint": "eslint ."
+  },
+  "type": "module"
 }

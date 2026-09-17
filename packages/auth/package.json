@@ -1,12 +1,4 @@
 {
-  "name": "@ankaa/auth",
-  "type": "module",
-  "exports": {
-    ".": "./src/auth.ts"
-  },
-  "scripts": {
-    "generate": "auth generate --config src/auth.ts --output ../db/src/schema/auth.ts"
-  },
   "dependencies": {
     "@ankaa/db": "workspace:*",
     "@better-auth/drizzle-adapter": "^1.7.4",
@@ -15,6 +7,25 @@
     "zod": "^4.6.4"
   },
   "devDependencies": {
-    "auth": "^1.7.4"
-  }
+    "@ankaa/eslint": "workspace:*",
+    "@ankaa/prettier": "workspace:*",
+    "@ankaa/typescript": "workspace:*",
+    "@types/node": "^26.4.1",
+    "auth": "^1.7.4",
+    "eslint": "^10.10.0",
+    "jiti": "^2.7.0",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "exports": {
+    ".": "./src/auth.ts"
+  },
+  "name": "@ankaa/auth",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "format": "prettier --check .",
+    "generate": "auth generate --config src/auth.ts --output ../db/src/schema/auth.ts",
+    "lint": "eslint ."
+  },
+  "type": "module"
 }

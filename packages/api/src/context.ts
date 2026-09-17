@@ -1,6 +1,9 @@
-import { auth } from "@ankaa/auth";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
+
+import { auth } from "@ankaa/auth";
 import { fromNodeHeaders } from "better-auth/node";
+
+export type Context = Awaited<ReturnType<typeof createContext>>;
 
 export async function createContext({ req, res }: CreateFastifyContextOptions) {
   const session = await auth.api.getSession({
@@ -9,5 +12,3 @@ export async function createContext({ req, res }: CreateFastifyContextOptions) {
 
   return { req, res, session };
 }
-
-export type Context = Awaited<ReturnType<typeof createContext>>;
