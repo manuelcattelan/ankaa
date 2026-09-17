@@ -1,0 +1,4 @@
+{
+  "extends": "@ankaa/typescript/tooling.json",
+  "include": ["*.ts", "tooling"]
+}

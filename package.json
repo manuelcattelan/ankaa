@@ -1,24 +1,39 @@
 {
-  "name": "ankaa",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
   "author": "",
-  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@ankaa/eslint": "workspace:*",
+    "@ankaa/prettier": "workspace:*",
+    "@ankaa/typescript": "workspace:*",
+    "@types/node": "^26.4.1",
+    "eslint": "^10.10.0",
+    "jiti": "^2.7.0",
+    "prettier": "catalog:",
+    "turbo": "^2.10.12",
+    "typescript": "catalog:"
+  },
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "12.3.4",
-      "onFail": "download"
+      "onFail": "download",
+      "version": "12.3.4"
     }
   },
+  "keywords": [],
+  "license": "ISC",
+  "main": "index.js",
+  "name": "ankaa",
   "packageManager": "pnpm@12.3.4",
+  "scripts": {
+    "check-types": "turbo run check-types check-types:root",
+    "check-types:root": "tsc --noEmit",
+    "dev": "turbo run dev",
+    "format": "turbo run format format:root",
+    "format:root": "prettier --check .",
+    "lint": "turbo run lint lint:root",
+    "lint:root": "eslint .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "type": "module",
-  "devDependencies": {
-    "turbo": "^2.10.12"
-  }
+  "version": "1.0.0"
 }

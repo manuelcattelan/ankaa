@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "isolatedModules": true,
+    "module": "Preserve",
+    "moduleDetection": "force",
+    "resolveJsonModule": true
+  },
+  "extends": [
+    "./base.json",
+    "@tsconfig/node26/tsconfig.json",
+    "@tsconfig/node-ts/tsconfig.json"
+  ]
+}

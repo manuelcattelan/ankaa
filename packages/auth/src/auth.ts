@@ -1,5 +1,5 @@
-import * as schema from "@ankaa/db/schema";
 import { db } from "@ankaa/db";
+import * as schema from "@ankaa/db/schema";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";

@@ -48,7 +48,7 @@ fastify.route({
 
       // Forward response to client
       reply.status(response.status);
-      response.headers.forEach((value, key) => reply.header(key, value));
+      for (const [key, value] of response.headers) reply.header(key, value);
       return reply.send(response.body ? await response.text() : null);
     } catch (error) {
       fastify.log.error(error, "Authentication Error:");

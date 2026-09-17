@@ -1,29 +1,25 @@
 {
   "expo": {
-    "name": "app",
-    "slug": "app",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "app",
-    "userInterfaceStyle": "automatic",
-    "ios": {
-      "icon": "./assets/expo.icon",
-      "bundleIdentifier": "app"
-    },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
     },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+    "experiments": {
+      "reactCompiler": true,
+      "typedRoutes": true
     },
+    "icon": "./assets/images/icon.png",
+    "ios": {
+      "bundleIdentifier": "app",
+      "icon": "./assets/expo.icon"
+    },
+    "name": "app",
+    "orientation": "portrait",
     "plugins": [
       "expo-router",
       [
@@ -35,9 +31,13 @@
         }
       ]
     ],
-    "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+    "scheme": "app",
+    "slug": "app",
+    "userInterfaceStyle": "automatic",
+    "version": "1.0.0",
+    "web": {
+      "favicon": "./assets/images/favicon.png",
+      "output": "static"
     }
   }
 }
