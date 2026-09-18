@@ -2,17 +2,17 @@
   "dependencies": {
     "@ankaa/db": "workspace:*",
     "@ankaa/env": "workspace:*",
-    "@better-auth/drizzle-adapter": "^1.7.4",
-    "@better-auth/expo": "^1.7.4",
-    "better-auth": "^1.7.4",
-    "zod": "^4.6.4"
+    "@better-auth/drizzle-adapter": "catalog:",
+    "@better-auth/expo": "catalog:",
+    "better-auth": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
     "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
     "@types/node": "^26.4.1",
-    "auth": "^1.7.4",
+    "auth": "catalog:",
     "eslint": "^10.10.0",
     "jiti": "^2.7.0",
     "prettier": "catalog:",
