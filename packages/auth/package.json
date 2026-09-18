@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@ankaa/db": "workspace:*",
+    "@ankaa/env": "workspace:*",
     "@better-auth/drizzle-adapter": "^1.7.4",
     "@better-auth/expo": "^1.7.4",
     "better-auth": "^1.7.4",

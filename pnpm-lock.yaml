@@ -254,6 +254,9 @@ importers:
       '@ankaa/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@ankaa/env':
+        specifier: workspace:*
+        version: link:../../packages/env
       '@fastify/cors':
         specifier: ^11.3.0
         version: 11.3.0
@@ -340,6 +343,9 @@ importers:
       '@ankaa/db':
         specifier: workspace:*
         version: link:../db
+      '@ankaa/env':
+        specifier: workspace:*
+        version: link:../env
       '@better-auth/drizzle-adapter':
         specifier: ^1.7.4
         version: 1.7.4(@better-auth/core@1.7.4(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.4.0(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.4.2)(drizzle-orm@1.0.0-rc.4(@types/pg@8.23.1)(pg@8.23.0)(zod@4.6.4))
@@ -383,6 +389,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@ankaa/env':
+        specifier: workspace:*
+        version: link:../env
       drizzle-orm:
         specifier: 1.0.0-rc.4
         version: 1.0.0-rc.4(@types/pg@8.23.1)(pg@8.23.0)(zod@4.6.4)
@@ -411,6 +420,37 @@ importers:
       drizzle-kit:
         specifier: 1.0.0-rc.4
         version: 1.0.0-rc.4
+      eslint:
+        specifier: ^10.10.0
+        version: 10.10.0(jiti@2.7.0)(supports-color@8.1.1)
+      jiti:
+        specifier: ^2.7.0
+        version: 2.7.0
+      prettier:
+        specifier: 'catalog:'
+        version: 3.9.6
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
+  packages/env:
+    dependencies:
+      zod:
+        specifier: ^4.6.4
+        version: 4.6.4
+    devDependencies:
+      '@ankaa/eslint':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@ankaa/prettier':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
+      '@ankaa/typescript':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      '@types/node':
+        specifier: ^26.4.1
+        version: 26.4.1
       eslint:
         specifier: ^10.10.0
         version: 10.10.0(jiti@2.7.0)(supports-color@8.1.1)

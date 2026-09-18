@@ -1,8 +1,5 @@
 {
   "dependencies": {
-    "@ankaa/env": "workspace:*",
-    "drizzle-orm": "1.0.0-rc.4",
-    "pg": "^8.23.0",
     "zod": "^4.6.4"
   },
   "devDependencies": {
@@ -10,18 +7,15 @@
     "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
     "@types/node": "^26.4.1",
-    "@types/pg": "^8.23.1",
-    "drizzle-kit": "1.0.0-rc.4",
     "eslint": "^10.10.0",
     "jiti": "^2.7.0",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./schema": "./src/schema/index.ts"
+    ".": "./src/index.ts"
   },
-  "name": "@ankaa/db",
+  "name": "@ankaa/env",
   "private": true,
   "scripts": {
     "check-types": "tsc --noEmit",
