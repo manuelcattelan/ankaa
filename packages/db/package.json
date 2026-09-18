@@ -21,6 +21,7 @@
     "./schema": "./src/schema/index.ts"
   },
   "name": "@ankaa/db",
+  "private": true,
   "scripts": {
     "check-types": "tsc --noEmit",
     "format": "prettier --check .",

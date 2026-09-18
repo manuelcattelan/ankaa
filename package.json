@@ -1,6 +1,4 @@
 {
-  "author": "",
-  "description": "",
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
     "@ankaa/prettier": "workspace:*",
@@ -15,15 +13,11 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "onFail": "download",
       "version": "12.3.4"
     }
   },
-  "keywords": [],
-  "license": "ISC",
-  "main": "index.js",
   "name": "ankaa",
-  "packageManager": "pnpm@12.3.4",
+  "private": true,
   "scripts": {
     "check-types": "turbo run check-types check-types:root",
     "check-types:root": "tsc --noEmit",
@@ -31,9 +25,7 @@
     "format": "turbo run format format:root",
     "format:root": "prettier --check .",
     "lint": "turbo run lint lint:root",
-    "lint:root": "eslint .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint:root": "eslint ."
   },
-  "type": "module",
-  "version": "1.0.0"
+  "type": "module"
 }

@@ -1,7 +1,3 @@
-# pnpm reports unmet peers for eslint-plugin-import and eslint-plugin-react
-# (dependencies of eslint-config-expo in tooling/eslint) because they do not
-# declare ESLint 10 support yet. They run fine under the app's ESLint 9;
-# remove this note when they support ESLint 10.
 packages:
   - "apps/*"
   - "packages/*"
@@ -12,22 +8,3 @@ catalog:
 allowBuilds:
   esbuild: true
   unrs-resolver: true
-minimumReleaseAgeExclude:
-  - "@expo/cli@57.0.21"
-  - "@expo/fingerprint@0.20.12"
-  - "@expo/metro-runtime@57.0.15"
-  - "@expo/router-server@57.0.9"
-  - "@expo/ui@57.0.15"
-  - babel-preset-expo@57.0.10
-  - expo-asset@57.0.16
-  - expo-constants@57.0.17
-  - expo-font@57.0.3
-  - expo-image@57.0.4
-  - expo-linking@57.0.9
-  - expo-modules-core@57.0.15
-  - expo-modules-jsi@57.0.7
-  - expo-router@57.0.18
-  - expo@57.0.19
-  - expo-dev-client@57.0.18
-  - expo-dev-launcher@57.0.19
-  - expo-dev-menu@57.0.18

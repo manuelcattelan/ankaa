@@ -1,0 +1,3 @@
+{
+  "extends": "@ankaa/typescript/server.json"
+}

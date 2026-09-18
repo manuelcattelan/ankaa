@@ -36,22 +36,6 @@ export const baseConfig = defineConfig([
   },
   {
     extends: ["json/recommended"],
-    files: ["**/*.jsonc"],
-    language: "json/jsonc",
-    languageOptions: {
-      allowTrailingCommas: true,
-    },
-    plugins: { json },
-    rules: {
-      "json/sort-keys": [
-        "error",
-        "asc",
-        { allowLineSeparatedGroups: true, natural: true },
-      ],
-    },
-  },
-  {
-    extends: ["json/recommended"],
     files: ["**/tsconfig.json"],
     language: "json/jsonc",
     languageOptions: {

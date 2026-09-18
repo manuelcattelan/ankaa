@@ -3,5 +3,6 @@
     "@tsconfig/node-ts": "^23.6.4",
     "@tsconfig/node26": "^26.0.1"
   },
-  "name": "@ankaa/typescript"
+  "name": "@ankaa/typescript",
+  "private": true
 }

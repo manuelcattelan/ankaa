@@ -1,12 +1,11 @@
-import { packageConfig } from "@ankaa/eslint/package";
+import { serverConfig } from "@ankaa/eslint/server";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
-  packageConfig,
+  serverConfig,
   {
     languageOptions: {
       parserOptions: { tsconfigRootDir: import.meta.dirname },
     },
   },
-  { ignores: ["drizzle/**"] },
 ]);

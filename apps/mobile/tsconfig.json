@@ -5,7 +5,7 @@
       "@/assets/*": ["./assets/*"]
     }
   },
-  "extends": ["@ankaa/typescript/app.json", "expo/tsconfig.base"],
+  "extends": ["@ankaa/typescript/mobile.json", "expo/tsconfig.base"],
   "include": [
     "**/*.ts",
     "**/*.mts",
