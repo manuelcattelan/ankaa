@@ -1,8 +1,8 @@
-import { apiConfig } from "@ankaa/eslint/api";
+import { serverConfig } from "@ankaa/eslint/server";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
-  apiConfig,
+  serverConfig,
   {
     languageOptions: {
       parserOptions: { tsconfigRootDir: import.meta.dirname },

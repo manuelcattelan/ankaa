@@ -1,7 +1,7 @@
-import { appConfig } from "@ankaa/eslint/app";
+import { mobileConfig } from "@ankaa/eslint/mobile";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
-  appConfig,
+  mobileConfig,
   { ignores: ["dist/*", "ios/*", "android/*", ".expo/*"] },
 ]);
