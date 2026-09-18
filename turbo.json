@@ -1,0 +1,23 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    "//#check-types:root": {},
+    "//#format:root": {},
+    "//#lint:root": {},
+    "check-types": {
+      "dependsOn": ["topo"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "format": {},
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "topo": {
+      "dependsOn": ["^topo"]
+    }
+  },
+  "ui": "tui"
+}

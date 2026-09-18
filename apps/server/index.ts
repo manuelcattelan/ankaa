@@ -17,7 +17,6 @@ const fastify = Fastify({
   },
 });
 
-// Configure CORS policies
 fastify.register(fastifyCors, {
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   credentials: true,
@@ -26,29 +25,21 @@ fastify.register(fastifyCors, {
   origin: env.CLIENT_ORIGIN,
 });
 
-// Register authentication endpoint
 fastify.route({
   async handler(request, reply) {
     try {
-      // Construct request URL
       const url = new URL(request.url, `http://${request.headers.host}`);
-
-      // Convert Fastify headers to standard Headers object
       const headers = fromNodeHeaders(request.headers);
-
-      // Create Fetch API-compatible request
       const req = new Request(url.toString(), {
         headers,
         method: request.method,
         ...(request.body ? { body: JSON.stringify(request.body) } : {}),
       });
-
-      // Process authentication request
       const response = await auth.handler(req);
-
-      // Forward response to client
       reply.status(response.status);
-      for (const [key, value] of response.headers) reply.header(key, value);
+      for (const [key, value] of response.headers) {
+        reply.header(key, value);
+      }
       return reply.send(response.body ? await response.text() : null);
     } catch (error) {
       fastify.log.error(error, "Authentication Error:");
@@ -66,14 +57,13 @@ fastify.register(fastifyTRPCPlugin, {
   prefix: "/trpc",
   trpcOptions: {
     createContext,
-    onError({ error, path }) {
-      console.error(`Error in tRPC handler on path '${path}':`, error);
+    onError({ error, path, req }) {
+      req.log.error(error, `Error in tRPC handler on path '${path}'`);
     },
     router: appRouter,
   } satisfies FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],
 });
 
-// Initialize server
 fastify.listen({ port: env.NODE_PORT }, (err) => {
   if (err) {
     fastify.log.error(err);

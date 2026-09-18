@@ -21,6 +21,7 @@
     ".": "./src/auth.ts"
   },
   "name": "@ankaa/auth",
+  "private": true,
   "scripts": {
     "check-types": "tsc --noEmit",
     "format": "prettier --check .",

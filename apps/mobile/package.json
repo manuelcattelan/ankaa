@@ -36,18 +36,12 @@
     "typescript": "catalog:"
   },
   "main": "expo-router/entry",
-  "name": "app",
+  "name": "@ankaa/mobile",
   "private": true,
   "scripts": {
-    "android": "expo run:android",
     "check-types": "tsc --noEmit",
     "dev": "expo start",
     "format": "prettier --check .",
-    "ios": "expo run:ios",
-    "lint": "eslint .",
-    "reset-project": "node ./scripts/reset-project.js",
-    "start": "expo start",
-    "web": "expo start --web"
-  },
-  "version": "1.0.0"
+    "lint": "eslint ."
+  }
 }
