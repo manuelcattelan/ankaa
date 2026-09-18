@@ -1,17 +1,13 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Button, Text, View } from "react-native";
+
+import { authClient } from "@/lib/auth";
 
 export default function Index() {
+  const { data: session } = authClient.useSession();
   return (
-    <View style={styles.container}>
-      <Text>Edit src/app/index.tsx to edit this screen.</Text>
+    <View>
+      <Text>{session?.user.email}</Text>
+      <Button onPress={() => void authClient.signOut()} title="Sign out" />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    flex: 1,
-    justifyContent: "center",
-  },
-});
