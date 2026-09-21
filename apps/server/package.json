@@ -3,7 +3,6 @@
     "@ankaa/api": "workspace:*",
     "@ankaa/auth": "workspace:*",
     "@ankaa/env": "workspace:*",
-    "@fastify/cors": "^11.3.0",
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",
     "fastify": "^5.12.1",
