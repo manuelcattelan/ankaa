@@ -1,0 +1,28 @@
+{
+  "dependencies": {
+    "@ankaa/env": "workspace:*",
+    "resend": "^6.28.1",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@ankaa/eslint": "workspace:*",
+    "@ankaa/prettier": "workspace:*",
+    "@ankaa/typescript": "workspace:*",
+    "@types/node": "^26.4.1",
+    "eslint": "^10.10.0",
+    "jiti": "^2.7.0",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "name": "@ankaa/email",
+  "private": true,
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "format": "prettier --check .",
+    "lint": "eslint ."
+  },
+  "type": "module"
+}
