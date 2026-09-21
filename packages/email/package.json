@@ -1,11 +1,7 @@
 {
   "dependencies": {
-    "@ankaa/db": "workspace:*",
-    "@ankaa/email": "workspace:*",
     "@ankaa/env": "workspace:*",
-    "@better-auth/drizzle-adapter": "catalog:",
-    "@better-auth/expo": "catalog:",
-    "better-auth": "catalog:",
+    "resend": "^6.28.1",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -13,21 +9,19 @@
     "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
     "@types/node": "^26.4.1",
-    "auth": "catalog:",
     "eslint": "^10.10.0",
     "jiti": "^2.7.0",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "exports": {
-    ".": "./src/auth.ts"
+    ".": "./src/index.ts"
   },
-  "name": "@ankaa/auth",
+  "name": "@ankaa/email",
   "private": true,
   "scripts": {
     "check-types": "tsc --noEmit",
     "format": "prettier --check .",
-    "generate": "auth generate --config src/auth.ts --output ../db/src/schema/auth.ts",
     "lint": "eslint ."
   },
   "type": "module"
