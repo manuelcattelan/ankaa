@@ -15,7 +15,7 @@ export const auth = betterAuth({
   plugins: [expo()],
   secret: env.BETTER_AUTH_SECRET,
   trustedOrigins: [
-    "mobile://",
+    "ankaa://",
     ...(env.NODE_ENV === "development"
       ? ["exp://", "exp://**", "exp://192.168.*.*:*/**"]
       : []),

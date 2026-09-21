@@ -1,6 +1,5 @@
 import { type AppRouter, appRouter, createContext } from "@ankaa/api";
 import { auth } from "@ankaa/auth";
-import fastifyCors from "@fastify/cors";
 import {
   fastifyTRPCPlugin,
   type FastifyTRPCPluginOptions,
@@ -15,14 +14,6 @@ const fastify = Fastify({
   routerOptions: {
     maxParamLength: 5000,
   },
-});
-
-fastify.register(fastifyCors, {
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  credentials: true,
-  maxAge: 86400,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  origin: env.CLIENT_ORIGIN,
 });
 
 fastify.route({
