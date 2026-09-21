@@ -7,6 +7,7 @@
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "package": "app.ankaa",
       "predictiveBackGestureEnabled": false
     },
     "experiments": {
@@ -15,10 +16,10 @@
     },
     "icon": "./assets/images/icon.png",
     "ios": {
-      "bundleIdentifier": "mobile",
+      "bundleIdentifier": "app.ankaa",
       "icon": "./assets/expo.icon"
     },
-    "name": "mobile",
+    "name": "Ankaa",
     "orientation": "portrait",
     "plugins": [
       "expo-router",
@@ -40,8 +41,8 @@
         }
       ]
     ],
-    "scheme": "mobile",
-    "slug": "mobile",
+    "scheme": "ankaa",
+    "slug": "ankaa",
     "userInterfaceStyle": "automatic",
     "version": "1.0.0",
     "web": {
