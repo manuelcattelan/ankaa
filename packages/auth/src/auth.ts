@@ -66,6 +66,10 @@ export const auth = betterAuth({
       enabled: true,
     },
   },
+  socialProviders: {
+    apple: { clientId: env.APPLE_APP_BUNDLE_IDENTIFIER },
+    google: { clientId: [env.GOOGLE_WEB_CLIENT_ID, env.GOOGLE_IOS_CLIENT_ID] },
+  },
   trustedOrigins: [
     "ankaa://",
     ...(env.NODE_ENV === "development"

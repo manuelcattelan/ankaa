@@ -22,6 +22,7 @@ function RootNavigator() {
         <Stack.Screen name="index" />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
+        <Stack.Screen name="welcome" />
         <Stack.Screen name="sign-in" />
         <Stack.Screen name="forgot-password" />
         <Stack.Screen name="sign-up" />
