@@ -3,6 +3,8 @@
     "@ankaa/api": "workspace:*",
     "@ankaa/auth": "workspace:*",
     "@ankaa/env": "workspace:*",
+    "@fastify/helmet": "^13.1.1",
+    "@fastify/rate-limit": "^11.2.0",
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",
     "fastify": "^5.12.1",
