@@ -8,8 +8,6 @@ import { emailOTP } from "better-auth/plugins";
 
 import { env } from "./env.ts";
 
-// Better Auth awaits these callbacks. The send itself is deliberately not
-// awaited, per the Better Auth docs, to prevent timing attacks.
 function sendEmailInBackground(
   email: Parameters<typeof sendEmail>[0],
 ): Promise<void> {
@@ -47,8 +45,6 @@ export const auth = betterAuth({
     emailOTP({
       disableSignUp: true,
       sendVerificationOTP: ({ email, otp, type }) => {
-        // The sign-in endpoint is disabled via `disabledPaths`, so a sign-in
-        // code must never be mailed.
         if (type === "sign-in") {
           return Promise.resolve();
         }
@@ -65,6 +61,11 @@ export const auth = betterAuth({
     }),
   ],
   secret: env.BETTER_AUTH_SECRET,
+  session: {
+    cookieCache: {
+      enabled: true,
+    },
+  },
   trustedOrigins: [
     "ankaa://",
     ...(env.NODE_ENV === "development"

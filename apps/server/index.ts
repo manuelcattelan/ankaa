@@ -1,5 +1,7 @@
 import { type AppRouter, appRouter, createContext } from "@ankaa/api";
 import { auth } from "@ankaa/auth";
+import helmet from "@fastify/helmet";
+import rateLimit from "@fastify/rate-limit";
 import {
   fastifyTRPCPlugin,
   type FastifyTRPCPluginOptions,
@@ -15,6 +17,23 @@ const fastify = Fastify({
     maxParamLength: 5000,
   },
 });
+
+await fastify.register(helmet);
+await fastify.register(rateLimit);
+
+fastify.setNotFoundHandler(
+  {
+    preHandler: fastify.rateLimit(),
+  },
+  async (request, reply) => {
+    request.log.info(`Route ${request.method}:${request.url} not found`);
+    return reply.status(404).send({
+      error: "Not Found",
+      message: `Route ${request.method}:${request.url} not found`,
+      statusCode: 404,
+    });
+  },
+);
 
 fastify.route({
   async handler(request, reply) {
