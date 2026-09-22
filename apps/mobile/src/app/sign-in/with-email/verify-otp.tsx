@@ -1,12 +1,19 @@
-import { Link, useRouter } from "expo-router";
+import { Redirect, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { AccessibilityInfo, Button, Text, TextInput, View } from "react-native";
+import {
+  AccessibilityInfo,
+  Button,
+  Platform,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 import { authClient } from "@/lib/auth";
 
-export default function ForgotPassword() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
+export default function VerifyOtp() {
+  const { email } = useLocalSearchParams<{ email?: string }>();
+  const [otp, setOtp] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<null | string>(null);
   const [error, setError] = useState<null | string>(null);
@@ -20,74 +27,92 @@ export default function ForgotPassword() {
       AccessibilityInfo.announceForAccessibility(error);
     }
   }, [error]);
-  async function sendResetLink() {
+  async function verifyCode() {
+    if (!email || !otp) {
+      return;
+    }
     if (submitting) {
       return;
     }
+    setError(null);
     setStatus(null);
     setSubmitting(true);
     try {
-      const { error: responseError } = await authClient.requestPasswordReset({
+      const { error: responseError } = await authClient.signIn.emailOtp({
         email,
-        redirectTo: "ankaa://reset-password",
+        otp,
       });
       if (responseError) {
         setError(responseError.message ?? responseError.statusText);
         return;
       }
       setError(null);
-      setStatus("Check your email for the reset link.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Something went wrong");
     } finally {
       setSubmitting(false);
     }
   }
-  async function sendResetOtp() {
+  async function resendCode() {
+    if (!email) {
+      return;
+    }
     if (submitting) {
       return;
     }
+    setError(null);
     setStatus(null);
     setSubmitting(true);
     try {
       const { error: responseError } =
-        await authClient.emailOtp.requestPasswordReset({ email });
+        await authClient.emailOtp.sendVerificationOtp({
+          email,
+          type: "sign-in",
+        });
       if (responseError) {
         setError(responseError.message ?? responseError.statusText);
         return;
       }
       setError(null);
-      router.push({ params: { email }, pathname: "/reset-password" });
+      setOtp("");
+      setStatus("Code sent.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Something went wrong");
     } finally {
       setSubmitting(false);
     }
   }
+  if (!email) {
+    return <Redirect href="/sign-in" />;
+  }
   return (
     <View>
+      <Text>Enter the code we sent to</Text>
+      <Text>{email}</Text>
       <TextInput
-        accessibilityLabel="Email"
-        autoCapitalize="none"
-        autoComplete="email"
+        accessibilityLabel="Verification code"
+        autoComplete={Platform.select({
+          android: "email-otp",
+          default: "one-time-code",
+        })}
         autoCorrect={false}
         autoFocus
-        keyboardType="email-address"
-        onChangeText={setEmail}
-        onSubmitEditing={() => void sendResetLink()}
-        placeholder="Email"
+        keyboardType="number-pad"
+        onChangeText={setOtp}
+        onSubmitEditing={() => void verifyCode()}
+        placeholder="Code"
         returnKeyType="done"
-        value={email}
+        value={otp}
+      />
+      <Button
+        disabled={submitting || !otp}
+        onPress={() => void verifyCode()}
+        title="Verify"
       />
       <Button
         disabled={submitting}
-        onPress={() => void sendResetLink()}
-        title="Send reset link"
-      />
-      <Button
-        disabled={submitting}
-        onPress={() => void sendResetOtp()}
-        title="Send me a code instead"
+        onPress={() => void resendCode()}
+        title="Resend code"
       />
       {status ? <Text accessibilityLiveRegion="polite">{status}</Text> : null}
       {error ? (
@@ -95,7 +120,6 @@ export default function ForgotPassword() {
           {error}
         </Text>
       ) : null}
-      <Link href="/sign-in">Sign in</Link>
     </View>
   );
 }

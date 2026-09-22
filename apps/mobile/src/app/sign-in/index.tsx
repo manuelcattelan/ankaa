@@ -16,7 +16,7 @@ GoogleSignin.configure({
   webClientId: env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
 });
 
-export default function Welcome() {
+export default function SignIn() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<null | string>(null);
@@ -124,7 +124,7 @@ export default function Welcome() {
       />
       <Button
         disabled={submitting}
-        onPress={() => router.push("/sign-in")}
+        onPress={() => router.push("/sign-in/with-email")}
         title="Continue with email"
       />
       {error ? (
