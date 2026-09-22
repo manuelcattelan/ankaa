@@ -15,13 +15,7 @@ export default function VerifyOtp() {
   const { email } = useLocalSearchParams<{ email?: string }>();
   const [otp, setOtp] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [status, setStatus] = useState<null | string>(null);
   const [error, setError] = useState<null | string>(null);
-  useEffect(() => {
-    if (status) {
-      AccessibilityInfo.announceForAccessibility(status);
-    }
-  }, [status]);
   useEffect(() => {
     if (error) {
       AccessibilityInfo.announceForAccessibility(error);
@@ -35,7 +29,6 @@ export default function VerifyOtp() {
       return;
     }
     setError(null);
-    setStatus(null);
     setSubmitting(true);
     try {
       const { error: responseError } = await authClient.signIn.emailOtp({
@@ -61,7 +54,6 @@ export default function VerifyOtp() {
       return;
     }
     setError(null);
-    setStatus(null);
     setSubmitting(true);
     try {
       const { error: responseError } =
@@ -75,7 +67,6 @@ export default function VerifyOtp() {
       }
       setError(null);
       setOtp("");
-      setStatus("Code sent.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Something went wrong");
     } finally {
@@ -87,8 +78,6 @@ export default function VerifyOtp() {
   }
   return (
     <View>
-      <Text>Enter the code we sent to</Text>
-      <Text>{email}</Text>
       <TextInput
         accessibilityLabel="Verification code"
         autoComplete={Platform.select({
@@ -114,7 +103,6 @@ export default function VerifyOtp() {
         onPress={() => void resendCode()}
         title="Resend code"
       />
-      {status ? <Text accessibilityLiveRegion="polite">{status}</Text> : null}
       {error ? (
         <Text accessibilityLiveRegion="polite" accessibilityRole="alert">
           {error}
