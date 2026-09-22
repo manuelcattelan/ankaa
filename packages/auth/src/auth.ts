@@ -8,56 +8,14 @@ import { emailOTP } from "better-auth/plugins";
 
 import { env } from "./env.ts";
 
-function sendEmailInBackground(
-  email: Parameters<typeof sendEmail>[0],
-): Promise<void> {
-  void sendEmail(email).catch((cause: unknown) => {
-    console.error("Unexpected error while sending email:", cause);
-  });
-  return Promise.resolve();
-}
-
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   database: drizzleAdapter(db, { provider: "pg", schema, schemaName: "auth" }),
-  disabledPaths: ["/sign-in/email-otp"],
-  emailAndPassword: {
-    enabled: true,
-    requireEmailVerification: true,
-    revokeSessionsOnPasswordReset: true,
-    sendResetPassword: ({ url, user }) =>
-      sendEmailInBackground({
-        subject: "Reset your password",
-        text: url,
-        to: user.email,
-      }),
-  },
-  emailVerification: {
-    sendVerificationEmail: ({ url, user }) =>
-      sendEmailInBackground({
-        subject: "Verify your email",
-        text: url,
-        to: user.email,
-      }),
-  },
   plugins: [
     expo(),
     emailOTP({
-      disableSignUp: true,
-      sendVerificationOTP: ({ email, otp, type }) => {
-        if (type === "sign-in") {
-          return Promise.resolve();
-        }
-        return sendEmailInBackground({
-          subject:
-            type === "forget-password"
-              ? "Reset your password"
-              : "Verify your email",
-          text: otp,
-          to: email,
-        });
-      },
-      storeOTP: "hashed",
+      sendVerificationOTP: ({ email, otp }) =>
+        sendEmail({ subject: "Your sign-in code", text: otp, to: email }),
     }),
   ],
   secret: env.BETTER_AUTH_SECRET,
