@@ -1,5 +1,5 @@
 {
-  "exports": "./index.js",
+  "exports": "./index.ts",
   "name": "@ankaa/prettier",
   "peerDependencies": {
     "prettier": ">=3.0.0"

@@ -1,8 +1,3 @@
-import ankaaPrettierConfig from "@ankaa/prettier";
-import { type Config } from "prettier";
+import { configuration } from "@ankaa/prettier";
 
-const config: Config = {
-  ...ankaaPrettierConfig,
-};
-
-export default config;
+export default configuration;

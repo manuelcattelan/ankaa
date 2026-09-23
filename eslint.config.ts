@@ -1,12 +1,12 @@
-import { toolingConfig } from "@ankaa/eslint/tooling";
+import { toolingConfiguration } from "@ankaa/eslint/tooling";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
-  toolingConfig,
+  toolingConfiguration,
   {
     languageOptions: {
       parserOptions: { tsconfigRootDir: import.meta.dirname },
     },
   },
-  { ignores: ["apps/**", "packages/**", ".turbo/**"] },
+  { ignores: ["apps/**", "packages/**", ".turbo/**", ".claude/worktrees/**"] },
 ]);
