@@ -1,0 +1,28 @@
+{
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@ankaa/eslint": "workspace:*",
+    "@ankaa/prettier": "workspace:*",
+    "@ankaa/typescript": "workspace:*",
+    "@types/node": "^26.4.1",
+    "eslint": "^10.10.0",
+    "jiti": "^2.7.0",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "name": "@ankaa/environment",
+  "private": true,
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "type": "module"
+}

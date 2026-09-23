@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@ankaa/auth": "workspace:*",
+    "@ankaa/authentication": "workspace:*",
     "@trpc/server": "catalog:",
     "better-auth": "catalog:"
   },
@@ -22,7 +22,9 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "format": "prettier --check .",
-    "lint": "eslint ."
+    "format:fix": "prettier --write .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "type": "module"
 }

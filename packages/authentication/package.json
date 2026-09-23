@@ -1,0 +1,36 @@
+{
+  "dependencies": {
+    "@ankaa/database": "workspace:*",
+    "@ankaa/email": "workspace:*",
+    "@ankaa/environment": "workspace:*",
+    "@better-auth/drizzle-adapter": "catalog:",
+    "@better-auth/expo": "catalog:",
+    "better-auth": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@ankaa/eslint": "workspace:*",
+    "@ankaa/prettier": "workspace:*",
+    "@ankaa/typescript": "workspace:*",
+    "@types/node": "^26.4.1",
+    "auth": "catalog:",
+    "eslint": "^10.10.0",
+    "jiti": "^2.7.0",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "exports": {
+    ".": "./src/authentication.ts"
+  },
+  "name": "@ankaa/authentication",
+  "private": true,
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "generate": "auth generate --config src/authentication.ts --output ../database/src/schema/authentication.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "type": "module"
+}

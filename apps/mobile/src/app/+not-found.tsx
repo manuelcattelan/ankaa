@@ -1,18 +1,19 @@
-import { Link, Stack, useTheme } from "expo-router";
-import { Text, View } from "react-native";
+import { Link, Stack } from "expo-router";
+import { View } from "react-native";
 
 import { Button } from "@/components/button";
+import { Text } from "@/components/text";
+import { messages } from "@/utilities/messages";
 
-export default function NotFound() {
-  const { colors } = useTheme();
+export default function NotFoundScreen() {
   return (
     <View>
-      <Stack.Screen options={{ headerShown: true, title: "Not found" }} />
-      <Text style={{ color: colors.text }}>
-        This screen doesn&apos;t exist.
-      </Text>
+      <Stack.Screen
+        options={{ headerShown: true, title: messages.notFound.title }}
+      />
+      <Text>{messages.notFound.body}</Text>
       <Link asChild href="/">
-        <Button title="Go to home" />
+        <Button title={messages.notFound.goHome} />
       </Link>
     </View>
   );

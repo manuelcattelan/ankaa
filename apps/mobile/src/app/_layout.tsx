@@ -1,3 +1,5 @@
+import type { ColorSchemeName } from "react-native";
+
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import {
   DarkTheme,
@@ -8,36 +10,40 @@ import {
 } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { Text, useColorScheme } from "react-native";
+import { useColorScheme } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { env } from "@/env";
-import { authClient } from "@/lib/auth";
+import { authenticationClient } from "@/clients/authentication";
+import { Text } from "@/components/text";
+import { environment } from "@/environment";
 import { QueryProvider } from "@/providers/query";
+import { messages } from "@/utilities/messages";
 
 void SplashScreen.preventAutoHideAsync();
+
 GoogleSignin.configure({
-  iosClientId: env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-  webClientId: env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  iosClientId: environment.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  webClientId: environment.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
 });
 
 export function ErrorBoundary() {
   const colorScheme = useColorScheme();
-  const { colors } = colorScheme === "dark" ? DarkTheme : DefaultTheme;
+
   return (
-    <SafeAreaView>
-      <Text selectable style={{ color: colors.text }}>
-        Oops! Something went wrong.
-      </Text>
-    </SafeAreaView>
+    <ThemeProvider value={getNavigationTheme(colorScheme)}>
+      <SafeAreaView>
+        <Text selectable>{messages.root.errorBoundary}</Text>
+      </SafeAreaView>
+    </ThemeProvider>
   );
 }
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
   return (
     <QueryProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={getNavigationTheme(colorScheme)}>
         <SplashScreenController />
         <RootNavigator />
         <StatusBar style="auto" />
@@ -46,14 +52,21 @@ export default function RootLayout() {
   );
 }
 
+function getNavigationTheme(colorScheme: ColorSchemeName) {
+  return colorScheme === "dark" ? DarkTheme : DefaultTheme;
+}
+
 function RootNavigator() {
-  const { data: session } = authClient.useSession();
+  const session = authenticationClient.useSession();
+
+  const hasSession = !!session.data;
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={!!session}>
+      <Stack.Protected guard={hasSession}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>
-      <Stack.Protected guard={!session}>
+      <Stack.Protected guard={!hasSession}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
     </Stack>
@@ -61,11 +74,13 @@ function RootNavigator() {
 }
 
 function SplashScreenController() {
-  const { isPending } = authClient.useSession();
+  const session = authenticationClient.useSession();
+
   useEffect(() => {
-    if (!isPending) {
+    if (!session.isPending) {
       SplashScreen.hide();
     }
-  }, [isPending]);
+  }, [session.isPending]);
+
   return null;
 }

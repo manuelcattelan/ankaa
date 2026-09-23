@@ -1,5 +1,4 @@
 import type { AppRouter } from "@ankaa/api";
-import type { AppStateStatus } from "react-native";
 
 import {
   focusManager,
@@ -8,69 +7,89 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
-import * as Network from "expo-network";
+import * as ExpoNetwork from "expo-network";
 import { useEffect, useState } from "react";
 import { AppState, Platform } from "react-native";
 
-import { env } from "@/env";
-import { authClient } from "@/lib/auth";
-import { TRPCProvider } from "@/lib/trpc";
+import { authenticationClient } from "@/clients/authentication";
+import { TrpcProvider } from "@/clients/trpc";
+import { environment } from "@/environment";
+
+type QueryProviderProperties = {
+  children: React.ReactNode;
+};
+
+const QUERY_STALE_TIME_MILLISECONDS = 60_000;
 
 onlineManager.setEventListener((setOnline) => {
-  let initialised = false;
-  const eventSubscription = Network.addNetworkStateListener((state) => {
-    initialised = true;
+  let isInitialized = false;
+
+  const subscription = ExpoNetwork.addNetworkStateListener((state) => {
+    isInitialized = true;
     setOnline(!!state.isConnected);
   });
-  void Network.getNetworkStateAsync().then((state) => {
-    if (!initialised) {
+
+  async function setInitialOnlineState() {
+    const state = await ExpoNetwork.getNetworkStateAsync();
+
+    if (!isInitialized) {
       setOnline(!!state.isConnected);
     }
-  });
+  }
+
+  void setInitialOnlineState();
+
   return () => {
-    eventSubscription.remove();
+    subscription.remove();
   };
 });
 
-export function QueryProvider({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({ defaultOptions: { queries: { staleTime: 60_000 } } }),
-  );
-  const [trpcClient] = useState(() =>
-    createTRPCClient<AppRouter>({
-      links: [
-        httpBatchLink({
-          fetch: (url, options) =>
-            fetch(url, { ...options, credentials: "omit" }),
-          async headers() {
-            const cookies = await authClient.getCookie();
-            return cookies ? { cookie: cookies } : {};
-          },
-          url: `${env.EXPO_PUBLIC_API_URL}/trpc`,
-        }),
-      ],
-    }),
-  );
+export function QueryProvider({ children }: QueryProviderProperties) {
+  const [queryClient] = useState(createQueryClient);
+  const [trpcClient] = useState(createTrpcClient);
+
   useEffect(() => {
     if (Platform.OS === "web") {
       return;
     }
-    const subscription = AppState.addEventListener(
-      "change",
-      (status: AppStateStatus) => {
-        focusManager.setFocused(status === "active");
-      },
-    );
+
+    const subscription = AppState.addEventListener("change", (status) => {
+      focusManager.setFocused(status === "active");
+    });
+
     return () => {
       subscription.remove();
     };
   }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <TRPCProvider queryClient={queryClient} trpcClient={trpcClient}>
+      <TrpcProvider queryClient={queryClient} trpcClient={trpcClient}>
         {children}
-      </TRPCProvider>
+      </TrpcProvider>
     </QueryClientProvider>
   );
+}
+
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: { queries: { staleTime: QUERY_STALE_TIME_MILLISECONDS } },
+  });
+}
+
+function createTrpcClient() {
+  return createTRPCClient<AppRouter>({
+    links: [
+      httpBatchLink({
+        fetch: (url, options) =>
+          fetch(url, { ...options, credentials: "omit" }),
+        headers: async () => {
+          const cookies = await authenticationClient.getCookie();
+
+          return cookies ? { cookie: cookies } : {};
+        },
+        url: `${environment.EXPO_PUBLIC_API_URL}/trpc`,
+      }),
+    ],
+  });
 }

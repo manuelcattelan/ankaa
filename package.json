@@ -24,9 +24,13 @@
     "dev": "turbo run dev",
     "dev:tunnel": "ngrok http 8080",
     "format": "turbo run format format:root",
+    "format:fix": "turbo run format:fix format:fix:root",
+    "format:fix:root": "prettier --write .",
     "format:root": "prettier --check .",
     "lint": "turbo run lint lint:root",
-    "lint:root": "eslint ."
+    "lint:fix": "turbo run lint:fix lint:fix:root",
+    "lint:fix:root": "eslint . --fix",
+    "lint:root": "eslint . && ! git grep --untracked -n -E '^[[:space:]]*#' -- ':(glob)**/.env*' ':(glob)**/.gitignore' ':(glob)**/.prettierignore'"
   },
   "type": "module"
 }

@@ -2,3 +2,7 @@ node_modules/
 .turbo
 
 .env
+
+.claude/*
+!.claude/hooks/
+!.claude/settings.json

@@ -1,178 +1,221 @@
 import { useMutation } from "@tanstack/react-query";
-import { Redirect, useLocalSearchParams, useTheme } from "expo-router";
+import { Redirect, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Platform } from "react-native";
 
+import { authenticationClient } from "@/clients/authentication";
 import { Button } from "@/components/button";
-import { authClient } from "@/lib/auth";
-import { OTP_LENGTH } from "@/utils/constants";
+import { KeyboardAvoidingView } from "@/components/keyboard-avoiding-view";
+import { ScrollView } from "@/components/scroll-view";
+import { StatusMessage } from "@/components/status-message";
+import { Text } from "@/components/text";
+import { TextInput } from "@/components/text-input";
+import { announceMessage } from "@/utilities/accessibility";
 import {
-  announce,
-  AuthError,
-  getAuthErrorMessage,
-  unwrap,
-} from "@/utils/errors";
+  sendAuthenticationRequest,
+  sendVerificationCode,
+} from "@/utilities/authentication";
+import { HTTP_STATUS_TOO_MANY_REQUESTS } from "@/utilities/constants";
+import {
+  announceAuthenticationError,
+  getAuthenticationErrorMessage,
+  isAuthenticationError,
+} from "@/utilities/errors";
+import { messages } from "@/utilities/messages";
 
-const COOLDOWN_MS = 60_000;
+type VerifyCodeVariables = {
+  email: string;
+  otp: string;
+};
 
-const NEEDS_NEW_CODE_MESSAGE =
-  "Too many attempts. Request a new code to continue.";
+type VerifyOtpContentProperties = {
+  email: string;
+};
 
-export default function VerifyOtp() {
-  const { colors } = useTheme();
-  const { email } = useLocalSearchParams<{ email?: string }>();
-  const [otp, setOtp] = useState("");
-  const [validationError, setValidationError] = useState<null | string>(null);
-  const [needsNewCode, setNeedsNewCode] = useState(false);
-  const [deadline, setDeadline] = useState(() => Date.now() + COOLDOWN_MS);
-  const [now, setNow] = useState(() => Date.now());
-  const verify = useMutation({
-    mutationFn: async (variables: { email: string; otp: string }) => {
-      let retryAfterSeconds: number | undefined;
-      const response = await authClient.signIn.emailOtp(variables, {
-        onError: (context) => {
-          const header = context.response.headers.get("X-Retry-After");
-          if (header) {
-            retryAfterSeconds = Number(header);
-          }
-        },
-      });
-      return unwrap(response, { retryAfterSeconds });
-    },
+type VerifyOtpSearchParameters = {
+  email?: string;
+};
+
+const CODE_LENGTH = 6;
+const COOLDOWN_SECONDS = 60;
+const COUNTDOWN_INTERVAL_MILLISECONDS = 1_000;
+const MILLISECONDS_PER_SECOND = 1_000;
+
+export default function VerifyOtpScreen() {
+  const searchParameters = useLocalSearchParams<VerifyOtpSearchParameters>();
+
+  if (!searchParameters.email) {
+    return <Redirect href="/sign-in" />;
+  }
+
+  return <VerifyOtpContent email={searchParameters.email} />;
+}
+
+function getCooldownDeadline() {
+  return Date.now() + COOLDOWN_SECONDS * MILLISECONDS_PER_SECOND;
+}
+
+function getVerifyCodeErrorMessage(error: unknown) {
+  if (
+    isAuthenticationError(error) &&
+    error.status === HTTP_STATUS_TOO_MANY_REQUESTS
+  ) {
+    return messages.verifyOtp.needsNewCode;
+  }
+
+  return getAuthenticationErrorMessage(error);
+}
+
+function VerifyOtpContent({ email }: VerifyOtpContentProperties) {
+  const [code, setCode] = useState("");
+  const [cooldownDeadline, setCooldownDeadline] = useState(getCooldownDeadline);
+  const [cooldownNow, setCooldownNow] = useState(Date.now);
+  const [shouldRequestNewCode, setShouldRequestNewCode] = useState(false);
+  const [validationError, setValidationError] = useState<string>();
+
+  const resendCode = useMutation({
+    mutationFn: sendVerificationCode,
     onError: (error) => {
-      if (!(error instanceof AuthError)) {
-        announce(getAuthErrorMessage(error));
-        return;
-      }
+      announceAuthenticationError(error);
+
       if (
-        error.code === "OTP_EXPIRED" ||
-        error.code === "TOO_MANY_ATTEMPTS" ||
-        error.status === 429
+        isAuthenticationError(error) &&
+        error.status === HTTP_STATUS_TOO_MANY_REQUESTS
       ) {
         const current = Date.now();
-        setOtp("");
-        setNeedsNewCode(true);
-        setNow(current);
-        setDeadline(current);
-        announce(getVerifyErrorMessage(error));
-        return;
-      }
-      announce(getAuthErrorMessage(error));
-      if (error.code === "INVALID_OTP") {
-        setOtp("");
-      }
-    },
-  });
-  const resend = useMutation({
-    mutationFn: async (variables: { email: string }) => {
-      let retryAfterSeconds: number | undefined;
-      const response = await authClient.emailOtp.sendVerificationOtp(
-        { email: variables.email, type: "sign-in" },
-        {
-          onError: (context) => {
-            const header = context.response.headers.get("X-Retry-After");
-            if (header) {
-              retryAfterSeconds = Number(header);
-            }
-          },
-        },
-      );
-      return unwrap(response, { retryAfterSeconds });
-    },
-    onError: (error) => {
-      announce(getAuthErrorMessage(error));
-      if (error instanceof AuthError && error.status === 429) {
-        const current = Date.now();
-        setNow(current);
-        setDeadline(current + (error.retryAfterSeconds ?? 60) * 1000);
+        setCooldownNow(current);
+
+        setCooldownDeadline(
+          current +
+            (error.retryAfterSeconds ?? COOLDOWN_SECONDS) *
+              MILLISECONDS_PER_SECOND,
+        );
       }
     },
     onSuccess: () => {
       const current = Date.now();
-      setOtp("");
-      setNeedsNewCode(false);
-      setNow(current);
-      setDeadline(current + COOLDOWN_MS);
+      setCode("");
+      setShouldRequestNewCode(false);
+      setCooldownNow(current);
+      setCooldownDeadline(current + COOLDOWN_SECONDS * MILLISECONDS_PER_SECOND);
     },
   });
-  const cooldownActive = now < deadline;
-  const secondsLeft = Math.max(0, Math.ceil((deadline - now) / 1000));
+
+  const verifyCode = useMutation({
+    mutationFn: (variables: VerifyCodeVariables) =>
+      sendAuthenticationRequest((fetchOptions) =>
+        authenticationClient.signIn.emailOtp(variables, fetchOptions),
+      ),
+    onError: (error) => {
+      if (!isAuthenticationError(error)) {
+        announceAuthenticationError(error);
+
+        return;
+      }
+
+      if (
+        error.code === "OTP_EXPIRED" ||
+        error.code === "TOO_MANY_ATTEMPTS" ||
+        error.status === HTTP_STATUS_TOO_MANY_REQUESTS
+      ) {
+        const current = Date.now();
+        setCode("");
+        setShouldRequestNewCode(true);
+        setCooldownNow(current);
+        setCooldownDeadline(current);
+        announceMessage(getVerifyCodeErrorMessage(error));
+
+        return;
+      }
+
+      announceAuthenticationError(error);
+
+      if (error.code === "INVALID_OTP") {
+        setCode("");
+      }
+    },
+  });
+
+  const isCooldownActive = cooldownNow < cooldownDeadline;
+
+  const cooldownRemainingSeconds = Math.max(
+    0,
+    Math.ceil((cooldownDeadline - cooldownNow) / MILLISECONDS_PER_SECOND),
+  );
+
+  const resendCodeErrorMessage = resendCode.error
+    ? getAuthenticationErrorMessage(resendCode.error)
+    : undefined;
+
+  const verifyCodeErrorMessage = verifyCode.error
+    ? getVerifyCodeErrorMessage(verifyCode.error)
+    : undefined;
+
+  const errorMessage =
+    verifyCodeErrorMessage ?? resendCodeErrorMessage ?? validationError;
+
   useEffect(() => {
-    if (!cooldownActive) {
+    if (!isCooldownActive) {
       return;
     }
+
     const interval = setInterval(() => {
       const current = Date.now();
-      setNow(current);
-      if (current >= deadline) {
+      setCooldownNow(current);
+
+      if (current >= cooldownDeadline) {
         clearInterval(interval);
-        announce("You can request a new code now.");
+        announceMessage(messages.verifyOtp.resendReady);
       }
-    }, 1000);
+    }, COUNTDOWN_INTERVAL_MILLISECONDS);
+
     return () => {
       clearInterval(interval);
     };
-  }, [cooldownActive, deadline]);
-  const errorMessage = verify.error
-    ? getVerifyErrorMessage(verify.error)
-    : resend.error
-      ? getAuthErrorMessage(resend.error)
-      : validationError;
-  if (!email) {
-    return <Redirect href="/sign-in" />;
+  }, [cooldownDeadline, isCooldownActive]);
+
+  function handleResendCode() {
+    if (resendCode.isPending) {
+      return;
+    }
+
+    setValidationError(undefined);
+    resendCode.reset();
+    verifyCode.reset();
+    resendCode.mutate({ email });
   }
-  const handleVerify = () => {
-    if (verify.isPending) {
+
+  function handleVerifyCode() {
+    if (verifyCode.isPending) {
       return;
     }
-    setValidationError(null);
-    verify.reset();
-    resend.reset();
-    if (otp.length !== OTP_LENGTH) {
-      const message = `Enter the ${OTP_LENGTH}-digit code.`;
+
+    setValidationError(undefined);
+    verifyCode.reset();
+    resendCode.reset();
+
+    if (code.length !== CODE_LENGTH) {
+      const message = messages.verifyOtp.enterCode(CODE_LENGTH);
       setValidationError(message);
-      announce(message);
+      announceMessage(message);
+
       return;
     }
-    verify.mutate({ email, otp });
-  };
-  const handleResend = () => {
-    if (resend.isPending) {
-      return;
-    }
-    setValidationError(null);
-    resend.reset();
-    verify.reset();
-    resend.mutate({ email });
-  };
+
+    verifyCode.mutate({ email, otp: code });
+  }
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "android" ? "padding" : undefined}
-      style={{ flex: 1 }}
-    >
-      <ScrollView
-        automaticallyAdjustKeyboardInsets
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={{ color: colors.text }}>
-          We sent a {OTP_LENGTH}-digit code to {email}.
+    <KeyboardAvoidingView>
+      <ScrollView>
+        <Text>
+          {messages.verifyOtp.codeSent({ codeLength: CODE_LENGTH, email })}
         </Text>
-        <Text style={{ color: colors.text }}>Code</Text>
+        <Text>{messages.verifyOtp.codeLabel}</Text>
         <TextInput
-          accessibilityLabel={
-            errorMessage
-              ? `Verification code, error: ${errorMessage}`
-              : "Verification code"
-          }
+          accessibilityLabel={messages.verifyOtp.codeAccessibilityLabel(
+            errorMessage,
+          )}
           autoComplete={Platform.select({
             android: "email-otp",
             default: "one-time-code",
@@ -180,47 +223,30 @@ export default function VerifyOtp() {
           autoCorrect={false}
           autoFocus
           inputMode="numeric"
-          maxLength={OTP_LENGTH}
-          onChangeText={setOtp}
-          style={{
-            borderColor: colors.border,
-            borderWidth: StyleSheet.hairlineWidth,
-            color: colors.text,
-            minHeight: 48,
-          }}
-          value={otp}
+          maxLength={CODE_LENGTH}
+          onChangeText={setCode}
+          value={code}
         />
-        <View accessible aria-live="polite">
-          <Text selectable style={{ color: colors.text }}>
-            {errorMessage ?? ""}
-          </Text>
-        </View>
+        <StatusMessage message={errorMessage} />
         <Button
-          busy={verify.isPending}
-          disabled={needsNewCode}
-          onPress={handleVerify}
-          title="Verify"
+          disabled={shouldRequestNewCode}
+          isBusy={verifyCode.isPending}
+          onPress={handleVerifyCode}
+          title={messages.verifyOtp.verify}
         />
         <Button
-          accessibilityHint="Available 60 seconds after a code is sent"
-          busy={resend.isPending}
-          disabled={secondsLeft > 0 || resend.isPending}
-          onPress={handleResend}
-          title="Resend code"
+          accessibilityHint={messages.verifyOtp.resendHint(COOLDOWN_SECONDS)}
+          disabled={cooldownRemainingSeconds > 0 || resendCode.isPending}
+          isBusy={resendCode.isPending}
+          onPress={handleResendCode}
+          title={messages.verifyOtp.resend}
         />
-        {secondsLeft > 0 ? (
-          <Text style={{ color: colors.text }}>
-            Resend available in {secondsLeft} s
+        {cooldownRemainingSeconds > 0 ? (
+          <Text>
+            {messages.verifyOtp.resendAvailableIn(cooldownRemainingSeconds)}
           </Text>
         ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
   );
-}
-
-function getVerifyErrorMessage(error: unknown): string {
-  if (error instanceof AuthError && error.status === 429) {
-    return NEEDS_NEW_CODE_MESSAGE;
-  }
-  return getAuthErrorMessage(error);
 }

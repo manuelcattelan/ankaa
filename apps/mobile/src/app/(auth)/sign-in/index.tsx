@@ -5,151 +5,107 @@ import {
   isSuccessResponse,
 } from "@react-native-google-signin/google-signin";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import * as AppleAuthentication from "expo-apple-authentication";
-import * as Crypto from "expo-crypto";
-import { Link, useTheme } from "expo-router";
+import * as ExpoAppleAuthentication from "expo-apple-authentication";
+import * as ExpoCrypto from "expo-crypto";
+import { Link } from "expo-router";
 import { useEffect } from "react";
-import { ScrollView, Text, useColorScheme, View } from "react-native";
+import { StyleSheet, useColorScheme } from "react-native";
 
+import { authenticationClient } from "@/clients/authentication";
 import { Button } from "@/components/button";
-import { authClient } from "@/lib/auth";
+import { ScrollView } from "@/components/scroll-view";
+import { StatusMessage } from "@/components/status-message";
+import { announceMessage } from "@/utilities/accessibility";
+import { sendAuthenticationRequest } from "@/utilities/authentication";
 import {
-  announce,
-  AuthError,
-  getAuthErrorMessage,
-  unwrap,
-} from "@/utils/errors";
+  MINIMUM_TOUCH_TARGET_SIZE,
+  REQUEST_CANCELED_ERROR_CODE,
+} from "@/utilities/constants";
+import {
+  announceAuthenticationError,
+  createAuthenticationError,
+  getAuthenticationErrorMessage,
+} from "@/utilities/errors";
+import { messages } from "@/utilities/messages";
 
-export default function SignIn() {
-  const { colors } = useTheme();
+type AppleIdTokenOptions = {
+  credential: ExpoAppleAuthentication.AppleAuthenticationCredential;
+  nonce: string;
+};
+
+type SessionState = ReturnType<typeof authenticationClient.useSession>;
+const APPLE_BUTTON_CORNER_RADIUS = 8;
+
+export default function SignInScreen() {
+  const session = authenticationClient.useSession();
+
   const colorScheme = useColorScheme();
-  const { data: session, error: sessionError } = authClient.useSession();
+
+  const signInApple = useMutation({
+    mutationFn: signInWithApple,
+    onError: announceAuthenticationError,
+  });
+
+  const signInGoogle = useMutation({
+    mutationFn: signInWithGoogle,
+    onError: announceAuthenticationError,
+  });
+
   const appleAvailability = useQuery({
     gcTime: Infinity,
-    queryFn: () => AppleAuthentication.isAvailableAsync(),
+    queryFn: () => ExpoAppleAuthentication.isAvailableAsync(),
     queryKey: ["apple-authentication-available"],
     staleTime: Infinity,
   });
-  const appleSignIn = useMutation({
-    mutationFn: async () => {
-      try {
-        const nonce = Crypto.randomUUID();
-        const hashedNonce = await Crypto.digestStringAsync(
-          Crypto.CryptoDigestAlgorithm.SHA256,
-          nonce,
-        );
-        const credential = await AppleAuthentication.signInAsync({
-          nonce: hashedNonce,
-          requestedScopes: [
-            AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-            AppleAuthentication.AppleAuthenticationScope.EMAIL,
-          ],
-        });
-        let retryAfterSeconds: number | undefined;
-        const response = await authClient.signIn.social(
-          { idToken: buildAppleIdToken(credential, nonce), provider: "apple" },
-          {
-            onError: (context) => {
-              const header = context.response.headers.get("X-Retry-After");
-              if (header) {
-                retryAfterSeconds = Number(header);
-              }
-            },
-          },
-        );
-        return unwrap(response, { retryAfterSeconds });
-      } catch (cause) {
-        if (isErrorWithCode(cause) && cause.code === "ERR_REQUEST_CANCELED") {
-          return { cancelled: true };
-        }
-        throw cause;
-      }
-    },
-    onError: (error) => {
-      announce(getAuthErrorMessage(error));
-    },
-  });
-  const googleSignIn = useMutation({
-    mutationFn: async () => {
-      await GoogleSignin.hasPlayServices();
-      const result = await GoogleSignin.signIn();
-      if (!isSuccessResponse(result)) {
-        return { cancelled: true };
-      }
-      if (!result.data.idToken) {
-        throw new AuthError("Google did not return an identity token");
-      }
-      let retryAfterSeconds: number | undefined;
-      const response = await authClient.signIn.social(
-        { idToken: { token: result.data.idToken }, provider: "google" },
-        {
-          onError: (context) => {
-            const header = context.response.headers.get("X-Retry-After");
-            if (header) {
-              retryAfterSeconds = Number(header);
-            }
-          },
-        },
-      );
-      return unwrap(response, { retryAfterSeconds });
-    },
-    onError: (error) => {
-      announce(getAuthErrorMessage(error));
-    },
-  });
-  const pending = appleSignIn.isPending || googleSignIn.isPending;
-  const sessionTransportMessage =
-    sessionError && !session && typeof sessionError.status !== "number"
-      ? getAuthErrorMessage(sessionError)
-      : null;
+
+  const isSignInPending = signInApple.isPending || signInGoogle.isPending;
+  const sessionErrorMessage = getSessionErrorMessage(session);
+  const signInError = signInApple.error ?? signInGoogle.error;
+
+  const errorMessage = signInError
+    ? getAuthenticationErrorMessage(signInError)
+    : sessionErrorMessage;
+
   useEffect(() => {
-    if (sessionTransportMessage) {
-      announce(sessionTransportMessage);
+    if (sessionErrorMessage) {
+      announceMessage(sessionErrorMessage);
     }
-  }, [sessionTransportMessage]);
-  const errorMessage = appleSignIn.error
-    ? getAuthErrorMessage(appleSignIn.error)
-    : googleSignIn.error
-      ? getAuthErrorMessage(googleSignIn.error)
-      : sessionTransportMessage;
-  function handleApple() {
-    if (pending) {
+  }, [sessionErrorMessage]);
+
+  function handleSignInApple() {
+    if (isSignInPending) {
       return;
     }
-    googleSignIn.reset();
-    appleSignIn.mutate();
+
+    signInGoogle.reset();
+    signInApple.mutate();
   }
-  function handleGoogle() {
-    if (pending) {
+
+  function handleSignInGoogle() {
+    if (isSignInPending) {
       return;
     }
-    appleSignIn.reset();
-    googleSignIn.mutate();
+
+    signInApple.reset();
+    signInGoogle.mutate();
   }
+
   return (
-    <ScrollView
-      automaticallyAdjustKeyboardInsets
-      contentInsetAdjustmentBehavior="automatic"
-      keyboardShouldPersistTaps="handled"
-    >
-      <View accessible aria-live="polite">
-        <Text selectable style={{ color: colors.text }}>
-          {errorMessage ?? ""}
-        </Text>
-      </View>
-      {appleAvailability.data === true ? (
-        <AppleAuthentication.AppleAuthenticationButton
+    <ScrollView>
+      <StatusMessage message={errorMessage} />
+      {appleAvailability.data ? (
+        <ExpoAppleAuthentication.AppleAuthenticationButton
           buttonStyle={
             colorScheme === "dark"
-              ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-              : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+              ? ExpoAppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+              : ExpoAppleAuthentication.AppleAuthenticationButtonStyle.BLACK
           }
           buttonType={
-            AppleAuthentication.AppleAuthenticationButtonType.CONTINUE
+            ExpoAppleAuthentication.AppleAuthenticationButtonType.CONTINUE
           }
-          cornerRadius={8}
-          onPress={handleApple}
-          style={{ height: 48, width: "100%" }}
+          cornerRadius={APPLE_BUTTON_CORNER_RADIUS}
+          onPress={handleSignInApple}
+          style={styles.appleButton}
         />
       ) : null}
       <GoogleSigninButton
@@ -158,26 +114,27 @@ export default function SignIn() {
             ? GoogleSigninButton.Color.Dark
             : GoogleSigninButton.Color.Light
         }
-        disabled={pending}
-        onPress={handleGoogle}
+        disabled={isSignInPending}
+        onPress={handleSignInGoogle}
         size={GoogleSigninButton.Size.Wide}
       />
       <Link asChild href="/sign-in/with-email">
-        <Button title="Continue with email" />
+        <Button title={messages.withEmail.title} />
       </Link>
     </ScrollView>
   );
 }
 
-function buildAppleIdToken(
-  credential: AppleAuthentication.AppleAuthenticationCredential,
-  nonce: string,
-) {
+function buildAppleIdToken({ credential, nonce }: AppleIdTokenOptions) {
   if (!credential.identityToken) {
-    throw new AuthError("Apple did not return an identity token");
+    throw createAuthenticationError({
+      message: "Failed to receive an identity token from Apple",
+    });
   }
+
   const firstName = credential.fullName?.givenName ?? undefined;
   const lastName = credential.fullName?.familyName ?? undefined;
+
   return {
     nonce,
     token: credential.identityToken,
@@ -185,3 +142,78 @@ function buildAppleIdToken(
       (firstName ?? lastName) ? { name: { firstName, lastName } } : undefined,
   };
 }
+
+function getSessionErrorMessage(session: SessionState) {
+  if (
+    !session.error ||
+    session.data ||
+    typeof session.error.status === "number"
+  ) {
+    return undefined;
+  }
+
+  return getAuthenticationErrorMessage(session.error);
+}
+
+async function signInWithApple() {
+  try {
+    const nonce = ExpoCrypto.randomUUID();
+
+    const hashedNonce = await ExpoCrypto.digestStringAsync(
+      ExpoCrypto.CryptoDigestAlgorithm.SHA256,
+      nonce,
+    );
+
+    const credential = await ExpoAppleAuthentication.signInAsync({
+      nonce: hashedNonce,
+      requestedScopes: [
+        ExpoAppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        ExpoAppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+    });
+
+    return await sendAuthenticationRequest((fetchOptions) =>
+      authenticationClient.signIn.social(
+        {
+          idToken: buildAppleIdToken({ credential, nonce }),
+          provider: "apple",
+        },
+        fetchOptions,
+      ),
+    );
+  } catch (error) {
+    if (isErrorWithCode(error) && error.code === REQUEST_CANCELED_ERROR_CODE) {
+      return { isCanceled: true };
+    }
+
+    throw error;
+  }
+}
+
+async function signInWithGoogle() {
+  await GoogleSignin.hasPlayServices();
+  const result = await GoogleSignin.signIn();
+
+  if (!isSuccessResponse(result)) {
+    return { isCanceled: true };
+  }
+
+  const idToken = result.data.idToken;
+
+  if (!idToken) {
+    throw createAuthenticationError({
+      message: "Failed to receive an identity token from Google",
+    });
+  }
+
+  return sendAuthenticationRequest((fetchOptions) =>
+    authenticationClient.signIn.social(
+      { idToken: { token: idToken }, provider: "google" },
+      fetchOptions,
+    ),
+  );
+}
+
+const styles = StyleSheet.create({
+  appleButton: { height: MINIMUM_TOUCH_TARGET_SIZE, width: "100%" },
+});
