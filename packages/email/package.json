@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@ankaa/env": "workspace:*",
+    "@ankaa/environment": "workspace:*",
     "resend": "^6.28.1",
     "zod": "catalog:"
   },
@@ -22,7 +22,9 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "format": "prettier --check .",
-    "lint": "eslint ."
+    "format:fix": "prettier --write .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "type": "module"
 }

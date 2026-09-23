@@ -1,93 +1,74 @@
 import { useMutation } from "@tanstack/react-query";
-import { useRouter, useTheme } from "expo-router";
+import { useRouter } from "expo-router";
 import { useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
 import { z } from "zod";
 
 import { Button } from "@/components/button";
-import { authClient } from "@/lib/auth";
+import { KeyboardAvoidingView } from "@/components/keyboard-avoiding-view";
+import { ScrollView } from "@/components/scroll-view";
+import { StatusMessage } from "@/components/status-message";
+import { Text } from "@/components/text";
+import { TextInput } from "@/components/text-input";
+import { announceMessage } from "@/utilities/accessibility";
+import { sendVerificationCode } from "@/utilities/authentication";
 import {
-  announce,
-  getAuthErrorMessage,
-  INVALID_EMAIL_MESSAGE,
-  unwrap,
-} from "@/utils/errors";
+  announceAuthenticationError,
+  getAuthenticationErrorMessage,
+} from "@/utilities/errors";
+import { messages } from "@/utilities/messages";
 
-export default function SignInWithEmail() {
-  const { colors } = useTheme();
+export default function WithEmailScreen() {
   const router = useRouter();
+
   const [email, setEmail] = useState("");
-  const [validationError, setValidationError] = useState<null | string>(null);
+  const [validationError, setValidationError] = useState<string>();
+
   const sendCode = useMutation({
-    mutationFn: async (variables: { email: string }) => {
-      let retryAfterSeconds: number | undefined;
-      const response = await authClient.emailOtp.sendVerificationOtp(
-        { email: variables.email, type: "sign-in" },
-        {
-          onError: (context) => {
-            const header = context.response.headers.get("X-Retry-After");
-            if (header) {
-              retryAfterSeconds = Number(header);
-            }
-          },
-        },
-      );
-      return unwrap(response, { retryAfterSeconds });
-    },
-    onError: (error) => {
-      announce(getAuthErrorMessage(error));
-    },
+    mutationFn: sendVerificationCode,
+    onError: announceAuthenticationError,
   });
+
   const errorMessage = sendCode.error
-    ? getAuthErrorMessage(sendCode.error)
+    ? getAuthenticationErrorMessage(sendCode.error)
     : validationError;
-  function handleSubmit() {
+
+  function handleSendCode() {
     if (sendCode.isPending) {
       return;
     }
-    setValidationError(null);
+
+    setValidationError(undefined);
     sendCode.reset();
-    const parsed = z.email().safeParse(email.trim());
-    if (!parsed.success) {
-      setValidationError(INVALID_EMAIL_MESSAGE);
-      announce(INVALID_EMAIL_MESSAGE);
+    const parsedEmail = z.email().safeParse(email.trim());
+
+    if (!parsedEmail.success) {
+      setValidationError(messages.error.invalidEmail);
+      announceMessage(messages.error.invalidEmail);
+
       return;
     }
+
     sendCode.mutate(
-      { email: parsed.data },
+      { email: parsedEmail.data },
       {
         onSuccess: () => {
           router.push({
-            params: { email: parsed.data },
+            params: { email: parsedEmail.data },
             pathname: "/sign-in/with-email/verify-otp",
           });
         },
       },
     );
   }
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "android" ? "padding" : undefined}
-      style={{ flex: 1 }}
-    >
-      <ScrollView
-        automaticallyAdjustKeyboardInsets
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={{ color: colors.text }}>Email</Text>
+    <KeyboardAvoidingView>
+      <ScrollView>
+        <Text>{messages.withEmail.emailLabel}</Text>
         <TextInput
-          accessibilityLabel={
-            errorMessage ? `Email, error: ${errorMessage}` : "Email"
-          }
+          accessibilityLabel={messages.withEmail.emailAccessibilityLabel(
+            errorMessage,
+          )}
           autoCapitalize="none"
           autoComplete="email"
           autoCorrect={false}
@@ -95,24 +76,14 @@ export default function SignInWithEmail() {
           enterKeyHint="send"
           inputMode="email"
           onChangeText={setEmail}
-          onSubmitEditing={handleSubmit}
-          style={{
-            borderColor: colors.border,
-            borderWidth: StyleSheet.hairlineWidth,
-            color: colors.text,
-            minHeight: 48,
-          }}
+          onSubmitEditing={handleSendCode}
           value={email}
         />
-        <View accessible aria-live="polite">
-          <Text selectable style={{ color: colors.text }}>
-            {errorMessage ?? ""}
-          </Text>
-        </View>
+        <StatusMessage message={errorMessage} />
         <Button
-          busy={sendCode.isPending}
-          onPress={handleSubmit}
-          title="Continue"
+          isBusy={sendCode.isPending}
+          onPress={handleSendCode}
+          title={messages.withEmail.continue}
         />
       </ScrollView>
     </KeyboardAvoidingView>

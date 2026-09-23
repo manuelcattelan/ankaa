@@ -1,15 +1,23 @@
-import { type ExpoConfig } from "expo/config";
+import type { ExpoConfig } from "expo/config";
 
-const googleIosClientId = /^(.+)\.apps\.googleusercontent\.com$/.exec(
+const APP_IDENTIFIER = "app.ankaa";
+const APP_SLUG = "ankaa";
+const GOOGLE_IOS_CLIENT_ID_PATTERN = /^(.+)\.apps\.googleusercontent\.com$/;
+const SPLASH_IMAGE_WIDTH = 76;
+
+const googleIosClientIdMatch = GOOGLE_IOS_CLIENT_ID_PATTERN.exec(
   process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? "",
 );
-if (!googleIosClientId) {
+
+if (!googleIosClientIdMatch) {
   throw new Error(
-    "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID is missing or malformed: it must look like `<id>.apps.googleusercontent.com`.",
+    'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID must match "<id>.apps.googleusercontent.com"',
   );
 }
-const iosUrlScheme = `com.googleusercontent.apps.${googleIosClientId[1]}`;
-const config: ExpoConfig = {
+
+const iosUrlScheme = `com.googleusercontent.apps.${googleIosClientIdMatch[1]}`;
+
+const configuration: ExpoConfig = {
   android: {
     adaptiveIcon: {
       backgroundColor: "#E6F4FE",
@@ -17,7 +25,7 @@ const config: ExpoConfig = {
       foregroundImage: "./assets/images/android-icon-foreground.png",
       monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
-    package: "app.ankaa",
+    package: APP_IDENTIFIER,
     predictiveBackGestureEnabled: false,
   },
   experiments: {
@@ -26,7 +34,7 @@ const config: ExpoConfig = {
   },
   icon: "./assets/images/icon.png",
   ios: {
-    bundleIdentifier: "app.ankaa",
+    bundleIdentifier: APP_IDENTIFIER,
     icon: "./assets/expo.icon",
     usesAppleSignIn: true,
   },
@@ -39,23 +47,16 @@ const config: ExpoConfig = {
       {
         backgroundColor: "#208AEF",
         image: "./assets/images/splash-icon.png",
-        imageWidth: 76,
+        imageWidth: SPLASH_IMAGE_WIDTH,
       },
     ],
     "expo-secure-store",
-    [
-      "expo-build-properties",
-      {
-        ios: {
-          enableSceneSupport: true,
-        },
-      },
-    ],
+    ["expo-build-properties", { ios: { enableSceneSupport: true } }],
     "expo-apple-authentication",
     ["@react-native-google-signin/google-signin", { iosUrlScheme }],
   ],
-  scheme: "ankaa",
-  slug: "ankaa",
+  scheme: APP_SLUG,
+  slug: APP_SLUG,
   userInterfaceStyle: "automatic",
   version: "1.0.0",
   web: {
@@ -63,4 +64,5 @@ const config: ExpoConfig = {
     output: "static",
   },
 };
-export default config;
+
+export default configuration;

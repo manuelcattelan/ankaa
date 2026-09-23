@@ -1,61 +1,72 @@
-import { type AppRouter, appRouter, createContext } from "@ankaa/api";
-import { auth } from "@ankaa/auth";
+import type { AppRouter } from "@ankaa/api";
+import type { FastifyTRPCPluginOptions } from "@trpc/server/adapters/fastify";
+
+import { appRouter, createContext } from "@ankaa/api";
+import { auth } from "@ankaa/authentication";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
-import {
-  fastifyTRPCPlugin,
-  type FastifyTRPCPluginOptions,
-} from "@trpc/server/adapters/fastify";
+import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
 import { fromNodeHeaders } from "better-auth/node";
-import Fastify from "fastify";
+import fastify from "fastify";
 
-import { env } from "./env.ts";
+import { environment } from "./environment.ts";
 
-const fastify = Fastify({
+const HTTP_STATUS_NOT_FOUND = 404;
+const HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
+const ROUTER_MAXIMUM_PARAMETER_LENGTH = 5_000;
+
+const AUTHENTICATION_FAILURE_MESSAGE =
+  "Failed to handle authentication request";
+
+const server = fastify({
   logger: true,
-  routerOptions: {
-    maxParamLength: 5000,
-  },
+  routerOptions: { maxParamLength: ROUTER_MAXIMUM_PARAMETER_LENGTH },
 });
 
-await fastify.register(helmet);
-await fastify.register(rateLimit);
+await server.register(helmet);
+await server.register(rateLimit);
 
-fastify.setNotFoundHandler(
-  {
-    preHandler: fastify.rateLimit(),
-  },
+server.setNotFoundHandler(
+  { preHandler: server.rateLimit() },
   async (request, reply) => {
-    request.log.info(`Route ${request.method}:${request.url} not found`);
-    return reply.status(404).send({
+    const message = `Route "${request.method} ${request.url}" not found`;
+    request.log.info(message);
+
+    return reply.status(HTTP_STATUS_NOT_FOUND).send({
       error: "Not Found",
-      message: `Route ${request.method}:${request.url} not found`,
-      statusCode: 404,
+      message,
+      statusCode: HTTP_STATUS_NOT_FOUND,
     });
   },
 );
 
-fastify.route({
-  async handler(request, reply) {
+server.route({
+  handler: async (request, reply) => {
     try {
       const url = new URL(request.url, `http://${request.headers.host}`);
-      const headers = fromNodeHeaders(request.headers);
-      const req = new Request(url.toString(), {
-        headers,
+
+      const webRequest = new Request(url.toString(), {
+        headers: fromNodeHeaders(request.headers),
         method: request.method,
         ...(request.body ? { body: JSON.stringify(request.body) } : {}),
       });
-      const response = await auth.handler(req);
+
+      const response = await auth.handler(webRequest);
       reply.status(response.status);
+
       for (const [key, value] of response.headers) {
         reply.header(key, value);
       }
-      return reply.send(response.body ? await response.text() : null);
+
+      return await reply.send(response.body ? await response.text() : null);
     } catch (error) {
-      fastify.log.error(error, "Authentication Error:");
-      return reply.status(500).send({
-        code: "AUTH_FAILURE",
-        error: "Internal authentication error",
+      request.log.error(error, AUTHENTICATION_FAILURE_MESSAGE);
+
+      return reply.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
+        code: "AUTHENTICATION_FAILURE",
+        error: "Internal Server Error",
+        message: AUTHENTICATION_FAILURE_MESSAGE,
+        statusCode: HTTP_STATUS_INTERNAL_SERVER_ERROR,
       });
     }
   },
@@ -63,20 +74,26 @@ fastify.route({
   url: "/api/auth/*",
 });
 
-fastify.register(fastifyTRPCPlugin, {
+await server.register(fastifyTRPCPlugin, {
   prefix: "/trpc",
   trpcOptions: {
     createContext,
-    onError({ error, path, req }) {
-      req.log.error(error, `Error in tRPC handler on path '${path}'`);
+    onError: ({ error, path, req: request }) => {
+      request.log.error(
+        error,
+        `Failed to handle tRPC request on path "${path}"`,
+      );
     },
     router: appRouter,
   } satisfies FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],
 });
 
-fastify.listen({ port: env.NODE_PORT }, (err) => {
-  if (err) {
-    fastify.log.error(err);
-    process.exit(1);
-  }
-});
+try {
+  await server.listen({
+    host: environment.SERVER_HOST,
+    port: environment.SERVER_PORT,
+  });
+} catch (error) {
+  server.log.error(error, "Failed to start server");
+  process.exit(1);
+}

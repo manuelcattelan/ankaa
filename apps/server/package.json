@@ -1,8 +1,8 @@
 {
   "dependencies": {
     "@ankaa/api": "workspace:*",
-    "@ankaa/auth": "workspace:*",
-    "@ankaa/env": "workspace:*",
+    "@ankaa/authentication": "workspace:*",
+    "@ankaa/environment": "workspace:*",
     "@fastify/helmet": "^13.1.1",
     "@fastify/rate-limit": "^11.2.0",
     "@trpc/server": "catalog:",
@@ -27,7 +27,9 @@
     "check-types": "tsc --noEmit",
     "dev": "tsx watch --env-file-if-exists=.env ./index.ts",
     "format": "prettier --check .",
-    "lint": "eslint ."
+    "format:fix": "prettier --write .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "type": "module"
 }

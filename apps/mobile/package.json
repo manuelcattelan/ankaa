@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@ankaa/env": "workspace:*",
+    "@ankaa/environment": "workspace:*",
     "@better-auth/expo": "catalog:",
     "@expo/ui": "~57.0.19",
     "@react-native-google-signin/google-signin": "^16.1.5",
@@ -57,6 +57,8 @@
     "check-types": "tsc --noEmit",
     "dev": "expo start",
     "format": "prettier --check .",
-    "lint": "eslint ."
+    "format:fix": "prettier --write .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   }
 }
