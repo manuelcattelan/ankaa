@@ -54,7 +54,8 @@ export const messages = {
     enterCode: (codeLength: number) => `Enter the ${codeLength}-digit code.`,
     needsNewCode: "Too many attempts. Request a new code to continue.",
     resend: "Resend code",
-    resendAvailableIn: (seconds: number) => `Resend available in ${seconds} s`,
+    resendAvailableIn: (seconds: number) =>
+      `Resend available in ${formatCount({ count: seconds, ...SECONDS_UNIT })}`,
     resendHint: (seconds: number) =>
       `Available ${formatCount({ count: seconds, ...SECONDS_UNIT })} after a code is sent`,
     resendReady: "You can request a new code now.",
