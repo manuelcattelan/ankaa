@@ -9,13 +9,13 @@ export function createEnvironment<TShape extends z.ZodRawShape>({
   runtimeEnvironment,
   shape,
 }: CreateEnvironmentOptions<TShape>) {
-  const result = z.object(shape).safeParse(runtimeEnvironment);
+  const parsedEnvironment = z.object(shape).safeParse(runtimeEnvironment);
 
-  if (!result.success) {
+  if (!parsedEnvironment.success) {
     throw new Error(
-      `Environment variables must be valid:\n${z.prettifyError(result.error)}`,
+      `Environment variables must be valid:\n${z.prettifyError(parsedEnvironment.error)}`,
     );
   }
 
-  return result.data;
+  return parsedEnvironment.data;
 }
