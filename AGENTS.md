@@ -76,7 +76,7 @@ A reader should be able to predict a name before reading it.
   Do:
 
   ```ts
-  // verify-otp-code.tsx
+  // validate-otp-code.tsx
   const OTP_CODE_LENGTH = 6;
   const [otpCode, setOtpCode] = useState("");
   const [otpCodeValidationError, setOtpCodeValidationError] =
@@ -86,7 +86,7 @@ A reader should be able to predict a name before reading it.
   Don't:
 
   ```ts
-  // verify-otp.tsx
+  // validate-otp.tsx
   const CODE_LENGTH = 6;
   const [otp, setOtp] = useState("");
   const [verificationCodeError, setVerificationCodeError] = useState<string>();
@@ -196,7 +196,7 @@ const parsedEmail = z.email().safeParse(email.trim());
 ```ts
 setOtpCodeValidationError(undefined);
 resendOtpCode.reset();
-verifyOtpCode.reset();
+validateOtpCode.reset();
 
 resendOtpCode.mutate({ email });
 ```
@@ -212,7 +212,7 @@ const parsedEmail = z.email().safeParse(email.trim());
 ```ts
 setOtpCodeValidationError(undefined);
 resendOtpCode.reset();
-verifyOtpCode.reset();
+validateOtpCode.reset();
 resendOtpCode.mutate({ email });
 ```
 

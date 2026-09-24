@@ -33,7 +33,7 @@ export function ErrorBoundary() {
   return (
     <ThemeProvider value={getNavigationTheme(colorScheme)}>
       <SafeAreaView>
-        <Text selectable>{messages.root.errorBoundary}</Text>
+        <Text selectable>{messages.error.generic}</Text>
       </SafeAreaView>
     </ThemeProvider>
   );

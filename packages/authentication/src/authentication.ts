@@ -25,7 +25,7 @@ export const auth = betterAuth({
     expo(),
     emailOTP({
       sendVerificationOTP: ({ email, otp }) =>
-        sendEmail({ subject: "Your sign-in code", text: otp, to: email }),
+        sendEmail({ subject: "Your sign-in OTP code", text: otp, to: email }),
     }),
   ],
   secret: environment.BETTER_AUTH_SECRET,
