@@ -32,8 +32,6 @@ type CreateAuthenticationErrorOptions = AuthenticationErrorDetails & {
 
 const AUTHENTICATION_ERROR_NAME = "AuthenticationError";
 
-const HTTP_STATUS_SERVER_ERROR_MINIMUM = 500;
-
 const authenticationErrorMessages: Record<string, string | undefined> = {
   EMAIL_NOT_VERIFIED: messages.error.accountNotConnected,
   INVALID_EMAIL: messages.error.invalidEmail,
@@ -87,15 +85,7 @@ function getAuthenticationFailureMessage(error: AuthenticationError) {
     ? authenticationErrorMessages[error.code]
     : undefined;
 
-  if (errorCodeMessage) {
-    return errorCodeMessage;
-  }
-
-  if (error.status && error.status >= HTTP_STATUS_SERVER_ERROR_MINIMUM) {
-    return messages.error.server;
-  }
-
-  return messages.error.generic;
+  return errorCodeMessage ?? messages.error.generic;
 }
 
 function getSignInErrorMessage(errorCode: string) {

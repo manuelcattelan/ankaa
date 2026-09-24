@@ -52,7 +52,7 @@ export default function WithEmailScreen() {
         onSuccess: () => {
           router.push({
             params: { email: parsedEmail.data },
-            pathname: "/sign-in/with-email/verify-otp-code",
+            pathname: "/sign-in/with-email/validate-otp-code",
           });
         },
       },
@@ -77,7 +77,7 @@ export default function WithEmailScreen() {
       <Button
         isBusy={sendOtpCode.isPending}
         onPress={handleSendOtpCode}
-        title={messages.withEmail.continue}
+        title={messages.withEmail.title}
       />
     </ScrollView>
   );

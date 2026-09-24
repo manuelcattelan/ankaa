@@ -5,69 +5,60 @@ type FieldLabelValues = {
   label: string;
 };
 
-type OtpCodeSentValues = {
-  email: string;
-  otpCodeLength: number;
-};
-
 const SECONDS_UNIT = { plural: "seconds", singular: "second" };
 
 export const messages = {
   app: {
-    signedInAs: (email?: string) => `Signed in as ${email ?? ""}`,
     signOut: "Sign out",
     title: "Ankaa",
   },
   error: {
     accountNotConnected:
-      "We couldn't connect that account. Sign in with email instead.",
+      "We couldn't link the account for the selected provider: try another sign-in method.",
     emailNotShared:
-      "That account did not share an email address. Try another sign-in method.",
+      "We couldn't access the account's email address for the selected provider: try another sign-in method.",
     fieldLabel: ({ errorMessage, label }: FieldLabelValues) =>
       `${label}, error: ${errorMessage}`,
-    generic: "Something went wrong. Try again.",
-    invalidEmail: "Enter a valid email address, for example name@example.com.",
-    invalidOtpCode: "That code is not correct. Check the code and try again.",
-    network: "Could not reach the server. Check your connection and try again.",
-    otpCodeExpired: "That code has expired. Request a new code.",
+    generic: "Something went wrong: try again.",
+    invalidEmail:
+      "The provided email address is invalid: provide a valid email address.",
+    invalidOtpCode:
+      "The provided OTP code is invalid: check the OTP code you received via email and try again.",
+    network:
+      "We couldn't reach our server: check your connection and try again.",
+    otpCodeExpired:
+      "The provided OTP code has expired: request a new OTP code and try again.",
     playServicesMissing:
-      "Google Play services are required to sign in with Google.",
+      "Google Play services aren't installed on this device: try another sign-in method.",
     rateLimited: (seconds: number) =>
-      `Too many requests. Try again in ${formatCount({ count: seconds, ...SECONDS_UNIT })}.`,
-    rateLimitedShortly: "Too many requests. Try again in a moment.",
-    server: "We're having trouble on our end. Try again in a moment.",
+      `Too many requests: try again in ${formatCount({ count: seconds, ...SECONDS_UNIT })}.`,
+    rateLimitedShortly: "Too many requests: try again in a moment.",
     tooManyAttempts:
-      "Too many incorrect attempts. Request a new code to continue.",
+      "Too many incorrect attempts: request a new OTP code and try again.",
   },
   notFound: {
     body: "This screen doesn't exist.",
-    goHome: "Go to home",
-    title: "Not found",
-  },
-  root: {
-    errorBoundary: "Oops! Something went wrong.",
+    goHome: "Back to home",
+    title: "Screen not found",
   },
   signIn: {
     title: "Sign in",
   },
-  verifyOtpCode: {
+  validateOtpCode: {
     enterOtpCode: (otpCodeLength: number) =>
-      `Enter the ${otpCodeLength}-digit code.`,
-    needsNewOtpCode: "Too many attempts. Request a new code to continue.",
-    otpCodeLabel: "Verification code",
-    otpCodeSent: ({ email, otpCodeLength }: OtpCodeSentValues) =>
-      `We sent a ${otpCodeLength}-digit code to ${email}.`,
-    resend: "Resend code",
+      `The provided OTP code is invalid: provide a valid ${otpCodeLength}-digit OTP code.`,
+    otpCodeLabel: "OTP code",
+    resend: "Request a new OTP code",
     resendAvailableIn: (seconds: number) =>
-      `Resend available in ${formatCount({ count: seconds, ...SECONDS_UNIT })}`,
-    resendHint: "Sends a new code to your email address.",
-    resendReady: "You can request a new code now.",
+      `You can request a new OTP code in ${formatCount({ count: seconds, ...SECONDS_UNIT })}.`,
+    resendHint: "Request a new OTP code.",
+    resendReady: "You can request a new OTP code.",
     title: "Enter OTP code",
-    verify: "Verify",
+    validate: "Validate OTP code",
+    validateReady: "You can validate the OTP code.",
   },
   withEmail: {
-    continue: "Continue",
-    emailLabel: "Email",
-    title: "Continue with email",
+    emailLabel: "Email address",
+    title: "Continue with email address",
   },
 };

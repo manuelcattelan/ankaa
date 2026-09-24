@@ -47,13 +47,13 @@ const onResend = () => {
 - Name a screen after its file in `PascalCase`, followed by `Screen`. When the file is `index.tsx`, use the name of its directory instead, without the parentheses of a group. A screen directly in `src/app/` is `RootScreen`.
 - Name a layout after its directory, followed by `Layout`. The layout directly in `src/app/` is `RootLayout`.
 
-  | File                                     | Name                  |
-  | ---------------------------------------- | --------------------- |
-  | `src/app/(app)/index.tsx`                | `AppScreen`           |
-  | `src/app/(auth)/sign-in/index.tsx`       | `SignInScreen`        |
-  | `src/app/(auth)/.../verify-otp-code.tsx` | `VerifyOtpCodeScreen` |
-  | `src/app/+not-found.tsx`                 | `NotFoundScreen`      |
-  | `src/app/(auth)/_layout.tsx`             | `AuthLayout`          |
+  | File                                       | Name                    |
+  | ------------------------------------------ | ----------------------- |
+  | `src/app/(app)/index.tsx`                  | `AppScreen`             |
+  | `src/app/(auth)/sign-in/index.tsx`         | `SignInScreen`          |
+  | `src/app/(auth)/.../validate-otp-code.tsx` | `ValidateOtpCodeScreen` |
+  | `src/app/+not-found.tsx`                   | `NotFoundScreen`        |
+  | `src/app/(auth)/_layout.tsx`               | `AuthLayout`            |
 
 ## Components
 
@@ -68,7 +68,7 @@ Every component reads in the same order, so you always know where to look.
   6. early returns
   7. handlers
   8. the returned JSX
-- When an early return narrows a value that the handlers need, split the component in two. The outer component does the early return and renders the inner component, which receives the narrowed value as a prop. Name the inner component after the outer one, with `Content` instead of `Screen`: `VerifyOtpCodeScreen` renders `VerifyOtpCodeContent`.
+- When an early return narrows a value that the handlers need, split the component in two. The outer component does the early return and renders the inner component, which receives the narrowed value as a prop. Name the inner component after the outer one, with `Content` instead of `Screen`: `ValidateOtpCodeScreen` renders `ValidateOtpCodeContent`.
 - Never read theme colors in a screen.
 - Build every component the way the React Native and Expo documentation for the installed version recommends, and the way established mobile component libraries build theirs. When they disagree, follow the documentation.
 - Make every component work with VoiceOver and TalkBack. Use the `role` and `aria-*` props, and use an `accessibility*` prop only when no `aria-*` prop exists.
