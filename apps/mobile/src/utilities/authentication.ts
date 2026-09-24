@@ -17,20 +17,27 @@ type AuthenticationResponse<TData> =
     }
   | { data: TData; error: null };
 
+type RequestOtpCodeOptions = {
+  email: string;
+};
+
 type SendAuthenticationRequest<TData> = (
   fetchOptions: AuthenticationFetchOptions,
 ) => Promise<AuthenticationResponse<TData>>;
-
-type SendVerificationCodeOptions = {
-  email: string;
-};
 
 type UnwrapAuthenticationResponseOptions<TData> = {
   response: AuthenticationResponse<TData>;
   retryAfterSeconds?: number;
 };
 
-const RETRY_AFTER_HEADER = "X-Retry-After";
+export function requestOtpCode({ email }: RequestOtpCodeOptions) {
+  return sendAuthenticationRequest((fetchOptions) =>
+    authenticationClient.emailOtp.sendVerificationOtp(
+      { email, type: "sign-in" },
+      fetchOptions,
+    ),
+  );
+}
 
 export async function sendAuthenticationRequest<TData>(
   sendRequest: SendAuthenticationRequest<TData>,
@@ -39,24 +46,15 @@ export async function sendAuthenticationRequest<TData>(
 
   const response = await sendRequest({
     onError: (context) => {
-      const header = context.response.headers.get(RETRY_AFTER_HEADER);
+      const retryAfterHeader = context.response.headers.get("X-Retry-After");
 
-      if (header) {
-        retryAfterSeconds = Number(header);
+      if (retryAfterHeader) {
+        retryAfterSeconds = Number(retryAfterHeader);
       }
     },
   });
 
   return unwrapAuthenticationResponse({ response, retryAfterSeconds });
-}
-
-export function sendVerificationCode({ email }: SendVerificationCodeOptions) {
-  return sendAuthenticationRequest((fetchOptions) =>
-    authenticationClient.emailOtp.sendVerificationOtp(
-      { email, type: "sign-in" },
-      fetchOptions,
-    ),
-  );
 }
 
 function unwrapAuthenticationResponse<TData>({

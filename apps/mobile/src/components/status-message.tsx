@@ -8,7 +8,7 @@ type StatusMessageProperties = {
 
 export function StatusMessage({ message }: StatusMessageProperties) {
   return (
-    <ReactNative.View accessible aria-live="polite">
+    <ReactNative.View accessible={!!message} aria-live="polite">
       <Text selectable>{message}</Text>
     </ReactNative.View>
   );

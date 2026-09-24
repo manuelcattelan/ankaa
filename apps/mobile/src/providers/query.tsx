@@ -24,16 +24,16 @@ const QUERY_STALE_TIME_MILLISECONDS = 60_000;
 onlineManager.setEventListener((setOnline) => {
   let isInitialized = false;
 
-  const subscription = ExpoNetwork.addNetworkStateListener((state) => {
+  const subscription = ExpoNetwork.addNetworkStateListener((networkState) => {
     isInitialized = true;
-    setOnline(!!state.isConnected);
+    setOnline(!!networkState.isConnected);
   });
 
   async function setInitialOnlineState() {
-    const state = await ExpoNetwork.getNetworkStateAsync();
+    const networkState = await ExpoNetwork.getNetworkStateAsync();
 
     if (!isInitialized) {
-      setOnline(!!state.isConnected);
+      setOnline(!!networkState.isConnected);
     }
   }
 
@@ -53,9 +53,12 @@ export function QueryProvider({ children }: QueryProviderProperties) {
       return;
     }
 
-    const subscription = AppState.addEventListener("change", (status) => {
-      focusManager.setFocused(status === "active");
-    });
+    const subscription = AppState.addEventListener(
+      "change",
+      (appStateStatus) => {
+        focusManager.setFocused(appStateStatus === "active");
+      },
+    );
 
     return () => {
       subscription.remove();

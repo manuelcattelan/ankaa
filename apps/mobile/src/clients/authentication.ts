@@ -20,10 +20,10 @@ export const authenticationClient = createAuthClient({
         getItem: (key) => ExpoSecureStore.getItem(key, SECURE_STORE_OPTIONS),
         getItemAsync: (key) =>
           ExpoSecureStore.getItemAsync(key, SECURE_STORE_OPTIONS),
-        setItem: (key, value) =>
-          ExpoSecureStore.setItem(key, value, SECURE_STORE_OPTIONS),
-        setItemAsync: (key, value) =>
-          ExpoSecureStore.setItemAsync(key, value, SECURE_STORE_OPTIONS),
+        setItem: (key, item) =>
+          ExpoSecureStore.setItem(key, item, SECURE_STORE_OPTIONS),
+        setItemAsync: (key, item) =>
+          ExpoSecureStore.setItemAsync(key, item, SECURE_STORE_OPTIONS),
       },
       storagePrefix: APP_SLUG,
     }),
