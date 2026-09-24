@@ -53,20 +53,43 @@ A reader should be able to predict a name before reading it.
 
 - Write every name, message and document in American English.
 - Use full words: `options`, `error`, `database`, `environment`, `authentication`, `configuration`, `ButtonProperties`, `inputReference`, `COOLDOWN_MILLISECONDS`. The only allowed acronyms are `id`, `url`, `api`, `otp`, `http`, `json`, `ui`, `ios` and `trpc`. Ask before you use a new one.
-- When two or more names in the same scope have the same role, or serve the same concern, start them with the part they share and end them with the part that differs. When a new name joins the group, rename the existing ones too.
+- Start every name with the concept it belongs to, and end it with what it is: `cooldownDeadline`, `cooldownRemainingSeconds`, `COOLDOWN_SECONDS`, `COOLDOWN_INTERVAL_MILLISECONDS`. A name must read right without the code around it, so add the concept whenever the bare noun could mean more than one thing: `emailValidationError`, not `validationError`. A boolean keeps its prefix first: `isCooldownActive`. When a new name joins a concept, rename the existing ones too.
 
   Do:
 
   ```ts
-  const cooldownDeadline = getCooldownDeadline();
-  const cooldownRemainingSeconds = getCooldownRemainingSeconds();
+  const COOLDOWN_SECONDS = 60;
+  const COOLDOWN_INTERVAL_MILLISECONDS = 1_000;
+  const [emailValidationError, setEmailValidationError] = useState<string>();
   ```
 
   Don't:
 
   ```ts
-  const deadline = getCooldownDeadline();
-  const secondsLeft = getCooldownRemainingSeconds();
+  const COOLDOWN_SECONDS = 60;
+  const COUNTDOWN_INTERVAL_MILLISECONDS = 1_000;
+  const [validationError, setValidationError] = useState<string>();
+  ```
+
+- Give each concept one name, and use the whole name in every identifier, file and route that refers to it.
+
+  Do:
+
+  ```ts
+  // verify-otp-code.tsx
+  const OTP_CODE_LENGTH = 6;
+  const [otpCode, setOtpCode] = useState("");
+  const [otpCodeValidationError, setOtpCodeValidationError] =
+    useState<string>();
+  ```
+
+  Don't:
+
+  ```ts
+  // verify-otp.tsx
+  const CODE_LENGTH = 6;
+  const [otp, setOtp] = useState("");
+  const [verificationCodeError, setVerificationCodeError] = useState<string>();
   ```
 
 - Name every function with a verb followed by its object: `getAuthenticationErrorMessage`, `unwrapAuthenticationResponse`, `announceMessage`.
@@ -80,6 +103,7 @@ A reader should be able to predict a name before reading it.
   - an event parameter: `event`
   - a `catch` parameter: `error`, or `<context>Error` when `error` is already taken
   - a type parameter: `T` followed by a full word, such as `TData`
+  - the type of an object parameter: `<FunctionName>Options`
 - Never add an `Async` suffix or a `_` prefix to a name.
 - Name a default import after its module path without the scope, in `camelCase`. Name a namespace import the same way, in `PascalCase`.
 
@@ -101,6 +125,7 @@ A reader should be able to predict a name before reading it.
 
 - When two values would share a name, the value that comes from a framework keeps the usual name. Give the other one a first word that says where it comes from, such as `webRequest` next to the `request` of Fastify.
 - Name a file after the concept it holds, and let its directory give the role: `providers/query.tsx` exports `QueryProvider`.
+- Name a Claude Code hook script `on-<event>.sh`, with the hook event in kebab-case, and give each event its own script.
 - Name your own environment variables `<SERVICE>_<THING>`, such as `RESEND_EMAIL_FROM`.
 
 ## Destructuring
@@ -132,21 +157,64 @@ const email = session?.user.email;
 A value has one way to be written, so its meaning is always clear.
 
 - Give `1` a named constant when it is a limit, a count, a threshold or a version. Do not name it when it is arithmetic, as in `index + 1`.
+- Write a plain string where you use it. Move it to a constant only when the file uses it twice, or when another file needs it. Numbers and regular expressions always get a named constant, because they don't say what they mean.
 - Use `undefined` for a missing value. Use `null` only to render nothing in JSX, or where a library requires it.
 
   Do:
 
   ```ts
-  const [validationError, setValidationError] = useState<string>();
+  const [emailValidationError, setEmailValidationError] = useState<string>();
   ```
 
   Don't:
 
   ```ts
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [emailValidationError, setEmailValidationError] = useState<
+    string | null
+  >(null);
   ```
 
 - Use `async` and `await`. Never use `.then()` or `.catch()` on a promise.
+
+## Blank lines
+
+A blank line ends a step, so the reader sees the steps of the work at a glance.
+
+- Put the statements that do one step together, and separate two steps with one blank line.
+- Declaring related values is always its own step, at every level of the file.
+- Starting work that reaches outside the component, such as a request or a navigation, is always its own step, apart from the state changes that prepare it.
+
+Do:
+
+```ts
+setEmailValidationError(undefined);
+sendOtpCode.reset();
+
+const parsedEmail = z.email().safeParse(email.trim());
+```
+
+```ts
+setOtpCodeValidationError(undefined);
+resendOtpCode.reset();
+verifyOtpCode.reset();
+
+resendOtpCode.mutate({ email });
+```
+
+Don't:
+
+```ts
+setEmailValidationError(undefined);
+sendOtpCode.reset();
+const parsedEmail = z.email().safeParse(email.trim());
+```
+
+```ts
+setOtpCodeValidationError(undefined);
+resendOtpCode.reset();
+verifyOtpCode.reset();
+resendOtpCode.mutate({ email });
+```
 
 ## Structure
 
