@@ -14,8 +14,8 @@ export default function AuthenticationLayout() {
         options={{ title: messages.withEmail.title }}
       />
       <Stack.Screen
-        name="sign-in/with-email/verify-otp"
-        options={{ title: messages.verifyOtp.title }}
+        name="sign-in/with-email/verify-otp-code"
+        options={{ title: messages.verifyOtpCode.title }}
       />
     </Stack>
   );

@@ -26,11 +26,11 @@ export function Button({
 
   return (
     <ReactNative.Pressable
-      {...rest}
-      accessibilityLabel={title}
-      aria-busy={isBusy}
-      disabled={disabled}
       role="button"
+      {...rest}
+      aria-busy={isBusy}
+      aria-label={title}
+      disabled={disabled}
       style={[styles.button, disabled ? styles.disabled : undefined]}
     >
       {isBusy ? (

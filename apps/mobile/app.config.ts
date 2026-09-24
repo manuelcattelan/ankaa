@@ -2,7 +2,9 @@ import type { ExpoConfig } from "expo/config";
 
 const APP_IDENTIFIER = "app.ankaa";
 const APP_SLUG = "ankaa";
+
 const GOOGLE_IOS_CLIENT_ID_PATTERN = /^(.+)\.apps\.googleusercontent\.com$/;
+
 const SPLASH_IMAGE_WIDTH = 76;
 
 const googleIosClientIdMatch = GOOGLE_IOS_CLIENT_ID_PATTERN.exec(

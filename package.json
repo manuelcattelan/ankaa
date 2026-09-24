@@ -7,6 +7,7 @@
     "eslint": "^10.10.0",
     "jiti": "^2.7.0",
     "prettier": "catalog:",
+    "shellcheck": "^4.1.0",
     "turbo": "^2.10.12",
     "typescript": "catalog:"
   },
@@ -30,7 +31,7 @@
     "lint": "turbo run lint lint:root",
     "lint:fix": "turbo run lint:fix lint:fix:root",
     "lint:fix:root": "eslint . --fix",
-    "lint:root": "eslint . && ! git grep --untracked -n -E '^[[:space:]]*#' -- ':(glob)**/.env*' ':(glob)**/.gitignore' ':(glob)**/.prettierignore'"
+    "lint:root": "eslint . && git ls-files -z --cached --others --exclude-standard -- '*.sh' | xargs -0 -r shellcheck && ! git grep --untracked -n -E '^[[:space:]]*#' -- ':(glob)**/.env*' ':(glob)**/.gitignore' ':(glob)**/.prettierignore' && ! git ls-files --cached --others --exclude-standard -- .claude/hooks | grep -v -E '^\\.claude/hooks/on-[a-z]+(-[a-z]+)*\\.sh$'"
   },
   "type": "module"
 }

@@ -13,6 +13,7 @@ import { environment } from "./environment.ts";
 
 const HTTP_STATUS_NOT_FOUND = 404;
 const HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
+
 const ROUTER_MAXIMUM_PARAMETER_LENGTH = 5_000;
 
 const AUTHENTICATION_FAILURE_MESSAGE =
@@ -30,6 +31,7 @@ server.setNotFoundHandler(
   { preHandler: server.rateLimit() },
   async (request, reply) => {
     const message = `Route "${request.method} ${request.url}" not found`;
+
     request.log.info(message);
 
     return reply.status(HTTP_STATUS_NOT_FOUND).send({
@@ -44,7 +46,6 @@ server.route({
   handler: async (request, reply) => {
     try {
       const url = new URL(request.url, `http://${request.headers.host}`);
-
       const webRequest = new Request(url.toString(), {
         headers: fromNodeHeaders(request.headers),
         method: request.method,
@@ -52,10 +53,11 @@ server.route({
       });
 
       const response = await auth.handler(webRequest);
+
       reply.status(response.status);
 
-      for (const [key, value] of response.headers) {
-        reply.header(key, value);
+      for (const [headerName, headerValue] of response.headers) {
+        reply.header(headerName, headerValue);
       }
 
       return await reply.send(response.body ? await response.text() : null);

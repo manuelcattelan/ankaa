@@ -31,14 +31,15 @@ type CreateAuthenticationErrorOptions = AuthenticationErrorDetails & {
 };
 
 const AUTHENTICATION_ERROR_NAME = "AuthenticationError";
+
 const HTTP_STATUS_SERVER_ERROR_MINIMUM = 500;
 
 const authenticationErrorMessages: Record<string, string | undefined> = {
   EMAIL_NOT_VERIFIED: messages.error.accountNotConnected,
   INVALID_EMAIL: messages.error.invalidEmail,
-  INVALID_OTP: messages.error.invalidCode,
+  INVALID_OTP: messages.error.invalidOtpCode,
   OAUTH_LINK_ERROR: messages.error.accountNotConnected,
-  OTP_EXPIRED: messages.error.codeExpired,
+  OTP_EXPIRED: messages.error.otpCodeExpired,
   TOO_MANY_ATTEMPTS: messages.error.tooManyAttempts,
   USER_EMAIL_NOT_FOUND: messages.error.emailNotShared,
 } satisfies Partial<Record<AuthenticationErrorCode, string>>;
@@ -82,12 +83,12 @@ function getAuthenticationFailureMessage(error: AuthenticationError) {
       : messages.error.rateLimitedShortly;
   }
 
-  const codeMessage = error.code
+  const errorCodeMessage = error.code
     ? authenticationErrorMessages[error.code]
     : undefined;
 
-  if (codeMessage) {
-    return codeMessage;
+  if (errorCodeMessage) {
+    return errorCodeMessage;
   }
 
   if (error.status && error.status >= HTTP_STATUS_SERVER_ERROR_MINIMUM) {
@@ -97,14 +98,14 @@ function getAuthenticationFailureMessage(error: AuthenticationError) {
   return messages.error.generic;
 }
 
-function getSignInErrorMessage(code: string) {
-  if (code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+function getSignInErrorMessage(errorCode: string) {
+  if (errorCode === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
     return messages.error.playServicesMissing;
   }
 
   if (
-    code === statusCodes.IN_PROGRESS ||
-    code === REQUEST_CANCELED_ERROR_CODE
+    errorCode === statusCodes.IN_PROGRESS ||
+    errorCode === REQUEST_CANCELED_ERROR_CODE
   ) {
     return "";
   }

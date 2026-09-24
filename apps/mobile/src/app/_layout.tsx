@@ -11,6 +11,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { useColorScheme } from "react-native";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { authenticationClient } from "@/clients/authentication";
@@ -42,13 +43,15 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <QueryProvider>
-      <ThemeProvider value={getNavigationTheme(colorScheme)}>
-        <SplashScreenController />
-        <RootNavigator />
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </QueryProvider>
+    <KeyboardProvider>
+      <QueryProvider>
+        <ThemeProvider value={getNavigationTheme(colorScheme)}>
+          <SplashScreenController />
+          <RootNavigator />
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </QueryProvider>
+    </KeyboardProvider>
   );
 }
 

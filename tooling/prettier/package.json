@@ -1,4 +1,7 @@
 {
+  "dependencies": {
+    "prettier-plugin-sh": "^0.19.0"
+  },
   "exports": "./index.ts",
   "name": "@ankaa/prettier",
   "peerDependencies": {

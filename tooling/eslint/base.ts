@@ -13,7 +13,7 @@ import typescriptEslint from "typescript-eslint";
 
 import { plugin } from "./plugin.ts";
 
-type GeneratedFilesOptions = {
+type CreateGeneratedFilesConfigurationOptions = {
   configuration: Linter.Config[];
   files: string[];
 };
@@ -71,11 +71,28 @@ export const RESTRICTED_SYNTAX = [
 
 const HOOK_STATEMENT_SELECTOR =
   ":matches(VariableDeclaration[declarations.0.init.callee.name=/^use[A-Z]/], VariableDeclaration[declarations.0.init.callee.property.name=/^use[A-Z]/], ExpressionStatement[expression.callee.name=/^use[A-Z]/], ExpressionStatement[expression.callee.property.name=/^use[A-Z]/])";
+const ACTION_STATEMENT_SELECTOR =
+  ":matches(ExpressionStatement[expression.callee.property.name=/^mutate(Async)?$/], ExpressionStatement[expression.argument.callee.property.name=/^mutate(Async)?$/], ExpressionStatement[expression.callee.object.name='router'], ExpressionStatement[expression.argument.callee.object.name='router'])";
+const DECLARATION_STATEMENTS = ["const", "let", "var"];
+
+const GENERIC_NAMES = [
+  "callback",
+  "current",
+  "header",
+  "interval",
+  "other",
+  "result",
+  "state",
+  "temp",
+  "value",
+];
 
 const BOOLEAN_PREFIXES = ["is", "has", "can", "should"];
 const ASYNC_SUFFIX = { match: false, regex: "Async$" };
+
 const NUMERIC_SEPARATOR_GROUP_LENGTH = 3;
 const NUMERIC_SEPARATOR_MINIMUM_DIGITS = 4;
+
 const GENERATED_FILES_KEPT_RULE_PREFIXES = ["@stylistic/", "perfectionist/"];
 
 export const PREVENT_ABBREVIATIONS_OPTIONS = {
@@ -100,20 +117,19 @@ export const rulesConfiguration = defineConfig([
     rules: {
       "@ankaa/no-comments": "error",
       "@ankaa/no-duplicate-string": "error",
+      "@ankaa/no-single-use-string": "error",
       "@stylistic/padding-line-between-statements": [
         "error",
         { blankLine: "never", next: "*", prev: "*" },
         { blankLine: "always", next: "*", prev: "import" },
-        {
-          blankLine: "any",
-          next: "*",
-          prev: { selector: HOOK_STATEMENT_SELECTOR },
-        },
-        {
-          blankLine: "any",
-          next: { selector: HOOK_STATEMENT_SELECTOR },
-          prev: "*",
-        },
+        { blankLine: "always", next: "*", prev: DECLARATION_STATEMENTS },
+        { blankLine: "always", next: DECLARATION_STATEMENTS, prev: "*" },
+        { blankLine: "always", next: "*", prev: "type" },
+        { blankLine: "always", next: "type", prev: "*" },
+        { blankLine: "any", next: "type", prev: "type" },
+        { blankLine: "always", next: "*", prev: "export" },
+        { blankLine: "always", next: "export", prev: "*" },
+        { blankLine: "any", next: "export", prev: "export" },
         {
           blankLine: "always",
           next: "*",
@@ -124,8 +140,33 @@ export const rulesConfiguration = defineConfig([
           next: { lineMode: "multiline", selector: "*" },
           prev: "*",
         },
+        {
+          blankLine: "any",
+          next: DECLARATION_STATEMENTS,
+          prev: DECLARATION_STATEMENTS,
+        },
+        {
+          blankLine: "any",
+          next: "*",
+          prev: { selector: HOOK_STATEMENT_SELECTOR },
+        },
+        {
+          blankLine: "any",
+          next: { selector: HOOK_STATEMENT_SELECTOR },
+          prev: "*",
+        },
         { blankLine: "any", next: "import", prev: "import" },
         { blankLine: "always", next: "return", prev: "*" },
+        {
+          blankLine: "always",
+          next: "*",
+          prev: { selector: ACTION_STATEMENT_SELECTOR },
+        },
+        {
+          blankLine: "always",
+          next: { selector: ACTION_STATEMENT_SELECTOR },
+          prev: "*",
+        },
       ],
       "@typescript-eslint/consistent-type-assertions": [
         "error",
@@ -229,6 +270,7 @@ export const rulesConfiguration = defineConfig([
       curly: ["error", "all"],
       eqeqeq: ["error", "always"],
       "func-style": ["error", "declaration"],
+      "id-denylist": ["error", ...GENERIC_NAMES],
       "import-x/consistent-type-specifier-style": ["error", "prefer-top-level"],
       "no-else-return": ["error", { allowElseIf: false }],
       "no-magic-numbers": "off",
@@ -300,11 +342,10 @@ export const baseConfiguration = defineConfig([
 export function createGeneratedFilesConfiguration({
   configuration,
   files,
-}: GeneratedFilesOptions) {
+}: CreateGeneratedFilesConfigurationOptions) {
   const ruleNames = configuration.flatMap((entry) =>
     Object.keys(entry.rules ?? {}),
   );
-
   const disabledRuleNames = ruleNames.filter(
     (ruleName) =>
       !GENERATED_FILES_KEPT_RULE_PREFIXES.some((prefix) =>
