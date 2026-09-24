@@ -26,13 +26,7 @@ const MOBILE_RESTRICTED_SYNTAX = [
   },
 ];
 
-const WRAPPED_PRIMITIVES = [
-  "KeyboardAvoidingView",
-  "Pressable",
-  "ScrollView",
-  "Text",
-  "TextInput",
-];
+const WRAPPED_PRIMITIVES = ["Pressable", "ScrollView", "Text", "TextInput"];
 
 const RELATIVE_IMPORT_PATTERN = {
   group: ["./*", "../*"],
@@ -79,14 +73,7 @@ export const mobileConfiguration = defineConfig([
         "error",
         { ignoreProps: true, noStrings: true },
       ],
-      "react/jsx-props-no-spreading": [
-        "error",
-        {
-          exceptions: WRAPPED_PRIMITIVES.map(
-            (primitive) => `ReactNative.${primitive}`,
-          ),
-        },
-      ],
+      "react/jsx-props-no-spreading": "error",
     },
   },
   {
@@ -96,6 +83,7 @@ export const mobileConfiguration = defineConfig([
         "error",
         { patterns: [RELATIVE_IMPORT_PATTERN] },
       ],
+      "react/jsx-props-no-spreading": "off",
     },
   },
 ]);

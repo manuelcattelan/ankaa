@@ -8,12 +8,14 @@ import ts from "typescript";
 
 import { createRule } from "../utilities/rule.ts";
 
-type StringNode = TSESTree.Literal | TSESTree.TemplateLiteral;
-
-type StringNodeOptions = {
+type HasFixedContextualTypeOptions = {
   node: StringNode;
   services: ParserServicesWithTypeInformation;
 };
+
+type IsCountedStringOptions = HasFixedContextualTypeOptions;
+
+type StringNode = TSESTree.Literal | TSESTree.TemplateLiteral;
 
 const REPEATED_STRING_THRESHOLD = 2;
 
@@ -46,7 +48,7 @@ export const noDuplicateString = createRule({
         }
       },
       "Program:exit": () => {
-        for (const [value, nodes] of occurrences) {
+        for (const [string, nodes] of occurrences) {
           if (nodes.length < REPEATED_STRING_THRESHOLD) {
             continue;
           }
@@ -54,7 +56,7 @@ export const noDuplicateString = createRule({
           for (const node of nodes) {
             if (!isConstantDefinition(node)) {
               context.report({
-                data: { count: nodes.length, value },
+                data: { count: nodes.length, string },
                 messageId: "duplicateString",
                 node,
               });
@@ -63,14 +65,17 @@ export const noDuplicateString = createRule({
         }
       },
       TemplateLiteral: (node) => {
-        const value = node.quasis.at(0)?.value.cooked;
+        const cookedString = node.quasis.at(0)?.value.cooked;
 
         if (
           node.expressions.length === 0 &&
-          value &&
+          cookedString &&
           isCountedString({ node, services })
         ) {
-          occurrences.set(value, [...(occurrences.get(value) ?? []), node]);
+          occurrences.set(cookedString, [
+            ...(occurrences.get(cookedString) ?? []),
+            node,
+          ]);
         }
       },
     };
@@ -83,7 +88,7 @@ export const noDuplicateString = createRule({
     },
     messages: {
       duplicateString:
-        'The string "{{value}}" appears {{count}} times in this file. Move it to a named constant.',
+        'The string "{{string}}" appears {{count}} times in this file. Move it to a named constant.',
     },
     schema: [],
     type: "suggestion",
@@ -105,7 +110,10 @@ function getComparedNode(node: StringNode) {
   return undefined;
 }
 
-function hasFixedContextualType({ node, services }: StringNodeOptions) {
+function hasFixedContextualType({
+  node,
+  services,
+}: HasFixedContextualTypeOptions) {
   const checker = services.program.getTypeChecker();
 
   const contextualType = checker.getContextualType(
@@ -131,7 +139,7 @@ function isConstantDefinition(node: StringNode) {
   );
 }
 
-function isCountedString({ node, services }: StringNodeOptions) {
+function isCountedString({ node, services }: IsCountedStringOptions) {
   const parent = node.parent;
 
   if (node.type === AST_NODE_TYPES.Literal && node.value === "") {
@@ -169,7 +177,6 @@ function isFixedStringType(type: ts.Type) {
   const hasFreeFormString = types.some(
     (member) => !!(member.flags & ts.TypeFlags.String),
   );
-
   const hasFixedString = types.some(
     (member) =>
       member.isStringLiteral() ||
@@ -180,15 +187,10 @@ function isFixedStringType(type: ts.Type) {
 }
 
 function isTypeofComparison(node: StringNode) {
-  const parent = node.parent;
-
-  if (parent.type !== AST_NODE_TYPES.BinaryExpression) {
-    return false;
-  }
-
-  const other = parent.left === node ? parent.right : parent.left;
+  const comparedNode = getComparedNode(node);
 
   return (
-    other.type === AST_NODE_TYPES.UnaryExpression && other.operator === "typeof"
+    comparedNode?.type === AST_NODE_TYPES.UnaryExpression &&
+    comparedNode.operator === "typeof"
   );
 }
