@@ -126,7 +126,7 @@ A reader should be able to predict a name before reading it.
 - When two values would share a name, the value that comes from a framework keeps the usual name. Give the other one a first word that says where it comes from, such as `webRequest` next to the `request` of Fastify.
 - Name a file after the concept it holds, and let its directory give the role: `providers/query.tsx` exports `QueryProvider`.
 - Name a Claude Code hook script `on-<event>.sh`, with the hook event in kebab-case, and give each event its own script.
-- Name your own environment variables `<SERVICE>_<THING>`, such as `RESEND_EMAIL_FROM`.
+- Name your own environment variables like any other name: start with the concept they belong to and end with what they are, such as `RESEND_EMAIL_FROM` or `CLOSE_GRACE_DELAY_MILLISECONDS`.
 
 ## Destructuring
 
