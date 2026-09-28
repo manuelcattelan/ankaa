@@ -2,7 +2,8 @@
 
 ## Schema
 
-Hand-written tables look exactly like the generated ones, so the whole schema reads the same.
+New tables follow the conventions listed below, so you never have to make assumptions or arbitrary choices when you add one.
 
-- Follow the tables in `src/schema/authentication.ts` for every new table: a singular table name, `snake_case` column names with `camelCase` keys, and index names such as `session_userId_idx`.
-- Copy only the table, column and index names from generated files. Every other name follows the rules in the root `AGENTS.md`.
+- Tables are defined in `src/schema/` by following the official PostgreSQL documentation and by avoiding common pitfalls documented in this PostgreSQL wiki page: https://wiki.postgresql.org/wiki/Don't_Do_This. The Drizzle ORM documentation is the reference for syntax only.
+- Tables are defined the same way as the other hand-written tables, so the schema reads the same throughout. For example, every table has a singular name, `snake_case` column and index names, and `camelCase` column keys.
+- Authentication tables in `src/schema/authentication.ts` were generated automatically through the Better Auth CLI and don't follow these conventions, so never take them as a reference.
