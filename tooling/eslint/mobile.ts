@@ -86,4 +86,8 @@ export const mobileConfiguration = defineConfig([
       "react/jsx-props-no-spreading": "off",
     },
   },
+  {
+    files: ["src/utilities/messages.ts"],
+    rules: { "@ankaa/no-duplicate-string": "off" },
+  },
 ]);

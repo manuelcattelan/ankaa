@@ -13,7 +13,7 @@ export default function NotFoundScreen() {
       />
       <Text>{messages.notFound.body}</Text>
       <Link asChild href="/">
-        <Button title={messages.notFound.goHome} />
+        <Button title={messages.notFound.goHomeButton} />
       </Link>
     </View>
   );

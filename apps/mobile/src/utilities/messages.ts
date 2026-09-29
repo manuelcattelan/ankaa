@@ -1,6 +1,6 @@
 import { formatCount } from "@/utilities/format";
 
-type FieldLabelValues = {
+type TextFieldErrorLabelOptions = {
   errorMessage: string;
   label: string;
 };
@@ -9,56 +9,61 @@ const SECONDS_UNIT = { plural: "seconds", singular: "second" };
 
 export const messages = {
   app: {
-    signOut: "Sign out",
+    signOutButton: "Sign out",
     title: "Ankaa",
   },
   error: {
     accountNotConnected:
-      "We couldn't link the account for the selected provider: try another sign-in method.",
+      "This account can't be linked with the selected provider: try another sign-in method.",
+    emailInvalid:
+      "This email address isn't valid: enter an address like name@example.com.",
     emailNotShared:
-      "We couldn't access the account's email address for the selected provider: try another sign-in method.",
-    fieldLabel: ({ errorMessage, label }: FieldLabelValues) =>
-      `${label}, error: ${errorMessage}`,
-    generic: "Something went wrong: try again.",
-    invalidEmail:
-      "The provided email address is invalid: provide a valid email address.",
-    invalidOtpCode:
-      "The provided OTP code is invalid: check the OTP code you received via email and try again.",
-    network:
-      "We couldn't reach our server: check your connection and try again.",
+      "The selected provider didn't share your email address: try another sign-in method.",
+    otpCodeAttemptsExceeded:
+      "Too many incorrect attempts: resend the verification code and try again.",
     otpCodeExpired:
-      "The provided OTP code has expired: request a new OTP code and try again.",
+      "This verification code has expired: resend the verification code and try again.",
+    otpCodeInvalid:
+      "This verification code is incorrect: check the verification code in your email and try again.",
     playServicesMissing:
       "Google Play services aren't installed on this device: try another sign-in method.",
-    rateLimited: (seconds: number) =>
+    requestsRateLimited: (seconds: number) =>
       `Too many requests: try again in ${formatCount({ count: seconds, ...SECONDS_UNIT })}.`,
-    rateLimitedShortly: "Too many requests: try again in a moment.",
-    tooManyAttempts:
-      "Too many incorrect attempts: request a new OTP code and try again.",
+    requestsRateLimitedWithoutDelay:
+      "Too many requests: try again in a moment.",
+    serverUnreachable:
+      "The server can't be reached: check your connection and try again.",
+    unknown: "Something went wrong: try again.",
   },
   notFound: {
     body: "This screen doesn't exist.",
-    goHome: "Back to home",
+    goHomeButton: "Go to home screen",
     title: "Screen not found",
   },
   signIn: {
+    continueWithEmailButton: "Continue with email address",
     title: "Sign in",
   },
+  textField: {
+    errorLabel: ({ errorMessage, label }: TextFieldErrorLabelOptions) =>
+      `${label}, error: ${errorMessage}`,
+  },
   validateOtpCode: {
-    enterOtpCode: (otpCodeLength: number) =>
-      `The provided OTP code is invalid: provide a valid ${otpCodeLength}-digit OTP code.`,
-    otpCodeLabel: "OTP code",
-    resend: "Request a new OTP code",
-    resendAvailableIn: (seconds: number) =>
-      `You can request a new OTP code in ${formatCount({ count: seconds, ...SECONDS_UNIT })}.`,
-    resendHint: "Request a new OTP code.",
-    resendReady: "You can request a new OTP code.",
-    title: "Enter OTP code",
-    validate: "Validate OTP code",
-    validateReady: "You can validate the OTP code.",
+    otpCodeLabel: "Verification code",
+    otpCodeLengthError: (otpCodeLength: number) =>
+      `This verification code is incomplete: enter all ${formatCount({ count: otpCodeLength, plural: "digits", singular: "digit" })}.`,
+    resendOtpCodeButton: "Resend verification code",
+    resendOtpCodeCooldownStatus: (seconds: number) =>
+      `You can resend the verification code in ${formatCount({ count: seconds, ...SECONDS_UNIT })}.`,
+    resendOtpCodeHint: "Sends a new verification code to your email address.",
+    resendOtpCodeReadyAnnouncement: "You can resend the verification code.",
+    title: "Enter verification code",
+    validateOtpCodeButton: "Sign in",
+    validateOtpCodeReadyAnnouncement: "You can try to sign in again.",
   },
   withEmail: {
     emailLabel: "Email address",
+    sendOtpCodeButton: "Continue with email address",
     title: "Continue with email address",
   },
 };

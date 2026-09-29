@@ -74,7 +74,7 @@ function getOtpCodeErrorMessage({
     error.status === HTTP_STATUS_TOO_MANY_REQUESTS
   ) {
     return cooldownRemainingSeconds > 0
-      ? messages.error.rateLimited(cooldownRemainingSeconds)
+      ? messages.error.requestsRateLimited(cooldownRemainingSeconds)
       : undefined;
   }
 
@@ -140,11 +140,14 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
     startResendCooldown,
     stopResendCooldown,
   ] = useCooldown({
-    cooldownEndMessage: messages.validateOtpCode.resendReady,
+    cooldownEndMessage: messages.validateOtpCode.resendOtpCodeReadyAnnouncement,
     getCooldownInitialDeadline: getCooldownDeadline,
   });
   const [validateCooldownRemainingSeconds, startValidateCooldown] = useCooldown(
-    { cooldownEndMessage: messages.validateOtpCode.validateReady },
+    {
+      cooldownEndMessage:
+        messages.validateOtpCode.validateOtpCodeReadyAnnouncement,
+    },
   );
 
   const [otpCode, setOtpCode] = useState("");
@@ -242,7 +245,7 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
 
     if (otpCode.length !== OTP_CODE_LENGTH) {
       const otpCodeLengthError =
-        messages.validateOtpCode.enterOtpCode(OTP_CODE_LENGTH);
+        messages.validateOtpCode.otpCodeLengthError(OTP_CODE_LENGTH);
 
       setOtpCodeValidationError(otpCodeLengthError);
       announceMessage(otpCodeLengthError);
@@ -275,18 +278,18 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
         disabled={!canValidateOtpCode}
         isBusy={validateOtpCode.isPending}
         onPress={handleValidateOtpCode}
-        title={messages.validateOtpCode.validate}
+        title={messages.validateOtpCode.validateOtpCodeButton}
       />
       <Button
-        accessibilityHint={messages.validateOtpCode.resendHint}
+        accessibilityHint={messages.validateOtpCode.resendOtpCodeHint}
         disabled={resendCooldownRemainingSeconds > 0}
         isBusy={resendOtpCode.isPending}
         onPress={handleResendOtpCode}
-        title={messages.validateOtpCode.resend}
+        title={messages.validateOtpCode.resendOtpCodeButton}
       />
       {resendCooldownRemainingSeconds > 0 ? (
         <Text>
-          {messages.validateOtpCode.resendAvailableIn(
+          {messages.validateOtpCode.resendOtpCodeCooldownStatus(
             resendCooldownRemainingSeconds,
           )}
         </Text>
