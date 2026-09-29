@@ -70,7 +70,7 @@ function RootNavigator() {
         <Stack.Screen name="(app)" />
       </Stack.Protected>
       <Stack.Protected guard={!hasSession}>
-        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(authentication)" />
       </Stack.Protected>
     </Stack>
   );
