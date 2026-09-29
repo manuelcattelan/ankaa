@@ -98,11 +98,11 @@ export const componentOrder = createRule({
   meta: {
     docs: {
       description:
-        "Order the body of a component or hook as described in apps/mobile/AGENTS.md.",
+        "Order the body of a component or custom hook as described in apps/mobile/AGENTS.md.",
     },
     messages: {
       unexpectedOrder:
-        "Move this statement above line {{line}}. Order: context hooks, state, queries and mutations, derived values, effects, early returns, handlers, returned JSX.",
+        "Move this statement above line {{line}}. Order: hooks, state, queries and mutations, derived values, effects, early returns, handlers, returned JSX.",
     },
     schema: [],
     type: "suggestion",
