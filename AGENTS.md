@@ -1,33 +1,40 @@
 # Ankaa
 
-These rules describe how the code in this repository looks, reads and is structured. Follow them exactly.
+These rules describe how the code in this repository looks, reads and is structured, so the codebase stays consistent as it grows. Follow them exactly.
 
-Tooling enforces every other rule. The ESLint configuration is in `tooling/eslint/`, and a Stop hook runs `pnpm lint`, `pnpm check-types` and `pnpm format` before you finish.
+The `AGENTS.md` files in this repository hold only the rules that tooling can't check. ESLint, TypeScript and Prettier check everything else. A new rule that tooling could check belongs in the tooling, not in these files: don't add it yourself, but propose it instead, because how to enforce it needs its own decisions.
 
-Before you change files in a workspace, read the rules file of that workspace:
-
-- `apps/mobile/AGENTS.md`
-- `apps/server/AGENTS.md`
-- `packages/database/AGENTS.md`
+Before you create new files or edit existing ones in a workspace, read the `AGENTS.md` at the root of that workspace if it has one, because an agent doesn't always load it on its own.
 
 ## When no rule applies
 
-The codebase is the reference for every case that these rules do not cover.
+The codebase is the reference for every case that these rules and tooling don't cover. In those cases, look for a pattern: how the codebase already shapes, names, words or places one kind of code, such as a provider or an error message, whatever that code does.
 
-- Find the closest existing example in the repository and copy it exactly.
-- Use the same word and the same verb that the codebase already uses for the same concept.
-- If there is no existing example, stop and ask before you write the code:
+- Follow the pattern that fits what you're writing, but not its mistakes: where the code that shows the pattern breaks one of these rules, follow the rule and report the violation in the 📌 list below. Don't fix the existing code yourself, because each fix needs its own decision.
+- If no pattern fits, stop and ask before you write the code, because a guess becomes a pattern that the next agent copies. If you can't ask, such as in a subagent, stop and return this message as your result:
 
-  ```text
-  No rule or precedent for <case>. The library uses <term>. Suggestion: <name>. Proposed rule: <one sentence>.
+  ```markdown
+  🛑 **No rule or pattern for <the decision you need>**
+
+  - **Context:** <what you're writing, where it goes and why the decision comes up>
+  - **Rule proposal:** <one sentence, written like the rules in this file>
+  - **Implementation proposal:** <the code or name you would write by following the rule proposal, and what the documentation of the library does, if it covers the case>
   ```
 
-- When you copied an existing example because no rule covered the case, end your final message with this list:
+- When you followed a pattern because no rule covered the case, end your final message with this list, so that each pattern can be checked and turned into a rule:
 
-  ```text
-  Precedents followed:
-  - <what> → copied from <file>:<line>
+  ```markdown
+  📌 **Patterns followed**
+
+  - **<the pattern, in a few words>**
+    - **Context:** <what you wrote, where it goes and why no rule covered it>
+    - **Existing code:** <where the pattern comes from, in plain words, and a snippet of it>
+    - **Rule violation:** <only when the existing code breaks one of these rules: which rule, and how you followed it instead>
+    - **Rule assessment:** <whether a rule would make agents follow this pattern more reliably, and why>
+    - **Rule proposal:** <only when the rule assessment says yes: one sentence, written like the rules in this file>
   ```
+
+Write the context in both templates above for a reader who doesn't know the codebase.
 
 ## Names you must not change
 
