@@ -32,11 +32,13 @@ Screens and layouts take their names from the path of their file:
 Components and custom hooks all follow the same shape, so you always know where to find a value and what it is called.
 
 - Order the body this way: hooks, state, queries and mutations, derived values, effects, early returns, handlers, returned JSX. State means `useState`, `useRef` and `useReducer`, and hooks means every other hook, such as `useRouter` or a custom hook. A statement may come later when it uses a value from a later step.
-- Name a mutation `<verb><Object>` and a query after the data it returns. Name a handler `handle` followed by the mutation it triggers, or by its event when it triggers none. The example below shows each of them.
+- Name a mutation after what the user does, as `<verb><Object>`, and the function it calls after what that function does, so two mutations can share one function, as `sendOtpCode` and `resendOtpCode` both call `requestOtpCode`. Name a query after the data it returns. Name a handler `handle` followed by the mutation it triggers, or by its event when it triggers none. The example below shows each of them.
+- Name a component after what it shows, starting with its concept, such as `StatusMessage`, and a custom hook `use` followed by what it keeps track of, such as `useCooldown`, because both read as things, not actions: a hook that loads the profile is `useUserProfile`, not `useFetchUserProfile`.
 - In a screen, when code other than the returned JSX needs a value that an early return narrows, move that code into `<Name>Content` and pass it the narrowed value, as `EditProfileScreen` would with `EditProfileContent`. Hooks can't come after an early return and handlers lose the narrowing, while typing the value as required or adding `?? ""` would hide a missing value.
 - Screens never set colors: they don't read theme colors, and they pass `style` only to change the layout, so every color comes from `src/components/`. A screen may call `useColorScheme` only to pick the variant of a third-party component, such as a sign-in button that comes in a light and a dark version.
 - Use the `role` and `aria-*` props, because they are the web standard and each state is its own prop, so a caller's `...rest` can't overwrite them all at once as it would an `accessibilityState` object. Use an `accessibility*` prop only when it has no `aria-*` alias, such as `accessibilityHint`.
 - In a component that passes `...rest` on, put the props a caller may override before `{...rest}`, the props the component owns after it, and the caller's `style` last in the style array, so callers can change the defaults and the layout without breaking the component.
+- When the same JSX structure appears a second time, turn it into one component, in the file that uses it or in `src/components/` when another file uses it too, so a change to the layout lands in one place.
 
 🟢 Do this:
 
