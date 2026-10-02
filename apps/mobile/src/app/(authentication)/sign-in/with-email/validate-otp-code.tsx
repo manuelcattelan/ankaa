@@ -69,6 +69,10 @@ function getOtpCodeErrorMessage({
   cooldownRemainingSeconds,
   error,
 }: GetOtpCodeErrorMessageOptions) {
+  if (!error) {
+    return undefined;
+  }
+
   if (
     isAuthenticationError(error) &&
     error.status === HTTP_STATUS_TOO_MANY_REQUESTS
@@ -205,18 +209,14 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
   const canValidateOtpCode =
     !shouldRequestNewOtpCode && validateCooldownRemainingSeconds === 0;
 
-  const resendOtpCodeErrorMessage = resendOtpCode.error
-    ? getOtpCodeErrorMessage({
-        cooldownRemainingSeconds: resendCooldownRemainingSeconds,
-        error: resendOtpCode.error,
-      })
-    : undefined;
-  const validateOtpCodeErrorMessage = validateOtpCode.error
-    ? getOtpCodeErrorMessage({
-        cooldownRemainingSeconds: validateCooldownRemainingSeconds,
-        error: validateOtpCode.error,
-      })
-    : undefined;
+  const resendOtpCodeErrorMessage = getOtpCodeErrorMessage({
+    cooldownRemainingSeconds: resendCooldownRemainingSeconds,
+    error: resendOtpCode.error,
+  });
+  const validateOtpCodeErrorMessage = getOtpCodeErrorMessage({
+    cooldownRemainingSeconds: validateCooldownRemainingSeconds,
+    error: validateOtpCode.error,
+  });
   const otpCodeErrorMessage =
     validateOtpCodeErrorMessage ??
     resendOtpCodeErrorMessage ??

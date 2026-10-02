@@ -5,6 +5,8 @@ type CreateEnvironmentOptions<TShape extends z.ZodRawShape> = {
   shape: TShape;
 };
 
+export const nodeEnvironmentSchema = z.enum(["development", "production"]);
+
 export function createEnvironment<TShape extends z.ZodRawShape>({
   runtimeEnvironment,
   shape,

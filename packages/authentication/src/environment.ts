@@ -1,4 +1,4 @@
-import { createEnvironment } from "@ankaa/environment";
+import { createEnvironment, nodeEnvironmentSchema } from "@ankaa/environment";
 import { z } from "zod";
 
 const BETTER_AUTH_SECRET_MINIMUM_LENGTH = 32;
@@ -11,6 +11,6 @@ export const environment = createEnvironment({
     BETTER_AUTH_URL: z.url(),
     GOOGLE_IOS_CLIENT_ID: z.string().nonempty(),
     GOOGLE_WEB_CLIENT_ID: z.string().nonempty(),
-    NODE_ENV: z.enum(["development", "production"]),
+    NODE_ENV: nodeEnvironmentSchema,
   },
 });
