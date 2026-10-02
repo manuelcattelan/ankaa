@@ -19,6 +19,8 @@ export async function sendEmail({ subject, text, to }: SendEmailOptions) {
   });
 
   if (sendEmailResponse.error) {
-    console.error("Failed to send email", sendEmailResponse.error);
+    throw new Error(`Failed to send email with subject "${subject}"`, {
+      cause: sendEmailResponse.error,
+    });
   }
 }
