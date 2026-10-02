@@ -343,8 +343,8 @@ export function createGeneratedFilesConfiguration({
   configuration,
   files,
 }: CreateGeneratedFilesConfigurationOptions) {
-  const ruleNames = configuration.flatMap((entry) =>
-    Object.keys(entry.rules ?? {}),
+  const ruleNames = configuration.flatMap((configurationObject) =>
+    Object.keys(configurationObject.rules ?? {}),
   );
   const disabledRuleNames = ruleNames.filter(
     (ruleName) =>
