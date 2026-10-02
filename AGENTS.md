@@ -10,7 +10,7 @@ Before you create new files or edit existing ones in a workspace, read the `AGEN
 
 The codebase is the reference for every case that these rules and tooling don't cover. In those cases, look for a pattern: how the codebase already shapes, names, words or places one kind of code, such as a provider or an error message, whatever that code does.
 
-- Follow the pattern that fits what you're writing, but not its mistakes: where the code that shows the pattern breaks one of these rules, follow the rule and report the violation in the 📌 list below. Don't fix the existing code yourself, because each fix needs its own decision.
+- Follow the pattern that fits what you're writing, but not its mistakes: where the code that shows the pattern breaks one of these rules, follow the rule and report the violation in the 📌 list below. Don't fix that violation yourself, because each fix needs its own decision.
 - If no pattern fits, stop and ask before you write the code, because a guess becomes a pattern that the next agent copies. If you can't ask, such as in a subagent, stop and return this message as your result:
 
   ```markdown
@@ -38,13 +38,13 @@ Write the context in both templates above for a reader who doesn't know the code
 
 ## Naming
 
-A reader should be able to predict a name before reading it.
+- Write every name, message and document in American English, so the whole codebase shares one vocabulary and every word has one meaning.
+- Write every word in full, because a shortened word can mean more than one thing, but keep an acronym as it is, because readers know it better than its full form.
+- Start every name with the concept it belongs to, and end it with what it is. A name must read right without the code around it, so add the concept whenever the bare noun could mean more than one thing.
 
-- Write every name, message and document in American English.
-- Use full words: `options`, `error`, `database`, `environment`, `authentication`, `configuration`, `ButtonProperties`, `inputReference`, `COOLDOWN_MILLISECONDS`. The only allowed acronyms are `id`, `url`, `api`, `otp`, `http`, `json`, `ui`, `ios` and `trpc`. Ask before you use a new one.
-- Start every name with the concept it belongs to, and end it with what it is: `cooldownDeadline`, `cooldownRemainingSeconds`, `COOLDOWN_SECONDS`, `COOLDOWN_INTERVAL_MILLISECONDS`. A name must read right without the code around it, so add the concept whenever the bare noun could mean more than one thing: `emailValidationError`, not `validationError`. A boolean keeps its prefix first: `isCooldownActive`. When a new name joins a concept, rename the existing ones too.
+  When a new name joins a concept, rename the existing names of that concept in the same change, because two names for one concept confuse every later reader.
 
-  Do:
+  🟢 Do this:
 
   ```ts
   const COOLDOWN_SECONDS = 60;
@@ -52,7 +52,7 @@ A reader should be able to predict a name before reading it.
   const [emailValidationError, setEmailValidationError] = useState<string>();
   ```
 
-  Don't:
+  🔴 Don't do this:
 
   ```ts
   const COOLDOWN_SECONDS = 60;
@@ -60,62 +60,28 @@ A reader should be able to predict a name before reading it.
   const [validationError, setValidationError] = useState<string>();
   ```
 
-- Give each concept one name, and use the whole name in every identifier, file and route that refers to it.
+- Put a verb in front of a function name and a prefix in front of a boolean name, then follow the order above, as in `getAuthenticationErrorMessage`. Components and hooks are named by the rules in `apps/mobile/AGENTS.md`.
+- Choose the boolean prefix by meaning: `is` for a state, `has` for something owned or already done, `can` for a capability and `should` for a decision, because lint requires one of the four but can't tell which one fits.
+- Give each concept one name, and use the whole name in every identifier, file and route that refers to it, so a search for the name finds every place the concept appears. Use the word and the verb that the codebase already uses, even when the documentation of a library uses a different one.
 
-  Do:
+  🟢 Do this:
 
   ```ts
-  // validate-otp-code.tsx
   const OTP_CODE_LENGTH = 6;
   const [otpCode, setOtpCode] = useState("");
   const [otpCodeValidationError, setOtpCodeValidationError] =
     useState<string>();
   ```
 
-  Don't:
+  🔴 Don't do this:
 
   ```ts
-  // validate-otp.tsx
   const CODE_LENGTH = 6;
   const [otp, setOtp] = useState("");
   const [verificationCodeError, setVerificationCodeError] = useState<string>();
   ```
 
-- Name every function with a verb followed by its object: `getAuthenticationErrorMessage`, `unwrapAuthenticationResponse`, `announceMessage`.
-- Choose the boolean prefix by meaning: `is` for a state, `has` for something owned or already done, `can` for a capability, `should` for a decision.
-- Use `SCREAMING_SNAKE_CASE` for a module-level constant whose value is written in the code, such as a number, a string, or an object or array of such values. Use `camelCase` for a value that is computed or created when the code runs, such as `authenticationClient` or `database`.
-- Name the other kinds of values this way:
-  - a ref: `<noun>Reference`
-  - a context: `<Concept>Context`, with `<Concept>Provider` and `use<Concept>`
-  - a custom hook: `use<Noun>`
-  - an array callback parameter: the singular of the array name, as in `users.map((user) => user.id)`
-  - an event parameter: `event`
-  - a `catch` parameter: `error`, or `<context>Error` when `error` is already taken
-  - a type parameter: `T` followed by a full word, such as `TData`
-  - the type of an object parameter: `<FunctionName>Options`
-- Never add an `Async` suffix or a `_` prefix to a name.
-- Name a default import after its module path without the scope, in `camelCase`. Name a namespace import the same way, in `PascalCase`.
-
-  Do:
-
-  ```ts
-  import * as DatabaseSchema from "@ankaa/database/schema";
-  import helmet from "@fastify/helmet";
-  import * as ExpoCrypto from "expo-crypto";
-  ```
-
-  Don't:
-
-  ```ts
-  import * as schema from "@ankaa/database/schema";
-  import fastifyHelmet from "@fastify/helmet";
-  import * as Crypto from "expo-crypto";
-  ```
-
-- When two values would share a name, the value that comes from a framework keeps the usual name. Give the other one a first word that says where it comes from, such as `webRequest` next to the `request` of Fastify.
-- Name a file after the concept it holds, and let its directory give the role: `providers/query.tsx` exports `QueryProvider`.
-- Name a Claude Code hook script `on-<event>.sh`, with the hook event in kebab-case, and give each event its own script.
-- Name your own environment variables like any other name: start with the concept they belong to and end with what they are, such as `RESEND_EMAIL_FROM` or `CLOSE_GRACE_DELAY_MILLISECONDS`.
+- Name an array callback parameter after the singular of the array, as in `users.map((user) => user.id)`, not with a generic name such as `item` or `entry`, so the reader knows what each element is without looking up the array.
 
 ## Destructuring
 

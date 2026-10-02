@@ -18,7 +18,7 @@ A schema change reaches a database only through a migration. Drizzle Kit generat
    pnpm --filter @ankaa/database generate <name>
    ```
 
-2. Apply it to the development database, which `DATABASE_URL` in `.env` points to: 
+2. Apply it to the development database, which `DATABASE_URL` in `.env` points to:
 
    ```sh
    pnpm --filter @ankaa/database migrate
