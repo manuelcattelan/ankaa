@@ -83,30 +83,6 @@ Write the context in both templates above for a reader who doesn't know the code
 
 - Name an array callback parameter after the singular of the array, as in `users.map((user) => user.id)`, not with a generic name such as `item` or `entry`, so the reader knows what each element is without looking up the array.
 
-## Destructuring
-
-Values that calls return are handled the same way everywhere.
-
-- Destructure arrays that calls return.
-- Never destructure objects that calls return. Keep the object and read its properties.
-- Always destructure an object parameter in the function signature.
-
-Do:
-
-```ts
-const session = authenticationClient.useSession();
-
-const email = session.data?.user.email;
-```
-
-Don't:
-
-```ts
-const { data: session } = authenticationClient.useSession();
-
-const email = session?.user.email;
-```
-
 ## Values
 
 A value has one way to be written, so its meaning is always clear.
