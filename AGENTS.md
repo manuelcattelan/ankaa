@@ -82,47 +82,7 @@ Write the context in both templates above for a reader who doesn't know the code
   ```
 
 - Name an array callback parameter after the singular of the array, as in `users.map((user) => user.id)`, not with a generic name such as `item` or `entry`, so the reader knows what each element is without looking up the array.
-- Give `1` a named constant when it's a limit, a count, a threshold or a version, or use a library method whose name already says it, like `nonempty()` or `positive()` in Zod, because lint lets `1` through and a bare `1` doesn't say what it limits. Don't name `1` in arithmetic, such as `index + 1`.
-
-## Blank lines
-
-A blank line ends a step, so the reader sees the steps of the work at a glance.
-
-- Put the statements that do one step together, and separate two steps with one blank line.
-- Declaring related values is always its own step, at every level of the file.
-- Starting work that reaches outside the component, such as a request or a navigation, is always its own step, apart from the state changes that prepare it.
-
-Do:
-
-```ts
-setEmailValidationError(undefined);
-sendOtpCode.reset();
-
-const parsedEmail = z.email().safeParse(email.trim());
-```
-
-```ts
-setOtpCodeValidationError(undefined);
-resendOtpCode.reset();
-validateOtpCode.reset();
-
-resendOtpCode.mutate({ email });
-```
-
-Don't:
-
-```ts
-setEmailValidationError(undefined);
-sendOtpCode.reset();
-const parsedEmail = z.email().safeParse(email.trim());
-```
-
-```ts
-setOtpCodeValidationError(undefined);
-resendOtpCode.reset();
-validateOtpCode.reset();
-resendOtpCode.mutate({ email });
-```
+- Give `1` a named constant when it's a limit, a count, a threshold or a version, or use a library method whose name already says it, such as `.nonempty()` or `.positive()` in Zod, because lint lets `1` through and a bare `1` doesn't say what it limits. Don't name `1` in arithmetic, such as `index + 1`.
 
 ## Structure
 
