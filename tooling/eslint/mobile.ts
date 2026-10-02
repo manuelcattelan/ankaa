@@ -54,6 +54,7 @@ export const mobileConfiguration = defineConfig([
       ],
       "@stylistic/jsx-newline": ["error", { prevent: true }],
       "@stylistic/jsx-self-closing-comp": "error",
+      "import-x/extensions": "off",
       "no-restricted-imports": [
         "error",
         {
@@ -75,6 +76,10 @@ export const mobileConfiguration = defineConfig([
       ],
       "react/jsx-props-no-spreading": "error",
     },
+  },
+  {
+    files: ["src/app/**"],
+    rules: { "import-x/no-default-export": "off" },
   },
   {
     files: ["src/components/**"],

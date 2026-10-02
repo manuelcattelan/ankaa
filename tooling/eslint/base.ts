@@ -18,6 +18,12 @@ type CreateGeneratedFilesConfigurationOptions = {
   files: string[];
 };
 
+const MISSING_VALUE_RESTRICTED_SYNTAX = {
+  message: "Use undefined instead of null for a missing value.",
+  selector:
+    "Literal[raw='null']:not(JSXExpressionContainer > ConditionalExpression > .alternate, ReturnStatement > .argument, CallExpression[callee.name='useRef'] > .arguments)",
+};
+
 export const JAVASCRIPT_FILES = ["**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"];
 
 export const RESTRICTED_SYNTAX = [
@@ -64,15 +70,22 @@ export const RESTRICTED_SYNTAX = [
     selector: "VariableDeclarator > ObjectPattern.id",
   },
   {
-    message: "Use await instead of then().",
-    selector: "CallExpression > MemberExpression.callee[property.name='then']",
+    message: "Use await instead of then(), catch() or finally().",
+    selector:
+      "CallExpression > MemberExpression.callee[property.name=/^(then|catch|finally)$/]",
   },
+  {
+    message:
+      "Move this regular expression to a named constant at the top of the file.",
+    selector: ":function Literal[regex]:not([regex.flags=/[gy]/])",
+  },
+  MISSING_VALUE_RESTRICTED_SYNTAX,
 ];
 
 const HOOK_STATEMENT_SELECTOR =
   ":matches(VariableDeclaration[declarations.0.init.callee.name=/^use[A-Z]/], VariableDeclaration[declarations.0.init.callee.property.name=/^use[A-Z]/], ExpressionStatement[expression.callee.name=/^use[A-Z]/], ExpressionStatement[expression.callee.property.name=/^use[A-Z]/])";
 const ACTION_STATEMENT_SELECTOR =
-  ":matches(ExpressionStatement[expression.callee.property.name=/^mutate(Async)?$/], ExpressionStatement[expression.argument.callee.property.name=/^mutate(Async)?$/], ExpressionStatement[expression.callee.object.name='router'], ExpressionStatement[expression.argument.callee.object.name='router'])";
+  ":matches(ExpressionStatement[expression.callee.property.name=/^mutate(Async)?$/], ExpressionStatement[expression.argument.callee.property.name=/^mutate(Async)?$/], ExpressionStatement[expression.callee.object.name='router'], ExpressionStatement[expression.argument.callee.object.name='router'], ExpressionStatement[expression.type='AwaitExpression'])";
 const DECLARATION_STATEMENTS = ["const", "let", "var"];
 
 const GENERIC_NAMES = [
@@ -239,6 +252,7 @@ export const rulesConfiguration = defineConfig([
         },
         { format: ["StrictPascalCase"], selector: "typeLike" },
         {
+          custom: { match: true, regex: "^[A-Z][a-z]" },
           format: ["StrictPascalCase"],
           prefix: ["T"],
           selector: "typeParameter",
@@ -272,6 +286,13 @@ export const rulesConfiguration = defineConfig([
       "func-style": ["error", "declaration"],
       "id-denylist": ["error", ...GENERIC_NAMES],
       "import-x/consistent-type-specifier-style": ["error", "prefer-top-level"],
+      "import-x/extensions": [
+        "error",
+        "always",
+        { checkTypeImports: true, ignorePackages: true },
+      ],
+      "import-x/no-default-export": "error",
+      "import-x/no-relative-packages": "error",
       "no-else-return": ["error", { allowElseIf: false }],
       "no-magic-numbers": "off",
       "no-nested-ternary": "error",
@@ -279,6 +300,7 @@ export const rulesConfiguration = defineConfig([
       "no-shadow": "off",
       "object-shorthand": ["error", "properties"],
       "prefer-template": "error",
+      "unicorn/catch-error-name": "error",
       "unicorn/filename-case": ["error", { case: "kebabCase" }],
       "unicorn/numeric-separators-style": [
         "error",
@@ -296,6 +318,22 @@ export const rulesConfiguration = defineConfig([
   {
     files: ["tooling/eslint/*.ts", "**/eslint.config.ts"],
     rules: { "@ankaa/no-duplicate-string": "off" },
+  },
+  {
+    files: ["**/*.config.{ts,mts}"],
+    rules: { "import-x/no-default-export": "off" },
+  },
+  {
+    files: ["tooling/eslint/base.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        ...RESTRICTED_SYNTAX.filter(
+          (restrictedSyntax) =>
+            restrictedSyntax !== MISSING_VALUE_RESTRICTED_SYNTAX,
+        ),
+      ],
+    },
   },
 ]);
 
