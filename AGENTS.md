@@ -8,14 +8,17 @@ Before you create new files or edit existing ones in a workspace, read the `AGEN
 
 ## Structure
 
-- Keep code in the file that uses it. When a second file needs it, move it to the directory that matches its role, so a reader finds each piece of code either where it's used or where its role says. When a file in another workspace needs it, move it to the package that owns its concept, such as the `NODE_ENV` schema in `@ankaa/environment`. Keep a copy in each file only when no package owns the concept or when the two files run in different runtimes, such as `app.config.ts` and the app, and end your final message with this list, so a shared place can be planned for it:
+- Keep code in the file that uses it. When a second file in the same workspace needs it, move it to the directory that matches its role, so a reader finds each piece of code either where it's used or where its role says.
+- When a file in another workspace needs it, move it to the package that owns its concept, such as the `NODE_ENV` schema in `@ankaa/environment`.
+- Keep a copy in each file only when no package owns the concept, or when the two files run in different runtimes, such as `app.config.ts` and the app. Then end your final message with this list, so that a shared place can be planned for it:
 
   ```markdown
   ♻️ **Code duplicated**
 
   - **<what you copied, in a few words>**
-    - **Context:** <what the code does, which files hold a copy and why each one needs it, and why it wasn't shared yet>
-    - **Shared place:** <where it could live, what moving it there would take, and what sharing it would gain or cost>
+    - **Context:** <what the code does, which files hold a copy and why each one needs it, and why it wasn't shared yet, with a short snippet only when the description doesn't make the code clear>
+    - **Sharing assessment:** <whether sharing it now would gain more than it costs, including what breaks when the copies drift apart, and why>
+    - **Sharing proposal:** <where it could live and what moving it there would take>
   ```
 
 - When the same logic appears a second time, move it into one shared function, so a change lands in one place. Keep the copies separate only when another rule requires it, such as one handler per mutation in `apps/mobile/AGENTS.md`.
@@ -67,26 +70,6 @@ Before you create new files or edit existing ones in a workspace, read the `AGEN
 
 - Name an array callback parameter after the singular of the array, as in `users.map((user) => user.id)`, not with a generic name such as `item` or `entry`, so the reader knows what each element is without looking up the array.
 - Give `1` a named constant when it's a limit, a count, a threshold or a version, or use a library method whose name already says it, such as `.nonempty()` or `.positive()` in Zod, because lint lets `1` through and a bare `1` doesn't say what it limits. Don't name `1` in arithmetic, such as `index + 1`.
-
-## Messages for developers
-
-Errors and logs are read by developers, so they are short and factual.
-
-- Write thrown errors, log messages and validation messages as one clause in sentence case, without a final period.
-- Write a failure as `Failed to <verb> <object>` and a validation message as `<Subject> must <expectation>`.
-- Put interpolated values in double quotes. Pass the error object to the logger instead of adding it to the message.
-
-Do:
-
-```ts
-request.log.error(error, `Failed to handle tRPC request on path "${path}"`);
-```
-
-Don't:
-
-```ts
-request.log.error(`Error in tRPC handler on path '${path}': ${error}`);
-```
 
 ## When no rule applies
 
