@@ -2,7 +2,7 @@
 
 These rules describe how the code in this repository looks, reads and is structured, so the codebase stays consistent as it grows. Follow them exactly.
 
-The `AGENTS.md` files in this repository hold only the rules that tooling can't check. ESLint, TypeScript and Prettier check everything else. A new rule that tooling could check belongs in the tooling, not in these files: don't add it yourself, but propose it instead, because how to enforce it needs its own decisions.
+The `AGENTS.md` files in this repository hold the rules that tooling can't check, and the rules that tooling could check only at a cost greater than the mistakes it would catch. ESLint, TypeScript and Prettier check everything else. A new rule that tooling could check belongs in the tooling, not in these files: don't add it yourself, but propose it instead, because how to enforce it needs its own decisions.
 
 Before you create new files or edit existing ones in a workspace, read the `AGENTS.md` at the root of that workspace if it has one, because an agent doesn't always load it on its own.
 
@@ -22,6 +22,7 @@ Before you create new files or edit existing ones in a workspace, read the `AGEN
   ```
 
 - When the same logic appears a second time, move it into one shared function, so a change lands in one place. Keep the copies separate only when another rule requires it, such as one handler per mutation in `apps/mobile/AGENTS.md`.
+- Write an `index.ts` that only re-exports other files only as an entry point that the `exports` of a `package.json` lists, such as `packages/api/src/index.ts`. Everywhere else, import each name from the file that defines it, because a re-export gives every name a second place to look for it.
 
 ## Naming
 
@@ -69,6 +70,7 @@ Before you create new files or edit existing ones in a workspace, read the `AGEN
   ```
 
 - Name an array callback parameter after the singular of the array, as in `users.map((user) => user.id)`, not with a generic name such as `item` or `entry`, so the reader knows what each element is without looking up the array.
+- Name a module-level constant in `SCREAMING_SNAKE_CASE` when its value is written in the code, such as a number, a string, a regular expression, or an object or array built from such values and other constants, so a reader can tell a fixed value from one that's created when the code runs. Name it in `camelCase` when the code creates it when it runs or when it's the value that the file exists to export.
 - Give `1` a named constant when it's a limit, a count, a threshold or a version, or use a library method whose name already says it, such as `.nonempty()` or `.positive()` in Zod, because lint lets `1` through and a bare `1` doesn't say what it limits. Don't name `1` in arithmetic, such as `index + 1`.
 
 ## When no rule applies
