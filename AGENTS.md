@@ -82,30 +82,7 @@ Write the context in both templates above for a reader who doesn't know the code
   ```
 
 - Name an array callback parameter after the singular of the array, as in `users.map((user) => user.id)`, not with a generic name such as `item` or `entry`, so the reader knows what each element is without looking up the array.
-
-## Values
-
-A value has one way to be written, so its meaning is always clear.
-
-- Give `1` a named constant when it is a limit, a count, a threshold or a version. Do not name it when it is arithmetic, as in `index + 1`.
-- Write a plain string where you use it. Move it to a constant only when the file uses it twice, or when another file needs it. Numbers and regular expressions always get a named constant, because they don't say what they mean.
-- Use `undefined` for a missing value. Use `null` only to render nothing in JSX, or where a library requires it.
-
-  Do:
-
-  ```ts
-  const [emailValidationError, setEmailValidationError] = useState<string>();
-  ```
-
-  Don't:
-
-  ```ts
-  const [emailValidationError, setEmailValidationError] = useState<
-    string | null
-  >(null);
-  ```
-
-- Use `async` and `await`. Never use `.then()` or `.catch()` on a promise.
+- Give `1` a named constant when it's a limit, a count, a threshold or a version, or use a library method whose name already says it, like `nonempty()` or `positive()` in Zod, because lint lets `1` through and a bare `1` doesn't say what it limits. Don't name `1` in arithmetic, such as `index + 1`.
 
 ## Blank lines
 
