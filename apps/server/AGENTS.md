@@ -2,34 +2,15 @@
 
 ## Structure
 
-- Configure the process in `src/index.ts`: Fastify instance options, `closeWithGrace` and `listen`.
-- Configure the root scope in `src/application.ts`: loading `plugins/` and `routes/`, and handlers that apply to every route, such as the error and not-found handlers.
-- Put each plugin in `src/plugins/<library>.ts`, wrapped in `fastifyPlugin`.
-- Put each route in `src/routes/<url path>/index.ts`. Write API procedures in `packages/api`, not as routes.
+- `src/index.ts` sets up and runs the process. It holds what a test leaves out when it builds the server and calls `server.inject()`, such as the Fastify instance options, `closeWithGrace` and `listen`. See https://fastify.dev/docs/latest/Guides/Testing/.
+- `src/application.ts` assembles the server. It loads `plugins/`, then sets the error and not-found handlers, then loads `routes/`, so the handlers and routes can use what the plugins add. See https://fastify.dev/docs/latest/Guides/Getting-Started/#loading-order-of-your-plugins.
+- Every other shared capability is a plugin in `src/plugins/<concept>.ts`, wrapped in `fastifyPlugin` so the whole server can use what it adds. See https://fastify.dev/docs/latest/Reference/Plugins/#handle-the-scope.
+- Every API procedure lives in `packages/api`, so the mobile app gets its types through `AppRouter`. A route in `src/routes/<path>/index.ts` is only for an endpoint that tRPC doesn't serve, such as the Better Auth handler. The directory path becomes the URL prefix. See https://github.com/fastify/fastify-autoload.
 
 ## Fastify
 
-Every plugin, log and error response is written the same way.
+Where Fastify allows more than one way to do something, follow the conventions below. For everything else, follow the Fastify documentation at https://fastify.dev/docs/latest/.
 
-- Always `await` a call to `server.register()`.
-- Log with `request.log` inside a handler, and with `server.log` everywhere else.
-- Send every HTTP error with the shape `{ statusCode, code, error, message }`. `code` is optional.
-
-Do:
-
-```ts
-return reply.status(HTTP_STATUS_NOT_FOUND).send({
-  error: "Not Found",
-  message: `Route "${request.method} ${request.url}" not found`,
-  statusCode: HTTP_STATUS_NOT_FOUND,
-});
-```
-
-Don't:
-
-```ts
-return reply.status(500).send({
-  code: "AUTH_FAILURE",
-  error: "Internal authentication error",
-});
-```
+- Await every call to `server.register()`. Fastify also allows calls without `await`, but awaiting every call keeps them consistent and guarantees that the decorators and hooks a plugin adds, such as `server.rateLimit()`, are ready before the code below uses them. See https://fastify.dev/docs/latest/Reference/Plugins/#asyncawait.
+- Log with `request.log` wherever a `request` is available, and with `server.log` everywhere else, so every log line carries the request ID. See https://fastify.dev/docs/latest/Reference/Logging/.
+- Throw an error with a `statusCode` to fail a request, so the error handler in `src/application.ts` logs it and hides the message of errors of 500 and above. Only that handler and the not-found handler build error responses, in the shape that https://fastify.dev/docs/latest/Reference/Errors/ describes.

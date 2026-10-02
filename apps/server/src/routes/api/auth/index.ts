@@ -21,7 +21,7 @@ export default ((server, options, done) => {
         reply.header(headerName, headerValue);
       }
 
-      return reply.send(response.body ? await response.text() : null);
+      return reply.send(response.body ? await response.text() : undefined);
     },
     method: ["GET", "POST"],
     url: "/*",

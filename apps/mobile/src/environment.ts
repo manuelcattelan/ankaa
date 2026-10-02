@@ -16,7 +16,7 @@ export const environment = createEnvironment({
         (url) => !url.endsWith("/"),
         "EXPO_PUBLIC_API_URL must not end with a slash",
       ),
-    EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: z.string().min(1),
-    EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: z.string().min(1),
+    EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: z.string().nonempty(),
+    EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: z.string().nonempty(),
   },
 });

@@ -40,8 +40,8 @@ export default function WithEmailScreen() {
     const parsedEmail = z.email().safeParse(email.trim());
 
     if (!parsedEmail.success) {
-      setEmailValidationError(messages.error.invalidEmail);
-      announceMessage(messages.error.invalidEmail);
+      setEmailValidationError(messages.error.emailInvalid);
+      announceMessage(messages.error.emailInvalid);
 
       return;
     }
@@ -77,7 +77,7 @@ export default function WithEmailScreen() {
       <Button
         isBusy={sendOtpCode.isPending}
         onPress={handleSendOtpCode}
-        title={messages.withEmail.title}
+        title={messages.withEmail.sendOtpCodeButton}
       />
     </ScrollView>
   );

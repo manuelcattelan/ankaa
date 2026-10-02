@@ -1,7 +1,7 @@
 import closeWithGrace from "close-with-grace";
 import fastify from "fastify";
 
-import { application } from "./application.ts";
+import { assembleApplication } from "./application.ts";
 import { environment } from "./environment.ts";
 
 const LOGGER_CONFIGURATIONS = {
@@ -21,7 +21,7 @@ const server = fastify({
   routerOptions: { maxParamLength: ROUTER_MAXIMUM_PARAMETER_LENGTH },
 });
 
-await server.register(application);
+await server.register(assembleApplication);
 
 closeWithGrace(
   { delay: environment.CLOSE_GRACE_DELAY_MILLISECONDS, logger: server.log },

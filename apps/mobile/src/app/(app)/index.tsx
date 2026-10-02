@@ -23,7 +23,7 @@ export default function AppScreen() {
       <Button
         isBusy={signOut.isPending}
         onPress={handleSignOut}
-        title={messages.app.signOut}
+        title={messages.app.signOutButton}
       />
     </View>
   );

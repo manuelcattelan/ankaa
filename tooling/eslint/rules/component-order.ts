@@ -98,11 +98,11 @@ export const componentOrder = createRule({
   meta: {
     docs: {
       description:
-        "Order the body of a component or hook as described in apps/mobile/AGENTS.md.",
+        "Order the body of a component or custom hook as described in apps/mobile/AGENTS.md.",
     },
     messages: {
       unexpectedOrder:
-        "Move this statement above line {{line}}. Order: context hooks, state, queries and mutations, derived values, effects, early returns, handlers, returned JSX.",
+        "Move this statement above line {{line}}. Order: hooks, state, queries and mutations, derived values, effects, early returns, handlers, returned JSX.",
     },
     schema: [],
     type: "suggestion",
@@ -161,12 +161,12 @@ function getDependencies({
   const functionScope = context.sourceCode.getScope(node);
   const dependencies: number[][] = statements.map(() => []);
 
-  for (const [declaringIndex, statement] of statements.entries()) {
-    if (statement.type !== AST_NODE_TYPES.VariableDeclaration) {
+  for (const [declaringIndex, declaringStatement] of statements.entries()) {
+    if (declaringStatement.type !== AST_NODE_TYPES.VariableDeclaration) {
       continue;
     }
 
-    const references = statement.declarations.flatMap((declarator) =>
+    const references = declaringStatement.declarations.flatMap((declarator) =>
       context.sourceCode
         .getDeclaredVariables(declarator)
         .flatMap((variable) => variable.references),
@@ -174,9 +174,9 @@ function getDependencies({
 
     for (const reference of references) {
       const dependentIndex = statements.findIndex(
-        (candidate) =>
-          candidate.range[0] <= reference.identifier.range[0] &&
-          reference.identifier.range[1] <= candidate.range[1],
+        (statement) =>
+          statement.range[0] <= reference.identifier.range[0] &&
+          reference.identifier.range[1] <= statement.range[1],
       );
 
       const isImmediate =
@@ -202,28 +202,35 @@ function getSlot(statement: TSESTree.Statement) {
 }
 
 function sortDescriptors(descriptors: StatementDescriptor[]) {
-  const remaining = [...descriptors];
-  const sorted: StatementDescriptor[] = [];
+  const remainingDescriptors = [...descriptors];
+  const sortedDescriptors: StatementDescriptor[] = [];
 
-  while (remaining.length > 0) {
-    const available = remaining.filter((candidate) =>
-      candidate.dependencies.every((dependency) =>
-        sorted.some((descriptor) => descriptor.index === dependency),
-      ),
+  while (remainingDescriptors.length > 0) {
+    const availableDescriptors = remainingDescriptors.filter(
+      (remainingDescriptor) =>
+        remainingDescriptor.dependencies.every((dependency) =>
+          sortedDescriptors.some(
+            (sortedDescriptor) => sortedDescriptor.index === dependency,
+          ),
+        ),
     );
 
-    const next =
-      available
+    const nextDescriptor =
+      availableDescriptors
         .toSorted((first, second) => compareDescriptors({ first, second }))
-        .at(0) ?? remaining.at(0);
+        .at(0) ?? remainingDescriptors.at(0);
 
-    if (!next) {
-      return sorted;
+    if (!nextDescriptor) {
+      return sortedDescriptors;
     }
 
-    sorted.push(next);
-    remaining.splice(remaining.indexOf(next), 1);
+    sortedDescriptors.push(nextDescriptor);
+
+    remainingDescriptors.splice(
+      remainingDescriptors.indexOf(nextDescriptor),
+      1,
+    );
   }
 
-  return sorted;
+  return sortedDescriptors;
 }

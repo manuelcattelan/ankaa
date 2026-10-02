@@ -34,11 +34,11 @@ const AUTHENTICATION_ERROR_NAME = "AuthenticationError";
 
 const authenticationErrorMessages: Record<string, string | undefined> = {
   EMAIL_NOT_VERIFIED: messages.error.accountNotConnected,
-  INVALID_EMAIL: messages.error.invalidEmail,
-  INVALID_OTP: messages.error.invalidOtpCode,
+  INVALID_EMAIL: messages.error.emailInvalid,
+  INVALID_OTP: messages.error.otpCodeInvalid,
   OAUTH_LINK_ERROR: messages.error.accountNotConnected,
   OTP_EXPIRED: messages.error.otpCodeExpired,
-  TOO_MANY_ATTEMPTS: messages.error.tooManyAttempts,
+  TOO_MANY_ATTEMPTS: messages.error.otpCodeAttemptsExceeded,
   USER_EMAIL_NOT_FOUND: messages.error.emailNotShared,
 } satisfies Partial<Record<AuthenticationErrorCode, string>>;
 
@@ -65,7 +65,7 @@ export function getAuthenticationErrorMessage(error: unknown) {
     return getSignInErrorMessage(error.code);
   }
 
-  return messages.error.network;
+  return messages.error.serverUnreachable;
 }
 
 export function isAuthenticationError(
@@ -77,15 +77,15 @@ export function isAuthenticationError(
 function getAuthenticationFailureMessage(error: AuthenticationError) {
   if (error.status === HTTP_STATUS_TOO_MANY_REQUESTS) {
     return error.retryAfterSeconds
-      ? messages.error.rateLimited(error.retryAfterSeconds)
-      : messages.error.rateLimitedShortly;
+      ? messages.error.requestsRateLimited(error.retryAfterSeconds)
+      : messages.error.requestsRateLimitedWithoutDelay;
   }
 
   const errorCodeMessage = error.code
     ? authenticationErrorMessages[error.code]
     : undefined;
 
-  return errorCodeMessage ?? messages.error.generic;
+  return errorCodeMessage ?? messages.error.unknown;
 }
 
 function getSignInErrorMessage(errorCode: string) {
@@ -100,5 +100,5 @@ function getSignInErrorMessage(errorCode: string) {
     return "";
   }
 
-  return messages.error.generic;
+  return messages.error.unknown;
 }

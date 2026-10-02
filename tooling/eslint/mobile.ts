@@ -54,6 +54,7 @@ export const mobileConfiguration = defineConfig([
       ],
       "@stylistic/jsx-newline": ["error", { prevent: true }],
       "@stylistic/jsx-self-closing-comp": "error",
+      "import-x/extensions": "off",
       "no-restricted-imports": [
         "error",
         {
@@ -77,6 +78,10 @@ export const mobileConfiguration = defineConfig([
     },
   },
   {
+    files: ["src/app/**"],
+    rules: { "import-x/no-default-export": "off" },
+  },
+  {
     files: ["src/components/**"],
     rules: {
       "no-restricted-imports": [
@@ -85,5 +90,9 @@ export const mobileConfiguration = defineConfig([
       ],
       "react/jsx-props-no-spreading": "off",
     },
+  },
+  {
+    files: ["src/utilities/messages.ts"],
+    rules: { "@ankaa/no-duplicate-string": "off" },
   },
 ]);

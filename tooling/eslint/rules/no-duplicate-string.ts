@@ -4,7 +4,7 @@ import type {
 } from "@typescript-eslint/utils";
 
 import { AST_NODE_TYPES, ESLintUtils } from "@typescript-eslint/utils";
-import ts from "typescript";
+import typescript from "typescript";
 
 import { createRule } from "../utilities/rule.ts";
 
@@ -171,16 +171,19 @@ function isCountedString({ node, services }: IsCountedStringOptions) {
   );
 }
 
-function isFixedStringType(type: ts.Type) {
-  const types = type.isUnion() ? type.types : [type];
+function isFixedStringType(type: typescript.Type) {
+  const memberTypes = type.isUnion() ? type.types : [type];
 
-  const hasFreeFormString = types.some(
-    (member) => !!(member.flags & ts.TypeFlags.String),
+  const hasFreeFormString = memberTypes.some(
+    (memberType) => !!(memberType.flags & typescript.TypeFlags.String),
   );
-  const hasFixedString = types.some(
-    (member) =>
-      member.isStringLiteral() ||
-      !!(member.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)),
+  const hasFixedString = memberTypes.some(
+    (memberType) =>
+      memberType.isStringLiteral() ||
+      !!(
+        memberType.flags &
+        (typescript.TypeFlags.Any | typescript.TypeFlags.Unknown)
+      ),
   );
 
   return hasFixedString && !hasFreeFormString;

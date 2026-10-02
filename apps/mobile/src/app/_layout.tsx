@@ -33,7 +33,7 @@ export function ErrorBoundary() {
   return (
     <ThemeProvider value={getNavigationTheme(colorScheme)}>
       <SafeAreaView>
-        <Text selectable>{messages.error.generic}</Text>
+        <Text selectable>{messages.error.unknown}</Text>
       </SafeAreaView>
     </ThemeProvider>
   );
@@ -70,7 +70,7 @@ function RootNavigator() {
         <Stack.Screen name="(app)" />
       </Stack.Protected>
       <Stack.Protected guard={!hasSession}>
-        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(authentication)" />
       </Stack.Protected>
     </Stack>
   );

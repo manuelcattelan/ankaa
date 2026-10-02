@@ -16,7 +16,7 @@ export function TextField({
   ...rest
 }: TextFieldProperties) {
   const accessibilityLabel = errorMessage
-    ? messages.error.fieldLabel({ errorMessage, label })
+    ? messages.textField.errorLabel({ errorMessage, label })
     : label;
 
   return (

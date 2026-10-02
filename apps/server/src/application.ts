@@ -7,7 +7,7 @@ import path from "node:path";
 const HTTP_STATUS_NOT_FOUND = 404;
 const HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
 
-export async function application(server: FastifyInstance) {
+export async function assembleApplication(server: FastifyInstance) {
   await server.register(autoload, {
     dir: path.join(import.meta.dirname, "plugins"),
     forceESM: true,

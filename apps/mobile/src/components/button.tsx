@@ -9,6 +9,7 @@ type ButtonProperties = Omit<
   "children" | "style"
 > & {
   isBusy?: boolean;
+  style?: ReactNative.StyleProp<ReactNative.ViewStyle>;
   title: string;
 };
 
@@ -17,6 +18,7 @@ const DISABLED_OPACITY = 0.4;
 export function Button({
   disabled,
   isBusy = false,
+  style,
   title,
   ...rest
 }: ButtonProperties) {
@@ -31,7 +33,7 @@ export function Button({
       aria-busy={isBusy}
       aria-label={title}
       disabled={disabled}
-      style={[styles.button, disabled ? styles.disabled : undefined]}
+      style={[styles.button, disabled ? styles.disabled : undefined, style]}
     >
       {isBusy ? (
         <ReactNative.ActivityIndicator />

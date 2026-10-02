@@ -121,7 +121,7 @@ export default function SignInScreen() {
         size={GoogleSigninButton.Size.Wide}
       />
       <Link asChild href="/sign-in/with-email">
-        <Button title={messages.withEmail.title} />
+        <Button title={messages.signIn.continueWithEmailButton} />
       </Link>
     </ScrollView>
   );
