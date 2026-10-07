@@ -7,5 +7,9 @@ import * as Schema from "./schema/index.ts";
 const relations = defineRelationsPart(Schema);
 
 export const database = drizzle(environment.DATABASE_URL, {
-  relations: { ...relations, ...Schema.authRelations },
+  relations: {
+    ...relations,
+    ...Schema.authRelations,
+    ...Schema.exerciseRelations,
+  },
 });
