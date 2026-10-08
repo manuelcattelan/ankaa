@@ -14,6 +14,10 @@ export default function AppLayout() {
         name="routines/[routineId]"
         options={{ title: messages.routineId.title }}
       />
+      <Stack.Screen
+        name="workout"
+        options={{ title: messages.workout.title }}
+      />
     </Stack>
   );
 }

@@ -1,26 +1,60 @@
+import type { AppRouter } from "@ankaa/api";
+import type { inferRouterOutputs } from "@trpc/server";
+
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Link } from "expo-router";
-import { useEffect } from "react";
+import { Link, useRouter } from "expo-router";
+import { Fragment, useEffect } from "react";
 import { ActivityIndicator } from "react-native";
+
+import type { Exercise } from "@/components/exercise-picker";
+import type { WorkoutDocument } from "@/utilities/workout-documents";
 
 import { authenticationClient } from "@/clients/authentication";
 import { useTrpc } from "@/clients/trpc";
+import { useWorkoutDocuments } from "@/clients/workout-documents";
 import { Button } from "@/components/button";
 import { ScrollView } from "@/components/scroll-view";
 import { StatusMessage } from "@/components/status-message";
 import { announceMessage } from "@/utilities/accessibility";
 import { getTrpcErrorMessage } from "@/utilities/errors";
+import { createIdentifier } from "@/utilities/identifiers";
 import { messages } from "@/utilities/messages";
 
+type BuildWorkoutDocumentOptions = {
+  exercises: Exercise[];
+  routine: Routine;
+  userId: string;
+};
+
+type CanStartWorkoutOptions = {
+  exerciseIds: Set<string>;
+  routine: Routine;
+};
+
+type Routine = inferRouterOutputs<AppRouter>["routine"]["list"][number];
+
+const WORKOUT_DOCUMENT_INITIAL_VERSION = 1;
+const WORKOUT_DOCUMENT_INITIAL_SYNCED_VERSION = 0;
+
 export default function AppScreen() {
+  const router = useRouter();
+
   const trpc = useTrpc();
 
+  const session = authenticationClient.useSession();
+
+  const workoutDocuments = useWorkoutDocuments();
+
   const routines = useQuery(trpc.routine.list.queryOptions());
+  const exerciseLibrary = useQuery(trpc.exercise.list.queryOptions());
 
   const signOut = useMutation({
     mutationFn: () => authenticationClient.signOut(),
   });
 
+  const exerciseIds = new Set(
+    exerciseLibrary.data?.map((exercise) => exercise.id),
+  );
   const routinesErrorMessage = routines.error
     ? getTrpcErrorMessage(routines.error)
     : undefined;
@@ -43,21 +77,64 @@ export default function AppScreen() {
     signOut.mutate();
   }
 
+  function handleStartWorkout(routine: Routine) {
+    if (
+      !exerciseLibrary.data ||
+      !session.data ||
+      workoutDocuments.runningWorkoutDocument
+    ) {
+      return;
+    }
+
+    workoutDocuments.dispatchWorkoutDocumentsAction({
+      type: "startedWorkout",
+      workoutDocument: buildWorkoutDocument({
+        exercises: exerciseLibrary.data,
+        routine,
+        userId: session.data.user.id,
+      }),
+    });
+
+    router.push("/workout");
+  }
+
   return (
     <ScrollView>
+      {workoutDocuments.runningWorkoutDocument ? (
+        <Link asChild href="/workout">
+          <Button title={messages.app.resumeWorkoutButton} />
+        </Link>
+      ) : null}
       {routines.isPending ? <ActivityIndicator /> : null}
+      <StatusMessage
+        message={
+          workoutDocuments.hasWorkoutSaveFailed
+            ? messages.app.workoutSaveFailedStatus
+            : undefined
+        }
+      />
       <StatusMessage message={routinesStatusMessage} />
       {routines.data?.map((routine) => (
-        <Link
-          asChild
-          href={{
-            params: { routineId: routine.id },
-            pathname: "/routines/[routineId]",
-          }}
-          key={routine.id}
-        >
-          <Button title={routine.name} />
-        </Link>
+        <Fragment key={routine.id}>
+          <Link
+            asChild
+            href={{
+              params: { routineId: routine.id },
+              pathname: "/routines/[routineId]",
+            }}
+          >
+            <Button title={routine.name} />
+          </Link>
+          {workoutDocuments.runningWorkoutDocument === undefined ? (
+            <Button
+              disabled={!canStartWorkout({ exerciseIds, routine })}
+              onPress={() => {
+                handleStartWorkout(routine);
+              }}
+              title={messages.app.startWorkoutButton(routine.name)}
+            />
+          ) : null}
+        </Fragment>
       ))}
       <Link asChild href="/routines/new">
         <Button title={messages.app.newRoutineButton} />
@@ -68,5 +145,89 @@ export default function AppScreen() {
         title={messages.app.signOutButton}
       />
     </ScrollView>
+  );
+}
+
+function buildWorkoutDocument({
+  exercises,
+  routine,
+  userId,
+}: BuildWorkoutDocumentOptions) {
+  const identifiedRoutineExercises = routine.exercises.map(
+    (routineExercise) => ({
+      routineExercise,
+      workoutExerciseId: createIdentifier(),
+    }),
+  );
+
+  const workoutDocument: WorkoutDocument = {
+    exercises: identifiedRoutineExercises.flatMap(
+      (identifiedRoutineExercise) => {
+        const routineExercise = identifiedRoutineExercise.routineExercise;
+        const exercise = exercises.find(
+          (libraryExercise) =>
+            libraryExercise.id === routineExercise.exerciseId,
+        );
+
+        if (!exercise) {
+          return [];
+        }
+
+        return [
+          {
+            amountUnit: exercise.amountUnit,
+            exerciseId: routineExercise.exerciseId,
+            id: identifiedRoutineExercise.workoutExerciseId,
+            note: "",
+            routineExerciseNote: routineExercise.note ?? undefined,
+            routineExerciseSets: routineExercise.sets.map(
+              (routineExerciseSet) => ({
+                amount: routineExerciseSet.amount ?? undefined,
+                dropSetSegmentCount:
+                  routineExerciseSet.dropSetSegmentCount ?? undefined,
+                dropSetWeightPercentage:
+                  routineExerciseSet.dropSetWeightPercentage ?? undefined,
+                isToFailure: routineExerciseSet.isToFailure,
+                restPauseRestSeconds:
+                  routineExerciseSet.restPauseRestSeconds ?? undefined,
+                restPauseSegmentCount:
+                  routineExerciseSet.restPauseSegmentCount ?? undefined,
+                restSeconds: routineExerciseSet.restSeconds ?? undefined,
+                setType: routineExerciseSet.setType,
+                tempo: routineExerciseSet.tempo ?? undefined,
+                variation: routineExerciseSet.variation ?? undefined,
+              }),
+            ),
+            section: routineExercise.section,
+            sets: [],
+            skipReasonNote: "",
+            superset: routineExercise.superset ?? undefined,
+            warmUpForWorkoutExerciseId: identifiedRoutineExercises.find(
+              (warmUpForIdentifiedRoutineExercise) =>
+                warmUpForIdentifiedRoutineExercise.routineExercise.id ===
+                routineExercise.warmUpForRoutineExerciseId,
+            )?.workoutExerciseId,
+            weightType: exercise.weightType,
+          },
+        ];
+      },
+    ),
+    id: createIdentifier(),
+    routineId: routine.id,
+    startedAt: new Date().toISOString(),
+    syncedVersion: WORKOUT_DOCUMENT_INITIAL_SYNCED_VERSION,
+    userId,
+    version: WORKOUT_DOCUMENT_INITIAL_VERSION,
+  };
+
+  return workoutDocument;
+}
+
+function canStartWorkout({ exerciseIds, routine }: CanStartWorkoutOptions) {
+  return (
+    exerciseIds.size > 0 &&
+    routine.exercises.every((routineExercise) =>
+      exerciseIds.has(routineExercise.exerciseId),
+    )
   );
 }

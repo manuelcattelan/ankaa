@@ -1,5 +1,5 @@
 import type { AppRouter } from "@ankaa/api";
-import type { PickerItemValue, SnapPoint } from "@expo/ui";
+import type { SnapPoint } from "@expo/ui";
 import type { TRPCClientErrorLike } from "@trpc/client";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 
@@ -15,12 +15,10 @@ import {
   TEMPO_PATTERN,
   VARIATIONS,
 } from "@ankaa/database/constants";
-import { BottomSheet, Host, Picker, RNHostView, Switch } from "@expo/ui";
+import { BottomSheet, Host, RNHostView, Switch } from "@expo/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import * as ExpoCrypto from "expo-crypto";
 import { useRouter } from "expo-router";
 import { useReducer, useState } from "react";
-import { v7 } from "uuid";
 
 import type { Exercise } from "@/components/exercise-picker";
 
@@ -28,13 +26,20 @@ import { useTrpc } from "@/clients/trpc";
 import { Button } from "@/components/button";
 import { CheckboxGroup } from "@/components/checkbox-group";
 import { ExercisePicker } from "@/components/exercise-picker";
+import { PickerField } from "@/components/picker-field";
 import { ScrollView } from "@/components/scroll-view";
 import { StatusMessage } from "@/components/status-message";
 import { Text } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { announceMessage } from "@/utilities/accessibility";
+import {
+  convertUndefinedToNull,
+  parseOptionalWholeNumber,
+} from "@/utilities/conversion";
 import { getTrpcErrorMessage } from "@/utilities/errors";
+import { createIdentifier } from "@/utilities/identifiers";
 import { messages } from "@/utilities/messages";
+import { getWholeNumberValidationError } from "@/utilities/validation";
 
 type BuildRoutineExerciseSetSaveInputOptions = {
   position: number;
@@ -73,13 +78,6 @@ type DayOfWeek = (typeof DAYS_OF_WEEK)[number];
 
 type ExercisePickerTarget =
   { section: Section } | { warmUpForRoutineExerciseId: string };
-
-type GetWholeNumberValidationErrorOptions = {
-  isRequired: boolean;
-  maximum?: number;
-  minimum: number;
-  wholeNumberText: string;
-};
 
 type JoinRoutineDraftBlockWithNextBlockOptions = {
   routineDraftBlockId: string;
@@ -205,14 +203,6 @@ type RoutineEditorExerciseProperties = RoutineEditorSharedProperties & {
   warmUpForExerciseName?: string;
 };
 
-type RoutineEditorPickerProperties<TPickerValue extends PickerItemValue> = {
-  label: string;
-  onChangeSelectedValue: (selectedValue: TPickerValue) => void;
-  optionLabels: Record<TPickerValue, string>;
-  options: readonly TPickerValue[];
-  selectedValue: TPickerValue;
-};
-
 type RoutineEditorProperties = {
   routine?: Routine;
 };
@@ -256,10 +246,6 @@ const MAIN_SECTION = "main";
 const WARM_UP_SECTION = "warm_up";
 
 const SUPERSET_EXERCISE_COUNT_MINIMUM = 2;
-
-const UUID_RANDOM_BYTE_COUNT = 16;
-
-const WHOLE_NUMBER_PATTERN = /^\d+$/;
 
 const EXERCISE_PICKER_SNAP_POINTS: SnapPoint[] = ["full"];
 
@@ -612,14 +598,6 @@ function changeRoutineDraftSections({
   };
 }
 
-function convertUndefinedToNull<TValue>(optionalValue: TValue | undefined) {
-  if (optionalValue === undefined) {
-    return null;
-  }
-
-  return optionalValue;
-}
-
 function createEmptyRoutineDraftExerciseSet(routineExerciseSetId: string) {
   const routineDraftExerciseSet: RoutineDraftExerciseSet = {
     amount: "",
@@ -636,10 +614,6 @@ function createEmptyRoutineDraftExerciseSet(routineExerciseSetId: string) {
   };
 
   return routineDraftExerciseSet;
-}
-
-function createIdentifier() {
-  return v7({ random: ExpoCrypto.getRandomBytes(UUID_RANDOM_BYTE_COUNT) });
 }
 
 function createRoutineDraft(routine: Routine | undefined) {
@@ -878,29 +852,6 @@ function getTempoValidationError(tempoText: string) {
   return messages.routineEditor.tempoFormatError;
 }
 
-function getWholeNumberValidationError({
-  isRequired,
-  maximum,
-  minimum,
-  wholeNumberText,
-}: GetWholeNumberValidationErrorOptions) {
-  const trimmedWholeNumberText = wholeNumberText.trim();
-  const wholeNumber = Number(trimmedWholeNumberText);
-
-  const isWholeNumberValid =
-    WHOLE_NUMBER_PATTERN.test(trimmedWholeNumberText) &&
-    wholeNumber >= minimum &&
-    (maximum === undefined || wholeNumber <= maximum);
-
-  if ((!trimmedWholeNumberText && !isRequired) || isWholeNumberValid) {
-    return undefined;
-  }
-
-  return maximum === undefined
-    ? messages.routineEditor.wholeNumberMinimumError(minimum)
-    : messages.routineEditor.wholeNumberRangeError({ maximum, minimum });
-}
-
 function hasRoutineDraftValidationErrors(routineDraft: RoutineDraft) {
   return (
     !!getRoutineNameValidationError(routineDraft.name) ||
@@ -988,14 +939,6 @@ function moveRoutineDraftBlock({
   movedRoutineDraftBlocks[neighborRoutineDraftBlockIndex] = routineDraftBlock;
 
   return movedRoutineDraftBlocks;
-}
-
-function parseOptionalWholeNumber(wholeNumberText: string) {
-  const trimmedWholeNumberText = wholeNumberText.trim();
-
-  return convertUndefinedToNull(
-    trimmedWholeNumberText ? Number(trimmedWholeNumberText) : undefined,
-  );
 }
 
 function routineDraftReducer(
@@ -1410,34 +1353,6 @@ function RoutineEditorExercise({
   );
 }
 
-function RoutineEditorPicker<TPickerValue extends PickerItemValue>({
-  label,
-  onChangeSelectedValue,
-  optionLabels,
-  options,
-  selectedValue,
-}: RoutineEditorPickerProperties<TPickerValue>) {
-  return (
-    <>
-      <Text>{label}</Text>
-      <Host matchContents>
-        <Picker
-          onValueChange={onChangeSelectedValue}
-          selectedValue={selectedValue}
-        >
-          {options.map((option) => (
-            <Picker.Item
-              key={option}
-              label={optionLabels[option]}
-              value={option}
-            />
-          ))}
-        </Picker>
-      </Host>
-    </>
-  );
-}
-
 function RoutineEditorSection({
   dispatchRoutineDraftAction,
   exerciseNames,
@@ -1518,7 +1433,7 @@ function RoutineEditorSet({
   return (
     <>
       <Text>{messages.routineEditor.setLabel(setNumber)}</Text>
-      <RoutineEditorPicker
+      <PickerField
         label={messages.routineEditor.setTypeLabel}
         onChangeSelectedValue={(setType) => {
           handleChangeSet({ setType });
@@ -1545,7 +1460,7 @@ function RoutineEditorSet({
         }}
         value={routineDraftExerciseSet.restSeconds}
       />
-      <RoutineEditorPicker
+      <PickerField
         label={messages.routineEditor.variationLabel}
         onChangeSelectedValue={handleChangeVariation}
         optionLabels={VARIATION_PICKER_LABELS}

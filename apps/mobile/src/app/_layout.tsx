@@ -19,6 +19,7 @@ import { authenticationClient } from "@/clients/authentication";
 import { Text } from "@/components/text";
 import { environment } from "@/environment";
 import { QueryProvider } from "@/providers/query";
+import { WorkoutDocumentsProvider } from "@/providers/workout-documents";
 import { messages } from "@/utilities/messages";
 
 void SplashScreen.preventAutoHideAsync();
@@ -58,11 +59,13 @@ export default function RootLayout() {
   return (
     <KeyboardProvider>
       <QueryProvider>
-        <ThemeProvider value={getNavigationTheme(colorScheme)}>
-          <SplashScreenController />
-          <RootNavigator />
-          <StatusBar style="auto" />
-        </ThemeProvider>
+        <WorkoutDocumentsProvider>
+          <ThemeProvider value={getNavigationTheme(colorScheme)}>
+            <SplashScreenController />
+            <RootNavigator />
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </WorkoutDocumentsProvider>
       </QueryProvider>
     </KeyboardProvider>
   );
