@@ -53,6 +53,7 @@ const configuration: ExpoConfig = {
       },
     ],
     "expo-secure-store",
+    "expo-sqlite",
     ["expo-build-properties", { ios: { enableSceneSupport: true } }],
     "expo-apple-authentication",
     ["@react-native-google-signin/google-signin", { iosUrlScheme }],
