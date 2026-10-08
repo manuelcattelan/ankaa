@@ -18,11 +18,11 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { protectedProcedure, router } from "../trpc.ts";
-
-type CheckUniqueValuesOptions = {
-  context: z.RefinementCtx;
-  values: unknown[];
-};
+import {
+  checkLinkedWarmUpExercises,
+  checkSupersetNeighbors,
+  checkUniqueValues,
+} from "../utilities/validation.ts";
 
 const nowSql = sql`now()`;
 
@@ -136,50 +136,13 @@ const routineSchema = z.object({
         ),
       });
 
-      for (const [index, routineExercise] of routineExercises.entries()) {
-        const warmUpForRoutineExercise = routineExercises.find(
-          (linkedRoutineExercise) =>
-            linkedRoutineExercise.id ===
-            routineExercise.warmUpForRoutineExerciseId,
-        );
+      checkLinkedWarmUpExercises({
+        context,
+        exercises: routineExercises,
+        warmUpForExerciseIdKey: "warmUpForRoutineExerciseId",
+      });
 
-        if (
-          typeof routineExercise.warmUpForRoutineExerciseId === "string" &&
-          (warmUpForRoutineExercise?.section !== "main" ||
-            warmUpForRoutineExercise.id === routineExercise.id)
-        ) {
-          context.addIssue({
-            code: "custom",
-            message: "Must point to another main exercise of the same routine",
-            path: [index, "warmUpForRoutineExerciseId"],
-          });
-        }
-      }
-
-      const sortedRoutineExercises = routineExercises.toSorted(
-        (firstRoutineExercise, secondRoutineExercise) =>
-          firstRoutineExercise.position - secondRoutineExercise.position,
-      );
-
-      for (const [index, routineExercise] of sortedRoutineExercises.entries()) {
-        const isSupersetContinued =
-          typeof routineExercise.superset !== "number" ||
-          routineExercise.superset ===
-            sortedRoutineExercises[index - 1]?.superset;
-        const isSupersetStartedEarlier = sortedRoutineExercises
-          .slice(0, index)
-          .some(
-            (earlierRoutineExercise) =>
-              earlierRoutineExercise.superset === routineExercise.superset,
-          );
-
-        if (!isSupersetContinued && isSupersetStartedEarlier) {
-          context.addIssue({
-            code: "custom",
-            message: "The exercises of a superset must be neighbors",
-          });
-        }
-      }
+      checkSupersetNeighbors({ context, exercises: routineExercises });
     }),
   id: z.uuidv7(),
   name: z.string().trim().nonempty(),
@@ -351,9 +314,3 @@ export const routineRouter = router({
     }),
   ),
 });
-
-function checkUniqueValues({ context, values }: CheckUniqueValuesOptions) {
-  if (new Set(values).size !== values.length) {
-    context.addIssue({ code: "custom", message: "Must be unique" });
-  }
-}
