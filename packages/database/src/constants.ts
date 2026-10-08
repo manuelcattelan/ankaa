@@ -1,3 +1,25 @@
+export type AmountUnit = (typeof AMOUNT_UNITS)[number];
+
+export type DayOfWeek = (typeof DAYS_OF_WEEK)[number];
+
+export type Equipment = (typeof EQUIPMENT)[number];
+
+export type MuscleGroup = (typeof MUSCLE_GROUPS)[number];
+
+export type MuscleGroupRole = (typeof MUSCLE_GROUP_ROLES)[number];
+
+export type Section = (typeof SECTIONS)[number];
+
+export type SetType = (typeof SET_TYPES)[number];
+
+export type SkipReason = (typeof SKIP_REASONS)[number];
+
+export type Variation = (typeof VARIATIONS)[number];
+
+export type WeightType = (typeof WEIGHT_TYPES)[number];
+
+export type WeightUnit = (typeof WEIGHT_UNITS)[number];
+
 export const AMOUNT_UNITS = ["repetition", "second"] as const;
 
 export const WEIGHT_TYPES = [

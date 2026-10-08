@@ -223,40 +223,41 @@ export const workoutRelations = defineRelationsPart(
     workoutExerciseSet,
     workoutExerciseSetSegment,
   },
-  (r) => ({
+  (relationsBuilder) => ({
     workout: {
-      workoutExercises: r.many.workoutExercise({
-        from: r.workout.id,
-        to: r.workoutExercise.workoutId,
+      workoutExercises: relationsBuilder.many.workoutExercise({
+        from: relationsBuilder.workout.id,
+        to: relationsBuilder.workoutExercise.workoutId,
       }),
     },
     workoutExercise: {
-      workout: r.one.workout({
-        from: r.workoutExercise.workoutId,
+      workout: relationsBuilder.one.workout({
+        from: relationsBuilder.workoutExercise.workoutId,
         optional: false,
-        to: r.workout.id,
+        to: relationsBuilder.workout.id,
       }),
-      workoutExerciseSets: r.many.workoutExerciseSet({
-        from: r.workoutExercise.id,
-        to: r.workoutExerciseSet.workoutExerciseId,
+      workoutExerciseSets: relationsBuilder.many.workoutExerciseSet({
+        from: relationsBuilder.workoutExercise.id,
+        to: relationsBuilder.workoutExerciseSet.workoutExerciseId,
       }),
     },
     workoutExerciseSet: {
-      workoutExercise: r.one.workoutExercise({
-        from: r.workoutExerciseSet.workoutExerciseId,
+      workoutExercise: relationsBuilder.one.workoutExercise({
+        from: relationsBuilder.workoutExerciseSet.workoutExerciseId,
         optional: false,
-        to: r.workoutExercise.id,
+        to: relationsBuilder.workoutExercise.id,
       }),
-      workoutExerciseSetSegments: r.many.workoutExerciseSetSegment({
-        from: r.workoutExerciseSet.id,
-        to: r.workoutExerciseSetSegment.workoutExerciseSetId,
-      }),
+      workoutExerciseSetSegments:
+        relationsBuilder.many.workoutExerciseSetSegment({
+          from: relationsBuilder.workoutExerciseSet.id,
+          to: relationsBuilder.workoutExerciseSetSegment.workoutExerciseSetId,
+        }),
     },
     workoutExerciseSetSegment: {
-      workoutExerciseSet: r.one.workoutExerciseSet({
-        from: r.workoutExerciseSetSegment.workoutExerciseSetId,
+      workoutExerciseSet: relationsBuilder.one.workoutExerciseSet({
+        from: relationsBuilder.workoutExerciseSetSegment.workoutExerciseSetId,
         optional: false,
-        to: r.workoutExerciseSet.id,
+        to: relationsBuilder.workoutExerciseSet.id,
       }),
     },
   }),
