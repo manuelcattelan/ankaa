@@ -40,11 +40,16 @@ export function checkLinkedWarmUpExercises<
   exercises,
   warmUpForExerciseIdKey,
 }: CheckLinkedWarmUpExercisesOptions<TWarmUpForExerciseIdKey>) {
+  const exercisesById = new Map(
+    exercises.map((exercise) => [exercise.id, exercise]),
+  );
+
   for (const [index, exercise] of exercises.entries()) {
     const warmUpForExerciseId = exercise[warmUpForExerciseIdKey];
-    const warmUpForExercise = exercises.find(
-      (linkedExercise) => linkedExercise.id === warmUpForExerciseId,
-    );
+    const warmUpForExercise =
+      typeof warmUpForExerciseId === "string"
+        ? exercisesById.get(warmUpForExerciseId)
+        : undefined;
 
     if (
       typeof warmUpForExerciseId === "string" &&
@@ -76,9 +81,7 @@ export function checkSupersetNeighbors({
       exercise.superset === sortedExercises[index - 1]?.superset;
     const isSupersetStartedEarlier = sortedExercises
       .slice(0, index)
-      .some(
-        (earlierExercise) => earlierExercise.superset === exercise.superset,
-      );
+      .some((sortedExercise) => sortedExercise.superset === exercise.superset);
 
     if (!isSupersetContinued && isSupersetStartedEarlier) {
       context.addIssue({
