@@ -2,6 +2,7 @@ import {
   isErrorWithCode,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
+import { isTRPCClientError } from "@trpc/client";
 
 import type { authenticationClient } from "@/clients/authentication";
 
@@ -63,6 +64,14 @@ export function getAuthenticationErrorMessage(error: unknown) {
 
   if (isErrorWithCode(error)) {
     return getSignInErrorMessage(error.code);
+  }
+
+  return messages.error.serverUnreachable;
+}
+
+export function getTrpcErrorMessage(error: unknown) {
+  if (isTRPCClientError(error) && error.data) {
+    return messages.error.unknown;
   }
 
   return messages.error.serverUnreachable;

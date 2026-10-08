@@ -5,10 +5,17 @@ type TextFieldErrorLabelOptions = {
   label: string;
 };
 
+type WholeNumberRangeErrorOptions = {
+  maximum: number;
+  minimum: number;
+};
+
 const SECONDS_UNIT = { plural: "seconds", singular: "second" };
 
 export const messages = {
   app: {
+    newRoutineButton: "New routine",
+    routineListEmptyStatus: "You have no routines yet.",
     signOutButton: "Sign out",
     title: "Ankaa",
   },
@@ -47,10 +54,76 @@ export const messages = {
     rackEquipmentLabel: "Rack",
     tricepsMuscleGroupLabel: "Triceps",
   },
+  new: {
+    title: "New routine",
+  },
   notFound: {
     body: "This screen doesn't exist.",
     goHomeButton: "Go to home screen",
     title: "Screen not found",
+  },
+  routineEditor: {
+    addExerciseButton: "Add exercise",
+    addSetButton: "Add set",
+    addWarmUpExerciseButton: "Add warm-up exercise",
+    amountLabel: "Repetitions or seconds",
+    coolDownSectionLabel: "Cool-down",
+    daysLabel: "Days",
+    deleteRoutineButton: "Delete routine",
+    dropSetSegmentCountLabel: "Number of drops, the first set included",
+    dropSetVariationLabel: "Drop set",
+    dropSetWeightPercentageLabel: "Weight to drop each time, in percent",
+    exerciseNoteLabel: "Note",
+    fridayDayLabel: "Friday",
+    joinSupersetButton: "Superset with next exercise",
+    leaveSupersetButton: "Leave superset",
+    mainSectionLabel: "Main",
+    mondayDayLabel: "Monday",
+    moveDownButton: "Move down",
+    moveUpButton: "Move up",
+    noVariationLabel: "None",
+    removeExerciseButton: "Remove exercise",
+    removeSetButton: "Remove set",
+    restPauseRestSecondsLabel: "Rest between rest-pause segments, in seconds",
+    restPauseSegmentCountLabel:
+      "Number of rest-pause segments, the first included",
+    restPauseVariationLabel: "Rest-pause",
+    restSecondsLabel: "Rest after the set, in seconds",
+    routineDraftInvalidError:
+      "Some fields aren't valid: correct the fields marked with an error.",
+    routineNameEmptyError: "This routine has no name: enter a name.",
+    routineNameLabel: "Name",
+    routineNameTakenError:
+      "You already have a routine with this name: enter another name.",
+    saturdayDayLabel: "Saturday",
+    saveRoutineButton: "Save routine",
+    setLabel: (setNumber: number) => `Set ${setNumber}`,
+    setTypeLabel: "Set type",
+    sundayDayLabel: "Sunday",
+    supersetLabel: "Superset",
+    tempoFormatError:
+      "This tempo isn't valid: enter four numbers separated by hyphens, like 3-0-1-2, with X allowed only as the third.",
+    tempoLabel: "Tempo",
+    thursdayDayLabel: "Thursday",
+    toFailureLabel: "To failure",
+    tuesdayDayLabel: "Tuesday",
+    variationLabel: "Variation",
+    warmUpForExerciseLabel: (exerciseName: string) =>
+      `Warm-up for ${exerciseName}`,
+    warmUpSectionLabel: "Warm-up",
+    warmUpSetTypeLabel: "Warm-up",
+    wednesdayDayLabel: "Wednesday",
+    wholeNumberMinimumError: (minimum: number) =>
+      `This number isn't valid: enter a whole number of at least ${minimum}.`,
+    wholeNumberRangeError: ({
+      maximum,
+      minimum,
+    }: WholeNumberRangeErrorOptions) =>
+      `This number isn't valid: enter a whole number from ${minimum} to ${maximum}.`,
+    workingSetTypeLabel: "Working",
+  },
+  routineId: {
+    title: "Edit routine",
   },
   signIn: {
     continueWithEmailButton: "Continue with email address",

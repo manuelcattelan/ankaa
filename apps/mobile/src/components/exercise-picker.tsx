@@ -1,32 +1,24 @@
 import type { AppRouter } from "@ankaa/api";
 import type { inferRouterOutputs } from "@trpc/server";
 
-import { Checkbox, Column, Host } from "@expo/ui";
 import { useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
 import { useEffect, useState } from "react";
 import * as ReactNative from "react-native";
 
 import { useTrpc } from "@/clients/trpc";
 import { Button } from "@/components/button";
+import { CheckboxGroup } from "@/components/checkbox-group";
 import { ScrollView } from "@/components/scroll-view";
 import { StatusMessage } from "@/components/status-message";
-import { Text } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { announceMessage } from "@/utilities/accessibility";
+import { getTrpcErrorMessage } from "@/utilities/errors";
 import { messages } from "@/utilities/messages";
 
+export type Exercise =
+  inferRouterOutputs<AppRouter>["exercise"]["list"][number];
+
 type Equipment = Exercise["exerciseEquipment"][number]["equipment"];
-
-type Exercise = inferRouterOutputs<AppRouter>["exercise"]["list"][number];
-
-type ExerciseFilterCheckboxGroupProperties<TFilterOption extends string> = {
-  filter: TFilterOption[];
-  filterOptionLabels: Record<TFilterOption, string>;
-  filterOptions: TFilterOption[];
-  label: string;
-  onChangeFilter: (filter: TFilterOption[]) => void;
-};
 
 type ExercisePickerContentProperties = ExercisePickerProperties & {
   exercises: Exercise[];
@@ -93,44 +85,6 @@ export function ExercisePicker({ onSelectExercise }: ExercisePickerProperties) {
   );
 }
 
-function ExerciseFilterCheckboxGroup<TFilterOption extends string>({
-  filter,
-  filterOptionLabels,
-  filterOptions,
-  label,
-  onChangeFilter,
-}: ExerciseFilterCheckboxGroupProperties<TFilterOption>) {
-  function handleToggleFilterOption(filterOption: TFilterOption) {
-    onChangeFilter(
-      filter.includes(filterOption)
-        ? filter.filter(
-            (selectedFilterOption) => selectedFilterOption !== filterOption,
-          )
-        : [...filter, filterOption],
-    );
-  }
-
-  return (
-    <>
-      <Text>{label}</Text>
-      <Host matchContents>
-        <Column>
-          {filterOptions.map((filterOption) => (
-            <Checkbox
-              key={filterOption}
-              label={filterOptionLabels[filterOption]}
-              onValueChange={() => {
-                handleToggleFilterOption(filterOption);
-              }}
-              value={filter.includes(filterOption)}
-            />
-          ))}
-        </Column>
-      </Host>
-    </>
-  );
-}
-
 function ExercisePickerContent({
   exercises,
   onSelectExercise,
@@ -183,19 +137,19 @@ function ExercisePickerContent({
         onChangeText={setExerciseNameFilter}
         value={exerciseNameFilter}
       />
-      <ExerciseFilterCheckboxGroup
-        filter={muscleGroupFilter}
-        filterOptionLabels={MUSCLE_GROUP_LABELS}
-        filterOptions={muscleGroupFilterOptions}
+      <CheckboxGroup
         label={messages.exercisePicker.muscleGroupFilterLabel}
-        onChangeFilter={setMuscleGroupFilter}
+        onChangeSelectedOptions={setMuscleGroupFilter}
+        optionLabels={MUSCLE_GROUP_LABELS}
+        options={muscleGroupFilterOptions}
+        selectedOptions={muscleGroupFilter}
       />
-      <ExerciseFilterCheckboxGroup
-        filter={equipmentFilter}
-        filterOptionLabels={EQUIPMENT_LABELS}
-        filterOptions={equipmentFilterOptions}
+      <CheckboxGroup
         label={messages.exercisePicker.equipmentFilterLabel}
-        onChangeFilter={setEquipmentFilter}
+        onChangeSelectedOptions={setEquipmentFilter}
+        optionLabels={EQUIPMENT_LABELS}
+        options={equipmentFilterOptions}
+        selectedOptions={equipmentFilter}
       />
       <StatusMessage
         message={
@@ -247,12 +201,4 @@ function filterExercises({
 
     return hasExerciseNameMatch && hasMuscleGroupMatch && hasEquipmentMatch;
   });
-}
-
-function getTrpcErrorMessage(error: unknown) {
-  if (isTRPCClientError(error) && error.data) {
-    return messages.error.unknown;
-  }
-
-  return messages.error.serverUnreachable;
 }
