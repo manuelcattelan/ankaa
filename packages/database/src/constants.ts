@@ -22,6 +22,15 @@ export const SET_TYPES = [WARM_UP_VALUE, "working"] as const;
 
 export const VARIATIONS = ["rest_pause", "drop_set"] as const;
 
+export const SKIP_REASONS = [
+  "low_on_time",
+  "low_energy",
+  "pain",
+  "other",
+] as const;
+
+export const WEIGHT_UNITS = ["kilogram", "pound"] as const;
+
 export const DAYS_OF_WEEK = [
   "monday",
   "tuesday",
@@ -46,3 +55,9 @@ export const SEGMENT_COUNT_MINIMUM = 2;
 export const DROP_SET_WEIGHT_PERCENTAGE_MINIMUM = 1;
 
 export const DROP_SET_WEIGHT_PERCENTAGE_MAXIMUM = 99;
+
+export const WEIGHT_VALUE_MINIMUM = 0.01;
+
+export const WEIGHT_VALUE_MAXIMUM = 9_999.99;
+
+export const WEIGHT_VALUE_STEP = 0.01;
