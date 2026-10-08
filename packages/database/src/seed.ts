@@ -37,7 +37,7 @@ const EXERCISE_SEEDS: ExerciseSeed[] = [
   },
 ];
 
-const updatedAtSql = sql`now()`;
+const nowSql = sql`now()`;
 
 try {
   await database.transaction(async (transaction) => {
@@ -54,7 +54,7 @@ try {
           set: {
             amountUnit: exerciseSeed.amountUnit,
             name: exerciseSeed.name,
-            updatedAt: updatedAtSql,
+            updatedAt: nowSql,
             weightType: exerciseSeed.weightType,
           },
           target: exercise.id,
@@ -67,7 +67,7 @@ try {
           .onConflictDoUpdate({
             set: {
               muscleGroupRole: exerciseMuscleGroupSeed.muscleGroupRole,
-              updatedAt: updatedAtSql,
+              updatedAt: nowSql,
             },
             target: [
               exerciseMuscleGroup.exerciseId,
@@ -81,7 +81,7 @@ try {
           .insert(exerciseEquipment)
           .values({ ...exerciseEquipmentSeed, exerciseId: exerciseSeed.id })
           .onConflictDoUpdate({
-            set: { updatedAt: updatedAtSql },
+            set: { updatedAt: nowSql },
             target: [exerciseEquipment.exerciseId, exerciseEquipment.equipment],
           });
       }

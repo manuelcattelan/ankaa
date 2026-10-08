@@ -210,40 +210,40 @@ export const routineExerciseSet = snakeCase.table(
 
 export const routineRelations = defineRelationsPart(
   { routine, routineDay, routineExercise, routineExerciseSet },
-  (r) => ({
+  (relationsBuilder) => ({
     routine: {
-      routineDays: r.many.routineDay({
-        from: r.routine.id,
-        to: r.routineDay.routineId,
+      routineDays: relationsBuilder.many.routineDay({
+        from: relationsBuilder.routine.id,
+        to: relationsBuilder.routineDay.routineId,
       }),
-      routineExercises: r.many.routineExercise({
-        from: r.routine.id,
-        to: r.routineExercise.routineId,
+      routineExercises: relationsBuilder.many.routineExercise({
+        from: relationsBuilder.routine.id,
+        to: relationsBuilder.routineExercise.routineId,
       }),
     },
     routineDay: {
-      routine: r.one.routine({
-        from: r.routineDay.routineId,
+      routine: relationsBuilder.one.routine({
+        from: relationsBuilder.routineDay.routineId,
         optional: false,
-        to: r.routine.id,
+        to: relationsBuilder.routine.id,
       }),
     },
     routineExercise: {
-      routine: r.one.routine({
-        from: r.routineExercise.routineId,
+      routine: relationsBuilder.one.routine({
+        from: relationsBuilder.routineExercise.routineId,
         optional: false,
-        to: r.routine.id,
+        to: relationsBuilder.routine.id,
       }),
-      routineExerciseSets: r.many.routineExerciseSet({
-        from: r.routineExercise.id,
-        to: r.routineExerciseSet.routineExerciseId,
+      routineExerciseSets: relationsBuilder.many.routineExerciseSet({
+        from: relationsBuilder.routineExercise.id,
+        to: relationsBuilder.routineExerciseSet.routineExerciseId,
       }),
     },
     routineExerciseSet: {
-      routineExercise: r.one.routineExercise({
-        from: r.routineExerciseSet.routineExerciseId,
+      routineExercise: relationsBuilder.one.routineExercise({
+        from: relationsBuilder.routineExerciseSet.routineExerciseId,
         optional: false,
-        to: r.routineExercise.id,
+        to: relationsBuilder.routineExercise.id,
       }),
     },
   }),
