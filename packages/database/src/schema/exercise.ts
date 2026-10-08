@@ -102,29 +102,29 @@ export const exerciseEquipment = snakeCase.table(
 
 export const exerciseRelations = defineRelationsPart(
   { exercise, exerciseEquipment, exerciseMuscleGroup },
-  (r) => ({
+  (relationsBuilder) => ({
     exercise: {
-      exerciseEquipment: r.many.exerciseEquipment({
-        from: r.exercise.id,
-        to: r.exerciseEquipment.exerciseId,
+      exerciseEquipment: relationsBuilder.many.exerciseEquipment({
+        from: relationsBuilder.exercise.id,
+        to: relationsBuilder.exerciseEquipment.exerciseId,
       }),
-      exerciseMuscleGroups: r.many.exerciseMuscleGroup({
-        from: r.exercise.id,
-        to: r.exerciseMuscleGroup.exerciseId,
+      exerciseMuscleGroups: relationsBuilder.many.exerciseMuscleGroup({
+        from: relationsBuilder.exercise.id,
+        to: relationsBuilder.exerciseMuscleGroup.exerciseId,
       }),
     },
     exerciseEquipment: {
-      exercise: r.one.exercise({
-        from: r.exerciseEquipment.exerciseId,
+      exercise: relationsBuilder.one.exercise({
+        from: relationsBuilder.exerciseEquipment.exerciseId,
         optional: false,
-        to: r.exercise.id,
+        to: relationsBuilder.exercise.id,
       }),
     },
     exerciseMuscleGroup: {
-      exercise: r.one.exercise({
-        from: r.exerciseMuscleGroup.exerciseId,
+      exercise: relationsBuilder.one.exercise({
+        from: relationsBuilder.exerciseMuscleGroup.exerciseId,
         optional: false,
-        to: r.exercise.id,
+        to: relationsBuilder.exercise.id,
       }),
     },
   }),
