@@ -16,17 +16,17 @@ export default function RoutineIdScreen() {
 
   const routines = useQuery(trpc.routine.list.queryOptions());
 
-  const routine = routines.data?.find(
-    (cachedRoutine) => cachedRoutine.id === searchParameters.routineId,
+  const editedRoutine = routines.data?.find(
+    (routine) => routine.id === searchParameters.routineId,
   );
 
   if (routines.isPending) {
     return <ActivityIndicator />;
   }
 
-  if (!routine) {
+  if (!editedRoutine) {
     return <Redirect href="/" />;
   }
 
-  return <RoutineEditor routine={routine} />;
+  return <RoutineEditor routine={editedRoutine} />;
 }
