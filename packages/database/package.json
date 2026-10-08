@@ -21,6 +21,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./constants": "./src/constants.ts",
+    "./operators": "./src/operators.ts",
     "./schema": "./src/schema/index.ts"
   },
   "name": "@ankaa/database",

@@ -1,12 +1,5 @@
-import { defineRelationsPart, inArray, sql } from "drizzle-orm";
-import {
-  check,
-  snakeCase,
-  text,
-  timestamp,
-  unique,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { defineRelationsPart, inArray } from "drizzle-orm";
+import { check, snakeCase, text, unique, uuid } from "drizzle-orm/pg-core";
 
 import {
   AMOUNT_UNITS,
@@ -15,17 +8,7 @@ import {
   MUSCLE_GROUPS,
   WEIGHT_TYPES,
 } from "../constants.ts";
-
-const commonColumns = {
-  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
-  id: uuid()
-    .primaryKey()
-    .default(sql`uuidv7()`),
-  updatedAt: timestamp({ withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-};
+import { commonColumns } from "./common-columns.ts";
 
 export const exercise = snakeCase.table(
   "exercise",

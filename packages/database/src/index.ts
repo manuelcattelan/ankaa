@@ -11,5 +11,6 @@ export const database = drizzle(environment.DATABASE_URL, {
     ...relations,
     ...Schema.authRelations,
     ...Schema.exerciseRelations,
+    ...Schema.routineRelations,
   },
 });

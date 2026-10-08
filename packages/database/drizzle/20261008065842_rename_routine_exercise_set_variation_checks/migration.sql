@@ -1,0 +1,2 @@
+ALTER TABLE "routine_exercise_set" RENAME CONSTRAINT "routine_exercise_set_check" TO "routine_exercise_set_rest_pause_check";--> statement-breakpoint
+ALTER TABLE "routine_exercise_set" RENAME CONSTRAINT "routine_exercise_set_check1" TO "routine_exercise_set_drop_set_check";
