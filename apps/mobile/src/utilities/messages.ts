@@ -62,6 +62,10 @@ export const messages = {
     goHomeButton: "Go to home screen",
     title: "Screen not found",
   },
+  restNotification: {
+    body: "Start your next set.",
+    title: "Your rest is over",
+  },
   routineEditor: {
     addExerciseButton: "Add exercise",
     addSetButton: "Add set",
