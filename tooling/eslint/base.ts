@@ -34,7 +34,7 @@ export const RESTRICTED_SYNTAX = [
   },
   {
     message: "Take one parameter. Use an object parameter for more values.",
-    selector: "FunctionDeclaration[params.length>1]",
+    selector: "FunctionDeclaration[params.length>1]:not([id.name=/Reducer$/])",
   },
   {
     message: "Move this object type to a named type.",
