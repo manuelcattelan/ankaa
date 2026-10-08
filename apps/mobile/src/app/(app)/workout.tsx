@@ -1,3 +1,12 @@
+import type {
+  AmountUnit,
+  Section,
+  SkipReason,
+  Variation,
+  WeightType,
+  WeightUnit,
+} from "@ankaa/database/constants";
+
 import {
   AMOUNT_MINIMUM,
   SKIP_REASONS,
@@ -33,14 +42,8 @@ import { MILLISECONDS_PER_SECOND } from "@/utilities/constants";
 import { parseWeightValue } from "@/utilities/conversion";
 import { createIdentifier } from "@/utilities/identifiers";
 import { messages } from "@/utilities/messages";
-import {
-  cancelRestNotification,
-  scheduleRestNotification,
-} from "@/utilities/notifications";
 import { getWholeNumberValidationError } from "@/utilities/validation";
 import { getWorkoutDocumentRoutineExerciseSet } from "@/utilities/workout-documents";
-
-type AmountUnit = WorkoutDocumentExercise["amountUnit"];
 
 type GetDropSetWeightValueSuggestionOptions = {
   dropSetWeightPercentage: number | undefined;
@@ -58,17 +61,7 @@ type GetWorkoutExercisePlacementOptions = {
   workoutDocumentExercises: WorkoutDocumentExercise[];
 };
 
-type Section = WorkoutDocumentExercise["section"];
-
-type SkipReason = (typeof SKIP_REASONS)[number];
-
-type SkipReasonPickerValue = SkipReason | typeof NO_SKIP_REASON_PICKER_VALUE;
-
-type Variation = NonNullable<WorkoutDocumentExerciseSet["variation"]>;
-
-type WeightType = WorkoutDocumentExercise["weightType"];
-
-type WeightUnit = (typeof WEIGHT_UNITS)[number];
+type SkipReasonPickerOption = SkipReason | typeof NO_SKIP_REASON_PICKER_OPTION;
 
 type WorkoutContentProperties = {
   workoutDocument: WorkoutDocument;
@@ -120,7 +113,7 @@ type WorkoutTimersProperties = {
   startedAt: string;
 };
 
-const NO_SKIP_REASON_PICKER_VALUE = "none";
+const NO_SKIP_REASON_PICKER_OPTION = "none";
 
 const CURRENT_TIME_INTERVAL_MILLISECONDS = 1_000;
 
@@ -154,10 +147,10 @@ const SKIP_REASON_PICKER_LABELS = {
   none: messages.workout.noSkipReasonLabel,
   ["other"]: messages.workout.otherSkipReasonLabel,
   pain: messages.workout.painSkipReasonLabel,
-} satisfies Record<SkipReasonPickerValue, string>;
+} satisfies Record<SkipReasonPickerOption, string>;
 
-const SKIP_REASON_PICKER_OPTIONS: SkipReasonPickerValue[] = [
-  NO_SKIP_REASON_PICKER_VALUE,
+const SKIP_REASON_PICKER_OPTIONS: SkipReasonPickerOption[] = [
+  NO_SKIP_REASON_PICKER_OPTION,
   ...SKIP_REASONS,
 ];
 
@@ -190,16 +183,16 @@ export default function WorkoutScreen() {
   );
 }
 
-async function cancelRestTimerNotification(
+async function cancelRestNotification(
   restTimer: undefined | WorkoutDocumentRestTimer,
 ) {
   if (restTimer?.restNotificationId === undefined) {
     return;
   }
 
-  await cancelRestNotification({
-    restNotificationId: restTimer.restNotificationId,
-  });
+  await ExpoNotifications.cancelScheduledNotificationAsync(
+    restTimer.restNotificationId,
+  );
 }
 
 function formatElapsedTime(elapsedSeconds: number) {
@@ -331,14 +324,23 @@ function hasWorkoutDocumentValidationErrors(workoutDocument: WorkoutDocument) {
   );
 }
 
-async function scheduleRestTimerNotification(restSeconds: number) {
+async function scheduleRestNotification(restSeconds: number) {
   const notificationPermission = await ExpoNotifications.getPermissionsAsync();
 
   if (!notificationPermission.granted) {
     return undefined;
   }
 
-  return scheduleRestNotification({ restSeconds });
+  return ExpoNotifications.scheduleNotificationAsync({
+    content: {
+      body: messages.restNotification.body,
+      title: messages.restNotification.title,
+    },
+    trigger: {
+      seconds: restSeconds,
+      type: ExpoNotifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+    },
+  });
 }
 
 function useCurrentTime() {
@@ -379,16 +381,18 @@ function WorkoutContent({ workoutDocument }: WorkoutContentProperties) {
     hasWorkoutDocumentValidationErrors(workoutDocument);
 
   function getWarmUpForExerciseName(
-    workoutDocumentExercise: WorkoutDocumentExercise,
+    warmUpWorkoutDocumentExercise: WorkoutDocumentExercise,
   ) {
-    if (workoutDocumentExercise.warmUpForWorkoutExerciseId === undefined) {
+    if (
+      warmUpWorkoutDocumentExercise.warmUpForWorkoutExerciseId === undefined
+    ) {
       return undefined;
     }
 
     const warmUpForWorkoutDocumentExercise = workoutDocument.exercises.find(
-      (linkedWorkoutDocumentExercise) =>
-        linkedWorkoutDocumentExercise.id ===
-        workoutDocumentExercise.warmUpForWorkoutExerciseId,
+      (workoutDocumentExercise) =>
+        workoutDocumentExercise.id ===
+        warmUpWorkoutDocumentExercise.warmUpForWorkoutExerciseId,
     );
 
     return (
@@ -398,7 +402,7 @@ function WorkoutContent({ workoutDocument }: WorkoutContentProperties) {
   }
 
   function handleSkipRest() {
-    void cancelRestTimerNotification(workoutDocument.restTimer);
+    void cancelRestNotification(workoutDocument.restTimer);
 
     workoutDocuments.dispatchWorkoutDocumentsAction({
       type: "skippedRest",
@@ -409,9 +413,9 @@ function WorkoutContent({ workoutDocument }: WorkoutContentProperties) {
   async function handleStartRestTimer(restSeconds: number) {
     const restTimerStartedAt = new Date().toISOString();
 
-    await cancelRestTimerNotification(workoutDocument.restTimer);
+    await cancelRestNotification(workoutDocument.restTimer);
 
-    const restNotificationId = await scheduleRestTimerNotification(restSeconds);
+    const restNotificationId = await scheduleRestNotification(restSeconds);
 
     workoutDocuments.dispatchWorkoutDocumentsAction({
       restTimer: {
@@ -433,7 +437,7 @@ function WorkoutContent({ workoutDocument }: WorkoutContentProperties) {
       return;
     }
 
-    void cancelRestTimerNotification(workoutDocument.restTimer);
+    void cancelRestNotification(workoutDocument.restTimer);
 
     workoutDocuments.dispatchWorkoutDocumentsAction({
       endedAt: new Date().toISOString(),
@@ -550,13 +554,13 @@ function WorkoutExercise({
   }
 
   function handleChangeSkipReason(
-    skipReasonPickerValue: SkipReasonPickerValue,
+    skipReasonPickerOption: SkipReasonPickerOption,
   ) {
     dispatchWorkoutDocumentsAction({
       skipReason:
-        skipReasonPickerValue === NO_SKIP_REASON_PICKER_VALUE
+        skipReasonPickerOption === NO_SKIP_REASON_PICKER_OPTION
           ? undefined
-          : skipReasonPickerValue,
+          : skipReasonPickerOption,
       type: "changedSkipReason",
       workoutExerciseId: workoutDocumentExercise.id,
       workoutId,
@@ -662,11 +666,11 @@ function WorkoutExercise({
       />
       <PickerField
         label={messages.workout.skipReasonLabel}
-        onChangeSelectedValue={handleChangeSkipReason}
+        onChangeSelectedOption={handleChangeSkipReason}
         optionLabels={SKIP_REASON_PICKER_LABELS}
         options={SKIP_REASON_PICKER_OPTIONS}
-        selectedValue={
-          workoutDocumentExercise.skipReason ?? NO_SKIP_REASON_PICKER_VALUE
+        selectedOption={
+          workoutDocumentExercise.skipReason ?? NO_SKIP_REASON_PICKER_OPTION
         }
       />
       {workoutDocumentExercise.skipReason ? (
@@ -743,12 +747,12 @@ function WorkoutSegment({
       {workoutDocumentExerciseSetSegment.weightUnit ? (
         <PickerField
           label={messages.workout.weightUnitLabel}
-          onChangeSelectedValue={(weightUnit) => {
+          onChangeSelectedOption={(weightUnit) => {
             handleChangeSegment({ weightUnit });
           }}
           optionLabels={WEIGHT_UNIT_LABELS}
           options={WEIGHT_UNITS}
-          selectedValue={workoutDocumentExerciseSetSegment.weightUnit}
+          selectedOption={workoutDocumentExerciseSetSegment.weightUnit}
         />
       ) : null}
     </>

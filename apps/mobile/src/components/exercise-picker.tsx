@@ -1,4 +1,5 @@
 import type { AppRouter } from "@ankaa/api";
+import type { Equipment, MuscleGroup } from "@ankaa/database/constants";
 import type { inferRouterOutputs } from "@trpc/server";
 
 import { useQuery } from "@tanstack/react-query";
@@ -18,8 +19,6 @@ import { messages } from "@/utilities/messages";
 export type Exercise =
   inferRouterOutputs<AppRouter>["exercise"]["list"][number];
 
-type Equipment = Exercise["exerciseEquipment"][number]["equipment"];
-
 type ExercisePickerContentProperties = ExercisePickerProperties & {
   exercises: Exercise[];
 };
@@ -34,8 +33,6 @@ type FilterExercisesOptions = {
   exercises: Exercise[];
   muscleGroupFilter: MuscleGroup[];
 };
-
-type MuscleGroup = Exercise["exerciseMuscleGroups"][number]["muscleGroup"];
 
 const EXERCISE_NAME_FILTER_WORD_SEPARATOR = /\s+/;
 

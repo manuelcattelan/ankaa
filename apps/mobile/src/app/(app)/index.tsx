@@ -1,5 +1,4 @@
-import type { AppRouter } from "@ankaa/api";
-import type { inferRouterOutputs } from "@trpc/server";
+import type { Href } from "expo-router";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useRouter } from "expo-router";
@@ -7,6 +6,7 @@ import { Fragment, useEffect } from "react";
 import { ActivityIndicator } from "react-native";
 
 import type { Exercise } from "@/components/exercise-picker";
+import type { Routine } from "@/components/routine-editor";
 import type { WorkoutDocument } from "@/utilities/workout-documents";
 
 import { authenticationClient } from "@/clients/authentication";
@@ -31,7 +31,10 @@ type CanStartWorkoutOptions = {
   routine: Routine;
 };
 
-type Routine = inferRouterOutputs<AppRouter>["routine"]["list"][number];
+type LinkButtonProperties = {
+  href: Href;
+  title: string;
+};
 
 const WORKOUT_DOCUMENT_INITIAL_VERSION = 1;
 const WORKOUT_DOCUMENT_INITIAL_SYNCED_VERSION = 0;
@@ -101,9 +104,7 @@ export default function AppScreen() {
   return (
     <ScrollView>
       {workoutDocuments.runningWorkoutDocument ? (
-        <Link asChild href="/workout">
-          <Button title={messages.app.resumeWorkoutButton} />
-        </Link>
+        <LinkButton href="/workout" title={messages.app.resumeWorkoutButton} />
       ) : null}
       {routines.isPending ? <ActivityIndicator /> : null}
       <StatusMessage
@@ -116,15 +117,13 @@ export default function AppScreen() {
       <StatusMessage message={routinesStatusMessage} />
       {routines.data?.map((routine) => (
         <Fragment key={routine.id}>
-          <Link
-            asChild
+          <LinkButton
             href={{
               params: { routineId: routine.id },
               pathname: "/routines/[routineId]",
             }}
-          >
-            <Button title={routine.name} />
-          </Link>
+            title={routine.name}
+          />
           {workoutDocuments.runningWorkoutDocument === undefined ? (
             <Button
               disabled={!canStartWorkout({ exerciseIds, routine })}
@@ -136,9 +135,7 @@ export default function AppScreen() {
           ) : null}
         </Fragment>
       ))}
-      <Link asChild href="/routines/new">
-        <Button title={messages.app.newRoutineButton} />
-      </Link>
+      <LinkButton href="/routines/new" title={messages.app.newRoutineButton} />
       <Button
         isBusy={signOut.isPending}
         onPress={handleSignOut}
@@ -162,22 +159,20 @@ function buildWorkoutDocument({
 
   const workoutDocument: WorkoutDocument = {
     exercises: identifiedRoutineExercises.flatMap(
-      (identifiedRoutineExercise) => {
-        const routineExercise = identifiedRoutineExercise.routineExercise;
-        const exercise = exercises.find(
-          (libraryExercise) =>
-            libraryExercise.id === routineExercise.exerciseId,
+      ({ routineExercise, workoutExerciseId }) => {
+        const libraryExercise = exercises.find(
+          (exercise) => exercise.id === routineExercise.exerciseId,
         );
 
-        if (!exercise) {
+        if (!libraryExercise) {
           return [];
         }
 
         return [
           {
-            amountUnit: exercise.amountUnit,
+            amountUnit: libraryExercise.amountUnit,
             exerciseId: routineExercise.exerciseId,
-            id: identifiedRoutineExercise.workoutExerciseId,
+            id: workoutExerciseId,
             note: "",
             routineExerciseNote: routineExercise.note ?? undefined,
             routineExerciseSets: routineExercise.sets.map(
@@ -203,11 +198,11 @@ function buildWorkoutDocument({
             skipReasonNote: "",
             superset: routineExercise.superset ?? undefined,
             warmUpForWorkoutExerciseId: identifiedRoutineExercises.find(
-              (warmUpForIdentifiedRoutineExercise) =>
-                warmUpForIdentifiedRoutineExercise.routineExercise.id ===
+              (identifiedRoutineExercise) =>
+                identifiedRoutineExercise.routineExercise.id ===
                 routineExercise.warmUpForRoutineExerciseId,
             )?.workoutExerciseId,
-            weightType: exercise.weightType,
+            weightType: libraryExercise.weightType,
           },
         ];
       },
@@ -229,5 +224,13 @@ function canStartWorkout({ exerciseIds, routine }: CanStartWorkoutOptions) {
     routine.exercises.every((routineExercise) =>
       exerciseIds.has(routineExercise.exerciseId),
     )
+  );
+}
+
+function LinkButton({ href, title }: LinkButtonProperties) {
+  return (
+    <Link asChild href={href}>
+      <Button title={title} />
+    </Link>
   );
 }

@@ -1,4 +1,5 @@
 import type { AppRouter } from "@ankaa/api";
+import type { WeightType } from "@ankaa/database/constants";
 import type { TRPCClientErrorLike } from "@trpc/client";
 import type { inferRouterInputs } from "@trpc/server";
 
@@ -31,7 +32,7 @@ import {
 
 type BuildWorkoutExerciseSetSegmentSaveInputOptions = {
   position: number;
-  weightType: WorkoutDocumentExercise["weightType"];
+  weightType: WeightType;
   workoutDocumentExerciseSetSegment: WorkoutDocumentExerciseSetSegment;
 };
 

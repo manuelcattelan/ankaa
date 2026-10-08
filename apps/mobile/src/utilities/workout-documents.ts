@@ -1,3 +1,5 @@
+import type { SkipReason } from "@ankaa/database/constants";
+
 import {
   AMOUNT_UNITS,
   SECTIONS,
@@ -81,8 +83,6 @@ type GetWorkoutDocumentRoutineExerciseSetOptions = {
   position: number;
   workoutDocumentExercise: WorkoutDocumentExercise;
 };
-
-type SkipReason = (typeof SKIP_REASONS)[number];
 
 const workoutDocumentRestTimerSchema = z.object({
   restNotificationId: z.string().optional(),

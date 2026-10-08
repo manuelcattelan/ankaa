@@ -1,4 +1,10 @@
 import type { AppRouter } from "@ankaa/api";
+import type {
+  DayOfWeek,
+  Section,
+  SetType,
+  Variation,
+} from "@ankaa/database/constants";
 import type { SnapPoint } from "@expo/ui";
 import type { TRPCClientErrorLike } from "@trpc/client";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
@@ -41,6 +47,8 @@ import { createIdentifier } from "@/utilities/identifiers";
 import { messages } from "@/utilities/messages";
 import { getWholeNumberValidationError } from "@/utilities/validation";
 
+export type Routine = inferRouterOutputs<AppRouter>["routine"]["list"][number];
+
 type BuildRoutineExerciseSetSaveInputOptions = {
   position: number;
   routineDraftExerciseSet: RoutineDraftExerciseSet;
@@ -74,8 +82,6 @@ type CreateRoutineDraftBlocksOptions = {
   section: Section;
 };
 
-type DayOfWeek = (typeof DAYS_OF_WEEK)[number];
-
 type ExercisePickerTarget =
   { section: Section } | { warmUpForRoutineExerciseId: string };
 
@@ -89,8 +95,6 @@ type MoveRoutineDraftBlockOptions = {
   routineDraftBlockMoveDirection: RoutineDraftBlockMoveDirection;
   routineDraftBlocks: RoutineDraftBlock[];
 };
-
-type Routine = inferRouterOutputs<AppRouter>["routine"]["list"][number];
 
 type RoutineDraft = {
   days: DayOfWeek[];
@@ -232,15 +236,9 @@ type RoutineExerciseSetSaveInput =
 
 type RoutineSaveInput = inferRouterInputs<AppRouter>["routine"]["save"];
 
-type Section = (typeof SECTIONS)[number];
+type VariationPickerOption = typeof NO_VARIATION_PICKER_OPTION | Variation;
 
-type SetType = (typeof SET_TYPES)[number];
-
-type Variation = (typeof VARIATIONS)[number];
-
-type VariationPickerValue = typeof NO_VARIATION_PICKER_VALUE | Variation;
-
-const NO_VARIATION_PICKER_VALUE = "none";
+const NO_VARIATION_PICKER_OPTION = "none";
 
 const MAIN_SECTION = "main";
 const WARM_UP_SECTION = "warm_up";
@@ -274,10 +272,10 @@ const VARIATION_PICKER_LABELS = {
   drop_set: messages.routineEditor.dropSetVariationLabel,
   none: messages.routineEditor.noVariationLabel,
   rest_pause: messages.routineEditor.restPauseVariationLabel,
-} satisfies Record<VariationPickerValue, string>;
+} satisfies Record<VariationPickerOption, string>;
 
-const VARIATION_PICKER_OPTIONS: VariationPickerValue[] = [
-  NO_VARIATION_PICKER_VALUE,
+const VARIATION_PICKER_OPTIONS: VariationPickerOption[] = [
+  NO_VARIATION_PICKER_OPTION,
   ...VARIATIONS,
 ];
 
@@ -1413,12 +1411,12 @@ function RoutineEditorSet({
     });
   }
 
-  function handleChangeVariation(variationPickerValue: VariationPickerValue) {
+  function handleChangeVariation(variationPickerOption: VariationPickerOption) {
     handleChangeSet({
       variation:
-        variationPickerValue === NO_VARIATION_PICKER_VALUE
+        variationPickerOption === NO_VARIATION_PICKER_OPTION
           ? undefined
-          : variationPickerValue,
+          : variationPickerOption,
     });
   }
 
@@ -1435,12 +1433,12 @@ function RoutineEditorSet({
       <Text>{messages.routineEditor.setLabel(setNumber)}</Text>
       <PickerField
         label={messages.routineEditor.setTypeLabel}
-        onChangeSelectedValue={(setType) => {
+        onChangeSelectedOption={(setType) => {
           handleChangeSet({ setType });
         }}
         optionLabels={SET_TYPE_LABELS}
         options={SET_TYPES}
-        selectedValue={routineDraftExerciseSet.setType}
+        selectedOption={routineDraftExerciseSet.setType}
       />
       <TextField
         errorMessage={validationErrors?.amount}
@@ -1462,11 +1460,11 @@ function RoutineEditorSet({
       />
       <PickerField
         label={messages.routineEditor.variationLabel}
-        onChangeSelectedValue={handleChangeVariation}
+        onChangeSelectedOption={handleChangeVariation}
         optionLabels={VARIATION_PICKER_LABELS}
         options={VARIATION_PICKER_OPTIONS}
-        selectedValue={
-          routineDraftExerciseSet.variation ?? NO_VARIATION_PICKER_VALUE
+        selectedOption={
+          routineDraftExerciseSet.variation ?? NO_VARIATION_PICKER_OPTION
         }
       />
       {routineDraftExerciseSet.variation === "rest_pause" ? (

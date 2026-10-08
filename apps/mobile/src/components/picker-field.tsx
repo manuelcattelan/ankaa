@@ -4,28 +4,28 @@ import { Host, Picker } from "@expo/ui";
 
 import { Text } from "@/components/text";
 
-type PickerFieldProperties<TPickerValue extends PickerItemValue> = {
+type PickerFieldProperties<TOption extends PickerItemValue> = {
   label: string;
-  onChangeSelectedValue: (selectedValue: TPickerValue) => void;
-  optionLabels: Record<TPickerValue, string>;
-  options: readonly TPickerValue[];
-  selectedValue: TPickerValue;
+  onChangeSelectedOption: (selectedOption: TOption) => void;
+  optionLabels: Record<TOption, string>;
+  options: readonly TOption[];
+  selectedOption: TOption;
 };
 
-export function PickerField<TPickerValue extends PickerItemValue>({
+export function PickerField<TOption extends PickerItemValue>({
   label,
-  onChangeSelectedValue,
+  onChangeSelectedOption,
   optionLabels,
   options,
-  selectedValue,
-}: PickerFieldProperties<TPickerValue>) {
+  selectedOption,
+}: PickerFieldProperties<TOption>) {
   return (
     <>
       <Text>{label}</Text>
       <Host matchContents>
         <Picker
-          onValueChange={onChangeSelectedValue}
-          selectedValue={selectedValue}
+          onValueChange={onChangeSelectedOption}
+          selectedValue={selectedOption}
         >
           {options.map((option) => (
             <Picker.Item
