@@ -38,7 +38,7 @@ export const exerciseMuscleGroup = snakeCase.table(
       .notNull()
       .references(() => exercise.id, {
         name: "exercise_muscle_group_exercise_id_fkey",
-        onDelete: "restrict",
+        onDelete: "cascade",
       }),
     muscleGroup: text({ enum: MUSCLE_GROUPS }).notNull(),
     muscleGroupRole: text({ enum: MUSCLE_GROUP_ROLES }).notNull(),
@@ -68,7 +68,7 @@ export const exerciseEquipment = snakeCase.table(
       .notNull()
       .references(() => exercise.id, {
         name: "exercise_equipment_exercise_id_fkey",
-        onDelete: "restrict",
+        onDelete: "cascade",
       }),
   },
   (table) => [

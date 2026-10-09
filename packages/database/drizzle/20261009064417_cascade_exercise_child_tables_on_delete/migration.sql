@@ -1,0 +1,2 @@
+ALTER TABLE "exercise_equipment" DROP CONSTRAINT "exercise_equipment_exercise_id_fkey", ADD CONSTRAINT "exercise_equipment_exercise_id_fkey" FOREIGN KEY ("exercise_id") REFERENCES "exercise"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "exercise_muscle_group" DROP CONSTRAINT "exercise_muscle_group_exercise_id_fkey", ADD CONSTRAINT "exercise_muscle_group_exercise_id_fkey" FOREIGN KEY ("exercise_id") REFERENCES "exercise"("id") ON DELETE CASCADE;
