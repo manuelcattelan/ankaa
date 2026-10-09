@@ -103,7 +103,11 @@ const WORKOUT_DOCUMENT_STORAGE_KEY_PREFIX = "workout-document:";
 
 const WORKOUT_SAVE_DEBOUNCE_MILLISECONDS = 2_000;
 
-const HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
+const WORKOUT_SAVE_PERMANENT_ERROR_CODES = [
+  "BAD_REQUEST",
+  "CONFLICT",
+  "NOT_FOUND",
+];
 
 const FAILED_WORKOUT_SAVES_INITIAL_VALUE: FailedWorkoutSave[] = [];
 
@@ -377,7 +381,7 @@ function hasFailedWorkoutSave({
 
 function isWorkoutSaveErrorRetryable(error: TRPCClientErrorLike<AppRouter>) {
   return (
-    !error.data || error.data.httpStatus >= HTTP_STATUS_INTERNAL_SERVER_ERROR
+    !error.data || !WORKOUT_SAVE_PERMANENT_ERROR_CODES.includes(error.data.code)
   );
 }
 
