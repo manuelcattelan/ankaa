@@ -1,6 +1,7 @@
 import type { ColorSchemeName } from "react-native";
 
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import * as ExpoNotifications from "expo-notifications";
 import {
   DarkTheme,
   DefaultTheme,
@@ -18,6 +19,7 @@ import { authenticationClient } from "@/clients/authentication";
 import { Text } from "@/components/text";
 import { environment } from "@/environment";
 import { QueryProvider } from "@/providers/query";
+import { WorkoutDocumentsProvider } from "@/providers/workout-documents";
 import { messages } from "@/utilities/messages";
 
 void SplashScreen.preventAutoHideAsync();
@@ -26,6 +28,18 @@ GoogleSignin.configure({
   iosClientId: environment.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
   webClientId: environment.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
 });
+
+ExpoNotifications.setNotificationHandler({
+  handleNotification: () =>
+    Promise.resolve({
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+});
+
+void requestNotificationPermission();
 
 export function ErrorBoundary() {
   const colorScheme = useColorScheme();
@@ -45,11 +59,13 @@ export default function RootLayout() {
   return (
     <KeyboardProvider>
       <QueryProvider>
-        <ThemeProvider value={getNavigationTheme(colorScheme)}>
-          <SplashScreenController />
-          <RootNavigator />
-          <StatusBar style="auto" />
-        </ThemeProvider>
+        <WorkoutDocumentsProvider>
+          <ThemeProvider value={getNavigationTheme(colorScheme)}>
+            <SplashScreenController />
+            <RootNavigator />
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </WorkoutDocumentsProvider>
       </QueryProvider>
     </KeyboardProvider>
   );
@@ -57,6 +73,17 @@ export default function RootLayout() {
 
 function getNavigationTheme(colorScheme: ColorSchemeName) {
   return colorScheme === "dark" ? DarkTheme : DefaultTheme;
+}
+
+async function requestNotificationPermission() {
+  const notificationPermission = await ExpoNotifications.getPermissionsAsync();
+
+  if (
+    notificationPermission.status ===
+    ExpoNotifications.PermissionStatus.UNDETERMINED
+  ) {
+    await ExpoNotifications.requestPermissionsAsync();
+  }
 }
 
 function RootNavigator() {

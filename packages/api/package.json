@@ -1,8 +1,10 @@
 {
   "dependencies": {
     "@ankaa/authentication": "workspace:*",
+    "@ankaa/database": "workspace:*",
     "@trpc/server": "catalog:",
-    "better-auth": "catalog:"
+    "better-auth": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",

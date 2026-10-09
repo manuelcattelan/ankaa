@@ -1,19 +1,29 @@
 import type { AppRouter } from "@ankaa/api";
+import type { Persister } from "@tanstack/react-query-persist-client";
 
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import {
   focusManager,
   onlineManager,
   QueryClient,
-  QueryClientProvider,
+  useIsRestoring,
+  useQueryClient,
 } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
+import expoConstants from "expo-constants";
 import * as ExpoNetwork from "expo-network";
+import * as ExpoSqliteKeyValueStore from "expo-sqlite/kv-store";
 import { useEffect, useState } from "react";
 import { AppState, Platform } from "react-native";
 
 import { authenticationClient } from "@/clients/authentication";
 import { TrpcProvider } from "@/clients/trpc";
 import { environment } from "@/environment";
+
+type QueryCacheControllerProperties = {
+  queryPersister: Persister;
+};
 
 type QueryProviderProperties = {
   children: React.ReactNode;
@@ -46,6 +56,7 @@ onlineManager.setEventListener((setOnline) => {
 
 export function QueryProvider({ children }: QueryProviderProperties) {
   const [queryClient] = useState(createQueryClient);
+  const [queryPersister] = useState(createQueryPersister);
   const [trpcClient] = useState(createTrpcClient);
 
   useEffect(() => {
@@ -66,17 +77,34 @@ export function QueryProvider({ children }: QueryProviderProperties) {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        buster: expoConstants.expoConfig?.version ?? "",
+        dehydrateOptions: { shouldDehydrateMutation: () => false },
+        maxAge: Infinity,
+        persister: queryPersister,
+      }}
+    >
+      <QueryCacheController queryPersister={queryPersister} />
       <TrpcProvider queryClient={queryClient} trpcClient={trpcClient}>
         {children}
       </TrpcProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }
 
 function createQueryClient() {
   return new QueryClient({
-    defaultOptions: { queries: { staleTime: QUERY_STALE_TIME_MILLISECONDS } },
+    defaultOptions: {
+      queries: { gcTime: Infinity, staleTime: QUERY_STALE_TIME_MILLISECONDS },
+    },
+  });
+}
+
+function createQueryPersister() {
+  return createAsyncStoragePersister({
+    storage: ExpoSqliteKeyValueStore.Storage,
   });
 }
 
@@ -95,4 +123,27 @@ function createTrpcClient() {
       }),
     ],
   });
+}
+
+function QueryCacheController({
+  queryPersister,
+}: QueryCacheControllerProperties) {
+  const isRestoring = useIsRestoring();
+
+  const queryClient = useQueryClient();
+
+  const session = authenticationClient.useSession();
+
+  const hasSession = !!session.data;
+
+  useEffect(() => {
+    if (isRestoring || session.isPending || hasSession) {
+      return;
+    }
+
+    queryClient.clear();
+    void queryPersister.removeClient();
+  }, [hasSession, isRestoring, queryClient, queryPersister, session.isPending]);
+
+  return null;
 }

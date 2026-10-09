@@ -13,7 +13,10 @@ import {
   requestOtpCode,
   sendAuthenticationRequest,
 } from "@/utilities/authentication";
-import { HTTP_STATUS_TOO_MANY_REQUESTS } from "@/utilities/constants";
+import {
+  HTTP_STATUS_TOO_MANY_REQUESTS,
+  MILLISECONDS_PER_SECOND,
+} from "@/utilities/constants";
 import {
   announceAuthenticationError,
   getAuthenticationErrorMessage,
@@ -48,7 +51,6 @@ const OTP_CODE_LENGTH = 6;
 
 const COOLDOWN_INTERVAL_MILLISECONDS = 1_000;
 const COOLDOWN_SECONDS = 60;
-const MILLISECONDS_PER_SECOND = 1_000;
 
 export default function ValidateOtpCodeScreen() {
   const searchParameters =

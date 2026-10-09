@@ -1,0 +1,85 @@
+export type AmountUnit = (typeof AMOUNT_UNITS)[number];
+
+export type DayOfWeek = (typeof DAYS_OF_WEEK)[number];
+
+export type Equipment = (typeof EQUIPMENT)[number];
+
+export type MuscleGroup = (typeof MUSCLE_GROUPS)[number];
+
+export type MuscleGroupRole = (typeof MUSCLE_GROUP_ROLES)[number];
+
+export type Section = (typeof SECTIONS)[number];
+
+export type SetType = (typeof SET_TYPES)[number];
+
+export type SkipReason = (typeof SKIP_REASONS)[number];
+
+export type Variation = (typeof VARIATIONS)[number];
+
+export type WeightType = (typeof WEIGHT_TYPES)[number];
+
+export type WeightUnit = (typeof WEIGHT_UNITS)[number];
+
+export const AMOUNT_UNITS = ["repetition", "second"] as const;
+
+export const WEIGHT_TYPES = [
+  "total",
+  "single",
+  "bodyweight",
+  "assisted",
+  "none",
+] as const;
+
+export const MUSCLE_GROUPS = ["chest", "triceps", "front_deltoid"] as const;
+
+export const MUSCLE_GROUP_ROLES = ["primary", "secondary"] as const;
+
+export const EQUIPMENT = ["barbell", "bench", "rack"] as const;
+
+const WARM_UP_VALUE = "warm_up";
+
+export const SECTIONS = [WARM_UP_VALUE, "main", "cool_down"] as const;
+
+export const SET_TYPES = [WARM_UP_VALUE, "working"] as const;
+
+export const VARIATIONS = ["rest_pause", "drop_set"] as const;
+
+export const SKIP_REASONS = [
+  "low_on_time",
+  "low_energy",
+  "pain",
+  "other",
+] as const;
+
+export const WEIGHT_UNITS = ["kilogram", "pound"] as const;
+
+export const DAYS_OF_WEEK = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
+
+export const TEMPO_PATTERN =
+  /^[0-9]{1,2}-[0-9]{1,2}-([0-9]{1,2}|X)-[0-9]{1,2}$/;
+
+export const POSITION_MINIMUM = 0;
+
+export const AMOUNT_MINIMUM = 1;
+
+export const REST_SECONDS_MINIMUM = 1;
+
+export const SEGMENT_COUNT_MINIMUM = 2;
+
+export const DROP_SET_WEIGHT_PERCENTAGE_MINIMUM = 1;
+
+export const DROP_SET_WEIGHT_PERCENTAGE_MAXIMUM = 99;
+
+export const WEIGHT_VALUE_MINIMUM = 0.01;
+
+export const WEIGHT_VALUE_MAXIMUM = 9_999.99;
+
+export const WEIGHT_VALUE_STEP = 0.01;

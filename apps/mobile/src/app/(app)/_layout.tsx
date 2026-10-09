@@ -6,6 +6,18 @@ export default function AppLayout() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ title: messages.app.title }} />
+      <Stack.Screen
+        name="routines/new"
+        options={{ title: messages.new.title }}
+      />
+      <Stack.Screen
+        name="routines/[routineId]"
+        options={{ title: messages.routineId.title }}
+      />
+      <Stack.Screen
+        name="workout"
+        options={{ title: messages.workout.title }}
+      />
     </Stack>
   );
 }

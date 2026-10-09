@@ -26,6 +26,8 @@ const MOBILE_RESTRICTED_SYNTAX = [
   },
 ];
 
+const DYNAMIC_ROUTE_FILE_NAME_PATTERN = /^\[[a-z][A-Za-z]*\]\.tsx$/;
+
 const WRAPPED_PRIMITIVES = ["Pressable", "ScrollView", "Text", "TextInput"];
 
 const RELATIVE_IMPORT_PATTERN = {
@@ -79,7 +81,13 @@ export const mobileConfiguration = defineConfig([
   },
   {
     files: ["src/app/**"],
-    rules: { "import-x/no-default-export": "off" },
+    rules: {
+      "import-x/no-default-export": "off",
+      "unicorn/filename-case": [
+        "error",
+        { case: "kebabCase", ignore: [DYNAMIC_ROUTE_FILE_NAME_PATTERN] },
+      ],
+    },
   },
   {
     files: ["src/components/**"],

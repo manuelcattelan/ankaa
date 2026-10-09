@@ -15,10 +15,13 @@
     "eslint": "^10.10.0",
     "jiti": "^2.7.0",
     "prettier": "catalog:",
+    "tsx": "^4.23.13",
     "typescript": "catalog:"
   },
   "exports": {
     ".": "./src/index.ts",
+    "./constants": "./src/constants.ts",
+    "./operators": "./src/operators.ts",
     "./schema": "./src/schema/index.ts"
   },
   "name": "@ankaa/database",
@@ -30,7 +33,8 @@
     "generate": "drizzle-kit generate --name",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "migrate": "drizzle-kit migrate"
+    "migrate": "drizzle-kit migrate",
+    "seed": "tsx --env-file-if-exists=.env src/seed.ts"
   },
   "type": "module"
 }
