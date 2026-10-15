@@ -102,3 +102,7 @@ The codebase is the reference for every case that these rules and tooling don't 
   ```
 
 Write the context of every template in this file for a reader who doesn't know the codebase.
+
+## Glossary
+
+`GLOSSARY.md` defines this project's vocabulary, and the glossaries listed in its `Glossary tree` section add the terms for their directories. Before you answer a question, explain something, or write code or documentation that involves a project concept, read them, and then use only their terms, even when the user or the code uses another word: when a word is on an entry's `Avoid` line, write that entry's term instead. When a concept you need has no entry, say so instead of coining a term.
