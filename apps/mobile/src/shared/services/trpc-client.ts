@@ -23,7 +23,8 @@ export class TrpcClient extends Context.Service<TrpcClient>()(
             fetch: (url, options) =>
               fetch(url, { ...options, credentials: "omit" }),
             headers: async () => {
-              const cookies = await authenticationClient.getCookie();
+              const cookies =
+                await authenticationClient.betterAuthenticationClient.getCookie();
 
               return cookies ? { cookie: cookies } : {};
             },

@@ -1,22 +1,5 @@
-import { Stack } from "expo-router";
-
-import { messages } from "@/utilities/messages";
+import { AuthenticationStack } from "@/features/authentication/components/authentication-stack";
 
 export default function AuthenticationLayout() {
-  return (
-    <Stack>
-      <Stack.Screen
-        name="sign-in/index"
-        options={{ title: messages.signIn.title }}
-      />
-      <Stack.Screen
-        name="sign-in/with-email/index"
-        options={{ title: messages.withEmail.title }}
-      />
-      <Stack.Screen
-        name="sign-in/with-email/validate-otp-code"
-        options={{ title: messages.validateOtpCode.title }}
-      />
-    </Stack>
-  );
+  return <AuthenticationStack />;
 }

@@ -176,7 +176,7 @@ export const mobileConfiguration = defineConfig([
     },
   },
   {
-    files: ["src/utilities/messages.ts"],
+    files: ["src/**/messages/**", "src/utilities/messages.ts"],
     rules: { "@ankaa/no-duplicate-string": "off" },
   },
 ]);

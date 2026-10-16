@@ -114,7 +114,7 @@ export function WorkoutDocumentsProvider({
 }: WorkoutDocumentsProviderProperties) {
   const authenticationClient = useAuthenticationClient();
 
-  const session = authenticationClient.useSession();
+  const session = authenticationClient.betterAuthenticationClient.useSession();
 
   const [workoutDocuments, dispatchWorkoutDocumentsAction] = useReducer(
     workoutDocumentsReducer,

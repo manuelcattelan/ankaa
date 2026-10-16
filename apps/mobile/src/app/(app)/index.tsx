@@ -51,7 +51,7 @@ export default function AppRoute() {
 
   const accessibility = useAccessibility();
 
-  const session = authenticationClient.useSession();
+  const session = authenticationClient.betterAuthenticationClient.useSession();
 
   const workoutDocuments = useWorkoutDocuments();
 
@@ -59,7 +59,7 @@ export default function AppRoute() {
   const exerciseLibrary = useQuery(trpc.exercise.list.queryOptions());
 
   const signOut = useMutation({
-    mutationFn: () => authenticationClient.signOut(),
+    mutationFn: () => authenticationClient.betterAuthenticationClient.signOut(),
   });
 
   const exerciseIds = new Set(

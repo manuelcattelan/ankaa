@@ -16,7 +16,7 @@ Then follow these rules for common tasks:
 
 ## Structure
 
-The mobile app follows the architecture in the root `AGENTS.md`: its Core decides, and its Shell runs Effect programs through one Runtime, inside TanStack Query functions and event handlers.
+The mobile app follows the architecture in the root `AGENTS.md`: its Core decides, and its Shell runs module-level Effect programs through one Runtime, inside TanStack Query functions, event handlers and React effects.
 
 - `src/app/` holds routes only: route components, layouts and other Expo Router special files, as described in https://docs.expo.dev/router/basics/notation/. Expo Router treats every file in this directory as a route, so put everything else in the folders below.
 - A route file only reads its params and renders a screen or the components of a Feature. It may compose components of several Features, such as the Routine list and starting a Workout on the home route, because composing in the route keeps the Features isolated.
@@ -30,7 +30,7 @@ The mobile app follows the architecture in the root `AGENTS.md`: its Core decide
 - `src/features/<feature>/` holds the code of one Feature, and `src/shared/` holds what several Features use. Both use the same role folders, so `shared/` reads exactly like a Feature, and each folder exists only when it holds a file:
   - `core/`: the Core of the Feature, such as reducers with their action unions, builders, selectors, the classification of errors to retry, validators and formatters.
   - `constants/`: the value sets and limits that only the mobile app uses, one file per concept, as the `constants/` folders of `@ankaa/core` hold them. A constant that the server uses too goes in `@ankaa/core` instead.
-  - `services/`: the Services that wrap a device or platform API, such as the API client, the better-auth client, storage on the device, notifications, crypto and accessibility announcements.
+  - `services/`: the Services that wrap a device or platform API, such as the API client, the better-auth client, Apple sign-in, Google sign-in, storage on the device, notifications, crypto and accessibility announcements.
   - `interactors/`: the Interactors, one business operation each.
   - `errors/`: the error classes of the Feature.
   - `queries/`: the Query options of the Feature, one factory function per file that takes the Runtime and returns `queryOptions(...)`, which hooks and screens import.

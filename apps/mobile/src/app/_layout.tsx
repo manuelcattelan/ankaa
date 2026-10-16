@@ -30,7 +30,13 @@ import { AppState, Platform, useColorScheme } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import type { ApplicationRuntime } from "@/layer";
+
 import { TrpcProvider } from "@/clients/trpc";
+import { createAppleSignInMutationOptions } from "@/features/authentication/mutations/create-apple-sign-in-mutation-options";
+import { createGoogleSignInMutationOptions } from "@/features/authentication/mutations/create-google-sign-in-mutation-options";
+import { createOtpCodeRequestMutationOptions } from "@/features/authentication/mutations/create-otp-code-request-mutation-options";
+import { createOtpCodeSignInMutationOptions } from "@/features/authentication/mutations/create-otp-code-sign-in-mutation-options";
 import { applicationLayer } from "@/layer";
 import { WorkoutDocumentsProvider } from "@/providers/workout-documents";
 import { Text } from "@/shared/components/text";
@@ -41,6 +47,11 @@ import { messages } from "@/utilities/messages";
 
 type QueryCacheControllerProperties = {
   queryPersister: Persister;
+};
+
+type RegisterMutationDefaultsOptions = {
+  queryClient: QueryClient;
+  runtime: ApplicationRuntime;
 };
 
 const QUERY_STALE_TIME_MILLISECONDS = 60_000;
@@ -65,6 +76,10 @@ export default function RootLayout() {
   const [queryPersister] = useState(createQueryPersister);
 
   const trpcClient = runtime.runSync(TrpcClient);
+
+  useEffect(() => {
+    registerMutationDefaults({ queryClient, runtime });
+  }, [queryClient, runtime]);
 
   useEffect(() => {
     ExpoNotifications.setNotificationHandler({
@@ -191,7 +206,7 @@ function QueryCacheController({
 
   const authenticationClient = useAuthenticationClient();
 
-  const session = authenticationClient.useSession();
+  const session = authenticationClient.betterAuthenticationClient.useSession();
 
   const hasSession = !!session.data;
 
@@ -205,6 +220,39 @@ function QueryCacheController({
   }, [hasSession, isRestoring, queryClient, queryPersister, session.isPending]);
 
   return null;
+}
+
+function registerMutationDefaults({
+  queryClient,
+  runtime,
+}: RegisterMutationDefaultsOptions) {
+  const appleSignInMutationOptions = createAppleSignInMutationOptions(runtime);
+  const googleSignInMutationOptions =
+    createGoogleSignInMutationOptions(runtime);
+  const otpCodeRequestMutationOptions =
+    createOtpCodeRequestMutationOptions(runtime);
+  const otpCodeSignInMutationOptions =
+    createOtpCodeSignInMutationOptions(runtime);
+
+  queryClient.setMutationDefaults(
+    appleSignInMutationOptions.mutationKey,
+    appleSignInMutationOptions,
+  );
+
+  queryClient.setMutationDefaults(
+    googleSignInMutationOptions.mutationKey,
+    googleSignInMutationOptions,
+  );
+
+  queryClient.setMutationDefaults(
+    otpCodeRequestMutationOptions.mutationKey,
+    otpCodeRequestMutationOptions,
+  );
+
+  queryClient.setMutationDefaults(
+    otpCodeSignInMutationOptions.mutationKey,
+    otpCodeSignInMutationOptions,
+  );
 }
 
 async function requestNotificationPermission() {
@@ -221,7 +269,7 @@ async function requestNotificationPermission() {
 function RootNavigator() {
   const authenticationClient = useAuthenticationClient();
 
-  const session = authenticationClient.useSession();
+  const session = authenticationClient.betterAuthenticationClient.useSession();
 
   const hasSession = !!session.data;
 
@@ -240,7 +288,7 @@ function RootNavigator() {
 function SplashScreenController() {
   const authenticationClient = useAuthenticationClient();
 
-  const session = authenticationClient.useSession();
+  const session = authenticationClient.betterAuthenticationClient.useSession();
 
   useEffect(() => {
     void SplashScreen.preventAutoHideAsync();

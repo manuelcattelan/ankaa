@@ -1,13 +1,13 @@
 import type * as ManagedRuntime from "effect/ManagedRuntime";
 
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import * as Config from "effect/Config";
 import * as ConfigProvider from "effect/ConfigProvider";
-import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { AppleSignIn } from "@/features/authentication/services/apple-sign-in";
+import { GoogleSignIn } from "@/features/authentication/services/google-sign-in";
 import { Accessibility } from "@/shared/services/accessibility";
 import { AuthenticationClient } from "@/shared/services/authentication-client";
+import { Crypto } from "@/shared/services/crypto";
 import { TrpcClient } from "@/shared/services/trpc-client";
 
 export type ApplicationRuntime = ManagedRuntime.ManagedRuntime<
@@ -15,22 +15,13 @@ export type ApplicationRuntime = ManagedRuntime.ManagedRuntime<
   Layer.Error<typeof applicationLayer>
 >;
 
-const googleSignInLayer = Layer.effectDiscard(
-  Effect.gen(function* () {
-    const googleSignInConfiguration = yield* Config.all({
-      iosClientId: Config.NonEmptyString("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID"),
-      webClientId: Config.NonEmptyString("EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID"),
-    });
-
-    GoogleSignin.configure(googleSignInConfiguration);
-  }),
-);
-
 export const applicationLayer = Layer.mergeAll(
   Accessibility.layer,
+  AppleSignIn.layer,
   AuthenticationClient.layer,
+  Crypto.layer,
+  GoogleSignIn.layer,
   TrpcClient.layer,
-  googleSignInLayer,
 ).pipe(
   Layer.provide(
     ConfigProvider.layer(
