@@ -8,13 +8,14 @@ import { useEffect, useState } from "react";
 import * as ReactNative from "react-native";
 
 import { useTrpc } from "@/clients/trpc";
-import { Button } from "@/components/button";
-import { CheckboxGroup } from "@/components/checkbox-group";
-import { ScrollView } from "@/components/scroll-view";
-import { StatusMessage } from "@/components/status-message";
-import { TextField } from "@/components/text-field";
-import { announceMessage } from "@/utilities/accessibility";
-import { getTrpcErrorMessage } from "@/utilities/errors";
+import { Button } from "@/shared/components/button";
+import { CheckboxGroup } from "@/shared/components/checkbox-group";
+import { ScrollView } from "@/shared/components/scroll-view";
+import { StatusMessage } from "@/shared/components/status-message";
+import { TextField } from "@/shared/components/text-field";
+import { getTrpcErrorMessage } from "@/shared/core/get-trpc-error-message";
+import { useAccessibility } from "@/shared/hooks/use-accessibility";
+import { useRuntime } from "@/shared/hooks/use-runtime";
 import { messages } from "@/utilities/messages";
 
 export type Exercise =
@@ -55,6 +56,10 @@ const MUSCLE_GROUP_LABELS = {
 export function ExercisePicker({ onSelectExercise }: ExercisePickerProperties) {
   const trpc = useTrpc();
 
+  const runtime = useRuntime();
+
+  const accessibility = useAccessibility();
+
   const exerciseLibrary = useQuery(trpc.exercise.list.queryOptions());
 
   const exerciseLibraryErrorMessage = exerciseLibrary.error
@@ -63,9 +68,11 @@ export function ExercisePicker({ onSelectExercise }: ExercisePickerProperties) {
 
   useEffect(() => {
     if (exerciseLibraryErrorMessage) {
-      announceMessage(exerciseLibraryErrorMessage);
+      runtime.runSync(
+        accessibility.announceMessage(exerciseLibraryErrorMessage),
+      );
     }
-  }, [exerciseLibraryErrorMessage]);
+  }, [accessibility, exerciseLibraryErrorMessage, runtime]);
 
   if (exerciseLibrary.isPending) {
     return <ReactNative.ActivityIndicator />;

@@ -1,4 +1,4 @@
-import { formatCount } from "@/utilities/format";
+import { formatCount } from "@/shared/core/format-count";
 
 type SetCounterStatusOptions = {
   workingSetDoneCount: number;

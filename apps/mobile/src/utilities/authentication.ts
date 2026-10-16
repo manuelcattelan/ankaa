@@ -1,4 +1,5 @@
-import { authenticationClient } from "@/clients/authentication";
+import type { AuthenticationClient } from "@/shared/services/authentication-client";
+
 import { createAuthenticationError } from "@/utilities/errors";
 
 type AuthenticationFetchOptions = {
@@ -18,6 +19,7 @@ type AuthenticationResponse<TData> =
   | { data: TData; error: null };
 
 type RequestOtpCodeOptions = {
+  authenticationClient: AuthenticationClient["Service"];
   email: string;
 };
 
@@ -30,7 +32,10 @@ type UnwrapAuthenticationResponseOptions<TData> = {
   retryAfterSeconds?: number;
 };
 
-export function requestOtpCode({ email }: RequestOtpCodeOptions) {
+export function requestOtpCode({
+  authenticationClient,
+  email,
+}: RequestOtpCodeOptions) {
   return sendAuthenticationRequest((fetchOptions) =>
     authenticationClient.emailOtp.sendVerificationOtp(
       { email, type: "sign-in" },

@@ -3,20 +3,19 @@ import { Redirect, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 
-import { authenticationClient } from "@/clients/authentication";
-import { Button } from "@/components/button";
-import { ScrollView } from "@/components/scroll-view";
-import { Text } from "@/components/text";
-import { TextField } from "@/components/text-field";
-import { announceMessage } from "@/utilities/accessibility";
+import { Button } from "@/shared/components/button";
+import { ScrollView } from "@/shared/components/scroll-view";
+import { Text } from "@/shared/components/text";
+import { TextField } from "@/shared/components/text-field";
+import { MILLISECONDS_PER_SECOND } from "@/shared/constants/time";
+import { useAccessibility } from "@/shared/hooks/use-accessibility";
+import { useAuthenticationClient } from "@/shared/hooks/use-authentication-client";
+import { useRuntime } from "@/shared/hooks/use-runtime";
 import {
   requestOtpCode,
   sendAuthenticationRequest,
 } from "@/utilities/authentication";
-import {
-  HTTP_STATUS_TOO_MANY_REQUESTS,
-  MILLISECONDS_PER_SECOND,
-} from "@/utilities/constants";
+import { HTTP_STATUS_TOO_MANY_REQUESTS } from "@/utilities/constants";
 import {
   announceAuthenticationError,
   getAuthenticationErrorMessage,
@@ -52,7 +51,7 @@ const OTP_CODE_LENGTH = 6;
 const COOLDOWN_INTERVAL_MILLISECONDS = 1_000;
 const COOLDOWN_SECONDS = 60;
 
-export default function ValidateOtpCodeScreen() {
+export default function ValidateOtpCodeRoute() {
   const searchParameters =
     useLocalSearchParams<ValidateOtpCodeSearchParameters>();
 
@@ -91,6 +90,10 @@ function useCooldown({
   cooldownEndMessage,
   getCooldownInitialDeadline = Date.now,
 }: UseCooldownOptions) {
+  const runtime = useRuntime();
+
+  const accessibility = useAccessibility();
+
   const [cooldownDeadline, setCooldownDeadline] = useState(
     getCooldownInitialDeadline,
   );
@@ -114,14 +117,20 @@ function useCooldown({
 
       if (cooldownTickTime >= cooldownDeadline) {
         clearInterval(cooldownInterval);
-        announceMessage(cooldownEndMessage);
+        runtime.runSync(accessibility.announceMessage(cooldownEndMessage));
       }
     }, COOLDOWN_INTERVAL_MILLISECONDS);
 
     return () => {
       clearInterval(cooldownInterval);
     };
-  }, [cooldownDeadline, cooldownEndMessage, isCooldownActive]);
+  }, [
+    accessibility,
+    cooldownDeadline,
+    cooldownEndMessage,
+    isCooldownActive,
+    runtime,
+  ]);
 
   function startCooldown(cooldownSeconds: number) {
     const cooldownStart = Date.now();
@@ -141,6 +150,12 @@ function useCooldown({
 }
 
 function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
+  const authenticationClient = useAuthenticationClient();
+
+  const runtime = useRuntime();
+
+  const accessibility = useAccessibility();
+
   const [
     resendCooldownRemainingSeconds,
     startResendCooldown,
@@ -162,9 +177,9 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
   const [shouldRequestNewOtpCode, setShouldRequestNewOtpCode] = useState(false);
 
   const resendOtpCode = useMutation({
-    mutationFn: requestOtpCode,
+    mutationFn: () => requestOtpCode({ authenticationClient, email }),
     onError: (error) => {
-      announceAuthenticationError(error);
+      runtime.runSync(announceAuthenticationError(error));
 
       if (
         isAuthenticationError(error) &&
@@ -186,7 +201,7 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
         authenticationClient.signIn.emailOtp(variables, fetchOptions),
       ),
     onError: (error) => {
-      announceAuthenticationError(error);
+      runtime.runSync(announceAuthenticationError(error));
 
       if (!isAuthenticationError(error)) {
         return;
@@ -233,7 +248,7 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
     resendOtpCode.reset();
     validateOtpCode.reset();
 
-    resendOtpCode.mutate({ email });
+    resendOtpCode.mutate();
   }
 
   function handleValidateOtpCode() {
@@ -250,7 +265,7 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
         messages.validateOtpCode.otpCodeLengthError(OTP_CODE_LENGTH);
 
       setOtpCodeValidationError(otpCodeLengthError);
-      announceMessage(otpCodeLengthError);
+      runtime.runSync(accessibility.announceMessage(otpCodeLengthError));
 
       return;
     }

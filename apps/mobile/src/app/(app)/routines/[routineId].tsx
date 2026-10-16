@@ -9,7 +9,7 @@ type RoutineIdSearchParameters = {
   routineId: string;
 };
 
-export default function RoutineIdScreen() {
+export default function RoutineIdRoute() {
   const searchParameters = useLocalSearchParams<RoutineIdSearchParameters>();
 
   const trpc = useTrpc();

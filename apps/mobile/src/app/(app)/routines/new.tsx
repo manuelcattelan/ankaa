@@ -1,5 +1,5 @@
 import { RoutineEditor } from "@/components/routine-editor";
 
-export default function NewScreen() {
+export default function NewRoute() {
   return <RoutineEditor />;
 }

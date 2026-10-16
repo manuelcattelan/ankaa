@@ -1,11 +1,11 @@
 import { Link, Stack } from "expo-router";
 import { View } from "react-native";
 
-import { Button } from "@/components/button";
-import { Text } from "@/components/text";
+import { Button } from "@/shared/components/button";
+import { Text } from "@/shared/components/text";
 import { messages } from "@/utilities/messages";
 
-export default function NotFoundScreen() {
+export default function NotFoundRoute() {
   return (
     <View>
       <Stack.Screen

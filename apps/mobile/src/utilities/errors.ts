@@ -2,11 +2,11 @@ import {
   isErrorWithCode,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
-import { isTRPCClientError } from "@trpc/client";
+import * as Effect from "effect/Effect";
 
-import type { authenticationClient } from "@/clients/authentication";
+import type { AuthenticationClient } from "@/shared/services/authentication-client";
 
-import { announceMessage } from "@/utilities/accessibility";
+import { Accessibility } from "@/shared/services/accessibility";
 import {
   HTTP_STATUS_TOO_MANY_REQUESTS,
   REQUEST_CANCELED_ERROR_CODE,
@@ -19,7 +19,7 @@ type AuthenticationErrorCode =
   | "EMAIL_NOT_VERIFIED"
   | "OAUTH_LINK_ERROR"
   | "USER_EMAIL_NOT_FOUND"
-  | keyof typeof authenticationClient.$ERROR_CODES;
+  | keyof AuthenticationClient["Service"]["$ERROR_CODES"];
 
 type AuthenticationErrorDetails = {
   code?: string;
@@ -43,9 +43,13 @@ const authenticationErrorMessages: Record<string, string | undefined> = {
   USER_EMAIL_NOT_FOUND: messages.error.emailNotShared,
 } satisfies Partial<Record<AuthenticationErrorCode, string>>;
 
-export function announceAuthenticationError(error: unknown) {
-  announceMessage(getAuthenticationErrorMessage(error));
-}
+export const announceAuthenticationError = Effect.fn(
+  "announceAuthenticationError",
+)(function* (error: unknown) {
+  const accessibility = yield* Accessibility;
+
+  yield* accessibility.announceMessage(getAuthenticationErrorMessage(error));
+});
 
 export function createAuthenticationError({
   message,
@@ -64,14 +68,6 @@ export function getAuthenticationErrorMessage(error: unknown) {
 
   if (isErrorWithCode(error)) {
     return getSignInErrorMessage(error.code);
-  }
-
-  return messages.error.serverUnreachable;
-}
-
-export function getTrpcErrorMessage(error: unknown) {
-  if (isTRPCClientError(error) && error.data) {
-    return messages.error.unknown;
   }
 
   return messages.error.serverUnreachable;

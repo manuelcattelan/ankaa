@@ -29,7 +29,8 @@ The mobile app follows the architecture in the root `AGENTS.md`: its Core decide
 - `src/layer.ts` defines `applicationLayer`, the application Layer of the mobile app. It installs `ConfigProvider.fromUnknown`, with one static `process.env.EXPO_PUBLIC_*` reference per variable, as the root `AGENTS.md` describes.
 - `src/features/<feature>/` holds the code of one Feature, and `src/shared/` holds what several Features use. Both use the same role folders, so `shared/` reads exactly like a Feature, and each folder exists only when it holds a file:
   - `core/`: the Core of the Feature, such as reducers with their action unions, builders, selectors, the classification of errors to retry, validators and formatters.
-  - `services/`: the Services that wrap a device or platform API, such as the API client, the better-auth client, storage on the device, notifications and crypto.
+  - `constants/`: the value sets and limits that only the mobile app uses, one file per concept, as the `constants/` folders of `@ankaa/core` hold them. A constant that the server uses too goes in `@ankaa/core` instead.
+  - `services/`: the Services that wrap a device or platform API, such as the API client, the better-auth client, storage on the device, notifications, crypto and accessibility announcements.
   - `interactors/`: the Interactors, one business operation each.
   - `errors/`: the error classes of the Feature.
   - `queries/`: the Query options of the Feature, one factory function per file that takes the Runtime and returns `queryOptions(...)`, which hooks and screens import.

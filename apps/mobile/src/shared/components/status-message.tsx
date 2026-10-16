@@ -1,6 +1,6 @@
 import * as ReactNative from "react-native";
 
-import { Text } from "@/components/text";
+import { Text } from "@/shared/components/text";
 
 type StatusMessageProperties = {
   message?: string;

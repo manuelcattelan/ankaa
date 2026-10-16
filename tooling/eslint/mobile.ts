@@ -45,8 +45,10 @@ const ROUTE_IMPORTABLE_SHARED_PATHS = [
 const LEGACY_LAYOUT_PATHS = [
   "./clients",
   "./components",
-  "./environment.ts",
   "./providers",
+  "./shared/constants",
+  "./shared/core",
+  "./shared/hooks",
   "./utilities",
 ];
 
@@ -61,7 +63,7 @@ const RELATIVE_IMPORT_PATTERN = {
 
 const WRAPPED_PRIMITIVES_IMPORT = {
   importNames: WRAPPED_PRIMITIVES,
-  message: "Use the component with the same name from @/components.",
+  message: "Use the component with the same name from @/shared/components.",
   name: "react-native",
 };
 
@@ -150,7 +152,7 @@ export const mobileConfiguration = defineConfig([
     },
   },
   {
-    files: ["src/components/**"],
+    files: ["src/components/**", "src/shared/components/**"],
     rules: {
       "no-restricted-imports": [
         "error",

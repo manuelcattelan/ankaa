@@ -9,14 +9,15 @@ import type { Exercise } from "@/components/exercise-picker";
 import type { Routine } from "@/components/routine-editor";
 import type { WorkoutDocument } from "@/utilities/workout-documents";
 
-import { authenticationClient } from "@/clients/authentication";
 import { useTrpc } from "@/clients/trpc";
 import { useWorkoutDocuments } from "@/clients/workout-documents";
-import { Button } from "@/components/button";
-import { ScrollView } from "@/components/scroll-view";
-import { StatusMessage } from "@/components/status-message";
-import { announceMessage } from "@/utilities/accessibility";
-import { getTrpcErrorMessage } from "@/utilities/errors";
+import { Button } from "@/shared/components/button";
+import { ScrollView } from "@/shared/components/scroll-view";
+import { StatusMessage } from "@/shared/components/status-message";
+import { getTrpcErrorMessage } from "@/shared/core/get-trpc-error-message";
+import { useAccessibility } from "@/shared/hooks/use-accessibility";
+import { useAuthenticationClient } from "@/shared/hooks/use-authentication-client";
+import { useRuntime } from "@/shared/hooks/use-runtime";
 import { createIdentifier } from "@/utilities/identifiers";
 import { messages } from "@/utilities/messages";
 
@@ -39,10 +40,16 @@ type LinkButtonProperties = {
 const WORKOUT_DOCUMENT_INITIAL_VERSION = 1;
 const WORKOUT_DOCUMENT_INITIAL_SYNCED_VERSION = 0;
 
-export default function AppScreen() {
+export default function AppRoute() {
   const router = useRouter();
 
   const trpc = useTrpc();
+
+  const authenticationClient = useAuthenticationClient();
+
+  const runtime = useRuntime();
+
+  const accessibility = useAccessibility();
 
   const session = authenticationClient.useSession();
 
@@ -68,9 +75,9 @@ export default function AppScreen() {
 
   useEffect(() => {
     if (routinesErrorMessage) {
-      announceMessage(routinesErrorMessage);
+      runtime.runSync(accessibility.announceMessage(routinesErrorMessage));
     }
-  }, [routinesErrorMessage]);
+  }, [accessibility, routinesErrorMessage, runtime]);
 
   function handleSignOut() {
     if (signOut.isPending) {

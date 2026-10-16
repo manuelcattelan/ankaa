@@ -1,7 +1,7 @@
 import { useTheme } from "expo-router";
 import * as ReactNative from "react-native";
 
-import { MINIMUM_TOUCH_TARGET_SIZE } from "@/utilities/constants";
+import { MINIMUM_TOUCH_TARGET_SIZE } from "@/shared/constants/touch-target";
 
 type TextInputProperties = ReactNative.TextInputProps;
 

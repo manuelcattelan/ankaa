@@ -1,8 +1,8 @@
 import type { TextInputProps } from "react-native";
 
-import { StatusMessage } from "@/components/status-message";
-import { Text } from "@/components/text";
-import { TextInput } from "@/components/text-input";
+import { StatusMessage } from "@/shared/components/status-message";
+import { Text } from "@/shared/components/text";
+import { TextInput } from "@/shared/components/text-input";
 import { messages } from "@/utilities/messages";
 
 type TextFieldProperties = TextInputProps & {

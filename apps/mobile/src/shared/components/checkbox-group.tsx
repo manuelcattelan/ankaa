@@ -1,6 +1,6 @@
 import { Checkbox, Column, Host } from "@expo/ui";
 
-import { Text } from "@/components/text";
+import { Text } from "@/shared/components/text";
 
 type CheckboxGroupProperties<TOption extends string> = {
   label: string;

@@ -27,23 +27,22 @@ import { useReducer, useState } from "react";
 import type { Exercise } from "@/components/exercise-picker";
 
 import { useTrpc } from "@/clients/trpc";
-import { Button } from "@/components/button";
-import { CheckboxGroup } from "@/components/checkbox-group";
 import { ExercisePicker } from "@/components/exercise-picker";
-import { PickerField } from "@/components/picker-field";
-import { ScrollView } from "@/components/scroll-view";
-import { StatusMessage } from "@/components/status-message";
-import { Text } from "@/components/text";
-import { TextField } from "@/components/text-field";
-import { announceMessage } from "@/utilities/accessibility";
-import {
-  convertUndefinedToNull,
-  parseOptionalWholeNumber,
-} from "@/utilities/conversion";
-import { getTrpcErrorMessage } from "@/utilities/errors";
+import { Button } from "@/shared/components/button";
+import { CheckboxGroup } from "@/shared/components/checkbox-group";
+import { PickerField } from "@/shared/components/picker-field";
+import { ScrollView } from "@/shared/components/scroll-view";
+import { StatusMessage } from "@/shared/components/status-message";
+import { Text } from "@/shared/components/text";
+import { TextField } from "@/shared/components/text-field";
+import { convertUndefinedToNull } from "@/shared/core/convert-undefined-to-null";
+import { getTrpcErrorMessage } from "@/shared/core/get-trpc-error-message";
+import { getWholeNumberValidationError } from "@/shared/core/get-whole-number-validation-error";
+import { parseOptionalWholeNumber } from "@/shared/core/parse-optional-whole-number";
+import { useAccessibility } from "@/shared/hooks/use-accessibility";
+import { useRuntime } from "@/shared/hooks/use-runtime";
 import { createIdentifier } from "@/utilities/identifiers";
 import { messages } from "@/utilities/messages";
-import { getWholeNumberValidationError } from "@/utilities/validation";
 
 export type Routine = inferRouterOutputs<AppRouter>["routine"]["list"][number];
 
@@ -280,6 +279,10 @@ const VARIATION_PICKER_OPTIONS: VariationPickerOption[] = [
 export function RoutineEditor({ routine }: RoutineEditorProperties) {
   const trpc = useTrpc();
 
+  const runtime = useRuntime();
+
+  const accessibility = useAccessibility();
+
   const router = useRouter();
 
   const queryClient = useQueryClient();
@@ -300,7 +303,9 @@ export function RoutineEditor({ routine }: RoutineEditorProperties) {
   const saveRoutine = useMutation(
     trpc.routine.save.mutationOptions({
       onError: (error) => {
-        announceMessage(getRoutineSaveErrorMessage(error));
+        runtime.runSync(
+          accessibility.announceMessage(getRoutineSaveErrorMessage(error)),
+        );
       },
       onSuccess: showUpdatedRoutineList,
     }),
@@ -309,7 +314,9 @@ export function RoutineEditor({ routine }: RoutineEditorProperties) {
   const deleteRoutine = useMutation(
     trpc.routine.delete.mutationOptions({
       onError: (error) => {
-        announceMessage(getTrpcErrorMessage(error));
+        runtime.runSync(
+          accessibility.announceMessage(getTrpcErrorMessage(error)),
+        );
       },
       onSuccess: showUpdatedRoutineList,
     }),
@@ -375,7 +382,11 @@ export function RoutineEditor({ routine }: RoutineEditorProperties) {
     deleteRoutine.reset();
 
     if (hasRoutineDraftValidationErrors(routineDraft)) {
-      announceMessage(messages.routineEditor.routineDraftInvalidError);
+      runtime.runSync(
+        accessibility.announceMessage(
+          messages.routineEditor.routineDraftInvalidError,
+        ),
+      );
 
       return;
     }

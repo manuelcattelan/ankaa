@@ -2,7 +2,7 @@ import type { PickerItemValue } from "@expo/ui";
 
 import { Host, Picker } from "@expo/ui";
 
-import { Text } from "@/components/text";
+import { Text } from "@/shared/components/text";
 
 type PickerFieldProperties<TOption extends PickerItemValue> = {
   label: string;

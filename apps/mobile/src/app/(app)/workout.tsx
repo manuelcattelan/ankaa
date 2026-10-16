@@ -29,18 +29,19 @@ import type {
 
 import { useTrpc } from "@/clients/trpc";
 import { useWorkoutDocuments } from "@/clients/workout-documents";
-import { Button } from "@/components/button";
-import { PickerField } from "@/components/picker-field";
-import { ScrollView } from "@/components/scroll-view";
-import { StatusMessage } from "@/components/status-message";
-import { Text } from "@/components/text";
-import { TextField } from "@/components/text-field";
-import { announceMessage } from "@/utilities/accessibility";
-import { MILLISECONDS_PER_SECOND } from "@/utilities/constants";
+import { Button } from "@/shared/components/button";
+import { PickerField } from "@/shared/components/picker-field";
+import { ScrollView } from "@/shared/components/scroll-view";
+import { StatusMessage } from "@/shared/components/status-message";
+import { Text } from "@/shared/components/text";
+import { TextField } from "@/shared/components/text-field";
+import { MILLISECONDS_PER_SECOND } from "@/shared/constants/time";
+import { getWholeNumberValidationError } from "@/shared/core/get-whole-number-validation-error";
+import { useAccessibility } from "@/shared/hooks/use-accessibility";
+import { useRuntime } from "@/shared/hooks/use-runtime";
 import { parseWeightValue } from "@/utilities/conversion";
 import { createIdentifier } from "@/utilities/identifiers";
 import { messages } from "@/utilities/messages";
-import { getWholeNumberValidationError } from "@/utilities/validation";
 import { getWorkoutDocumentRoutineExerciseSet } from "@/utilities/workout-documents";
 
 type GetDropSetWeightValueSuggestionOptions = {
@@ -169,7 +170,7 @@ const WEIGHT_UNIT_LABELS = {
   pound: messages.workout.poundWeightUnitLabel,
 } satisfies Record<WeightUnit, string>;
 
-export default function WorkoutScreen() {
+export default function WorkoutRoute() {
   const workoutDocuments = useWorkoutDocuments();
 
   if (!workoutDocuments.runningWorkoutDocument) {
@@ -360,6 +361,10 @@ function useCurrentTime() {
 function WorkoutContent({ workoutDocument }: WorkoutContentProperties) {
   const router = useRouter();
 
+  const runtime = useRuntime();
+
+  const accessibility = useAccessibility();
+
   const trpc = useTrpc();
 
   const workoutDocuments = useWorkoutDocuments();
@@ -430,7 +435,9 @@ function WorkoutContent({ workoutDocument }: WorkoutContentProperties) {
     setShouldShowValidationErrors(true);
 
     if (hasWorkoutDocumentValidationErrors(workoutDocument)) {
-      announceMessage(messages.workout.workoutInvalidError);
+      runtime.runSync(
+        accessibility.announceMessage(messages.workout.workoutInvalidError),
+      );
 
       return;
     }

@@ -16,15 +16,13 @@ import type {
   WorkoutDocumentsAction,
 } from "@/utilities/workout-documents";
 
-import { authenticationClient } from "@/clients/authentication";
 import { useTrpc } from "@/clients/trpc";
 import { WorkoutDocumentsContext } from "@/clients/workout-documents";
-import {
-  convertUndefinedToNull,
-  parseOptionalWholeNumber,
-  parseWeightValue,
-} from "@/utilities/conversion";
-import { getWholeNumberValidationError } from "@/utilities/validation";
+import { convertUndefinedToNull } from "@/shared/core/convert-undefined-to-null";
+import { getWholeNumberValidationError } from "@/shared/core/get-whole-number-validation-error";
+import { parseOptionalWholeNumber } from "@/shared/core/parse-optional-whole-number";
+import { useAuthenticationClient } from "@/shared/hooks/use-authentication-client";
+import { parseWeightValue } from "@/utilities/conversion";
 import {
   getWorkoutDocumentRoutineExerciseSet,
   workoutDocumentSchema,
@@ -114,6 +112,8 @@ const FAILED_WORKOUT_SAVES_INITIAL_VALUE: FailedWorkoutSave[] = [];
 export function WorkoutDocumentsProvider({
   children,
 }: WorkoutDocumentsProviderProperties) {
+  const authenticationClient = useAuthenticationClient();
+
   const session = authenticationClient.useSession();
 
   const [workoutDocuments, dispatchWorkoutDocumentsAction] = useReducer(

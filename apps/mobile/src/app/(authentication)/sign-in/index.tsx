@@ -11,16 +11,15 @@ import { Link } from "expo-router";
 import { useEffect } from "react";
 import { StyleSheet, useColorScheme } from "react-native";
 
-import { authenticationClient } from "@/clients/authentication";
-import { Button } from "@/components/button";
-import { ScrollView } from "@/components/scroll-view";
-import { StatusMessage } from "@/components/status-message";
-import { announceMessage } from "@/utilities/accessibility";
+import { Button } from "@/shared/components/button";
+import { ScrollView } from "@/shared/components/scroll-view";
+import { StatusMessage } from "@/shared/components/status-message";
+import { MINIMUM_TOUCH_TARGET_SIZE } from "@/shared/constants/touch-target";
+import { useAccessibility } from "@/shared/hooks/use-accessibility";
+import { useAuthenticationClient } from "@/shared/hooks/use-authentication-client";
+import { useRuntime } from "@/shared/hooks/use-runtime";
 import { sendAuthenticationRequest } from "@/utilities/authentication";
-import {
-  MINIMUM_TOUCH_TARGET_SIZE,
-  REQUEST_CANCELED_ERROR_CODE,
-} from "@/utilities/constants";
+import { REQUEST_CANCELED_ERROR_CODE } from "@/utilities/constants";
 import {
   announceAuthenticationError,
   createAuthenticationError,
@@ -33,23 +32,35 @@ type BuildAppleIdTokenOptions = {
   nonce: string;
 };
 
-type SessionState = ReturnType<typeof authenticationClient.useSession>;
+type SessionState = ReturnType<SignInAuthenticationClient["useSession"]>;
+
+type SignInAuthenticationClient = ReturnType<typeof useAuthenticationClient>;
 
 const APPLE_BUTTON_CORNER_RADIUS = 8;
 
-export default function SignInScreen() {
+export default function SignInRoute() {
+  const authenticationClient = useAuthenticationClient();
+
+  const runtime = useRuntime();
+
+  const accessibility = useAccessibility();
+
   const session = authenticationClient.useSession();
 
   const colorScheme = useColorScheme();
 
   const signInApple = useMutation({
-    mutationFn: signInWithApple,
-    onError: announceAuthenticationError,
+    mutationFn: () => signInWithApple(authenticationClient),
+    onError: (error) => {
+      runtime.runSync(announceAuthenticationError(error));
+    },
   });
 
   const signInGoogle = useMutation({
-    mutationFn: signInWithGoogle,
-    onError: announceAuthenticationError,
+    mutationFn: () => signInWithGoogle(authenticationClient),
+    onError: (error) => {
+      runtime.runSync(announceAuthenticationError(error));
+    },
   });
 
   const appleAvailability = useQuery({
@@ -68,9 +79,9 @@ export default function SignInScreen() {
 
   useEffect(() => {
     if (sessionErrorMessage) {
-      announceMessage(sessionErrorMessage);
+      runtime.runSync(accessibility.announceMessage(sessionErrorMessage));
     }
-  }, [sessionErrorMessage]);
+  }, [accessibility, runtime, sessionErrorMessage]);
 
   function handleSignInApple() {
     if (isSignInPending) {
@@ -157,7 +168,9 @@ function getSessionErrorMessage(session: SessionState) {
   return getAuthenticationErrorMessage(session.error);
 }
 
-async function signInWithApple() {
+async function signInWithApple(
+  authenticationClient: SignInAuthenticationClient,
+) {
   try {
     const nonce = ExpoCrypto.randomUUID();
     const hashedNonce = await ExpoCrypto.digestStringAsync(
@@ -191,7 +204,9 @@ async function signInWithApple() {
   }
 }
 
-async function signInWithGoogle() {
+async function signInWithGoogle(
+  authenticationClient: SignInAuthenticationClient,
+) {
   await GoogleSignin.hasPlayServices();
 
   const signInResponse = await GoogleSignin.signIn();

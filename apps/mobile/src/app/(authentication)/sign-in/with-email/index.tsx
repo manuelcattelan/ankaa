@@ -3,10 +3,12 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { z } from "zod";
 
-import { Button } from "@/components/button";
-import { ScrollView } from "@/components/scroll-view";
-import { TextField } from "@/components/text-field";
-import { announceMessage } from "@/utilities/accessibility";
+import { Button } from "@/shared/components/button";
+import { ScrollView } from "@/shared/components/scroll-view";
+import { TextField } from "@/shared/components/text-field";
+import { useAccessibility } from "@/shared/hooks/use-accessibility";
+import { useAuthenticationClient } from "@/shared/hooks/use-authentication-client";
+import { useRuntime } from "@/shared/hooks/use-runtime";
 import { requestOtpCode } from "@/utilities/authentication";
 import {
   announceAuthenticationError,
@@ -14,15 +16,28 @@ import {
 } from "@/utilities/errors";
 import { messages } from "@/utilities/messages";
 
-export default function WithEmailScreen() {
+type SendOtpCodeVariables = {
+  email: string;
+};
+
+export default function WithEmailRoute() {
   const router = useRouter();
+
+  const authenticationClient = useAuthenticationClient();
+
+  const runtime = useRuntime();
+
+  const accessibility = useAccessibility();
 
   const [email, setEmail] = useState("");
   const [emailValidationError, setEmailValidationError] = useState<string>();
 
   const sendOtpCode = useMutation({
-    mutationFn: requestOtpCode,
-    onError: announceAuthenticationError,
+    mutationFn: (sendOtpCodeVariables: SendOtpCodeVariables) =>
+      requestOtpCode({ ...sendOtpCodeVariables, authenticationClient }),
+    onError: (error) => {
+      runtime.runSync(announceAuthenticationError(error));
+    },
   });
 
   const emailErrorMessage = sendOtpCode.error
@@ -41,7 +56,10 @@ export default function WithEmailScreen() {
 
     if (!parsedEmail.success) {
       setEmailValidationError(messages.error.emailInvalid);
-      announceMessage(messages.error.emailInvalid);
+
+      runtime.runSync(
+        accessibility.announceMessage(messages.error.emailInvalid),
+      );
 
       return;
     }
