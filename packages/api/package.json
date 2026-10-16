@@ -5,8 +5,7 @@
     "@ankaa/database": "workspace:*",
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",
-    "effect": "catalog:",
-    "zod": "catalog:"
+    "effect": "catalog:"
   },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",

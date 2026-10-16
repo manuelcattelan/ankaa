@@ -10,6 +10,7 @@ import { createLinkedWarmUpExercisesFilter } from "../../../shared/filters/creat
 import { createUniqueValuesFilter } from "../../../shared/filters/create-unique-values-filter.ts";
 import { supersetNeighborsFilter } from "../../../shared/filters/superset-neighbors-filter.ts";
 import { identifierSchema } from "../../../shared/schemas/identifier-schema.ts";
+import { int32Schema } from "../../../shared/schemas/int32-schema.ts";
 import { DAYS_OF_WEEK } from "../constants/day-of-week.ts";
 import {
   DROP_SET_WEIGHT_PERCENTAGE_MAXIMUM,
@@ -19,8 +20,6 @@ import { REST_SECONDS_MINIMUM } from "../constants/rest.ts";
 import { SEGMENT_COUNT_MINIMUM } from "../constants/segment.ts";
 
 export type RoutineSaveInput = typeof routineSaveInputSchema.Type;
-
-const int32Schema = Schema.Number.check(Schema.isInt32());
 
 const routineExerciseSetSchema = Schema.Struct({
   amount: Schema.NullOr(
