@@ -13,7 +13,6 @@ catalog:
   effect: ^4.0.5
   prettier: 3.9.6
   typescript: ~6.0.3
-  zod: ^4.6.4
 allowBuilds:
   esbuild: true
   unrs-resolver: true

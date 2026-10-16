@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { z } from "zod";
 
 import { getAuthenticationErrorMessage } from "@/features/authentication/core/get-authentication-error-message";
+import { isEmailValid } from "@/features/authentication/core/is-email-valid";
 import { announceAuthenticationError } from "@/features/authentication/interactors/announce-authentication-error";
 import { authenticationErrorMessages } from "@/features/authentication/messages/authentication-error-messages";
 import { withEmailScreenMessages } from "@/features/authentication/messages/with-email-screen-messages";
@@ -41,9 +41,9 @@ export function WithEmailScreen() {
     setEmailValidationError(undefined);
     sendOtpCode.reset();
 
-    const parsedEmail = z.email().safeParse(email.trim());
+    const trimmedEmail = email.trim();
 
-    if (!parsedEmail.success) {
+    if (!isEmailValid(trimmedEmail)) {
       setEmailValidationError(authenticationErrorMessages.emailInvalid);
 
       runtime.runSync(
@@ -54,11 +54,11 @@ export function WithEmailScreen() {
     }
 
     sendOtpCode.mutate(
-      { email: parsedEmail.data },
+      { email: trimmedEmail },
       {
         onSuccess: () => {
           router.push({
-            params: { email: parsedEmail.data },
+            params: { email: trimmedEmail },
             pathname: "/sign-in/with-email/validate-otp-code",
           });
         },
