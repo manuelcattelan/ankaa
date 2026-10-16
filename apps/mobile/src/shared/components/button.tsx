@@ -2,7 +2,7 @@ import { useTheme } from "expo-router";
 import * as ReactNative from "react-native";
 
 import { Text } from "@/shared/components/text";
-import { MINIMUM_TOUCH_TARGET_SIZE } from "@/shared/constants/touch-target";
+import { TOUCH_TARGET_SIZE_MINIMUM } from "@/shared/constants/touch-target";
 
 type ButtonProperties = Omit<
   ReactNative.PressableProps,
@@ -45,6 +45,6 @@ export function Button({
 }
 
 const styles = ReactNative.StyleSheet.create({
-  button: { minHeight: MINIMUM_TOUCH_TARGET_SIZE },
+  button: { minHeight: TOUCH_TARGET_SIZE_MINIMUM },
   disabled: { opacity: DISABLED_OPACITY },
 });

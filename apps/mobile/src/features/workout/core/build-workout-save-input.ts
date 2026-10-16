@@ -2,7 +2,7 @@ import type { WorkoutSaveInput } from "@ankaa/core/features/workout/schemas/work
 import type { WeightType } from "@ankaa/core/shared/constants/weight-type";
 
 import { AMOUNT_MINIMUM } from "@ankaa/core/shared/constants/amount";
-import { amountFilter } from "@ankaa/core/shared/filters/amount-filter";
+import * as Match from "effect/Match";
 
 import type {
   WorkoutDocument,
@@ -11,8 +11,8 @@ import type {
 
 import { parseWeightValue } from "@/features/workout/core/parse-weight-value";
 import { convertUndefinedToNull } from "@/shared/core/convert-undefined-to-null";
-import { getWholeNumberValidationError } from "@/shared/core/get-whole-number-validation-error";
 import { parseOptionalWholeNumber } from "@/shared/core/parse-optional-whole-number";
+import { validateWholeNumber } from "@/shared/core/validate-whole-number";
 
 type BuildWorkoutExerciseSetSegmentSaveInputOptions = {
   position: number;
@@ -82,16 +82,19 @@ function buildWorkoutExerciseSetSegmentSaveInput({
   workoutDocumentExerciseSetSegment,
 }: BuildWorkoutExerciseSetSegmentSaveInputOptions) {
   const isWeightAllowed = weightType !== "none";
-  const amountValidationError = getWholeNumberValidationError({
+  const amountValidationOutcome = validateWholeNumber({
     isRequired: false,
     minimum: AMOUNT_MINIMUM,
-    wholeNumberFilter: amountFilter,
     wholeNumberText: workoutDocumentExerciseSetSegment.amount,
   });
 
   return {
     amount: parseOptionalWholeNumber(
-      amountValidationError ? "" : workoutDocumentExerciseSetSegment.amount,
+      Match.valueTags(amountValidationOutcome, {
+        WholeNumberBelowMinimum: () => undefined,
+        WholeNumberOutOfRange: () => undefined,
+        WholeNumberValid: () => workoutDocumentExerciseSetSegment.amount,
+      }),
     ),
     id: workoutDocumentExerciseSetSegment.id,
     position,

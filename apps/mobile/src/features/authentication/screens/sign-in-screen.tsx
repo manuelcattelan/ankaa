@@ -1,38 +1,30 @@
 import { GoogleSigninButton } from "@react-native-google-signin/google-signin";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import * as ExpoAppleAuthentication from "expo-apple-authentication";
-import { Link } from "expo-router";
 import { useEffect } from "react";
 import { StyleSheet, useColorScheme } from "react-native";
 
-import type { AuthenticationClient } from "@/shared/services/authentication-client";
-
 import { getAuthenticationErrorMessage } from "@/features/authentication/core/get-authentication-error-message";
+import { getSessionErrorMessage } from "@/features/authentication/core/get-session-error-message";
 import { announceAuthenticationError } from "@/features/authentication/interactors/announce-authentication-error";
 import { signInScreenMessages } from "@/features/authentication/messages/sign-in-screen-messages";
 import { createAppleSignInMutationOptions } from "@/features/authentication/mutations/create-apple-sign-in-mutation-options";
 import { createGoogleSignInMutationOptions } from "@/features/authentication/mutations/create-google-sign-in-mutation-options";
 import { createAppleSignInAvailabilityQueryOptions } from "@/features/authentication/queries/create-apple-sign-in-availability-query-options";
-import { Button } from "@/shared/components/button";
+import { LinkButton } from "@/shared/components/link-button";
 import { ScrollView } from "@/shared/components/scroll-view";
 import { StatusMessage } from "@/shared/components/status-message";
-import { MINIMUM_TOUCH_TARGET_SIZE } from "@/shared/constants/touch-target";
-import { useAuthenticationClient } from "@/shared/hooks/use-authentication-client";
+import { TOUCH_TARGET_SIZE_MINIMUM } from "@/shared/constants/touch-target";
+import { useAuthenticationSession } from "@/shared/hooks/use-authentication-session";
 import { useRuntime } from "@/shared/hooks/use-runtime";
 import { announceMessage } from "@/shared/interactors/announce-message";
-
-type SessionState = ReturnType<
-  AuthenticationClient["Service"]["betterAuthenticationClient"]["useSession"]
->;
 
 const APPLE_BUTTON_CORNER_RADIUS = 8;
 
 export function SignInScreen() {
-  const authenticationClient = useAuthenticationClient();
-
   const runtime = useRuntime();
 
-  const session = authenticationClient.betterAuthenticationClient.useSession();
+  const session = useAuthenticationSession();
 
   const colorScheme = useColorScheme();
 
@@ -50,7 +42,7 @@ export function SignInScreen() {
     },
   });
 
-  const appleAvailability = useQuery(
+  const appleSignInAvailability = useQuery(
     createAppleSignInAvailabilityQueryOptions(runtime),
   );
 
@@ -90,7 +82,7 @@ export function SignInScreen() {
   return (
     <ScrollView>
       <StatusMessage message={signInErrorMessage} />
-      {appleAvailability.data ? (
+      {appleSignInAvailability.data ? (
         <ExpoAppleAuthentication.AppleAuthenticationButton
           buttonStyle={
             colorScheme === "dark"
@@ -115,25 +107,14 @@ export function SignInScreen() {
         onPress={handleSignInGoogle}
         size={GoogleSigninButton.Size.Wide}
       />
-      <Link asChild href="/sign-in/with-email">
-        <Button title={signInScreenMessages.continueWithEmailButton} />
-      </Link>
+      <LinkButton
+        href="/sign-in/with-email"
+        title={signInScreenMessages.continueWithEmailButton}
+      />
     </ScrollView>
   );
 }
 
-function getSessionErrorMessage(session: SessionState) {
-  if (
-    !session.error ||
-    session.data ||
-    typeof session.error.status === "number"
-  ) {
-    return undefined;
-  }
-
-  return getAuthenticationErrorMessage(session.error);
-}
-
 const styles = StyleSheet.create({
-  appleButton: { height: MINIMUM_TOUCH_TARGET_SIZE, width: "100%" },
+  appleButton: { height: TOUCH_TARGET_SIZE_MINIMUM, width: "100%" },
 });

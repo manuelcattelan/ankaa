@@ -1,4 +1,5 @@
-import { urlFilter } from "@ankaa/core/shared/filters/url-filter";
+import { NODE_ENVIRONMENTS } from "@ankaa/core/shared/constants/node-environment";
+import { urlSchema } from "@ankaa/core/shared/schemas/url-schema";
 import { Database } from "@ankaa/database";
 import { Email } from "@ankaa/email";
 import { betterAuth } from "better-auth";
@@ -25,16 +26,10 @@ export class Authentication extends Context.Service<Authentication>()(
         appleAppBundleIdentifier: Config.NonEmptyString(
           "APPLE_APP_BUNDLE_IDENTIFIER",
         ),
-        baseUrl: Config.schema(
-          Schema.String.check(urlFilter),
-          "BETTER_AUTH_URL",
-        ),
+        baseUrl: Config.schema(urlSchema, "BETTER_AUTH_URL"),
         googleIosClientId: Config.NonEmptyString("GOOGLE_IOS_CLIENT_ID"),
         googleWebClientId: Config.NonEmptyString("GOOGLE_WEB_CLIENT_ID"),
-        nodeEnvironment: Config.Literals(
-          ["development", "production"],
-          "NODE_ENV",
-        ),
+        nodeEnvironment: Config.Literals(NODE_ENVIRONMENTS, "NODE_ENV"),
         secret: Config.schema(
           Schema.Redacted(
             Schema.String.check(
@@ -47,39 +42,37 @@ export class Authentication extends Context.Service<Authentication>()(
 
       const context = yield* Effect.context();
 
-      const auth = betterAuth(
+      const betterAuthentication = betterAuth(
         createAuthenticationOptions({
           ...authenticationConfiguration,
           database: database.drizzleDatabase,
           secret: Redacted.value(authenticationConfiguration.secret),
-          sendVerificationOtp: ({ email: emailAddress, otp }) =>
+          sendVerificationOtpCode: ({ email: emailAddress, otpCode }) =>
             Effect.runPromiseWith(context)(
               email.send({
                 subject: "Your sign-in OTP code",
-                text: otp,
+                text: otpCode,
                 to: emailAddress,
               }),
             ),
         }),
       );
 
-      yield* Effect.tryPromise({
-        catch: (cause) => new AuthenticationError({ cause }),
-        try: () => auth.$context,
-      });
-
-      function getSession(headers: Headers) {
+      function request<TResponse>(execute: () => Promise<TResponse>) {
         return Effect.tryPromise({
           catch: (cause) => new AuthenticationError({ cause }),
-          try: () => auth.api.getSession({ headers }),
+          try: execute,
         });
       }
 
-      function handleRequest(request: Request) {
-        return Effect.tryPromise({
-          catch: (cause) => new AuthenticationError({ cause }),
-          try: () => auth.handler(request),
-        });
+      yield* request(() => betterAuthentication.$context);
+
+      function getSession(headers: Headers) {
+        return request(() => betterAuthentication.api.getSession({ headers }));
+      }
+
+      function handleRequest(webRequest: Request) {
+        return request(() => betterAuthentication.handler(webRequest));
       }
 
       return { getSession, handleRequest };

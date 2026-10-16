@@ -7,7 +7,8 @@ import { ActivityIndicator } from "react-native";
 
 import type { Exercise } from "@/shared/interactors/list-exercises";
 
-import { filterExercises } from "@/features/exercise/core/filter-exercises";
+import { getExerciseSearchOptions } from "@/features/exercise/core/get-exercise-search-options";
+import { searchExercises } from "@/features/exercise/core/search-exercises";
 import { exercisePickerMessages } from "@/features/exercise/messages/exercise-picker-messages";
 import { Button } from "@/shared/components/button";
 import { CheckboxGroup } from "@/shared/components/checkbox-group";
@@ -27,8 +28,8 @@ type ExercisePickerProperties = {
   onSelectExercise: (exercise: Exercise) => void;
 };
 
-const EQUIPMENT_FILTER_INITIAL_VALUE: Equipment[] = [];
-const MUSCLE_GROUP_FILTER_INITIAL_VALUE: MuscleGroup[] = [];
+const EQUIPMENT_SELECTION_INITIAL_VALUE: Equipment[] = [];
+const MUSCLE_GROUP_SELECTION_INITIAL_VALUE: MuscleGroup[] = [];
 
 const EQUIPMENT_LABELS = {
   barbell: exercisePickerMessages.barbellEquipmentLabel,
@@ -77,37 +78,20 @@ function ExercisePickerContent({
   exercises,
   onSelectExercise,
 }: ExercisePickerContentProperties) {
-  const [equipmentFilter, setEquipmentFilter] = useState(
-    EQUIPMENT_FILTER_INITIAL_VALUE,
+  const [equipmentSelection, setEquipmentSelection] = useState(
+    EQUIPMENT_SELECTION_INITIAL_VALUE,
   );
-  const [exerciseNameFilter, setExerciseNameFilter] = useState("");
-  const [muscleGroupFilter, setMuscleGroupFilter] = useState(
-    MUSCLE_GROUP_FILTER_INITIAL_VALUE,
+  const [exerciseNameSearchText, setExerciseNameSearchText] = useState("");
+  const [muscleGroupSelection, setMuscleGroupSelection] = useState(
+    MUSCLE_GROUP_SELECTION_INITIAL_VALUE,
   );
 
-  const equipmentFilterOptions = [
-    ...new Set(
-      exercises.flatMap((exercise) =>
-        exercise.exerciseEquipment.map(
-          (exerciseEquipment) => exerciseEquipment.equipment,
-        ),
-      ),
-    ),
-  ];
-  const muscleGroupFilterOptions = [
-    ...new Set(
-      exercises.flatMap((exercise) =>
-        exercise.exerciseMuscleGroups.map(
-          (exerciseMuscleGroup) => exerciseMuscleGroup.muscleGroup,
-        ),
-      ),
-    ),
-  ];
-  const matchingExercises = filterExercises({
-    equipmentFilter,
-    exerciseNameFilter,
+  const exerciseSearchOptions = getExerciseSearchOptions(exercises);
+  const matchingExercises = searchExercises({
+    equipmentSelection,
+    exerciseNameSearchText,
     exercises,
-    muscleGroupFilter,
+    muscleGroupSelection,
   });
 
   function handleSelectExercise(exercise: Exercise) {
@@ -121,23 +105,23 @@ function ExercisePickerContent({
         autoCorrect={false}
         enterKeyHint="search"
         inputMode="search"
-        label={exercisePickerMessages.exerciseNameFilterLabel}
-        onChangeText={setExerciseNameFilter}
-        value={exerciseNameFilter}
+        label={exercisePickerMessages.exerciseNameLabel}
+        onChangeText={setExerciseNameSearchText}
+        value={exerciseNameSearchText}
       />
       <CheckboxGroup
-        label={exercisePickerMessages.muscleGroupFilterLabel}
-        onChangeSelectedOptions={setMuscleGroupFilter}
+        label={exercisePickerMessages.muscleGroupsLabel}
+        onChangeSelectedOptions={setMuscleGroupSelection}
         optionLabels={MUSCLE_GROUP_LABELS}
-        options={muscleGroupFilterOptions}
-        selectedOptions={muscleGroupFilter}
+        options={exerciseSearchOptions.muscleGroupOptions}
+        selectedOptions={muscleGroupSelection}
       />
       <CheckboxGroup
-        label={exercisePickerMessages.equipmentFilterLabel}
-        onChangeSelectedOptions={setEquipmentFilter}
+        label={exercisePickerMessages.equipmentLabel}
+        onChangeSelectedOptions={setEquipmentSelection}
         optionLabels={EQUIPMENT_LABELS}
-        options={equipmentFilterOptions}
-        selectedOptions={equipmentFilter}
+        options={exerciseSearchOptions.equipmentOptions}
+        selectedOptions={equipmentSelection}
       />
       <StatusMessage
         message={

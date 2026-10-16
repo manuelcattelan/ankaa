@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@ankaa/core": "workspace:*",
-    "drizzle-orm": "1.0.0-rc.4",
+    "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "pg": "^8.23.0"
   },
@@ -9,20 +9,22 @@
     "@ankaa/eslint": "workspace:*",
     "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
-    "@types/node": "^26.4.1",
+    "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
     "drizzle-kit": "1.0.0-rc.4",
-    "eslint": "^10.10.0",
-    "jiti": "^2.7.0",
+    "eslint": "catalog:",
+    "jiti": "catalog:",
     "prettier": "catalog:",
-    "tsx": "^4.23.13",
+    "tsx": "catalog:",
     "typescript": "catalog:"
   },
   "exports": {
     ".": "./src/index.ts",
     "./error": "./src/error.ts",
-    "./operators": "./src/operators.ts",
-    "./schema": "./src/schema/index.ts"
+    "./schema/authentication": "./src/schema/authentication.ts",
+    "./schema/exercise": "./src/schema/exercise.ts",
+    "./schema/routine": "./src/schema/routine.ts",
+    "./schema/workout": "./src/schema/workout.ts"
   },
   "name": "@ankaa/database",
   "private": true,

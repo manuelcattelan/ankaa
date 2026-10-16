@@ -1,4 +1,5 @@
 import * as Effect from "effect/Effect";
+import * as Match from "effect/Match";
 
 import type { WorkoutDocument } from "@/features/workout/core/workout-document-schema";
 
@@ -12,21 +13,30 @@ export const writeWorkoutDocuments = Effect.fn("writeWorkoutDocuments")(
     const storedWorkoutDocumentJsons =
       yield* workoutDocumentStorage.readStoredWorkoutDocumentJsons();
 
-    const workoutDocumentStorageChanges = getWorkoutDocumentStorageChanges({
-      storedWorkoutDocumentJsons,
-      workoutDocuments,
+    const workoutDocumentStorageChangesOutcome =
+      getWorkoutDocumentStorageChanges({
+        storedWorkoutDocumentJsons,
+        workoutDocuments,
+      });
+
+    yield* Match.valueTags(workoutDocumentStorageChangesOutcome, {
+      StoredWorkoutDocumentJsonMalformed: (
+        storedWorkoutDocumentJsonMalformed,
+      ) => Effect.die(storedWorkoutDocumentJsonMalformed.cause),
+      WorkoutDocumentStorageChangesFound: (workoutDocumentStorageChanges) =>
+        Effect.gen(function* () {
+          yield* Effect.forEach(
+            workoutDocumentStorageChanges.writtenWorkoutDocumentJsons,
+            workoutDocumentStorage.writeWorkoutDocumentJson,
+            { discard: true },
+          );
+
+          yield* Effect.forEach(
+            workoutDocumentStorageChanges.removedWorkoutIds,
+            workoutDocumentStorage.removeWorkoutDocumentJson,
+            { discard: true },
+          );
+        }),
     });
-
-    yield* Effect.forEach(
-      workoutDocumentStorageChanges.writtenWorkoutDocumentJsons,
-      workoutDocumentStorage.writeWorkoutDocumentJson,
-      { discard: true },
-    );
-
-    yield* Effect.forEach(
-      workoutDocumentStorageChanges.removedWorkoutIds,
-      workoutDocumentStorage.removeWorkoutDocumentJson,
-      { discard: true },
-    );
   },
 );

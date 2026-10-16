@@ -4,7 +4,7 @@ import type {
   PgAsyncTransaction,
 } from "drizzle-orm/pg-core/async";
 
-import { urlFilter } from "@ankaa/core/shared/filters/url-filter";
+import { urlSchema } from "@ankaa/core/shared/schemas/url-schema";
 import { defineRelationsPart } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as Config from "effect/Config";
@@ -12,18 +12,25 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
-import * as Schema from "effect/Schema";
 import { Pool } from "pg";
 
 import { DatabaseError } from "./error.ts";
-import * as DatabaseSchema from "./schema/index.ts";
+import * as AuthenticationDatabaseSchema from "./schema/authentication.ts";
+import * as ExerciseDatabaseSchema from "./schema/exercise.ts";
+import * as RoutineDatabaseSchema from "./schema/routine.ts";
+import * as WorkoutDatabaseSchema from "./schema/workout.ts";
 
 const relations = {
-  ...defineRelationsPart(DatabaseSchema),
-  ...DatabaseSchema.authRelations,
-  ...DatabaseSchema.exerciseRelations,
-  ...DatabaseSchema.routineRelations,
-  ...DatabaseSchema.workoutRelations,
+  ...defineRelationsPart({
+    ...AuthenticationDatabaseSchema,
+    ...ExerciseDatabaseSchema,
+    ...RoutineDatabaseSchema,
+    ...WorkoutDatabaseSchema,
+  }),
+  ...AuthenticationDatabaseSchema.authRelations,
+  ...ExerciseDatabaseSchema.exerciseRelations,
+  ...RoutineDatabaseSchema.routineRelations,
+  ...WorkoutDatabaseSchema.workoutRelations,
 };
 
 export type DrizzleDatabase = PgAsyncDatabase<
@@ -42,9 +49,8 @@ export class Database extends Context.Service<Database>()(
   "@ankaa/database/Database",
   {
     make: Effect.gen(function* () {
-      const databaseUrl = yield* Config.schema(
-        Schema.Redacted(Schema.String.check(urlFilter)),
-        "DATABASE_URL",
+      const databaseUrl = yield* Config.schema(urlSchema, "DATABASE_URL").pipe(
+        Config.map(Redacted.make),
       );
 
       const pool = yield* Effect.acquireRelease(
@@ -70,10 +76,7 @@ export class Database extends Context.Service<Database>()(
           transaction: DrizzleTransaction,
         ) => Promise<TTransactionResult>,
       ) {
-        return Effect.tryPromise({
-          catch: (cause) => new DatabaseError({ cause }),
-          try: () => drizzleDatabase.transaction(execute),
-        });
+        return query((database) => database.transaction(execute));
       }
 
       return { drizzleDatabase, query, transaction };

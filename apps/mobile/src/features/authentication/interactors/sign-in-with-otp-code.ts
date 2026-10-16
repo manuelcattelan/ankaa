@@ -2,9 +2,9 @@ import * as Effect from "effect/Effect";
 
 import { AuthenticationClient } from "@/shared/services/authentication-client";
 
-type SignInWithOtpCodeOptions = {
+export type SignInWithOtpCodeOptions = {
   email: string;
-  otp: string;
+  otpCode: string;
 };
 
 export const signInWithOtpCode = Effect.fn("signInWithOtpCode")(function* (
@@ -15,7 +15,10 @@ export const signInWithOtpCode = Effect.fn("signInWithOtpCode")(function* (
   return yield* authenticationClient.request(
     (betterAuthenticationClient, fetchOptions) =>
       betterAuthenticationClient.signIn.emailOtp(
-        signInWithOtpCodeOptions,
+        {
+          email: signInWithOtpCodeOptions.email,
+          otp: signInWithOtpCodeOptions.otpCode,
+        },
         fetchOptions,
       ),
   );

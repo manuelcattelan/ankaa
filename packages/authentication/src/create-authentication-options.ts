@@ -1,7 +1,8 @@
+import type { NodeEnvironment } from "@ankaa/core/shared/constants/node-environment";
 import type { DB } from "@better-auth/drizzle-adapter/relations-v2";
 import type { BetterAuthOptions } from "better-auth";
 
-import * as DatabaseSchema from "@ankaa/database/schema";
+import * as AuthenticationDatabaseSchema from "@ankaa/database/schema/authentication";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { expo } from "@better-auth/expo";
 import { emailOTP } from "better-auth/plugins";
@@ -12,14 +13,16 @@ type CreateAuthenticationOptionsOptions = {
   database: DB;
   googleIosClientId: string;
   googleWebClientId: string;
-  nodeEnvironment: "development" | "production";
+  nodeEnvironment: NodeEnvironment;
   secret: string;
-  sendVerificationOtp: (options: SendVerificationOtpOptions) => Promise<void>;
+  sendVerificationOtpCode: (
+    options: SendVerificationOtpCodeOptions,
+  ) => Promise<void>;
 };
 
-type SendVerificationOtpOptions = {
+type SendVerificationOtpCodeOptions = {
   email: string;
-  otp: string;
+  otpCode: string;
 };
 
 const DEVELOPMENT_TRUSTED_ORIGINS = [
@@ -36,20 +39,20 @@ export function createAuthenticationOptions({
   googleWebClientId,
   nodeEnvironment,
   secret,
-  sendVerificationOtp,
+  sendVerificationOtpCode,
 }: CreateAuthenticationOptionsOptions) {
   return {
     baseURL: baseUrl,
     database: drizzleAdapter(database, {
       provider: "pg",
-      schema: DatabaseSchema,
+      schema: AuthenticationDatabaseSchema,
       schemaName: "auth",
     }),
     plugins: [
       expo(),
       emailOTP({
         sendVerificationOTP: ({ email, otp }) =>
-          sendVerificationOtp({ email, otp }),
+          sendVerificationOtpCode({ email, otpCode: otp }),
       }),
     ],
     secret,

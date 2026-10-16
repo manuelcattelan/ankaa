@@ -1,3 +1,5 @@
+import * as Data from "effect/Data";
+
 import type { WorkoutDocument } from "@/features/workout/core/workout-document-schema";
 
 import { parseStoredWorkoutDocument } from "@/features/workout/core/parse-stored-workout-document";
@@ -11,6 +13,22 @@ type StoredWorkoutDocumentJson = {
   workoutDocumentJson: null | string;
   workoutId: string;
 };
+
+type WorkoutDocumentStorageChangesOutcome = Data.TaggedEnum<{
+  StoredWorkoutDocumentJsonMalformed: { readonly cause: unknown };
+  WorkoutDocumentStorageChangesFound: {
+    readonly removedWorkoutIds: string[];
+    readonly writtenWorkoutDocumentJsons: WrittenWorkoutDocumentJson[];
+  };
+}>;
+
+type WrittenWorkoutDocumentJson = {
+  workoutDocumentJson: string;
+  workoutId: string;
+};
+
+const WorkoutDocumentStorageChangesOutcome =
+  Data.taggedEnum<WorkoutDocumentStorageChangesOutcome>();
 
 export function getWorkoutDocumentStorageChanges({
   storedWorkoutDocumentJsons,
@@ -28,24 +46,47 @@ export function getWorkoutDocumentStorageChanges({
   const workoutIds = new Set(
     workoutDocuments.map((workoutDocument) => workoutDocument.id),
   );
+  const removedWorkoutIds: string[] = [];
 
-  return {
-    removedWorkoutIds: storedWorkoutDocumentJsons
-      .filter(
-        (storedWorkoutDocumentJson) =>
-          !workoutIds.has(storedWorkoutDocumentJson.workoutId) &&
-          parseStoredWorkoutDocument(
-            storedWorkoutDocumentJson.workoutDocumentJson,
-          ),
-      )
-      .map((storedWorkoutDocumentJson) => storedWorkoutDocumentJson.workoutId),
-    writtenWorkoutDocumentJsons: workoutDocuments.flatMap((workoutDocument) => {
-      const workoutDocumentJson = JSON.stringify(workoutDocument);
+  for (const storedWorkoutDocumentJson of storedWorkoutDocumentJsons) {
+    if (workoutIds.has(storedWorkoutDocumentJson.workoutId)) {
+      continue;
+    }
 
-      return storedWorkoutDocumentJsonsByWorkoutId.get(workoutDocument.id) ===
-        workoutDocumentJson
-        ? []
-        : [{ workoutDocumentJson, workoutId: workoutDocument.id }];
-    }),
-  };
+    const storedWorkoutDocumentParseOutcome = parseStoredWorkoutDocument(
+      storedWorkoutDocumentJson.workoutDocumentJson,
+    );
+
+    if (
+      storedWorkoutDocumentParseOutcome._tag ===
+      "StoredWorkoutDocumentJsonMalformed"
+    ) {
+      return WorkoutDocumentStorageChangesOutcome.StoredWorkoutDocumentJsonMalformed(
+        { cause: storedWorkoutDocumentParseOutcome.cause },
+      );
+    }
+
+    if (
+      storedWorkoutDocumentParseOutcome._tag === "StoredWorkoutDocumentParsed"
+    ) {
+      removedWorkoutIds.push(storedWorkoutDocumentJson.workoutId);
+    }
+  }
+
+  return WorkoutDocumentStorageChangesOutcome.WorkoutDocumentStorageChangesFound(
+    {
+      removedWorkoutIds,
+      writtenWorkoutDocumentJsons: workoutDocuments.flatMap(
+        (workoutDocument) => {
+          const workoutDocumentJson = JSON.stringify(workoutDocument);
+
+          return storedWorkoutDocumentJsonsByWorkoutId.get(
+            workoutDocument.id,
+          ) === workoutDocumentJson
+            ? []
+            : [{ workoutDocumentJson, workoutId: workoutDocument.id }];
+        },
+      ),
+    },
+  );
 }

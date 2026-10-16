@@ -1,7 +1,7 @@
 import type { DrizzleDatabase } from "@ankaa/database";
 
-import { and, eq, isNull, sql } from "@ankaa/database/operators";
-import * as DatabaseSchema from "@ankaa/database/schema";
+import * as RoutineDatabaseSchema from "@ankaa/database/schema/routine";
+import { sql } from "drizzle-orm";
 
 type UpsertRoutineOptions = {
   database: DrizzleDatabase;
@@ -17,14 +17,10 @@ export async function upsertRoutine({
   userId,
 }: UpsertRoutineOptions) {
   await database
-    .insert(DatabaseSchema.routine)
+    .insert(RoutineDatabaseSchema.routine)
     .values({ id: routineId, name: routineName, userId })
     .onConflictDoUpdate({
       set: { name: routineName, updatedAt: sql`now()` },
-      setWhere: and(
-        eq(DatabaseSchema.routine.userId, userId),
-        isNull(DatabaseSchema.routine.deletedAt),
-      ),
-      target: DatabaseSchema.routine.id,
+      target: RoutineDatabaseSchema.routine.id,
     });
 }

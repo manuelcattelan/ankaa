@@ -1,6 +1,8 @@
 import type { DrizzleDatabase } from "@ankaa/database";
 
-import * as DatabaseSchema from "@ankaa/database/schema";
+import * as WorkoutDatabaseSchema from "@ankaa/database/schema/workout";
+
+import { insertRows } from "../../../shared/queries/insert-rows.ts";
 
 type InsertWorkoutExerciseSetSegmentsOptions = {
   database: DrizzleDatabase;
@@ -8,17 +10,15 @@ type InsertWorkoutExerciseSetSegmentsOptions = {
 };
 
 type WorkoutExerciseSetSegmentRow =
-  typeof DatabaseSchema.workoutExerciseSetSegment.$inferInsert;
+  typeof WorkoutDatabaseSchema.workoutExerciseSetSegment.$inferInsert;
 
 export async function insertWorkoutExerciseSetSegments({
   database,
   workoutExerciseSetSegmentRows,
 }: InsertWorkoutExerciseSetSegmentsOptions) {
-  if (workoutExerciseSetSegmentRows.length === 0) {
-    return;
-  }
-
-  await database
-    .insert(DatabaseSchema.workoutExerciseSetSegment)
-    .values(workoutExerciseSetSegmentRows);
+  await insertRows({
+    database,
+    rows: workoutExerciseSetSegmentRows,
+    table: WorkoutDatabaseSchema.workoutExerciseSetSegment,
+  });
 }

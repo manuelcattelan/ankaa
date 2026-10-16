@@ -5,7 +5,7 @@ type SetCounterStatusOptions = {
   workingSetLeftCount: number;
 };
 
-type WeightValueRangeErrorOptions = {
+type WeightValueOutOfRangeErrorOptions = {
   maximum: number;
   minimum: number;
 };
@@ -65,7 +65,10 @@ export const workoutScreenMessages = {
   warmUpSetLabel: (setNumber: number) => `Set ${setNumber}, warm-up`,
   weightUnitLabel: "Weight unit",
   weightValueLabel: "Weight",
-  weightValueRangeError: ({ maximum, minimum }: WeightValueRangeErrorOptions) =>
+  weightValueOutOfRangeError: ({
+    maximum,
+    minimum,
+  }: WeightValueOutOfRangeErrorOptions) =>
     `This weight isn't valid: enter a number from ${minimum} to ${maximum}, with at most two decimal places.`,
   workoutInvalidError:
     "Some fields aren't valid: correct the fields marked with an error.",

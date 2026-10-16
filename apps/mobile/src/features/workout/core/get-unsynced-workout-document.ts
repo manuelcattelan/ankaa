@@ -1,5 +1,7 @@
 import type { WorkoutDocument } from "@/features/workout/core/workout-document-schema";
 
+import { hasWorkoutDocumentUnsavedChanges } from "@/features/workout/core/has-workout-document-unsaved-changes";
+
 export type FailedWorkoutSave = {
   version: number;
   workoutId: string;
@@ -21,7 +23,7 @@ export function getUnsyncedWorkoutDocument({
 }: GetUnsyncedWorkoutDocumentOptions) {
   const unsyncedWorkoutDocuments = workoutDocuments.filter(
     (workoutDocument) =>
-      workoutDocument.version > workoutDocument.syncedVersion &&
+      hasWorkoutDocumentUnsavedChanges(workoutDocument) &&
       !hasFailedWorkoutSave({ failedWorkoutSaves, workoutDocument }),
   );
 

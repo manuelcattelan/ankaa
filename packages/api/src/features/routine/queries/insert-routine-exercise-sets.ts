@@ -1,6 +1,8 @@
 import type { DrizzleDatabase } from "@ankaa/database";
 
-import * as DatabaseSchema from "@ankaa/database/schema";
+import * as RoutineDatabaseSchema from "@ankaa/database/schema/routine";
+
+import { insertRows } from "../../../shared/queries/insert-rows.ts";
 
 type InsertRoutineExerciseSetsOptions = {
   database: DrizzleDatabase;
@@ -8,17 +10,15 @@ type InsertRoutineExerciseSetsOptions = {
 };
 
 type RoutineExerciseSetRow =
-  typeof DatabaseSchema.routineExerciseSet.$inferInsert;
+  typeof RoutineDatabaseSchema.routineExerciseSet.$inferInsert;
 
 export async function insertRoutineExerciseSets({
   database,
   routineExerciseSetRows,
 }: InsertRoutineExerciseSetsOptions) {
-  if (routineExerciseSetRows.length === 0) {
-    return;
-  }
-
-  await database
-    .insert(DatabaseSchema.routineExerciseSet)
-    .values(routineExerciseSetRows);
+  await insertRows({
+    database,
+    rows: routineExerciseSetRows,
+    table: RoutineDatabaseSchema.routineExerciseSet,
+  });
 }

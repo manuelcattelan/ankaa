@@ -1,4 +1,5 @@
 import * as Effect from "effect/Effect";
+import * as Match from "effect/Match";
 
 import { parseStoredWorkoutDocument } from "@/features/workout/core/parse-stored-workout-document";
 import { WorkoutDocumentStorage } from "@/features/workout/services/workout-document-storage";
@@ -10,12 +11,24 @@ export const readWorkoutDocuments = Effect.fn("readWorkoutDocuments")(
     const storedWorkoutDocumentJsons =
       yield* workoutDocumentStorage.readStoredWorkoutDocumentJsons();
 
-    return storedWorkoutDocumentJsons.flatMap((storedWorkoutDocumentJson) => {
-      const workoutDocument = parseStoredWorkoutDocument(
-        storedWorkoutDocumentJson.workoutDocumentJson,
-      );
+    const workoutDocumentGroups = yield* Effect.forEach(
+      storedWorkoutDocumentJsons,
+      (storedWorkoutDocumentJson) =>
+        Match.valueTags(
+          parseStoredWorkoutDocument(
+            storedWorkoutDocumentJson.workoutDocumentJson,
+          ),
+          {
+            StoredWorkoutDocumentInvalid: () => Effect.succeed([]),
+            StoredWorkoutDocumentJsonMalformed: (
+              storedWorkoutDocumentJsonMalformed,
+            ) => Effect.die(storedWorkoutDocumentJsonMalformed.cause),
+            StoredWorkoutDocumentParsed: (storedWorkoutDocumentParsed) =>
+              Effect.succeed([storedWorkoutDocumentParsed.workoutDocument]),
+          },
+        ),
+    );
 
-      return workoutDocument ? [workoutDocument] : [];
-    });
+    return workoutDocumentGroups.flat();
   },
 );

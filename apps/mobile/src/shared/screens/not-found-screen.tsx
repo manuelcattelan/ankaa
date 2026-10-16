@@ -1,7 +1,7 @@
-import { Link, Stack } from "expo-router";
+import { Stack } from "expo-router";
 import { View } from "react-native";
 
-import { Button } from "@/shared/components/button";
+import { LinkButton } from "@/shared/components/link-button";
 import { Text } from "@/shared/components/text";
 import { notFoundScreenMessages } from "@/shared/messages/not-found-screen-messages";
 
@@ -12,9 +12,7 @@ export function NotFoundScreen() {
         options={{ headerShown: true, title: notFoundScreenMessages.title }}
       />
       <Text>{notFoundScreenMessages.body}</Text>
-      <Link asChild href="/">
-        <Button title={notFoundScreenMessages.goHomeButton} />
-      </Link>
+      <LinkButton href="/" title={notFoundScreenMessages.goHomeButton} />
     </View>
   );
 }

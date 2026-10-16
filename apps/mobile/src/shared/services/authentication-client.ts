@@ -99,7 +99,7 @@ export class AuthenticationClient extends Context.Service<AuthenticationClient>(
         );
       }
 
-      return { betterAuthenticationClient, request };
+      return { apiUrl, betterAuthenticationClient, request };
     }),
   },
 ) {

@@ -71,19 +71,19 @@ function buildRoutineExerciseSetSaveInput({
   return {
     amount: parseOptionalWholeNumber(routineDraftExerciseSet.amount),
     dropSetSegmentCount: parseOptionalWholeNumber(
-      isDropSet ? routineDraftExerciseSet.dropSetSegmentCount : "",
+      isDropSet ? routineDraftExerciseSet.dropSetSegmentCount : undefined,
     ),
     dropSetWeightPercentage: parseOptionalWholeNumber(
-      isDropSet ? routineDraftExerciseSet.dropSetWeightPercentage : "",
+      isDropSet ? routineDraftExerciseSet.dropSetWeightPercentage : undefined,
     ),
     id: routineDraftExerciseSet.id,
     isToFailure: routineDraftExerciseSet.isToFailure,
     position,
     restPauseRestSeconds: parseOptionalWholeNumber(
-      isRestPause ? routineDraftExerciseSet.restPauseRestSeconds : "",
+      isRestPause ? routineDraftExerciseSet.restPauseRestSeconds : undefined,
     ),
     restPauseSegmentCount: parseOptionalWholeNumber(
-      isRestPause ? routineDraftExerciseSet.restPauseSegmentCount : "",
+      isRestPause ? routineDraftExerciseSet.restPauseSegmentCount : undefined,
     ),
     restSeconds: parseOptionalWholeNumber(routineDraftExerciseSet.restSeconds),
     setType: routineDraftExerciseSet.setType,

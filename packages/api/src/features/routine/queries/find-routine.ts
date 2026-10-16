@@ -1,7 +1,7 @@
 import type { DrizzleDatabase } from "@ankaa/database";
 
-import { and, eq, isNull } from "@ankaa/database/operators";
-import * as DatabaseSchema from "@ankaa/database/schema";
+import * as RoutineDatabaseSchema from "@ankaa/database/schema/routine";
+import { and, eq, isNull } from "drizzle-orm";
 
 type FindRoutineOptions = {
   database: DrizzleDatabase;
@@ -15,13 +15,13 @@ export async function findRoutine({
   userId,
 }: FindRoutineOptions) {
   const [routine] = await database
-    .select({ id: DatabaseSchema.routine.id })
-    .from(DatabaseSchema.routine)
+    .select({ id: RoutineDatabaseSchema.routine.id })
+    .from(RoutineDatabaseSchema.routine)
     .where(
       and(
-        eq(DatabaseSchema.routine.id, routineId),
-        eq(DatabaseSchema.routine.userId, userId),
-        isNull(DatabaseSchema.routine.deletedAt),
+        eq(RoutineDatabaseSchema.routine.id, routineId),
+        eq(RoutineDatabaseSchema.routine.userId, userId),
+        isNull(RoutineDatabaseSchema.routine.deletedAt),
       ),
     )
     .for("update");

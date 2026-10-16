@@ -1,7 +1,7 @@
 import type { DrizzleDatabase } from "@ankaa/database";
 
-import { eq } from "@ankaa/database/operators";
-import * as DatabaseSchema from "@ankaa/database/schema";
+import * as RoutineDatabaseSchema from "@ankaa/database/schema/routine";
+import { eq } from "drizzle-orm";
 
 type FindRoutineWithSameIdOptions = {
   database: DrizzleDatabase;
@@ -14,11 +14,11 @@ export async function findRoutineWithSameId({
 }: FindRoutineWithSameIdOptions) {
   const [routineWithSameId] = await database
     .select({
-      deletedAt: DatabaseSchema.routine.deletedAt,
-      userId: DatabaseSchema.routine.userId,
+      deletedAt: RoutineDatabaseSchema.routine.deletedAt,
+      userId: RoutineDatabaseSchema.routine.userId,
     })
-    .from(DatabaseSchema.routine)
-    .where(eq(DatabaseSchema.routine.id, routineId))
+    .from(RoutineDatabaseSchema.routine)
+    .where(eq(RoutineDatabaseSchema.routine.id, routineId))
     .for("update");
 
   return routineWithSameId;

@@ -8,7 +8,7 @@ type WorkoutDocumentsContextValue = {
     workoutDocumentsAction: WorkoutDocumentsAction,
   ) => void;
   hasWorkoutSaveFailed: boolean;
-  runningWorkoutDocument: undefined | WorkoutDocument;
+  workoutDocumentInProgress: undefined | WorkoutDocument;
 };
 
 export const WorkoutDocumentsContext = createContext<

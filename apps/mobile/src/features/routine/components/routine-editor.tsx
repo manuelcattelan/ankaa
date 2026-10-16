@@ -20,20 +20,21 @@ import type {
   RoutineDraftBlockMoveDirection,
   RoutineDraftExercise,
   RoutineDraftExerciseSet,
-  RoutineDraftWarmUpExercise,
 } from "@/features/routine/core/routine-draft-reducer";
 import type { Exercise } from "@/shared/interactors/list-exercises";
 import type { Routine } from "@/shared/interactors/list-routines";
 
-import { MAIN_SECTION } from "@/features/routine/constants/section";
 import { SUPERSET_EXERCISE_COUNT_MINIMUM } from "@/features/routine/constants/superset";
 import { buildRoutineSaveInput } from "@/features/routine/core/build-routine-save-input";
 import { createRoutineDraft } from "@/features/routine/core/create-routine-draft";
-import { getRoutineDraftExerciseSetValidationErrors } from "@/features/routine/core/get-routine-draft-exercise-set-validation-errors";
-import { getRoutineNameValidationError } from "@/features/routine/core/get-routine-name-validation-error";
+import { getRoutineDraftExerciseSetValidationErrorMessages } from "@/features/routine/core/get-routine-draft-exercise-set-validation-error-messages";
+import { getRoutineDraftWarmUpForExerciseName } from "@/features/routine/core/get-routine-draft-warm-up-for-exercise-name";
+import { getRoutineNameValidationErrorMessage } from "@/features/routine/core/get-routine-name-validation-error-message";
 import { getRoutineSaveErrorMessage } from "@/features/routine/core/get-routine-save-error-message";
 import { hasRoutineDraftValidationErrors } from "@/features/routine/core/has-routine-draft-validation-errors";
 import { routineDraftReducer } from "@/features/routine/core/routine-draft-reducer";
+import { validateRoutineDraftExerciseSet } from "@/features/routine/core/validate-routine-draft-exercise-set";
+import { validateRoutineName } from "@/features/routine/core/validate-routine-name";
 import { routineEditorMessages } from "@/features/routine/messages/routine-editor-messages";
 import { createRoutineDeleteMutationOptions } from "@/features/routine/mutations/create-routine-delete-mutation-options";
 import { createRoutineSaveMutationOptions } from "@/features/routine/mutations/create-routine-save-mutation-options";
@@ -45,6 +46,7 @@ import { ScrollView } from "@/shared/components/scroll-view";
 import { StatusMessage } from "@/shared/components/status-message";
 import { Text } from "@/shared/components/text";
 import { TextField } from "@/shared/components/text-field";
+import { getExerciseNames } from "@/shared/core/get-exercise-names";
 import { getTrpcErrorMessage } from "@/shared/core/get-trpc-error-message";
 import { useRuntime } from "@/shared/hooks/use-runtime";
 import { announceMessage } from "@/shared/interactors/announce-message";
@@ -172,17 +174,15 @@ export function RoutineEditor({
     onSuccess: showUpdatedRoutineList,
   });
 
-  const exerciseNames = new Map(
-    exerciseLibrary.data?.map(
-      (exercise) => [exercise.id, exercise.name] as const,
-    ),
-  );
+  const exerciseNames = getExerciseNames(exerciseLibrary.data);
   const isRoutineChangePending =
     saveRoutine.isPending || deleteRoutine.isPending;
   const isRoutineDraftInvalid =
     shouldShowValidationErrors && hasRoutineDraftValidationErrors(routineDraft);
-  const routineNameValidationError = shouldShowValidationErrors
-    ? getRoutineNameValidationError(routineDraft.name)
+  const routineNameValidationErrorMessage = shouldShowValidationErrors
+    ? getRoutineNameValidationErrorMessage(
+        validateRoutineName(routineDraft.name),
+      )
     : undefined;
   const routineChangeErrorMessage = getRoutineChangeErrorMessage();
 
@@ -284,7 +284,7 @@ export function RoutineEditor({
     <>
       <ScrollView>
         <TextField
-          errorMessage={routineNameValidationError}
+          errorMessage={routineNameValidationErrorMessage}
           label={routineEditorMessages.routineNameLabel}
           onChangeText={handleChangeName}
           value={routineDraft.name}
@@ -347,20 +347,6 @@ function RoutineEditorBlock({
   const isSuperset =
     routineDraftBlock.exercises.length >= SUPERSET_EXERCISE_COUNT_MINIMUM;
 
-  function getWarmUpForExerciseName(
-    routineDraftWarmUpExercise: RoutineDraftWarmUpExercise,
-  ) {
-    const warmUpForRoutineDraftExercise = routineDraftBlock.exercises.find(
-      (routineDraftExercise) =>
-        routineDraftExercise.id ===
-        routineDraftWarmUpExercise.warmUpForRoutineExerciseId,
-    );
-
-    return (
-      exerciseNames.get(warmUpForRoutineDraftExercise?.exerciseId ?? "") ?? ""
-    );
-  }
-
   function handleJoinSupersetWithNextBlock() {
     dispatchRoutineDraftAction({
       routineDraftBlockId: routineDraftBlock.id,
@@ -391,9 +377,11 @@ function RoutineEditorBlock({
           onOpenExercisePicker={onOpenExercisePicker}
           routineDraftExercise={routineDraftWarmUpExercise}
           shouldShowValidationErrors={shouldShowValidationErrors}
-          warmUpForExerciseName={getWarmUpForExerciseName(
+          warmUpForExerciseName={getRoutineDraftWarmUpForExerciseName({
+            exerciseNames,
+            routineDraftBlock,
             routineDraftWarmUpExercise,
-          )}
+          })}
         />
       ))}
       {routineDraftBlock.exercises.map((routineDraftExercise) => (
@@ -402,7 +390,7 @@ function RoutineEditorBlock({
           exerciseNames={exerciseNames}
           key={routineDraftExercise.id}
           onAddWarmUpExercise={
-            section === MAIN_SECTION
+            section === "main"
               ? () => {
                   onOpenExercisePicker({
                     warmUpForRoutineExerciseId: routineDraftExercise.id,
@@ -575,19 +563,22 @@ function RoutineEditorSet({
   setNumber,
   shouldShowValidationErrors,
 }: RoutineEditorSetProperties) {
-  const validationErrors = shouldShowValidationErrors
-    ? getRoutineDraftExerciseSetValidationErrors(routineDraftExerciseSet)
-    : undefined;
+  const routineDraftExerciseSetValidationErrorMessages =
+    shouldShowValidationErrors
+      ? getRoutineDraftExerciseSetValidationErrorMessages(
+          validateRoutineDraftExerciseSet(routineDraftExerciseSet),
+        )
+      : undefined;
 
   function handleChangeSet(
     routineDraftExerciseSetChanges: Partial<RoutineDraftExerciseSet>,
   ) {
     dispatchRoutineDraftAction({
-      routineExerciseId,
-      routineExerciseSet: {
+      routineDraftExerciseSet: {
         ...routineDraftExerciseSet,
         ...routineDraftExerciseSetChanges,
       },
+      routineExerciseId,
       type: "changedSet",
     });
   }
@@ -622,7 +613,7 @@ function RoutineEditorSet({
         selectedOption={routineDraftExerciseSet.setType}
       />
       <TextField
-        errorMessage={validationErrors?.amount}
+        errorMessage={routineDraftExerciseSetValidationErrorMessages?.amount}
         inputMode="numeric"
         label={routineEditorMessages.amountLabel}
         onChangeText={(amount) => {
@@ -631,7 +622,9 @@ function RoutineEditorSet({
         value={routineDraftExerciseSet.amount}
       />
       <TextField
-        errorMessage={validationErrors?.restSeconds}
+        errorMessage={
+          routineDraftExerciseSetValidationErrorMessages?.restSeconds
+        }
         inputMode="numeric"
         label={routineEditorMessages.restSecondsLabel}
         onChangeText={(restSeconds) => {
@@ -651,7 +644,9 @@ function RoutineEditorSet({
       {routineDraftExerciseSet.variation === "rest_pause" ? (
         <>
           <TextField
-            errorMessage={validationErrors?.restPauseRestSeconds}
+            errorMessage={
+              routineDraftExerciseSetValidationErrorMessages?.restPauseRestSeconds
+            }
             inputMode="numeric"
             label={routineEditorMessages.restPauseRestSecondsLabel}
             onChangeText={(restPauseRestSeconds) => {
@@ -660,7 +655,9 @@ function RoutineEditorSet({
             value={routineDraftExerciseSet.restPauseRestSeconds}
           />
           <TextField
-            errorMessage={validationErrors?.restPauseSegmentCount}
+            errorMessage={
+              routineDraftExerciseSetValidationErrorMessages?.restPauseSegmentCount
+            }
             inputMode="numeric"
             label={routineEditorMessages.restPauseSegmentCountLabel}
             onChangeText={(restPauseSegmentCount) => {
@@ -673,7 +670,9 @@ function RoutineEditorSet({
       {routineDraftExerciseSet.variation === "drop_set" ? (
         <>
           <TextField
-            errorMessage={validationErrors?.dropSetSegmentCount}
+            errorMessage={
+              routineDraftExerciseSetValidationErrorMessages?.dropSetSegmentCount
+            }
             inputMode="numeric"
             label={routineEditorMessages.dropSetSegmentCountLabel}
             onChangeText={(dropSetSegmentCount) => {
@@ -682,7 +681,9 @@ function RoutineEditorSet({
             value={routineDraftExerciseSet.dropSetSegmentCount}
           />
           <TextField
-            errorMessage={validationErrors?.dropSetWeightPercentage}
+            errorMessage={
+              routineDraftExerciseSetValidationErrorMessages?.dropSetWeightPercentage
+            }
             inputMode="numeric"
             label={routineEditorMessages.dropSetWeightPercentageLabel}
             onChangeText={(dropSetWeightPercentage) => {
@@ -704,7 +705,7 @@ function RoutineEditorSet({
       <TextField
         autoCapitalize="characters"
         autoCorrect={false}
-        errorMessage={validationErrors?.tempo}
+        errorMessage={routineDraftExerciseSetValidationErrorMessages?.tempo}
         label={routineEditorMessages.tempoLabel}
         onChangeText={(tempo) => {
           handleChangeSet({ tempo });

@@ -1,8 +1,8 @@
 import * as Data from "effect/Data";
 
 type DecideRoutineSaveOptions = {
-  routinesWithSameName: readonly unknown[];
   routineWithSameId: RoutineWithSameId | undefined;
+  routineWithSameName: RoutineWithSameName | undefined;
   userId: string;
 };
 
@@ -17,14 +17,18 @@ type RoutineWithSameId = {
   readonly userId: string;
 };
 
+type RoutineWithSameName = {
+  readonly id: string;
+};
+
 const RoutineSaveOutcome = Data.taggedEnum<RoutineSaveOutcome>();
 
 export function decideRoutineSave({
-  routinesWithSameName,
   routineWithSameId,
+  routineWithSameName,
   userId,
 }: DecideRoutineSaveOptions) {
-  if (routinesWithSameName.length > 0) {
+  if (routineWithSameName !== undefined) {
     return RoutineSaveOutcome.RoutineNameConflict();
   }
 

@@ -1,7 +1,7 @@
 import type { DrizzleDatabase } from "@ankaa/database";
 
-import { eq } from "@ankaa/database/operators";
-import * as DatabaseSchema from "@ankaa/database/schema";
+import * as WorkoutDatabaseSchema from "@ankaa/database/schema/workout";
+import { eq } from "drizzle-orm";
 
 type FindWorkoutWithSameIdOptions = {
   database: DrizzleDatabase;
@@ -14,11 +14,11 @@ export async function findWorkoutWithSameId({
 }: FindWorkoutWithSameIdOptions) {
   const [workoutWithSameId] = await database
     .select({
-      userId: DatabaseSchema.workout.userId,
-      version: DatabaseSchema.workout.version,
+      userId: WorkoutDatabaseSchema.workout.userId,
+      version: WorkoutDatabaseSchema.workout.version,
     })
-    .from(DatabaseSchema.workout)
-    .where(eq(DatabaseSchema.workout.id, workoutId))
+    .from(WorkoutDatabaseSchema.workout)
+    .where(eq(WorkoutDatabaseSchema.workout.id, workoutId))
     .for("update");
 
   return workoutWithSameId;

@@ -1,21 +1,21 @@
 import type { DrizzleDatabase } from "@ankaa/database";
 
-import { and, eq, lt, sql } from "@ankaa/database/operators";
-import * as DatabaseSchema from "@ankaa/database/schema";
+import * as WorkoutDatabaseSchema from "@ankaa/database/schema/workout";
+import { sql } from "drizzle-orm";
 
 type UpsertWorkoutOptions = {
   database: DrizzleDatabase;
   workoutRow: WorkoutRow;
 };
 
-type WorkoutRow = typeof DatabaseSchema.workout.$inferInsert;
+type WorkoutRow = typeof WorkoutDatabaseSchema.workout.$inferInsert;
 
 export async function upsertWorkout({
   database,
   workoutRow,
 }: UpsertWorkoutOptions) {
   await database
-    .insert(DatabaseSchema.workout)
+    .insert(WorkoutDatabaseSchema.workout)
     .values(workoutRow)
     .onConflictDoUpdate({
       set: {
@@ -25,10 +25,6 @@ export async function upsertWorkout({
         updatedAt: sql`now()`,
         version: workoutRow.version,
       },
-      setWhere: and(
-        eq(DatabaseSchema.workout.userId, workoutRow.userId),
-        lt(DatabaseSchema.workout.version, workoutRow.version),
-      ),
-      target: DatabaseSchema.workout.id,
+      target: WorkoutDatabaseSchema.workout.id,
     });
 }

@@ -28,6 +28,20 @@ export class Notifications extends Context.Service<Notifications>()(
         });
       }
 
+      function requestNotificationPermission() {
+        return Effect.promise(async () => {
+          const notificationPermission =
+            await ExpoNotifications.getPermissionsAsync();
+
+          if (
+            notificationPermission.status ===
+            ExpoNotifications.PermissionStatus.UNDETERMINED
+          ) {
+            await ExpoNotifications.requestPermissionsAsync();
+          }
+        });
+      }
+
       function scheduleNotification({
         body,
         delaySeconds,
@@ -48,6 +62,7 @@ export class Notifications extends Context.Service<Notifications>()(
       return {
         cancelScheduledNotification,
         checkNotificationPermission,
+        requestNotificationPermission,
         scheduleNotification,
       };
     }),

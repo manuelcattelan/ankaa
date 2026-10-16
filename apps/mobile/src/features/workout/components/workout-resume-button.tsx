@@ -5,7 +5,7 @@ import { LinkButton } from "@/shared/components/link-button";
 export function WorkoutResumeButton() {
   const workoutDocuments = useWorkoutDocuments();
 
-  if (!workoutDocuments.runningWorkoutDocument) {
+  if (!workoutDocuments.workoutDocumentInProgress) {
     return null;
   }
 

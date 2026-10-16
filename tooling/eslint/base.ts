@@ -150,7 +150,7 @@ const corePackagePath = path.resolve(
   "../../packages/core",
 );
 
-export const PREVENT_ABBREVIATIONS_OPTIONS = {
+const PREVENT_ABBREVIATIONS_OPTIONS = {
   checkShorthandImports: false,
   ignore: ["\\.config$", "^eslint-config-"],
   replacements: {

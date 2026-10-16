@@ -1,14 +1,16 @@
+import type { NodeEnvironment } from "@ankaa/core/shared/constants/node-environment";
+import type { FastifyServerOptions } from "fastify";
+
+import { NODE_ENVIRONMENTS } from "@ankaa/core/shared/constants/node-environment";
 import closeWithGrace from "close-with-grace";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Schema from "effect/Schema";
 import fastify from "fastify";
 
 import { applicationPlugin } from "./application.ts";
-import { applicationLayer } from "./layer.ts";
-import { createLoggerLayer } from "./logger.ts";
+import { createApplicationLayer } from "./layer.ts";
 
 const LOGGER_CONFIGURATIONS = {
   development: {
@@ -18,11 +20,13 @@ const LOGGER_CONFIGURATIONS = {
     },
   },
   production: true,
-};
+} satisfies Record<NodeEnvironment, FastifyServerOptions["logger"]>;
 
 const ROUTER_MAXIMUM_PARAMETER_LENGTH = 5_000;
 
-const positiveIntegerSchema = Schema.Int.check(Schema.isGreaterThan(0));
+const positiveIntegerSchema = Schema.Trim.pipe(
+  Schema.decodeTo(Schema.FiniteFromString),
+).check(Schema.isInt(), Schema.isGreaterThan(0));
 
 const serverConfiguration = await Effect.runPromise(
   Config.all({
@@ -30,7 +34,7 @@ const serverConfiguration = await Effect.runPromise(
       positiveIntegerSchema,
       "CLOSE_GRACE_DELAY_MILLISECONDS",
     ),
-    nodeEnvironment: Config.Literals(["development", "production"], "NODE_ENV"),
+    nodeEnvironment: Config.Literals(NODE_ENVIRONMENTS, "NODE_ENV"),
     serverHost: Config.NonEmptyString("SERVER_HOST"),
     serverPort: Config.schema(positiveIntegerSchema, "SERVER_PORT"),
   }),
@@ -41,9 +45,9 @@ const server = fastify({
   routerOptions: { maxParamLength: ROUTER_MAXIMUM_PARAMETER_LENGTH },
 });
 
-const runtime = ManagedRuntime.make(
-  applicationLayer.pipe(Layer.provideMerge(createLoggerLayer(server.log))),
-);
+const applicationLayer = createApplicationLayer(server.log);
+
+const runtime = ManagedRuntime.make(applicationLayer);
 
 function exitAfterStartFailure(error: unknown) {
   server.log.error(error, "Failed to start server");

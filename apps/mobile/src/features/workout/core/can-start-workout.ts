@@ -1,18 +1,18 @@
 import type { Routine } from "@/shared/interactors/list-routines";
 
 type CanStartWorkoutOptions = {
-  exerciseIds: Set<string>;
+  exerciseNames: Map<string, string>;
   routine: Routine;
 };
 
 export function canStartWorkout({
-  exerciseIds,
+  exerciseNames,
   routine,
 }: CanStartWorkoutOptions) {
   return (
-    exerciseIds.size > 0 &&
+    exerciseNames.size > 0 &&
     routine.exercises.every((routineExercise) =>
-      exerciseIds.has(routineExercise.exerciseId),
+      exerciseNames.has(routineExercise.exerciseId),
     )
   );
 }

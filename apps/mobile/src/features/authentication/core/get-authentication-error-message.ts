@@ -2,11 +2,8 @@ import * as Predicate from "effect/Predicate";
 
 import type { AuthenticationClient } from "@/shared/services/authentication-client";
 
-import { HTTP_STATUS_TOO_MANY_REQUESTS } from "@/features/authentication/constants/http-status";
-import { REQUEST_CANCELED_ERROR_CODE } from "@/features/authentication/constants/request-error-code";
-import { AppleSignInCanceledError } from "@/features/authentication/errors/apple-sign-in-canceled-error";
+import { isAuthenticationRateLimited } from "@/features/authentication/core/is-authentication-rate-limited";
 import { GooglePlayServicesMissingError } from "@/features/authentication/errors/google-play-services-missing-error";
-import { GoogleSignInCanceledError } from "@/features/authentication/errors/google-sign-in-canceled-error";
 import { GoogleSignInInProgressError } from "@/features/authentication/errors/google-sign-in-in-progress-error";
 import { authenticationErrorMessages } from "@/features/authentication/messages/authentication-error-messages";
 import { AuthenticationError } from "@/shared/errors/authentication-error";
@@ -37,11 +34,7 @@ export function getAuthenticationErrorMessage(error: unknown) {
     return authenticationErrorMessages.playServicesMissing;
   }
 
-  if (
-    error instanceof AppleSignInCanceledError ||
-    error instanceof GoogleSignInCanceledError ||
-    error instanceof GoogleSignInInProgressError
-  ) {
+  if (error instanceof GoogleSignInInProgressError) {
     return "";
   }
 
@@ -53,7 +46,7 @@ function getAuthenticationFailureMessage(error: AuthenticationError) {
     return getUnexpectedErrorMessage(error.cause);
   }
 
-  if (error.status === HTTP_STATUS_TOO_MANY_REQUESTS) {
+  if (isAuthenticationRateLimited(error)) {
     return error.retryAfterSeconds
       ? authenticationErrorMessages.requestsRateLimited(error.retryAfterSeconds)
       : authenticationErrorMessages.requestsRateLimitedWithoutDelay;
@@ -67,11 +60,7 @@ function getAuthenticationFailureMessage(error: AuthenticationError) {
 }
 
 function getUnexpectedErrorMessage(error: unknown) {
-  if (!Predicate.hasProperty(error, "code")) {
-    return errorMessages.serverUnreachable;
-  }
-
-  return error.code === REQUEST_CANCELED_ERROR_CODE
-    ? ""
-    : errorMessages.unknown;
+  return Predicate.hasProperty(error, "code")
+    ? errorMessages.unknown
+    : errorMessages.serverUnreachable;
 }

@@ -37,7 +37,7 @@ export const routineEditorMessages = {
   setTypeLabel: "Set type",
   sundayDayLabel: "Sunday",
   supersetLabel: "Superset",
-  tempoFormatError:
+  tempoFormatInvalidError:
     "This tempo isn't valid: enter four numbers separated by hyphens, like 3-0-1-2, with X allowed only as the third.",
   tempoLabel: "Tempo",
   thursdayDayLabel: "Thursday",

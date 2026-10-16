@@ -3,11 +3,11 @@ import { Redirect } from "expo-router";
 import { useState } from "react";
 import { Platform } from "react-native";
 
-import { HTTP_STATUS_TOO_MANY_REQUESTS } from "@/features/authentication/constants/http-status";
-import { getAuthenticationErrorMessage } from "@/features/authentication/core/get-authentication-error-message";
+import { getCooldownDeadline } from "@/features/authentication/core/get-cooldown-deadline";
+import { getOtpCodeErrorMessage } from "@/features/authentication/core/get-otp-code-error-message";
+import { isAuthenticationRateLimited } from "@/features/authentication/core/is-authentication-rate-limited";
 import { useCooldown } from "@/features/authentication/hooks/use-cooldown";
 import { announceAuthenticationError } from "@/features/authentication/interactors/announce-authentication-error";
-import { authenticationErrorMessages } from "@/features/authentication/messages/authentication-error-messages";
 import { validateOtpCodeScreenMessages } from "@/features/authentication/messages/validate-otp-code-screen-messages";
 import { createOtpCodeRequestMutationOptions } from "@/features/authentication/mutations/create-otp-code-request-mutation-options";
 import { createOtpCodeSignInMutationOptions } from "@/features/authentication/mutations/create-otp-code-sign-in-mutation-options";
@@ -15,15 +15,9 @@ import { Button } from "@/shared/components/button";
 import { ScrollView } from "@/shared/components/scroll-view";
 import { Text } from "@/shared/components/text";
 import { TextField } from "@/shared/components/text-field";
-import { MILLISECONDS_PER_SECOND } from "@/shared/constants/time";
 import { AuthenticationError } from "@/shared/errors/authentication-error";
 import { useRuntime } from "@/shared/hooks/use-runtime";
 import { announceMessage } from "@/shared/interactors/announce-message";
-
-type GetOtpCodeErrorMessageOptions = {
-  cooldownRemainingSeconds: number;
-  error: unknown;
-};
 
 type ValidateOtpCodeContentProperties = {
   email: string;
@@ -47,30 +41,11 @@ export function ValidateOtpCodeScreen({
   return <ValidateOtpCodeContent email={email} />;
 }
 
-function getCooldownDeadline() {
-  return Date.now() + COOLDOWN_SECONDS * MILLISECONDS_PER_SECOND;
-}
-
-function getOtpCodeErrorMessage({
-  cooldownRemainingSeconds,
-  error,
-}: GetOtpCodeErrorMessageOptions) {
-  if (!error) {
-    return undefined;
-  }
-
-  if (
-    error instanceof AuthenticationError &&
-    error.status === HTTP_STATUS_TOO_MANY_REQUESTS
-  ) {
-    return cooldownRemainingSeconds > 0
-      ? authenticationErrorMessages.requestsRateLimited(
-          cooldownRemainingSeconds,
-        )
-      : undefined;
-  }
-
-  return getAuthenticationErrorMessage(error);
+function getResendCooldownInitialDeadline() {
+  return getCooldownDeadline({
+    cooldownSeconds: COOLDOWN_SECONDS,
+    cooldownStart: Date.now(),
+  });
 }
 
 function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
@@ -83,7 +58,7 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
   ] = useCooldown({
     cooldownEndMessage:
       validateOtpCodeScreenMessages.resendOtpCodeReadyAnnouncement,
-    getCooldownInitialDeadline: getCooldownDeadline,
+    getCooldownInitialDeadline: getResendCooldownInitialDeadline,
   });
   const [validateCooldownRemainingSeconds, startValidateCooldown] = useCooldown(
     {
@@ -102,10 +77,7 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
     onError: (error) => {
       runtime.runSync(announceAuthenticationError(error));
 
-      if (
-        error instanceof AuthenticationError &&
-        error.status === HTTP_STATUS_TOO_MANY_REQUESTS
-      ) {
+      if (isAuthenticationRateLimited(error)) {
         startResendCooldown(error.retryAfterSeconds ?? COOLDOWN_SECONDS);
       }
     },
@@ -125,7 +97,7 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
         return;
       }
 
-      if (error.status === HTTP_STATUS_TOO_MANY_REQUESTS) {
+      if (isAuthenticationRateLimited(error)) {
         startValidateCooldown(error.retryAfterSeconds ?? COOLDOWN_SECONDS);
       }
 
@@ -188,7 +160,7 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
       return;
     }
 
-    validateOtpCode.mutate({ email, otp: otpCode });
+    validateOtpCode.mutate({ email, otpCode });
   }
 
   return (

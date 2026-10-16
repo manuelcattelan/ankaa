@@ -52,7 +52,7 @@
     "@ankaa/typescript": "workspace:*",
     "@types/react": "~19.2.2",
     "eslint": "^9.39.5",
-    "jiti": "^2.7.0",
+    "jiti": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },

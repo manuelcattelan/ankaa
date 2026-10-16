@@ -1,5 +1,6 @@
 import type { Authentication } from "@ankaa/authentication";
 import type { Database } from "@ankaa/database";
+import type { DatabaseError } from "@ankaa/database/error";
 import type { TRPC_ERROR_CODE_KEY } from "@trpc/server";
 
 import { CurrentSession } from "@ankaa/authentication/current-session";
@@ -20,14 +21,14 @@ type RunOptions<TSuccess, TError> = {
   context: RunContext;
   effect: Effect.Effect<
     TSuccess,
-    TError,
+    DatabaseError | NoInfer<TError>,
     Authentication | CurrentSession | Database
   >;
   getErrorCode: (error: TError) => TRPC_ERROR_CODE_KEY;
   signal: AbortSignal | undefined;
 };
 
-export async function run<TSuccess, TError>({
+export async function run<TSuccess, TError = never>({
   context,
   effect,
   getErrorCode,
@@ -36,6 +37,7 @@ export async function run<TSuccess, TError>({
   const exit = await context.runtime.runPromiseExit(
     effect.pipe(
       Effect.provideService(CurrentSession, context.session),
+      Effect.catchTag("DatabaseError", Effect.die),
       Effect.result,
     ),
     { signal },

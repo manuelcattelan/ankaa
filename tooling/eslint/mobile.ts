@@ -51,6 +51,12 @@ const RELATIVE_IMPORT_PATTERN = {
   message: "Import through @/ instead of a relative path.",
 };
 
+const ROUTE_PACKAGE_IMPORT_PATTERN = {
+  message:
+    "Import only screens and components in a route file, and expo-router for its params and navigators. The root layout wires the rest of the app.",
+  regex: "^(?!@/|expo-router$|react$)",
+};
+
 const WRAPPED_PRIMITIVES_IMPORT = {
   importNames: WRAPPED_PRIMITIVES,
   message: "Use the component with the same name from @/shared/components.",
@@ -95,6 +101,7 @@ export const mobileConfiguration = defineConfig([
       ],
       "@stylistic/jsx-newline": ["error", { prevent: true }],
       "@stylistic/jsx-self-closing-comp": "error",
+      "@typescript-eslint/no-redeclare": "off",
       "import-x/extensions": "off",
       "import-x/no-restricted-paths": [
         "error",
@@ -137,6 +144,19 @@ export const mobileConfiguration = defineConfig([
       "unicorn/filename-case": [
         "error",
         { case: "kebabCase", ignore: [DYNAMIC_ROUTE_FILE_NAME_PATTERN] },
+      ],
+    },
+  },
+  {
+    files: ["src/app/**"],
+    ignores: ["src/app/_layout.tsx"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [WRAPPED_PRIMITIVES_IMPORT],
+          patterns: [RELATIVE_IMPORT_PATTERN, ROUTE_PACKAGE_IMPORT_PATTERN],
+        },
       ],
     },
   },

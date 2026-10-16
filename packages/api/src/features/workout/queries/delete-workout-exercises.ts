@@ -1,7 +1,7 @@
 import type { DrizzleDatabase } from "@ankaa/database";
 
-import { eq } from "@ankaa/database/operators";
-import * as DatabaseSchema from "@ankaa/database/schema";
+import * as WorkoutDatabaseSchema from "@ankaa/database/schema/workout";
+import { eq } from "drizzle-orm";
 
 type DeleteWorkoutExercisesOptions = {
   database: DrizzleDatabase;
@@ -13,6 +13,6 @@ export async function deleteWorkoutExercises({
   workoutId,
 }: DeleteWorkoutExercisesOptions) {
   await database
-    .delete(DatabaseSchema.workoutExercise)
-    .where(eq(DatabaseSchema.workoutExercise.workoutId, workoutId));
+    .delete(WorkoutDatabaseSchema.workoutExercise)
+    .where(eq(WorkoutDatabaseSchema.workoutExercise.workoutId, workoutId));
 }

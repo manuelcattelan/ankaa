@@ -4,10 +4,14 @@ import * as Data from "effect/Data";
 
 type DecideWorkoutSaveOptions = {
   userId: string;
+  workoutInProgress: undefined | WorkoutInProgress;
   workoutRoutine: undefined | WorkoutRoutine;
   workoutSaveInput: WorkoutSaveInput;
-  workoutsInProgress: readonly unknown[];
   workoutWithSameId: undefined | WorkoutWithSameId;
+};
+
+type WorkoutInProgress = {
+  readonly id: string;
 };
 
 type WorkoutRoutine = {
@@ -31,9 +35,9 @@ const WorkoutSaveOutcome = Data.taggedEnum<WorkoutSaveOutcome>();
 
 export function decideWorkoutSave({
   userId,
+  workoutInProgress,
   workoutRoutine,
   workoutSaveInput,
-  workoutsInProgress,
   workoutWithSameId,
 }: DecideWorkoutSaveOptions) {
   if (workoutRoutine === undefined) {
@@ -42,7 +46,7 @@ export function decideWorkoutSave({
 
   if (
     typeof workoutSaveInput.endedAt !== "string" &&
-    workoutsInProgress.length > 0
+    workoutInProgress !== undefined
   ) {
     return WorkoutSaveOutcome.WorkoutInProgressConflict();
   }

@@ -2,7 +2,7 @@ import * as Effect from "effect/Effect";
 
 import { AuthenticationClient } from "@/shared/services/authentication-client";
 
-type RequestOtpCodeOptions = {
+export type RequestOtpCodeOptions = {
   email: string;
 };
 

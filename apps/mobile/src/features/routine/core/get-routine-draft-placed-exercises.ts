@@ -7,7 +7,6 @@ import type {
   RoutineDraftExercise,
 } from "@/features/routine/core/routine-draft-reducer";
 
-import { WARM_UP_SECTION } from "@/features/routine/constants/section";
 import { SUPERSET_EXERCISE_COUNT_MINIMUM } from "@/features/routine/constants/superset";
 
 type RoutineDraftPlacedExercise = {
@@ -31,7 +30,7 @@ export function getRoutineDraftPlacedExercises(routineDraft: RoutineDraft) {
         (routineDraftWarmUpExercise) =>
           ({
             routineDraftExercise: routineDraftWarmUpExercise,
-            section: WARM_UP_SECTION,
+            section: "warm_up",
             superset: undefined,
             warmUpForRoutineExerciseId:
               routineDraftWarmUpExercise.warmUpForRoutineExerciseId,

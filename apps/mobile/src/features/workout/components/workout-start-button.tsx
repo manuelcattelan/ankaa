@@ -8,7 +8,8 @@ import { canStartWorkout } from "@/features/workout/core/can-start-workout";
 import { useWorkoutDocuments } from "@/features/workout/hooks/use-workout-documents";
 import { workoutStartButtonMessages } from "@/features/workout/messages/workout-start-button-messages";
 import { Button } from "@/shared/components/button";
-import { useAuthenticationClient } from "@/shared/hooks/use-authentication-client";
+import { getExerciseNames } from "@/shared/core/get-exercise-names";
+import { useAuthenticationSession } from "@/shared/hooks/use-authentication-session";
 import { useRuntime } from "@/shared/hooks/use-runtime";
 import { createIdentifier } from "@/shared/interactors/create-identifier";
 import { createExerciseListQueryOptions } from "@/shared/queries/create-exercise-list-query-options";
@@ -22,19 +23,15 @@ export function WorkoutStartButton({ routine }: WorkoutStartButtonProperties) {
 
   const runtime = useRuntime();
 
-  const authenticationClient = useAuthenticationClient();
-
-  const session = authenticationClient.betterAuthenticationClient.useSession();
+  const session = useAuthenticationSession();
 
   const workoutDocuments = useWorkoutDocuments();
 
   const exerciseLibrary = useQuery(createExerciseListQueryOptions(runtime));
 
-  const exerciseIds = new Set(
-    exerciseLibrary.data?.map((exercise) => exercise.id),
-  );
+  const exerciseNames = getExerciseNames(exerciseLibrary.data);
 
-  if (workoutDocuments.runningWorkoutDocument) {
+  if (workoutDocuments.workoutDocumentInProgress) {
     return null;
   }
 
@@ -42,7 +39,7 @@ export function WorkoutStartButton({ routine }: WorkoutStartButtonProperties) {
     if (
       !exerciseLibrary.data ||
       !session.data ||
-      workoutDocuments.runningWorkoutDocument
+      workoutDocuments.workoutDocumentInProgress
     ) {
       return;
     }
@@ -70,7 +67,7 @@ export function WorkoutStartButton({ routine }: WorkoutStartButtonProperties) {
 
   return (
     <Button
-      disabled={!canStartWorkout({ exerciseIds, routine })}
+      disabled={!canStartWorkout({ exerciseNames, routine })}
       onPress={handleStartWorkout}
       title={workoutStartButtonMessages.startWorkoutButton(routine.name)}
     />

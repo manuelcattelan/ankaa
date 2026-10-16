@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { MILLISECONDS_PER_SECOND } from "@/shared/constants/time";
+import { getCooldownDeadline } from "@/features/authentication/core/get-cooldown-deadline";
+import { getRemainingSeconds } from "@/shared/core/get-remaining-seconds";
 import { useRuntime } from "@/shared/hooks/use-runtime";
 import { announceMessage } from "@/shared/interactors/announce-message";
 
@@ -23,10 +24,10 @@ export function useCooldown({
   const [cooldownNow, setCooldownNow] = useState(Date.now);
 
   const isCooldownActive = cooldownNow < cooldownDeadline;
-  const cooldownRemainingSeconds = Math.max(
-    0,
-    Math.ceil((cooldownDeadline - cooldownNow) / MILLISECONDS_PER_SECOND),
-  );
+  const cooldownRemainingSeconds = getRemainingSeconds({
+    currentTime: cooldownNow,
+    deadline: cooldownDeadline,
+  });
 
   useEffect(() => {
     if (!isCooldownActive) {
@@ -55,7 +56,7 @@ export function useCooldown({
     setCooldownNow(cooldownStart);
 
     setCooldownDeadline(
-      cooldownStart + cooldownSeconds * MILLISECONDS_PER_SECOND,
+      getCooldownDeadline({ cooldownSeconds, cooldownStart }),
     );
   }
 

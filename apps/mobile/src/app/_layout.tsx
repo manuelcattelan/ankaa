@@ -1,3 +1,4 @@
+import type { MutationKey, UseMutationOptions } from "@tanstack/react-query";
 import type { Persister } from "@tanstack/react-query-persist-client";
 import type { ColorSchemeName } from "react-native";
 
@@ -39,13 +40,18 @@ import { createOtpCodeSignInMutationOptions } from "@/features/authentication/mu
 import { createSignOutMutationOptions } from "@/features/authentication/mutations/create-sign-out-mutation-options";
 import { createRoutineDeleteMutationOptions } from "@/features/routine/mutations/create-routine-delete-mutation-options";
 import { createRoutineSaveMutationOptions } from "@/features/routine/mutations/create-routine-save-mutation-options";
+import { requestNotificationPermission } from "@/features/workout/interactors/request-notification-permission";
 import { createWorkoutSaveMutationOptions } from "@/features/workout/mutations/create-workout-save-mutation-options";
 import { WorkoutDocumentsProvider } from "@/features/workout/providers/workout-documents-provider";
 import { applicationLayer } from "@/layer";
 import { Text } from "@/shared/components/text";
-import { useAuthenticationClient } from "@/shared/hooks/use-authentication-client";
+import { useAuthenticationSession } from "@/shared/hooks/use-authentication-session";
 import { errorMessages } from "@/shared/messages/error-messages";
 import { RuntimeContext } from "@/shared/providers/runtime-context";
+
+type MutationDefaultKey = {
+  mutationKey: MutationKey;
+};
 
 type QueryCacheControllerProperties = {
   queryPersister: Persister;
@@ -54,6 +60,12 @@ type QueryCacheControllerProperties = {
 type RegisterMutationDefaultsOptions = {
   queryClient: QueryClient;
   runtime: ApplicationRuntime;
+};
+
+type SetMutationDefaultOptions<TData, TError, TVariables, TOnMutateResult> = {
+  mutationOptions: MutationDefaultKey &
+    UseMutationOptions<TData, TError, TVariables, TOnMutateResult>;
+  queryClient: QueryClient;
 };
 
 const QUERY_STALE_TIME_MILLISECONDS = 60_000;
@@ -92,8 +104,8 @@ export default function RootLayout() {
         }),
     });
 
-    void requestNotificationPermission();
-  }, []);
+    void runtime.runPromise(requestNotificationPermission());
+  }, [runtime]);
 
   useEffect(() => {
     onlineManager.setEventListener(listenToNetworkState);
@@ -202,9 +214,7 @@ function QueryCacheController({
 
   const queryClient = useQueryClient();
 
-  const authenticationClient = useAuthenticationClient();
-
-  const session = authenticationClient.betterAuthenticationClient.useSession();
+  const session = useAuthenticationSession();
 
   const hasSession = !!session.data;
 
@@ -224,75 +234,49 @@ function registerMutationDefaults({
   queryClient,
   runtime,
 }: RegisterMutationDefaultsOptions) {
-  const appleSignInMutationOptions = createAppleSignInMutationOptions(runtime);
-  const googleSignInMutationOptions =
-    createGoogleSignInMutationOptions(runtime);
-  const otpCodeRequestMutationOptions =
-    createOtpCodeRequestMutationOptions(runtime);
-  const otpCodeSignInMutationOptions =
-    createOtpCodeSignInMutationOptions(runtime);
-  const routineDeleteMutationOptions =
-    createRoutineDeleteMutationOptions(runtime);
-  const routineSaveMutationOptions = createRoutineSaveMutationOptions(runtime);
-  const signOutMutationOptions = createSignOutMutationOptions(runtime);
-  const workoutSaveMutationOptions = createWorkoutSaveMutationOptions(runtime);
+  setMutationDefault({
+    mutationOptions: createAppleSignInMutationOptions(runtime),
+    queryClient,
+  });
 
-  queryClient.setMutationDefaults(
-    appleSignInMutationOptions.mutationKey,
-    appleSignInMutationOptions,
-  );
+  setMutationDefault({
+    mutationOptions: createGoogleSignInMutationOptions(runtime),
+    queryClient,
+  });
 
-  queryClient.setMutationDefaults(
-    googleSignInMutationOptions.mutationKey,
-    googleSignInMutationOptions,
-  );
+  setMutationDefault({
+    mutationOptions: createOtpCodeRequestMutationOptions(runtime),
+    queryClient,
+  });
 
-  queryClient.setMutationDefaults(
-    otpCodeRequestMutationOptions.mutationKey,
-    otpCodeRequestMutationOptions,
-  );
+  setMutationDefault({
+    mutationOptions: createOtpCodeSignInMutationOptions(runtime),
+    queryClient,
+  });
 
-  queryClient.setMutationDefaults(
-    otpCodeSignInMutationOptions.mutationKey,
-    otpCodeSignInMutationOptions,
-  );
+  setMutationDefault({
+    mutationOptions: createRoutineDeleteMutationOptions(runtime),
+    queryClient,
+  });
 
-  queryClient.setMutationDefaults(
-    routineDeleteMutationOptions.mutationKey,
-    routineDeleteMutationOptions,
-  );
+  setMutationDefault({
+    mutationOptions: createRoutineSaveMutationOptions(runtime),
+    queryClient,
+  });
 
-  queryClient.setMutationDefaults(
-    routineSaveMutationOptions.mutationKey,
-    routineSaveMutationOptions,
-  );
+  setMutationDefault({
+    mutationOptions: createSignOutMutationOptions(runtime),
+    queryClient,
+  });
 
-  queryClient.setMutationDefaults(
-    signOutMutationOptions.mutationKey,
-    signOutMutationOptions,
-  );
-
-  queryClient.setMutationDefaults(
-    workoutSaveMutationOptions.mutationKey,
-    workoutSaveMutationOptions,
-  );
-}
-
-async function requestNotificationPermission() {
-  const notificationPermission = await ExpoNotifications.getPermissionsAsync();
-
-  if (
-    notificationPermission.status ===
-    ExpoNotifications.PermissionStatus.UNDETERMINED
-  ) {
-    await ExpoNotifications.requestPermissionsAsync();
-  }
+  setMutationDefault({
+    mutationOptions: createWorkoutSaveMutationOptions(runtime),
+    queryClient,
+  });
 }
 
 function RootNavigator() {
-  const authenticationClient = useAuthenticationClient();
-
-  const session = authenticationClient.betterAuthenticationClient.useSession();
+  const session = useAuthenticationSession();
 
   const hasSession = !!session.data;
 
@@ -308,10 +292,15 @@ function RootNavigator() {
   );
 }
 
-function SplashScreenController() {
-  const authenticationClient = useAuthenticationClient();
+function setMutationDefault<TData, TError, TVariables, TOnMutateResult>({
+  mutationOptions,
+  queryClient,
+}: SetMutationDefaultOptions<TData, TError, TVariables, TOnMutateResult>) {
+  queryClient.setMutationDefaults(mutationOptions.mutationKey, mutationOptions);
+}
 
-  const session = authenticationClient.betterAuthenticationClient.useSession();
+function SplashScreenController() {
+  const session = useAuthenticationSession();
 
   useEffect(() => {
     void SplashScreen.preventAutoHideAsync();

@@ -22,12 +22,18 @@ import type { WorkoutDocumentsAction } from "@/features/workout/core/workout-doc
 
 import { formatElapsedTime } from "@/features/workout/core/format-elapsed-time";
 import { getDropSetWeightValueSuggestion } from "@/features/workout/core/get-drop-set-weight-value-suggestion";
+import { getElapsedSeconds } from "@/features/workout/core/get-elapsed-seconds";
+import { getRestRemainingSeconds } from "@/features/workout/core/get-rest-remaining-seconds";
 import { getVariationSegmentCount } from "@/features/workout/core/get-variation-segment-count";
 import { getWorkoutDocumentExerciseBlockSection } from "@/features/workout/core/get-workout-document-exercise-block-section";
-import { getWorkoutDocumentExerciseSetSegmentValidationErrors } from "@/features/workout/core/get-workout-document-exercise-set-segment-validation-errors";
+import { getWorkoutDocumentExerciseRestSeconds } from "@/features/workout/core/get-workout-document-exercise-rest-seconds";
+import { getWorkoutDocumentExerciseSetSegmentValidationErrorMessages } from "@/features/workout/core/get-workout-document-exercise-set-segment-validation-error-messages";
+import { getWorkoutDocumentExerciseWorkingSetCounts } from "@/features/workout/core/get-workout-document-exercise-working-set-counts";
 import { getWorkoutDocumentRoutineExerciseSet } from "@/features/workout/core/get-workout-document-routine-exercise-set";
+import { getWorkoutDocumentWarmUpForExerciseName } from "@/features/workout/core/get-workout-document-warm-up-for-exercise-name";
 import { getWorkoutExercisePlacement } from "@/features/workout/core/get-workout-exercise-placement";
 import { hasWorkoutDocumentValidationErrors } from "@/features/workout/core/has-workout-document-validation-errors";
+import { validateWorkoutDocumentExerciseSetSegment } from "@/features/workout/core/validate-workout-document-exercise-set-segment";
 import { useWorkoutDocuments } from "@/features/workout/hooks/use-workout-documents";
 import { cancelRestNotification } from "@/features/workout/interactors/cancel-rest-notification";
 import { scheduleRestNotification } from "@/features/workout/interactors/schedule-rest-notification";
@@ -38,7 +44,7 @@ import { ScrollView } from "@/shared/components/scroll-view";
 import { StatusMessage } from "@/shared/components/status-message";
 import { Text } from "@/shared/components/text";
 import { TextField } from "@/shared/components/text-field";
-import { MILLISECONDS_PER_SECOND } from "@/shared/constants/time";
+import { getExerciseNames } from "@/shared/core/get-exercise-names";
 import { useRuntime } from "@/shared/hooks/use-runtime";
 import { announceMessage } from "@/shared/interactors/announce-message";
 import { createIdentifier } from "@/shared/interactors/create-identifier";
@@ -152,9 +158,9 @@ export function WorkoutScreen() {
   return (
     <>
       <Stack.Screen options={{ title: workoutScreenMessages.title }} />
-      {workoutDocuments.runningWorkoutDocument ? (
+      {workoutDocuments.workoutDocumentInProgress ? (
         <WorkoutContent
-          workoutDocument={workoutDocuments.runningWorkoutDocument}
+          workoutDocument={workoutDocuments.workoutDocumentInProgress}
         />
       ) : (
         <Redirect href="/" />
@@ -191,35 +197,10 @@ function WorkoutContent({ workoutDocument }: WorkoutContentProperties) {
 
   const exerciseLibrary = useQuery(createExerciseListQueryOptions(runtime));
 
-  const exerciseNames = new Map(
-    exerciseLibrary.data?.map(
-      (exercise) => [exercise.id, exercise.name] as const,
-    ),
-  );
+  const exerciseNames = getExerciseNames(exerciseLibrary.data);
   const isWorkoutDocumentInvalid =
     shouldShowValidationErrors &&
     hasWorkoutDocumentValidationErrors(workoutDocument);
-
-  function getWarmUpForExerciseName(
-    warmUpWorkoutDocumentExercise: WorkoutDocumentExercise,
-  ) {
-    if (
-      warmUpWorkoutDocumentExercise.warmUpForWorkoutExerciseId === undefined
-    ) {
-      return undefined;
-    }
-
-    const warmUpForWorkoutDocumentExercise = workoutDocument.exercises.find(
-      (workoutDocumentExercise) =>
-        workoutDocumentExercise.id ===
-        warmUpWorkoutDocumentExercise.warmUpForWorkoutExerciseId,
-    );
-
-    return (
-      exerciseNames.get(warmUpForWorkoutDocumentExercise?.exerciseId ?? "") ??
-      ""
-    );
-  }
 
   function handleSkipRest() {
     void runtime.runPromise(cancelRestNotification(workoutDocument.restTimer));
@@ -304,9 +285,11 @@ function WorkoutContent({ workoutDocument }: WorkoutContentProperties) {
                 void handleStartRestTimer(restSeconds);
               }}
               shouldShowValidationErrors={shouldShowValidationErrors}
-              warmUpForExerciseName={getWarmUpForExerciseName(
-                workoutDocumentExercise,
-              )}
+              warmUpForExerciseName={getWorkoutDocumentWarmUpForExerciseName({
+                exerciseNames,
+                warmUpWorkoutDocumentExercise: workoutDocumentExercise,
+                workoutDocument,
+              })}
               workoutDocumentExercise={workoutDocumentExercise}
               workoutId={workoutDocument.id}
             />
@@ -342,23 +325,13 @@ function WorkoutExercise({
 }: WorkoutExerciseProperties) {
   const runtime = useRuntime();
 
-  const nextWorkoutDocumentRoutineExerciseSet =
-    getWorkoutDocumentRoutineExerciseSet({
-      position: workoutDocumentExercise.sets.length,
-      workoutDocumentExercise,
-    });
-  const restSeconds = isLastExerciseOfRound
-    ? nextWorkoutDocumentRoutineExerciseSet?.restSeconds
-    : undefined;
-  const workingSetDoneCount = workoutDocumentExercise.sets.filter(
-    (workoutDocumentExerciseSet) =>
-      workoutDocumentExerciseSet.setType === "working",
-  ).length;
-  const workingSetPlannedCount =
-    workoutDocumentExercise.routineExerciseSets.filter(
-      (workoutDocumentRoutineExerciseSet) =>
-        workoutDocumentRoutineExerciseSet.setType === "working",
-    ).length;
+  const restSeconds = getWorkoutDocumentExerciseRestSeconds({
+    isLastExerciseOfRound,
+    workoutDocumentExercise,
+  });
+  const workingSetCounts = getWorkoutDocumentExerciseWorkingSetCounts(
+    workoutDocumentExercise,
+  );
 
   function handleAddSet() {
     dispatchWorkoutDocumentsAction({
@@ -451,15 +424,7 @@ function WorkoutExercise({
           {WEIGHT_TYPE_DESCRIPTIONS[workoutDocumentExercise.weightType]}
         </Text>
       ) : null}
-      <Text>
-        {workoutScreenMessages.setCounterStatus({
-          workingSetDoneCount,
-          workingSetLeftCount: Math.max(
-            0,
-            workingSetPlannedCount - workingSetDoneCount,
-          ),
-        })}
-      </Text>
+      <Text>{workoutScreenMessages.setCounterStatus(workingSetCounts)}</Text>
       {workoutDocumentExercise.sets.map(
         (workoutDocumentExerciseSet, setIndex) => (
           <WorkoutSet
@@ -529,11 +494,14 @@ function WorkoutSegment({
   workoutExerciseSetId,
   workoutId,
 }: WorkoutSegmentProperties) {
-  const validationErrors = shouldShowValidationErrors
-    ? getWorkoutDocumentExerciseSetSegmentValidationErrors(
-        workoutDocumentExerciseSetSegment,
-      )
-    : undefined;
+  const workoutDocumentExerciseSetSegmentValidationErrorMessages =
+    shouldShowValidationErrors
+      ? getWorkoutDocumentExerciseSetSegmentValidationErrorMessages(
+          validateWorkoutDocumentExerciseSetSegment(
+            workoutDocumentExerciseSetSegment,
+          ),
+        )
+      : undefined;
 
   function handleChangeSegment(
     workoutDocumentExerciseSetSegmentChanges: Partial<WorkoutDocumentExerciseSetSegment>,
@@ -554,7 +522,9 @@ function WorkoutSegment({
     <>
       {segmentLabel ? <Text>{segmentLabel}</Text> : null}
       <TextField
-        errorMessage={validationErrors?.amount}
+        errorMessage={
+          workoutDocumentExerciseSetSegmentValidationErrorMessages?.amount
+        }
         inputMode="numeric"
         label={AMOUNT_UNIT_LABELS[amountUnit]}
         onChangeText={(amount) => {
@@ -565,7 +535,9 @@ function WorkoutSegment({
       />
       {weightType !== "none" ? (
         <TextField
-          errorMessage={validationErrors?.weightValue}
+          errorMessage={
+            workoutDocumentExerciseSetSegmentValidationErrorMessages?.weightValue
+          }
           inputMode="decimal"
           label={workoutScreenMessages.weightValueLabel}
           onChangeText={(weightValue) => {
@@ -709,18 +681,11 @@ function WorkoutTimers({
 }: WorkoutTimersProperties) {
   const currentTime = useCurrentTime();
 
-  const elapsedSeconds = Math.max(
-    0,
-    Math.floor((currentTime - Date.parse(startedAt)) / MILLISECONDS_PER_SECOND),
-  );
-  const restRemainingSeconds = restTimer
-    ? Math.ceil(
-        (Date.parse(restTimer.startedAt) +
-          restTimer.restSeconds * MILLISECONDS_PER_SECOND -
-          currentTime) /
-          MILLISECONDS_PER_SECOND,
-      )
-    : 0;
+  const elapsedSeconds = getElapsedSeconds({ currentTime, startedAt });
+  const restRemainingSeconds = getRestRemainingSeconds({
+    currentTime,
+    restTimer,
+  });
 
   return (
     <>

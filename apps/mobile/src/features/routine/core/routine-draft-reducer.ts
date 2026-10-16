@@ -54,8 +54,8 @@ export type RoutineDraftAction =
       type: "joinedSupersetWithNextBlock";
     }
   | {
+      routineDraftExerciseSet: RoutineDraftExerciseSet;
       routineExerciseId: string;
-      routineExerciseSet: RoutineDraftExerciseSet;
       type: "changedSet";
     }
   | {
@@ -121,6 +121,11 @@ type ChangeRoutineDraftSectionsOptions = {
   routineDraft: RoutineDraft;
 };
 
+type CreateEmptyRoutineDraftExerciseOptions = {
+  exerciseId: string;
+  routineExerciseId: string;
+};
+
 export function routineDraftReducer(
   routineDraft: RoutineDraft,
   routineDraftAction: RoutineDraftAction,
@@ -132,12 +137,10 @@ export function routineDraftReducer(
           ...routineDraftBlocks,
           {
             exercises: [
-              {
+              createEmptyRoutineDraftExercise({
                 exerciseId: routineDraftAction.exerciseId,
-                id: routineDraftAction.routineExerciseId,
-                note: "",
-                sets: [],
-              },
+                routineExerciseId: routineDraftAction.routineExerciseId,
+              }),
             ],
             id: routineDraftAction.routineDraftBlockId,
             warmUpExercises: [],
@@ -177,10 +180,10 @@ export function routineDraftReducer(
                   warmUpExercises: [
                     ...routineDraftBlock.warmUpExercises,
                     {
-                      exerciseId: routineDraftAction.exerciseId,
-                      id: routineDraftAction.routineExerciseId,
-                      note: "",
-                      sets: [],
+                      ...createEmptyRoutineDraftExercise({
+                        exerciseId: routineDraftAction.exerciseId,
+                        routineExerciseId: routineDraftAction.routineExerciseId,
+                      }),
                       warmUpForRoutineExerciseId:
                         routineDraftAction.warmUpForRoutineExerciseId,
                     },
@@ -219,8 +222,8 @@ export function routineDraftReducer(
         getRoutineDraftExerciseChanges: (routineDraftExercise) => ({
           sets: routineDraftExercise.sets.map((routineDraftExerciseSet) =>
             routineDraftExerciseSet.id ===
-            routineDraftAction.routineExerciseSet.id
-              ? routineDraftAction.routineExerciseSet
+            routineDraftAction.routineDraftExerciseSet.id
+              ? routineDraftAction.routineDraftExerciseSet
               : routineDraftExerciseSet,
           ),
         }),
@@ -396,6 +399,20 @@ function changeRoutineDraftSections({
       getRoutineDraftBlocks(routineDraft.sections[section]),
     ),
   };
+}
+
+function createEmptyRoutineDraftExercise({
+  exerciseId,
+  routineExerciseId,
+}: CreateEmptyRoutineDraftExerciseOptions) {
+  const routineDraftExercise: RoutineDraftExercise = {
+    exerciseId,
+    id: routineExerciseId,
+    note: "",
+    sets: [],
+  };
+
+  return routineDraftExercise;
 }
 
 function createEmptyRoutineDraftExerciseSet(routineExerciseSetId: string) {

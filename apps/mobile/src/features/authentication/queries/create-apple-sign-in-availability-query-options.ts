@@ -10,7 +10,7 @@ export function createAppleSignInAvailabilityQueryOptions(
   return queryOptions({
     gcTime: Infinity,
     queryFn: () => runtime.runPromise(checkAppleSignInAvailability()),
-    queryKey: ["apple-authentication-available"],
+    queryKey: ["apple-sign-in-availability"],
     staleTime: Infinity,
   });
 }

@@ -2,12 +2,10 @@ import type { AppRouter } from "@ankaa/api/trpc/router";
 import type { TRPCClient } from "@trpc/client";
 
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
-import * as Config from "effect/Config";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { apiUrlSchema } from "@/shared/core/api-url-schema";
 import { TrpcError } from "@/shared/errors/trpc-error";
 import { AuthenticationClient } from "@/shared/services/authentication-client";
 
@@ -21,8 +19,6 @@ export class TrpcClient extends Context.Service<TrpcClient>()(
     make: Effect.gen(function* () {
       const authenticationClient = yield* AuthenticationClient;
 
-      const apiUrl = yield* Config.schema(apiUrlSchema, "EXPO_PUBLIC_API_URL");
-
       const vanillaTrpcClient = createTRPCClient<AppRouter>({
         links: [
           httpBatchLink({
@@ -34,7 +30,7 @@ export class TrpcClient extends Context.Service<TrpcClient>()(
 
               return cookies ? { cookie: cookies } : {};
             },
-            url: `${apiUrl}/trpc`,
+            url: `${authenticationClient.apiUrl}/trpc`,
           }),
         ],
       });

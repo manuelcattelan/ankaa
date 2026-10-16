@@ -16,7 +16,7 @@ import { readWorkoutDocuments } from "@/features/workout/interactors/read-workou
 import { writeWorkoutDocuments } from "@/features/workout/interactors/write-workout-documents";
 import { createWorkoutSaveMutationOptions } from "@/features/workout/mutations/create-workout-save-mutation-options";
 import { WorkoutDocumentsContext } from "@/features/workout/providers/workout-documents-context";
-import { useAuthenticationClient } from "@/shared/hooks/use-authentication-client";
+import { useAuthenticationSession } from "@/shared/hooks/use-authentication-session";
 import { useRuntime } from "@/shared/hooks/use-runtime";
 
 type UseWorkoutSyncOptions = {
@@ -39,9 +39,7 @@ export function WorkoutDocumentsProvider({
 }: WorkoutDocumentsProviderProperties) {
   const runtime = useRuntime();
 
-  const authenticationClient = useAuthenticationClient();
-
-  const session = authenticationClient.betterAuthenticationClient.useSession();
+  const session = useAuthenticationSession();
 
   const [workoutDocuments, dispatchWorkoutDocumentsAction] = useReducer(
     workoutDocumentsReducer,
@@ -58,7 +56,7 @@ export function WorkoutDocumentsProvider({
     workoutDocuments: sessionWorkoutDocuments,
   });
 
-  const runningWorkoutDocument = sessionWorkoutDocuments.find(
+  const workoutDocumentInProgress = sessionWorkoutDocuments.find(
     (sessionWorkoutDocument) => sessionWorkoutDocument.endedAt === undefined,
   );
 
@@ -71,7 +69,7 @@ export function WorkoutDocumentsProvider({
       value={{
         dispatchWorkoutDocumentsAction,
         hasWorkoutSaveFailed: hasSessionWorkoutSaveFailed,
-        runningWorkoutDocument,
+        workoutDocumentInProgress,
       }}
     >
       {children}

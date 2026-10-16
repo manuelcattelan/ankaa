@@ -5,8 +5,8 @@ import { Database } from "@ankaa/database";
 import * as Effect from "effect/Effect";
 import * as Match from "effect/Match";
 
+import { RoutineNotFoundError } from "../../../shared/errors/routine-not-found-error.ts";
 import { decideRoutineDelete } from "../core/decide-routine-delete.ts";
-import { RoutineNotFoundError } from "../errors/routine-not-found-error.ts";
 import { findRoutine } from "../queries/find-routine.ts";
 import { updateRoutineDeletedAt } from "../queries/update-routine-deleted-at.ts";
 
@@ -26,13 +26,14 @@ export const deleteRoutine = Effect.fn("deleteRoutine")(function* (
 
       const routineDeleteOutcome = decideRoutineDelete({ routine });
 
-      if (routineDeleteOutcome._tag === "RoutineDeleteAllowed") {
-        await updateRoutineDeletedAt({
-          database: transaction,
-          routineId: routineDeleteInput.id,
-          userId: currentSession.user.id,
-        });
-      }
+      await Match.valueTags(routineDeleteOutcome, {
+        RoutineDeleteAllowed: () =>
+          updateRoutineDeletedAt({
+            database: transaction,
+            routineId: routineDeleteInput.id,
+          }),
+        RoutineNotFound: () => Promise.resolve(),
+      });
 
       return routineDeleteOutcome;
     })
