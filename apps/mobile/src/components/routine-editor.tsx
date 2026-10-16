@@ -1,4 +1,4 @@
-import type { AppRouter } from "@ankaa/api";
+import type { AppRouter } from "@ankaa/api/trpc/router";
 import type { DayOfWeek } from "@ankaa/core/features/routine/constants/day-of-week";
 import type { Variation } from "@ankaa/core/shared/constants/intensity-technique";
 import type { Section } from "@ankaa/core/shared/constants/section";

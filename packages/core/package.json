@@ -1,4 +1,7 @@
 {
+  "dependencies": {
+    "effect": "catalog:"
+  },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
     "@ankaa/prettier": "workspace:*",

@@ -1,4 +1,4 @@
-import type { AppRouter } from "@ankaa/api";
+import type { AppRouter } from "@ankaa/api/trpc/router";
 import type { Equipment } from "@ankaa/core/features/exercise/constants/equipment";
 import type { MuscleGroup } from "@ankaa/core/features/exercise/constants/muscle-group";
 import type { inferRouterOutputs } from "@trpc/server";

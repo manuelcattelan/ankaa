@@ -5,6 +5,7 @@
     "@ankaa/database": "workspace:*",
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",
+    "effect": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -18,7 +19,7 @@
     "typescript": "catalog:"
   },
   "exports": {
-    ".": "./src/index.ts"
+    "./*": "./src/*.ts"
   },
   "name": "@ankaa/api",
   "private": true,

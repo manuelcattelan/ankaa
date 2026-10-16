@@ -1,8 +1,7 @@
 {
   "dependencies": {
-    "@ankaa/environment": "workspace:*",
-    "resend": "^6.28.1",
-    "zod": "catalog:"
+    "effect": "catalog:",
+    "resend": "^6.28.1"
   },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",

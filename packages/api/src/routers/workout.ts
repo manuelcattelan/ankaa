@@ -15,13 +15,16 @@ import { SECTIONS } from "@ankaa/core/shared/constants/section";
 import { SET_TYPES } from "@ankaa/core/shared/constants/set-type";
 import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo";
 import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-type";
-import { database } from "@ankaa/database";
+import { Database } from "@ankaa/database";
 import { and, eq, gte, isNull, lt, ne, sql } from "@ankaa/database/operators";
 import * as Schema from "@ankaa/database/schema";
 import { TRPCError } from "@trpc/server";
+import * as Effect from "effect/Effect";
 import { z } from "zod";
 
-import { protectedProcedure, router } from "../trpc.ts";
+import { protectedProcedure, router } from "../trpc/procedures.ts";
+import { run } from "../trpc/run.ts";
+import { getDatabaseErrorCode } from "../utilities/get-database-error-code.ts";
 import {
   checkLinkedWarmUpExercises,
   checkSupersetNeighbors,
@@ -198,143 +201,157 @@ const workoutSchema = z
   });
 
 export const workoutRouter = router({
-  save: protectedProcedure.input(workoutSchema).mutation(({ ctx, input }) =>
-    database.transaction(async (transaction) => {
-      const routines = await transaction
-        .select({ id: Schema.routine.id })
-        .from(Schema.routine)
-        .where(
-          and(
-            eq(Schema.routine.id, input.routineId),
-            eq(Schema.routine.userId, ctx.session.user.id),
-          ),
-        );
+  save: protectedProcedure
+    .input(workoutSchema)
+    .mutation(({ ctx, input, signal }) =>
+      run({
+        context: ctx,
+        effect: Effect.gen(function* () {
+          const database = yield* Database;
 
-      if (routines.length === 0) {
-        throw new TRPCError({ code: "NOT_FOUND" });
-      }
+          yield* database.transaction(async (transaction) => {
+            const routines = await transaction
+              .select({ id: Schema.routine.id })
+              .from(Schema.routine)
+              .where(
+                and(
+                  eq(Schema.routine.id, input.routineId),
+                  eq(Schema.routine.userId, ctx.session.user.id),
+                ),
+              );
 
-      if (typeof input.endedAt !== "string") {
-        const inProgressWorkouts = await transaction
-          .select({ id: Schema.workout.id })
-          .from(Schema.workout)
-          .where(
-            and(
-              eq(Schema.workout.userId, ctx.session.user.id),
-              isNull(Schema.workout.endedAt),
-              ne(Schema.workout.id, input.id),
-            ),
-          );
+            if (routines.length === 0) {
+              throw new TRPCError({ code: "NOT_FOUND" });
+            }
 
-        if (inProgressWorkouts.length > 0) {
-          throw new TRPCError({ code: "CONFLICT" });
-        }
-      }
+            if (typeof input.endedAt !== "string") {
+              const inProgressWorkouts = await transaction
+                .select({ id: Schema.workout.id })
+                .from(Schema.workout)
+                .where(
+                  and(
+                    eq(Schema.workout.userId, ctx.session.user.id),
+                    isNull(Schema.workout.endedAt),
+                    ne(Schema.workout.id, input.id),
+                  ),
+                );
 
-      const workoutValues = {
-        endedAt:
-          typeof input.endedAt === "string"
-            ? new Date(input.endedAt)
-            : input.endedAt,
-        routineId: input.routineId,
-        startedAt: new Date(input.startedAt),
-        version: input.version,
-      };
+              if (inProgressWorkouts.length > 0) {
+                throw new TRPCError({ code: "CONFLICT" });
+              }
+            }
 
-      const savedWorkouts = await transaction
-        .insert(Schema.workout)
-        .values({
-          ...workoutValues,
-          id: input.id,
-          userId: ctx.session.user.id,
-        })
-        .onConflictDoUpdate({
-          set: { ...workoutValues, updatedAt: sql`now()` },
-          setWhere: and(
-            eq(Schema.workout.userId, ctx.session.user.id),
-            lt(Schema.workout.version, input.version),
-          ),
-          target: Schema.workout.id,
-        })
-        .returning({ id: Schema.workout.id });
+            const workoutValues = {
+              endedAt:
+                typeof input.endedAt === "string"
+                  ? new Date(input.endedAt)
+                  : input.endedAt,
+              routineId: input.routineId,
+              startedAt: new Date(input.startedAt),
+              version: input.version,
+            };
 
-      if (savedWorkouts.length === 0) {
-        const newerWorkouts = await transaction
-          .select({ id: Schema.workout.id })
-          .from(Schema.workout)
-          .where(
-            and(
-              eq(Schema.workout.id, input.id),
-              eq(Schema.workout.userId, ctx.session.user.id),
-              gte(Schema.workout.version, input.version),
-            ),
-          );
+            const savedWorkouts = await transaction
+              .insert(Schema.workout)
+              .values({
+                ...workoutValues,
+                id: input.id,
+                userId: ctx.session.user.id,
+              })
+              .onConflictDoUpdate({
+                set: { ...workoutValues, updatedAt: sql`now()` },
+                setWhere: and(
+                  eq(Schema.workout.userId, ctx.session.user.id),
+                  lt(Schema.workout.version, input.version),
+                ),
+                target: Schema.workout.id,
+              })
+              .returning({ id: Schema.workout.id });
 
-        if (newerWorkouts.length > 0) {
-          return;
-        }
+            if (savedWorkouts.length === 0) {
+              const newerWorkouts = await transaction
+                .select({ id: Schema.workout.id })
+                .from(Schema.workout)
+                .where(
+                  and(
+                    eq(Schema.workout.id, input.id),
+                    eq(Schema.workout.userId, ctx.session.user.id),
+                    gte(Schema.workout.version, input.version),
+                  ),
+                );
 
-        throw new TRPCError({ code: "NOT_FOUND" });
-      }
+              if (newerWorkouts.length > 0) {
+                return;
+              }
 
-      await transaction
-        .delete(Schema.workoutExercise)
-        .where(eq(Schema.workoutExercise.workoutId, input.id));
+              throw new TRPCError({ code: "NOT_FOUND" });
+            }
 
-      if (input.exercises.length > 0) {
-        await transaction.insert(Schema.workoutExercise).values(
-          input.exercises.map((workoutExercise) => ({
-            amountUnit: workoutExercise.amountUnit,
-            exerciseId: workoutExercise.exerciseId,
-            id: workoutExercise.id,
-            note: workoutExercise.note,
-            position: workoutExercise.position,
-            section: workoutExercise.section,
-            skipReason: workoutExercise.skipReason,
-            skipReasonNote: workoutExercise.skipReasonNote,
-            superset: workoutExercise.superset,
-            warmUpForWorkoutExerciseId:
-              workoutExercise.warmUpForWorkoutExerciseId,
-            weightType: workoutExercise.weightType,
-            workoutId: input.id,
-          })),
-        );
-      }
+            await transaction
+              .delete(Schema.workoutExercise)
+              .where(eq(Schema.workoutExercise.workoutId, input.id));
 
-      const workoutExerciseSets = input.exercises.flatMap((workoutExercise) =>
-        workoutExercise.sets.map((workoutExerciseSet) => ({
-          ...workoutExerciseSet,
-          workoutExerciseId: workoutExercise.id,
-        })),
-      );
+            if (input.exercises.length > 0) {
+              await transaction.insert(Schema.workoutExercise).values(
+                input.exercises.map((workoutExercise) => ({
+                  amountUnit: workoutExercise.amountUnit,
+                  exerciseId: workoutExercise.exerciseId,
+                  id: workoutExercise.id,
+                  note: workoutExercise.note,
+                  position: workoutExercise.position,
+                  section: workoutExercise.section,
+                  skipReason: workoutExercise.skipReason,
+                  skipReasonNote: workoutExercise.skipReasonNote,
+                  superset: workoutExercise.superset,
+                  warmUpForWorkoutExerciseId:
+                    workoutExercise.warmUpForWorkoutExerciseId,
+                  weightType: workoutExercise.weightType,
+                  workoutId: input.id,
+                })),
+              );
+            }
 
-      if (workoutExerciseSets.length > 0) {
-        await transaction.insert(Schema.workoutExerciseSet).values(
-          workoutExerciseSets.map((workoutExerciseSet) => ({
-            id: workoutExerciseSet.id,
-            isToFailure: workoutExerciseSet.isToFailure,
-            position: workoutExerciseSet.position,
-            setType: workoutExerciseSet.setType,
-            tempo: workoutExerciseSet.tempo,
-            variation: workoutExerciseSet.variation,
-            workoutExerciseId: workoutExerciseSet.workoutExerciseId,
-          })),
-        );
-      }
+            const workoutExerciseSets = input.exercises.flatMap(
+              (workoutExercise) =>
+                workoutExercise.sets.map((workoutExerciseSet) => ({
+                  ...workoutExerciseSet,
+                  workoutExerciseId: workoutExercise.id,
+                })),
+            );
 
-      const workoutExerciseSetSegments = workoutExerciseSets.flatMap(
-        (workoutExerciseSet) =>
-          workoutExerciseSet.segments.map((workoutExerciseSetSegment) => ({
-            ...workoutExerciseSetSegment,
-            workoutExerciseSetId: workoutExerciseSet.id,
-          })),
-      );
+            if (workoutExerciseSets.length > 0) {
+              await transaction.insert(Schema.workoutExerciseSet).values(
+                workoutExerciseSets.map((workoutExerciseSet) => ({
+                  id: workoutExerciseSet.id,
+                  isToFailure: workoutExerciseSet.isToFailure,
+                  position: workoutExerciseSet.position,
+                  setType: workoutExerciseSet.setType,
+                  tempo: workoutExerciseSet.tempo,
+                  variation: workoutExerciseSet.variation,
+                  workoutExerciseId: workoutExerciseSet.workoutExerciseId,
+                })),
+              );
+            }
 
-      if (workoutExerciseSetSegments.length > 0) {
-        await transaction
-          .insert(Schema.workoutExerciseSetSegment)
-          .values(workoutExerciseSetSegments);
-      }
-    }),
-  ),
+            const workoutExerciseSetSegments = workoutExerciseSets.flatMap(
+              (workoutExerciseSet) =>
+                workoutExerciseSet.segments.map(
+                  (workoutExerciseSetSegment) => ({
+                    ...workoutExerciseSetSegment,
+                    workoutExerciseSetId: workoutExerciseSet.id,
+                  }),
+                ),
+            );
+
+            if (workoutExerciseSetSegments.length > 0) {
+              await transaction
+                .insert(Schema.workoutExerciseSetSegment)
+                .values(workoutExerciseSetSegments);
+            }
+          });
+        }),
+        getErrorCode: getDatabaseErrorCode,
+        signal,
+      }),
+    ),
 });

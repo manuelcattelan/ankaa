@@ -10,7 +10,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["src/authentication.ts"],
+    files: ["src/index.ts"],
     rules: {
       "unicorn/prevent-abbreviations": [
         "error",

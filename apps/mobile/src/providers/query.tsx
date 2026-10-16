@@ -1,4 +1,4 @@
-import type { AppRouter } from "@ankaa/api";
+import type { AppRouter } from "@ankaa/api/trpc/router";
 import type { Persister } from "@tanstack/react-query-persist-client";
 
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";

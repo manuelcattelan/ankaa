@@ -1,6 +1,12 @@
+import * as Config from "effect/Config";
+import * as Context from "effect/Context";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
+import * as Redacted from "effect/Redacted";
+import * as Schema from "effect/Schema";
 import { Resend } from "resend";
 
-import { environment } from "./environment.ts";
+import { EmailError } from "./error.ts";
 
 type SendEmailOptions = {
   subject: string;
@@ -8,19 +14,40 @@ type SendEmailOptions = {
   to: string;
 };
 
-const resend = new Resend(environment.RESEND_API_KEY);
+export class Email extends Context.Service<Email>()("@ankaa/email/Email", {
+  make: Effect.gen(function* () {
+    const resendApiKey = yield* Config.schema(
+      Schema.Redacted(Schema.NonEmptyString),
+      "RESEND_API_KEY",
+    );
+    const resendEmailFrom = yield* Config.NonEmptyString("RESEND_EMAIL_FROM");
 
-export async function sendEmail({ subject, text, to }: SendEmailOptions) {
-  const sendEmailResponse = await resend.emails.send({
-    from: environment.RESEND_EMAIL_FROM,
-    subject,
-    text,
-    to,
-  });
+    const resend = new Resend(Redacted.value(resendApiKey));
 
-  if (sendEmailResponse.error) {
-    throw new Error(`Failed to send email with subject "${subject}"`, {
-      cause: sendEmailResponse.error,
+    const send = Effect.fn("Email.send")(function* ({
+      subject,
+      text,
+      to,
+    }: SendEmailOptions) {
+      const sendEmailErrorMessage = `Failed to send email with subject "${subject}"`;
+
+      const sendEmailResponse = yield* Effect.tryPromise({
+        catch: (cause) =>
+          new EmailError({ cause, message: sendEmailErrorMessage }),
+        try: () =>
+          resend.emails.send({ from: resendEmailFrom, subject, text, to }),
+      });
+
+      if (sendEmailResponse.error) {
+        return yield* new EmailError({
+          cause: sendEmailResponse.error,
+          message: sendEmailErrorMessage,
+        });
+      }
     });
-  }
+
+    return { send };
+  }),
+}) {
+  static readonly layer = Layer.effect(this, this.make);
 }

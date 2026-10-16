@@ -1,0 +1,94 @@
+import { urlFilter } from "@ankaa/core/shared/filters/url-filter";
+import { Database } from "@ankaa/database";
+import { Email } from "@ankaa/email";
+import { betterAuth } from "better-auth";
+import * as Config from "effect/Config";
+import * as Context from "effect/Context";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
+import * as Redacted from "effect/Redacted";
+import * as Schema from "effect/Schema";
+
+import { createAuthenticationOptions } from "./create-authentication-options.ts";
+import { AuthenticationError } from "./error.ts";
+
+const BETTER_AUTH_SECRET_MINIMUM_LENGTH = 32;
+
+export class Authentication extends Context.Service<Authentication>()(
+  "@ankaa/authentication/Authentication",
+  {
+    make: Effect.gen(function* () {
+      const database = yield* Database;
+      const email = yield* Email;
+
+      const authenticationConfiguration = yield* Config.all({
+        appleAppBundleIdentifier: Config.NonEmptyString(
+          "APPLE_APP_BUNDLE_IDENTIFIER",
+        ),
+        baseUrl: Config.schema(
+          Schema.String.check(urlFilter),
+          "BETTER_AUTH_URL",
+        ),
+        googleIosClientId: Config.NonEmptyString("GOOGLE_IOS_CLIENT_ID"),
+        googleWebClientId: Config.NonEmptyString("GOOGLE_WEB_CLIENT_ID"),
+        nodeEnvironment: Config.Literals(
+          ["development", "production"],
+          "NODE_ENV",
+        ),
+        secret: Config.schema(
+          Schema.Redacted(
+            Schema.String.check(
+              Schema.isMinLength(BETTER_AUTH_SECRET_MINIMUM_LENGTH),
+            ),
+          ),
+          "BETTER_AUTH_SECRET",
+        ),
+      });
+
+      const context = yield* Effect.context();
+
+      const auth = betterAuth(
+        createAuthenticationOptions({
+          ...authenticationConfiguration,
+          database: database.drizzleDatabase,
+          secret: Redacted.value(authenticationConfiguration.secret),
+          sendVerificationOtp: ({ email: emailAddress, otp }) =>
+            Effect.runPromiseWith(context)(
+              email.send({
+                subject: "Your sign-in OTP code",
+                text: otp,
+                to: emailAddress,
+              }),
+            ),
+        }),
+      );
+
+      yield* Effect.tryPromise({
+        catch: (cause) => new AuthenticationError({ cause }),
+        try: () => auth.$context,
+      });
+
+      function getSession(headers: Headers) {
+        return Effect.tryPromise({
+          catch: (cause) => new AuthenticationError({ cause }),
+          try: () => auth.api.getSession({ headers }),
+        });
+      }
+
+      function handleRequest(request: Request) {
+        return Effect.tryPromise({
+          catch: (cause) => new AuthenticationError({ cause }),
+          try: () => auth.handler(request),
+        });
+      }
+
+      return { getSession, handleRequest };
+    }),
+  },
+) {
+  static readonly layerNoDeps = Layer.effect(this, this.make);
+
+  static readonly layer = this.layerNoDeps.pipe(
+    Layer.provide([Database.layer, Email.layer]),
+  );
+}

@@ -1,4 +1,4 @@
-import type { AppRouter } from "@ankaa/api";
+import type { AppRouter } from "@ankaa/api/trpc/router";
 import type { WeightType } from "@ankaa/core/shared/constants/weight-type";
 import type { TRPCClientErrorLike } from "@trpc/client";
 import type { inferRouterInputs } from "@trpc/server";

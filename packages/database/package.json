@@ -1,10 +1,9 @@
 {
   "dependencies": {
     "@ankaa/core": "workspace:*",
-    "@ankaa/environment": "workspace:*",
     "drizzle-orm": "1.0.0-rc.4",
-    "pg": "^8.23.0",
-    "zod": "catalog:"
+    "effect": "catalog:",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
@@ -21,6 +20,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./error": "./src/error.ts",
     "./operators": "./src/operators.ts",
     "./schema": "./src/schema/index.ts"
   },

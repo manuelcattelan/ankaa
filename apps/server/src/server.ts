@@ -1,0 +1,86 @@
+import closeWithGrace from "close-with-grace";
+import * as Config from "effect/Config";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
+import * as ManagedRuntime from "effect/ManagedRuntime";
+import * as Schema from "effect/Schema";
+import fastify from "fastify";
+
+import { applicationPlugin } from "./application.ts";
+import { applicationLayer } from "./layer.ts";
+import { createLoggerLayer } from "./logger.ts";
+
+const LOGGER_CONFIGURATIONS = {
+  development: {
+    transport: {
+      options: { ignore: "pid,hostname", translateTime: "HH:MM:ss Z" },
+      target: "pino-pretty",
+    },
+  },
+  production: true,
+};
+
+const ROUTER_MAXIMUM_PARAMETER_LENGTH = 5_000;
+
+const positiveIntegerSchema = Schema.Int.check(Schema.isGreaterThan(0));
+
+const serverConfiguration = await Effect.runPromise(
+  Config.all({
+    closeGraceDelayMilliseconds: Config.schema(
+      positiveIntegerSchema,
+      "CLOSE_GRACE_DELAY_MILLISECONDS",
+    ),
+    nodeEnvironment: Config.Literals(["development", "production"], "NODE_ENV"),
+    serverHost: Config.NonEmptyString("SERVER_HOST"),
+    serverPort: Config.schema(positiveIntegerSchema, "SERVER_PORT"),
+  }),
+);
+
+const server = fastify({
+  logger: LOGGER_CONFIGURATIONS[serverConfiguration.nodeEnvironment],
+  routerOptions: { maxParamLength: ROUTER_MAXIMUM_PARAMETER_LENGTH },
+});
+
+const runtime = ManagedRuntime.make(
+  applicationLayer.pipe(Layer.provideMerge(createLoggerLayer(server.log))),
+);
+
+function exitAfterStartFailure(error: unknown) {
+  server.log.error(error, "Failed to start server");
+  process.exit(1);
+}
+
+try {
+  await runtime.context();
+} catch (error) {
+  exitAfterStartFailure(error);
+}
+
+await server.register(applicationPlugin, { runtime });
+
+server.addHook("onClose", async () => {
+  await runtime.dispose();
+});
+
+closeWithGrace(
+  {
+    delay: serverConfiguration.closeGraceDelayMilliseconds,
+    logger: server.log,
+  },
+  async ({ err: error }) => {
+    if (error) {
+      server.log.error(error, "Closing server after an uncaught error");
+    }
+
+    await server.close();
+  },
+);
+
+try {
+  await server.listen({
+    host: serverConfiguration.serverHost,
+    port: serverConfiguration.serverPort,
+  });
+} catch (error) {
+  exitAfterStartFailure(error);
+}

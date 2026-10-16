@@ -11,13 +11,16 @@ import { POSITION_MINIMUM } from "@ankaa/core/shared/constants/position";
 import { SECTIONS } from "@ankaa/core/shared/constants/section";
 import { SET_TYPES } from "@ankaa/core/shared/constants/set-type";
 import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo";
-import { database } from "@ankaa/database";
+import { Database } from "@ankaa/database";
 import { and, eq, isNull, ne, sql } from "@ankaa/database/operators";
 import * as Schema from "@ankaa/database/schema";
 import { TRPCError } from "@trpc/server";
+import * as Effect from "effect/Effect";
 import { z } from "zod";
 
-import { protectedProcedure, router } from "../trpc.ts";
+import { protectedProcedure, router } from "../trpc/procedures.ts";
+import { run } from "../trpc/run.ts";
+import { getDatabaseErrorCode } from "../utilities/get-database-error-code.ts";
 import {
   checkLinkedWarmUpExercises,
   checkSupersetNeighbors,
@@ -151,166 +154,200 @@ const routineSchema = z.object({
 export const routineRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.uuidv7() }))
-    .mutation(async ({ ctx, input }) => {
-      const deletedRoutines = await database
-        .update(Schema.routine)
-        .set({ deletedAt: nowSql })
-        .where(
-          and(
-            eq(Schema.routine.id, input.id),
-            eq(Schema.routine.userId, ctx.session.user.id),
-            isNull(Schema.routine.deletedAt),
-          ),
-        )
-        .returning({ id: Schema.routine.id });
+    .mutation(({ ctx, input, signal }) =>
+      run({
+        context: ctx,
+        effect: Effect.gen(function* () {
+          const database = yield* Database;
 
-      if (deletedRoutines.length === 0) {
-        throw new TRPCError({ code: "NOT_FOUND" });
-      }
-    }),
-  list: protectedProcedure.query(async ({ ctx }) => {
-    const routines = await database.query.routine.findMany({
-      columns: { id: true, name: true },
-      orderBy: { name: "asc" },
-      where: { deletedAt: { isNull: true }, userId: ctx.session.user.id },
-      with: {
-        routineDays: { columns: { dayOfWeek: true } },
-        routineExercises: {
-          columns: {
-            exerciseId: true,
-            id: true,
-            note: true,
-            position: true,
-            section: true,
-            superset: true,
-            warmUpForRoutineExerciseId: true,
-          },
-          orderBy: { position: "asc" },
-          with: {
-            routineExerciseSets: {
-              columns: {
-                amount: true,
-                dropSetSegmentCount: true,
-                dropSetWeightPercentage: true,
-                id: true,
-                isToFailure: true,
-                position: true,
-                restPauseRestSeconds: true,
-                restPauseSegmentCount: true,
-                restSeconds: true,
-                setType: true,
-                tempo: true,
-                variation: true,
-              },
-              orderBy: { position: "asc" },
-            },
-          },
-        },
-      },
-    });
+          yield* database.query(async (drizzleDatabase) => {
+            const deletedRoutines = await drizzleDatabase
+              .update(Schema.routine)
+              .set({ deletedAt: nowSql })
+              .where(
+                and(
+                  eq(Schema.routine.id, input.id),
+                  eq(Schema.routine.userId, ctx.session.user.id),
+                  isNull(Schema.routine.deletedAt),
+                ),
+              )
+              .returning({ id: Schema.routine.id });
 
-    return routines.map((routine) => ({
-      days: routine.routineDays
-        .map((routineDay) => routineDay.dayOfWeek)
-        .toSorted(
-          (firstDayOfWeek, secondDayOfWeek) =>
-            DAYS_OF_WEEK.indexOf(firstDayOfWeek) -
-            DAYS_OF_WEEK.indexOf(secondDayOfWeek),
-        ),
-      exercises: routine.routineExercises.map(
-        ({ routineExerciseSets, ...routineExercise }) => ({
-          ...routineExercise,
-          sets: routineExerciseSets,
+            if (deletedRoutines.length === 0) {
+              throw new TRPCError({ code: "NOT_FOUND" });
+            }
+          });
         }),
-      ),
-      id: routine.id,
-      name: routine.name,
-    }));
-  }),
-  save: protectedProcedure.input(routineSchema).mutation(({ ctx, input }) =>
-    database.transaction(async (transaction) => {
-      const routinesWithSameName = await transaction
-        .select({ id: Schema.routine.id })
-        .from(Schema.routine)
-        .where(
-          and(
-            eq(Schema.routine.userId, ctx.session.user.id),
-            eq(Schema.routine.name, input.name),
-            isNull(Schema.routine.deletedAt),
-            ne(Schema.routine.id, input.id),
-          ),
-        );
+        getErrorCode: getDatabaseErrorCode,
+        signal,
+      }),
+    ),
+  list: protectedProcedure.query(({ ctx, signal }) =>
+    run({
+      context: ctx,
+      effect: Effect.gen(function* () {
+        const database = yield* Database;
 
-      if (routinesWithSameName.length > 0) {
-        throw new TRPCError({ code: "CONFLICT" });
-      }
+        return yield* database.query(async (drizzleDatabase) => {
+          const routines = await drizzleDatabase.query.routine.findMany({
+            columns: { id: true, name: true },
+            orderBy: { name: "asc" },
+            where: { deletedAt: { isNull: true }, userId: ctx.session.user.id },
+            with: {
+              routineDays: { columns: { dayOfWeek: true } },
+              routineExercises: {
+                columns: {
+                  exerciseId: true,
+                  id: true,
+                  note: true,
+                  position: true,
+                  section: true,
+                  superset: true,
+                  warmUpForRoutineExerciseId: true,
+                },
+                orderBy: { position: "asc" },
+                with: {
+                  routineExerciseSets: {
+                    columns: {
+                      amount: true,
+                      dropSetSegmentCount: true,
+                      dropSetWeightPercentage: true,
+                      id: true,
+                      isToFailure: true,
+                      position: true,
+                      restPauseRestSeconds: true,
+                      restPauseSegmentCount: true,
+                      restSeconds: true,
+                      setType: true,
+                      tempo: true,
+                      variation: true,
+                    },
+                    orderBy: { position: "asc" },
+                  },
+                },
+              },
+            },
+          });
 
-      const savedRoutines = await transaction
-        .insert(Schema.routine)
-        .values({
-          id: input.id,
-          name: input.name,
-          userId: ctx.session.user.id,
-        })
-        .onConflictDoUpdate({
-          set: { name: input.name, updatedAt: nowSql },
-          setWhere: and(
-            eq(Schema.routine.userId, ctx.session.user.id),
-            isNull(Schema.routine.deletedAt),
-          ),
-          target: Schema.routine.id,
-        })
-        .returning({ id: Schema.routine.id });
-
-      if (savedRoutines.length === 0) {
-        throw new TRPCError({ code: "NOT_FOUND" });
-      }
-
-      await transaction
-        .delete(Schema.routineDay)
-        .where(eq(Schema.routineDay.routineId, input.id));
-
-      await transaction
-        .delete(Schema.routineExercise)
-        .where(eq(Schema.routineExercise.routineId, input.id));
-
-      if (input.days.length > 0) {
-        await transaction.insert(Schema.routineDay).values(
-          input.days.map((dayOfWeek) => ({
-            dayOfWeek,
-            routineId: input.id,
-          })),
-        );
-      }
-
-      if (input.exercises.length > 0) {
-        await transaction.insert(Schema.routineExercise).values(
-          input.exercises.map((routineExercise) => ({
-            exerciseId: routineExercise.exerciseId,
-            id: routineExercise.id,
-            note: routineExercise.note,
-            position: routineExercise.position,
-            routineId: input.id,
-            section: routineExercise.section,
-            superset: routineExercise.superset,
-            warmUpForRoutineExerciseId:
-              routineExercise.warmUpForRoutineExerciseId,
-          })),
-        );
-      }
-
-      const routineExerciseSets = input.exercises.flatMap((routineExercise) =>
-        routineExercise.sets.map((routineExerciseSet) => ({
-          ...routineExerciseSet,
-          routineExerciseId: routineExercise.id,
-        })),
-      );
-
-      if (routineExerciseSets.length > 0) {
-        await transaction
-          .insert(Schema.routineExerciseSet)
-          .values(routineExerciseSets);
-      }
+          return routines.map((routine) => ({
+            days: routine.routineDays
+              .map((routineDay) => routineDay.dayOfWeek)
+              .toSorted(
+                (firstDayOfWeek, secondDayOfWeek) =>
+                  DAYS_OF_WEEK.indexOf(firstDayOfWeek) -
+                  DAYS_OF_WEEK.indexOf(secondDayOfWeek),
+              ),
+            exercises: routine.routineExercises.map(
+              ({ routineExerciseSets, ...routineExercise }) => ({
+                ...routineExercise,
+                sets: routineExerciseSets,
+              }),
+            ),
+            id: routine.id,
+            name: routine.name,
+          }));
+        });
+      }),
+      getErrorCode: getDatabaseErrorCode,
+      signal,
     }),
   ),
+  save: protectedProcedure
+    .input(routineSchema)
+    .mutation(({ ctx, input, signal }) =>
+      run({
+        context: ctx,
+        effect: Effect.gen(function* () {
+          const database = yield* Database;
+
+          yield* database.transaction(async (transaction) => {
+            const routinesWithSameName = await transaction
+              .select({ id: Schema.routine.id })
+              .from(Schema.routine)
+              .where(
+                and(
+                  eq(Schema.routine.userId, ctx.session.user.id),
+                  eq(Schema.routine.name, input.name),
+                  isNull(Schema.routine.deletedAt),
+                  ne(Schema.routine.id, input.id),
+                ),
+              );
+
+            if (routinesWithSameName.length > 0) {
+              throw new TRPCError({ code: "CONFLICT" });
+            }
+
+            const savedRoutines = await transaction
+              .insert(Schema.routine)
+              .values({
+                id: input.id,
+                name: input.name,
+                userId: ctx.session.user.id,
+              })
+              .onConflictDoUpdate({
+                set: { name: input.name, updatedAt: nowSql },
+                setWhere: and(
+                  eq(Schema.routine.userId, ctx.session.user.id),
+                  isNull(Schema.routine.deletedAt),
+                ),
+                target: Schema.routine.id,
+              })
+              .returning({ id: Schema.routine.id });
+
+            if (savedRoutines.length === 0) {
+              throw new TRPCError({ code: "NOT_FOUND" });
+            }
+
+            await transaction
+              .delete(Schema.routineDay)
+              .where(eq(Schema.routineDay.routineId, input.id));
+
+            await transaction
+              .delete(Schema.routineExercise)
+              .where(eq(Schema.routineExercise.routineId, input.id));
+
+            if (input.days.length > 0) {
+              await transaction.insert(Schema.routineDay).values(
+                input.days.map((dayOfWeek) => ({
+                  dayOfWeek,
+                  routineId: input.id,
+                })),
+              );
+            }
+
+            if (input.exercises.length > 0) {
+              await transaction.insert(Schema.routineExercise).values(
+                input.exercises.map((routineExercise) => ({
+                  exerciseId: routineExercise.exerciseId,
+                  id: routineExercise.id,
+                  note: routineExercise.note,
+                  position: routineExercise.position,
+                  routineId: input.id,
+                  section: routineExercise.section,
+                  superset: routineExercise.superset,
+                  warmUpForRoutineExerciseId:
+                    routineExercise.warmUpForRoutineExerciseId,
+                })),
+              );
+            }
+
+            const routineExerciseSets = input.exercises.flatMap(
+              (routineExercise) =>
+                routineExercise.sets.map((routineExerciseSet) => ({
+                  ...routineExerciseSet,
+                  routineExerciseId: routineExercise.id,
+                })),
+            );
+
+            if (routineExerciseSets.length > 0) {
+              await transaction
+                .insert(Schema.routineExerciseSet)
+                .values(routineExerciseSets);
+            }
+          });
+        }),
+        getErrorCode: getDatabaseErrorCode,
+        signal,
+      }),
+    ),
 });

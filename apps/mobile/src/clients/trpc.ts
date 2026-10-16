@@ -1,4 +1,4 @@
-import type { AppRouter } from "@ankaa/api";
+import type { AppRouter } from "@ankaa/api/trpc/router";
 
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 
