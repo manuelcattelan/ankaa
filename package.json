@@ -15,6 +15,10 @@
     "packageManager": {
       "name": "pnpm",
       "version": "12.3.4"
+    },
+    "runtime": {
+      "name": "node",
+      "version": ">=26"
     }
   },
   "name": "ankaa",

@@ -1,8 +1,15 @@
 import eslintConfigExpoFlat from "eslint-config-expo/flat";
+import { createNodeResolver } from "eslint-plugin-import-x";
 import { defineConfig } from "eslint/config";
+import path from "node:path";
 
 import {
   baseConfiguration,
+  CORE_FILES,
+  CORE_RESTRICTED_IMPORT_PATTERNS,
+  createFeatureIsolationZone,
+  FEATURES_PATH,
+  getFeatureNames,
   JAVASCRIPT_FILES,
   RESTRICTED_SYNTAX,
   rulesConfiguration,
@@ -26,6 +33,23 @@ const MOBILE_RESTRICTED_SYNTAX = [
   },
 ];
 
+const RESOLVED_FILE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".json"];
+
+const ROUTE_FILES = ["./src/app/!(_layout.tsx)", "./src/app/*/**"];
+
+const ROUTE_IMPORTABLE_SHARED_PATHS = [
+  "./shared/components",
+  "./shared/screens",
+];
+
+const LEGACY_LAYOUT_PATHS = [
+  "./clients",
+  "./components",
+  "./environment.ts",
+  "./providers",
+  "./utilities",
+];
+
 const DYNAMIC_ROUTE_FILE_NAME_PATTERN = /^\[[a-z][A-Za-z]*\]\.tsx$/;
 
 const WRAPPED_PRIMITIVES = ["Pressable", "ScrollView", "Text", "TextInput"];
@@ -39,6 +63,30 @@ const WRAPPED_PRIMITIVES_IMPORT = {
   importNames: WRAPPED_PRIMITIVES,
   message: "Use the component with the same name from @/components.",
   name: "react-native",
+};
+
+const featureNames = getFeatureNames();
+
+const featureIsolationZones = featureNames.map((featureName) =>
+  createFeatureIsolationZone({
+    featureName,
+    target: `${FEATURES_PATH}/${featureName}`,
+  }),
+);
+
+const routeZone = {
+  except: [
+    ...featureNames.flatMap((featureName) => [
+      `./features/${featureName}/components`,
+      `./features/${featureName}/screens`,
+    ]),
+    ...ROUTE_IMPORTABLE_SHARED_PATHS,
+    ...LEGACY_LAYOUT_PATHS,
+  ],
+  from: "./src",
+  message:
+    "Import only screens and components in a route file. The root layout wires the rest of the app.",
+  target: ROUTE_FILES,
 };
 
 export const mobileConfiguration = defineConfig([
@@ -57,6 +105,10 @@ export const mobileConfiguration = defineConfig([
       "@stylistic/jsx-newline": ["error", { prevent: true }],
       "@stylistic/jsx-self-closing-comp": "error",
       "import-x/extensions": "off",
+      "import-x/no-restricted-paths": [
+        "error",
+        { zones: [...featureIsolationZones, routeZone] },
+      ],
       "no-restricted-imports": [
         "error",
         {
@@ -78,6 +130,14 @@ export const mobileConfiguration = defineConfig([
       ],
       "react/jsx-props-no-spreading": "error",
     },
+    settings: {
+      "import-x/resolver-next": [
+        createNodeResolver({
+          extensions: RESOLVED_FILE_EXTENSIONS,
+          tsconfig: { configFile: path.resolve("tsconfig.json") },
+        }),
+      ],
+    },
   },
   {
     files: ["src/app/**"],
@@ -97,6 +157,20 @@ export const mobileConfiguration = defineConfig([
         { patterns: [RELATIVE_IMPORT_PATTERN] },
       ],
       "react/jsx-props-no-spreading": "off",
+    },
+  },
+  {
+    files: [[...CORE_FILES, ...JAVASCRIPT_FILES]],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            RELATIVE_IMPORT_PATTERN,
+            ...CORE_RESTRICTED_IMPORT_PATTERNS,
+          ],
+        },
+      ],
     },
   },
   {
