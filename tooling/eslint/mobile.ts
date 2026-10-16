@@ -44,7 +44,6 @@ const ROUTE_IMPORTABLE_SHARED_PATHS = [
 
 const LEGACY_LAYOUT_PATHS = [
   "./clients",
-  "./components",
   "./providers",
   "./shared/constants",
   "./shared/core",
@@ -152,7 +151,7 @@ export const mobileConfiguration = defineConfig([
     },
   },
   {
-    files: ["src/components/**", "src/shared/components/**"],
+    files: ["src/shared/components/**"],
     rules: {
       "no-restricted-imports": [
         "error",

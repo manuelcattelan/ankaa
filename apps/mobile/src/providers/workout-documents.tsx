@@ -4,6 +4,7 @@ import type { TRPCClientErrorLike } from "@trpc/client";
 import type { inferRouterInputs } from "@trpc/server";
 
 import { AMOUNT_MINIMUM } from "@ankaa/core/shared/constants/amount";
+import { amountFilter } from "@ankaa/core/shared/filters/amount-filter";
 import { useMutation } from "@tanstack/react-query";
 import * as ExpoSqliteKeyValueStore from "expo-sqlite/kv-store";
 import { useEffect, useReducer, useState } from "react";
@@ -161,6 +162,7 @@ function buildWorkoutExerciseSetSegmentSaveInput({
   const amountValidationError = getWholeNumberValidationError({
     isRequired: false,
     minimum: AMOUNT_MINIMUM,
+    wholeNumberFilter: amountFilter,
     wholeNumberText: workoutDocumentExerciseSetSegment.amount,
   });
 

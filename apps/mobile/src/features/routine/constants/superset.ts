@@ -1,0 +1,1 @@
+export const SUPERSET_EXERCISE_COUNT_MINIMUM = 2;

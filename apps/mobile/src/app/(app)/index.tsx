@@ -1,23 +1,19 @@
-import type { Href } from "expo-router";
+import type { AppRouter } from "@ankaa/api/trpc/router";
+import type { inferRouterOutputs } from "@trpc/server";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Link, useRouter } from "expo-router";
-import { Fragment, useEffect } from "react";
-import { ActivityIndicator } from "react-native";
+import { useRouter } from "expo-router";
 
-import type { Exercise } from "@/components/exercise-picker";
-import type { Routine } from "@/components/routine-editor";
 import type { WorkoutDocument } from "@/utilities/workout-documents";
 
 import { useTrpc } from "@/clients/trpc";
 import { useWorkoutDocuments } from "@/clients/workout-documents";
+import { RoutineList } from "@/features/routine/components/routine-list";
 import { Button } from "@/shared/components/button";
+import { LinkButton } from "@/shared/components/link-button";
 import { ScrollView } from "@/shared/components/scroll-view";
 import { StatusMessage } from "@/shared/components/status-message";
-import { getTrpcErrorMessage } from "@/shared/core/get-trpc-error-message";
-import { useAccessibility } from "@/shared/hooks/use-accessibility";
 import { useAuthenticationClient } from "@/shared/hooks/use-authentication-client";
-import { useRuntime } from "@/shared/hooks/use-runtime";
 import { createIdentifier } from "@/utilities/identifiers";
 import { messages } from "@/utilities/messages";
 
@@ -32,10 +28,9 @@ type CanStartWorkoutOptions = {
   routine: Routine;
 };
 
-type LinkButtonProperties = {
-  href: Href;
-  title: string;
-};
+type Exercise = inferRouterOutputs<AppRouter>["exercise"]["list"][number];
+
+type Routine = inferRouterOutputs<AppRouter>["routine"]["list"][number];
 
 const WORKOUT_DOCUMENT_INITIAL_VERSION = 1;
 const WORKOUT_DOCUMENT_INITIAL_SYNCED_VERSION = 0;
@@ -47,15 +42,10 @@ export default function AppRoute() {
 
   const authenticationClient = useAuthenticationClient();
 
-  const runtime = useRuntime();
-
-  const accessibility = useAccessibility();
-
   const session = authenticationClient.betterAuthenticationClient.useSession();
 
   const workoutDocuments = useWorkoutDocuments();
 
-  const routines = useQuery(trpc.routine.list.queryOptions());
   const exerciseLibrary = useQuery(trpc.exercise.list.queryOptions());
 
   const signOut = useMutation({
@@ -65,19 +55,6 @@ export default function AppRoute() {
   const exerciseIds = new Set(
     exerciseLibrary.data?.map((exercise) => exercise.id),
   );
-  const routinesErrorMessage = routines.error
-    ? getTrpcErrorMessage(routines.error)
-    : undefined;
-  const routinesStatusMessage =
-    routines.data?.length === 0
-      ? messages.app.routineListEmptyStatus
-      : routinesErrorMessage;
-
-  useEffect(() => {
-    if (routinesErrorMessage) {
-      runtime.runSync(accessibility.announceMessage(routinesErrorMessage));
-    }
-  }, [accessibility, routinesErrorMessage, runtime]);
 
   function handleSignOut() {
     if (signOut.isPending) {
@@ -113,25 +90,9 @@ export default function AppRoute() {
       {workoutDocuments.runningWorkoutDocument ? (
         <LinkButton href="/workout" title={messages.app.resumeWorkoutButton} />
       ) : null}
-      {routines.isPending ? <ActivityIndicator /> : null}
-      <StatusMessage
-        message={
-          workoutDocuments.hasWorkoutSaveFailed
-            ? messages.app.workoutSaveFailedStatus
-            : undefined
-        }
-      />
-      <StatusMessage message={routinesStatusMessage} />
-      {routines.data?.map((routine) => (
-        <Fragment key={routine.id}>
-          <LinkButton
-            href={{
-              params: { routineId: routine.id },
-              pathname: "/routines/[routineId]",
-            }}
-            title={routine.name}
-          />
-          {workoutDocuments.runningWorkoutDocument === undefined ? (
+      <RoutineList
+        renderRoutineActions={(routine) =>
+          workoutDocuments.runningWorkoutDocument === undefined ? (
             <Button
               disabled={!canStartWorkout({ exerciseIds, routine })}
               onPress={() => {
@@ -139,10 +100,17 @@ export default function AppRoute() {
               }}
               title={messages.app.startWorkoutButton(routine.name)}
             />
-          ) : null}
-        </Fragment>
-      ))}
-      <LinkButton href="/routines/new" title={messages.app.newRoutineButton} />
+          ) : undefined
+        }
+      >
+        <StatusMessage
+          message={
+            workoutDocuments.hasWorkoutSaveFailed
+              ? messages.app.workoutSaveFailedStatus
+              : undefined
+          }
+        />
+      </RoutineList>
       <Button
         isBusy={signOut.isPending}
         onPress={handleSignOut}
@@ -231,13 +199,5 @@ function canStartWorkout({ exerciseIds, routine }: CanStartWorkoutOptions) {
     routine.exercises.every((routineExercise) =>
       exerciseIds.has(routineExercise.exerciseId),
     )
-  );
-}
-
-function LinkButton({ href, title }: LinkButtonProperties) {
-  return (
-    <Link asChild href={href}>
-      <Button title={title} />
-    </Link>
   );
 }

@@ -177,7 +177,7 @@ The shared ESLint configuration in `tooling/eslint/` turns the boundaries of thi
 - Core purity: `core/` folders and `@ankaa/core` import no `effect/Effect`, `effect/Layer`, `effect/Context`, `effect/ManagedRuntime` or root `effect`, and no React, React Native or Expo module. Without the ban on the root `effect`, lint couldn't tell `Schema` from `Effect`.
 - Feature isolation: a Feature imports no other Feature, except for the two exceptions in [Layout](#layout).
 - Database queries: in a package, `queries/` is imported only by the Interactors of its own Feature. On the mobile app, `queries/` holds Query options, which hooks and screens import.
-- Route files: a route file imports only screens and components. The root layout is the exception, as the Composition root. Until the mobile app moves into its Features, lint also lets route files import `src/clients/`, `src/components/`, `src/providers/`, `src/shared/constants/`, `src/shared/core/`, `src/shared/hooks/` and `src/utilities/`, which `LEGACY_LAYOUT_PATHS` lists in `tooling/eslint/mobile.ts`.
+- Route files: a route file imports only screens and components. The root layout is the exception, as the Composition root. Until the mobile app moves into its Features, lint also lets route files import `src/clients/`, `src/providers/`, `src/shared/constants/`, `src/shared/core/`, `src/shared/hooks/` and `src/utilities/`, which `LEGACY_LAYOUT_PATHS` lists in `tooling/eslint/mobile.ts`.
 
 Lint also allows the Effect forms listed in [Effect](#effect), and nothing wider.
 

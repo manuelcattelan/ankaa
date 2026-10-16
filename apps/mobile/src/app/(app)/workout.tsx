@@ -12,6 +12,7 @@ import {
   WEIGHT_VALUE_MINIMUM,
 } from "@ankaa/core/features/workout/constants/weight";
 import { AMOUNT_MINIMUM } from "@ankaa/core/shared/constants/amount";
+import { amountFilter } from "@ankaa/core/shared/filters/amount-filter";
 import { useQuery } from "@tanstack/react-query";
 import * as ExpoNotifications from "expo-notifications";
 import { Redirect, useRouter } from "expo-router";
@@ -267,6 +268,7 @@ function getWorkoutDocumentExerciseSetSegmentValidationErrors(
     amount: getWholeNumberValidationError({
       isRequired: false,
       minimum: AMOUNT_MINIMUM,
+      wholeNumberFilter: amountFilter,
       wholeNumberText: workoutDocumentExerciseSetSegment.amount,
     }),
     weightValue: hasInvalidWeightValue

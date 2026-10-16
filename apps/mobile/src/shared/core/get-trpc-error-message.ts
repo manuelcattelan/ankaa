@@ -1,9 +1,12 @@
 import { isTRPCClientError } from "@trpc/client";
 
+import { TrpcError } from "@/shared/errors/trpc-error";
 import { messages } from "@/utilities/messages";
 
 export function getTrpcErrorMessage(error: unknown) {
-  if (isTRPCClientError(error) && error.data) {
+  const trpcClientError = error instanceof TrpcError ? error.cause : error;
+
+  if (isTRPCClientError(trpcClientError) && trpcClientError.data) {
     return messages.error.unknown;
   }
 

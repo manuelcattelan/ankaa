@@ -1,4 +1,5 @@
 import type { AppRouter } from "@ankaa/api/trpc/router";
+import type { TRPCClient } from "@trpc/client";
 
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import * as Config from "effect/Config";
@@ -7,7 +8,12 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { apiUrlSchema } from "@/shared/core/api-url-schema";
+import { TrpcError } from "@/shared/errors/trpc-error";
 import { AuthenticationClient } from "@/shared/services/authentication-client";
+
+type SendTrpcRequest<TData> = (
+  vanillaTrpcClient: TRPCClient<AppRouter>,
+) => Promise<TData>;
 
 export class TrpcClient extends Context.Service<TrpcClient>()(
   "@ankaa/mobile/shared/services/TrpcClient",
@@ -17,7 +23,7 @@ export class TrpcClient extends Context.Service<TrpcClient>()(
 
       const apiUrl = yield* Config.schema(apiUrlSchema, "EXPO_PUBLIC_API_URL");
 
-      return createTRPCClient<AppRouter>({
+      const vanillaTrpcClient = createTRPCClient<AppRouter>({
         links: [
           httpBatchLink({
             fetch: (url, options) =>
@@ -32,6 +38,15 @@ export class TrpcClient extends Context.Service<TrpcClient>()(
           }),
         ],
       });
+
+      function request<TData>(sendRequest: SendTrpcRequest<TData>) {
+        return Effect.tryPromise({
+          catch: (cause) => new TrpcError({ cause }),
+          try: () => sendRequest(vanillaTrpcClient),
+        });
+      }
+
+      return { request, vanillaTrpcClient };
     }),
   },
 ) {

@@ -37,6 +37,8 @@ import { createAppleSignInMutationOptions } from "@/features/authentication/muta
 import { createGoogleSignInMutationOptions } from "@/features/authentication/mutations/create-google-sign-in-mutation-options";
 import { createOtpCodeRequestMutationOptions } from "@/features/authentication/mutations/create-otp-code-request-mutation-options";
 import { createOtpCodeSignInMutationOptions } from "@/features/authentication/mutations/create-otp-code-sign-in-mutation-options";
+import { createRoutineDeleteMutationOptions } from "@/features/routine/mutations/create-routine-delete-mutation-options";
+import { createRoutineSaveMutationOptions } from "@/features/routine/mutations/create-routine-save-mutation-options";
 import { applicationLayer } from "@/layer";
 import { WorkoutDocumentsProvider } from "@/providers/workout-documents";
 import { Text } from "@/shared/components/text";
@@ -75,7 +77,7 @@ export default function RootLayout() {
   const [queryClient] = useState(createQueryClient);
   const [queryPersister] = useState(createQueryPersister);
 
-  const trpcClient = runtime.runSync(TrpcClient);
+  const trpcClient = runtime.runSync(TrpcClient).vanillaTrpcClient;
 
   useEffect(() => {
     registerMutationDefaults({ queryClient, runtime });
@@ -233,6 +235,9 @@ function registerMutationDefaults({
     createOtpCodeRequestMutationOptions(runtime);
   const otpCodeSignInMutationOptions =
     createOtpCodeSignInMutationOptions(runtime);
+  const routineDeleteMutationOptions =
+    createRoutineDeleteMutationOptions(runtime);
+  const routineSaveMutationOptions = createRoutineSaveMutationOptions(runtime);
 
   queryClient.setMutationDefaults(
     appleSignInMutationOptions.mutationKey,
@@ -252,6 +257,16 @@ function registerMutationDefaults({
   queryClient.setMutationDefaults(
     otpCodeSignInMutationOptions.mutationKey,
     otpCodeSignInMutationOptions,
+  );
+
+  queryClient.setMutationDefaults(
+    routineDeleteMutationOptions.mutationKey,
+    routineDeleteMutationOptions,
+  );
+
+  queryClient.setMutationDefaults(
+    routineSaveMutationOptions.mutationKey,
+    routineSaveMutationOptions,
   );
 }
 

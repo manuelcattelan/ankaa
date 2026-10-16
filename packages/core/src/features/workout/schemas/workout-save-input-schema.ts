@@ -1,18 +1,16 @@
 import * as Schema from "effect/Schema";
 
-import {
-  AMOUNT_MINIMUM,
-  AMOUNT_UNITS,
-} from "../../../shared/constants/amount.ts";
+import { AMOUNT_UNITS } from "../../../shared/constants/amount.ts";
 import { VARIATIONS } from "../../../shared/constants/intensity-technique.ts";
 import { POSITION_MINIMUM } from "../../../shared/constants/position.ts";
 import { SECTIONS } from "../../../shared/constants/section.ts";
 import { SET_TYPES } from "../../../shared/constants/set-type.ts";
-import { TEMPO_PATTERN } from "../../../shared/constants/tempo.ts";
 import { WEIGHT_TYPES } from "../../../shared/constants/weight-type.ts";
+import { amountFilter } from "../../../shared/filters/amount-filter.ts";
 import { createLinkedWarmUpExercisesFilter } from "../../../shared/filters/create-linked-warm-up-exercises-filter.ts";
 import { createUniqueValuesFilter } from "../../../shared/filters/create-unique-values-filter.ts";
 import { supersetNeighborsFilter } from "../../../shared/filters/superset-neighbors-filter.ts";
+import { tempoFilter } from "../../../shared/filters/tempo-filter.ts";
 import { identifierSchema } from "../../../shared/schemas/identifier-schema.ts";
 import { int32Schema } from "../../../shared/schemas/int32-schema.ts";
 import { SKIP_REASONS } from "../constants/skip-reason.ts";
@@ -51,9 +49,7 @@ const weightValueStepFilter = Schema.makeFilter(
 );
 
 const workoutExerciseSetSegmentSchema = Schema.Struct({
-  amount: Schema.NullOr(
-    int32Schema.check(Schema.isGreaterThanOrEqualTo(AMOUNT_MINIMUM)),
-  ),
+  amount: Schema.NullOr(int32Schema.check(amountFilter)),
   id: identifierSchema,
   position: int32Schema.check(Schema.isGreaterThanOrEqualTo(POSITION_MINIMUM)),
   weightUnit: Schema.NullOr(Schema.Literals(WEIGHT_UNITS)),
@@ -96,7 +92,7 @@ const workoutExerciseSetSchema = Schema.Struct({
     }),
   ),
   setType: Schema.Literals(SET_TYPES),
-  tempo: Schema.NullOr(Schema.String.check(Schema.isPattern(TEMPO_PATTERN))),
+  tempo: Schema.NullOr(Schema.String.check(tempoFilter)),
   variation: Schema.NullOr(Schema.Literals(VARIATIONS)),
 });
 
