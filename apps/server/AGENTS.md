@@ -18,6 +18,7 @@ Every procedure in `packages/api` runs its Interactor through the one runner in 
 - The runner takes the Runtime from tRPC's inner context, provides `CurrentSession` with `Effect.provideService`, passes tRPC's abort `signal`, and runs the Interactor with `runPromiseExit`.
 - The `router.ts` of each Feature supplies the mapping from the errors of that Feature to tRPC codes, and the runner applies it. The runner turns defects and interruptions into `INTERNAL_SERVER_ERROR`, with the original as the cause.
 - To fail a procedure, fail its Interactor with a `Data.TaggedError` from the `errors/` folder of its Feature, and map that error in the `router.ts` of the Feature, so expected errors stay typed until the boundary and only the runner reports defects.
+- Put an error class that the Interactors of several server Features fail with in `packages/api/src/shared/errors/`, and map it in the `router.ts` of each Feature, so the error has one class and one tag while each Feature still maps every error its procedures can fail with.
 
 ## Fastify
 

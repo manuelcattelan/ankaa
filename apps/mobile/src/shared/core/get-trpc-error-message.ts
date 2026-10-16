@@ -1,14 +1,14 @@
 import { isTRPCClientError } from "@trpc/client";
 
 import { TrpcError } from "@/shared/errors/trpc-error";
-import { messages } from "@/utilities/messages";
+import { errorMessages } from "@/shared/messages/error-messages";
 
 export function getTrpcErrorMessage(error: unknown) {
   const trpcClientError = error instanceof TrpcError ? error.cause : error;
 
   if (isTRPCClientError(trpcClientError) && trpcClientError.data) {
-    return messages.error.unknown;
+    return errorMessages.unknown;
   }
 
-  return messages.error.serverUnreachable;
+  return errorMessages.serverUnreachable;
 }

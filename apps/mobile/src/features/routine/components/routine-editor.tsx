@@ -22,8 +22,8 @@ import type {
   RoutineDraftExerciseSet,
   RoutineDraftWarmUpExercise,
 } from "@/features/routine/core/routine-draft-reducer";
-import type { Routine } from "@/features/routine/interactors/list-routines";
 import type { Exercise } from "@/shared/interactors/list-exercises";
+import type { Routine } from "@/shared/interactors/list-routines";
 
 import { MAIN_SECTION } from "@/features/routine/constants/section";
 import { SUPERSET_EXERCISE_COUNT_MINIMUM } from "@/features/routine/constants/superset";

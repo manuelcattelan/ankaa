@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { messages } from "@/utilities/messages";
+import { errorMessages } from "@/shared/messages/error-messages";
 
 type GetWholeNumberValidationErrorOptions = {
   isRequired: boolean;
@@ -33,6 +33,6 @@ export function getWholeNumberValidationError({
   }
 
   return maximum === undefined
-    ? messages.error.wholeNumberBelowMinimum(minimum)
-    : messages.error.wholeNumberOutOfRange({ maximum, minimum });
+    ? errorMessages.wholeNumberBelowMinimum(minimum)
+    : errorMessages.wholeNumberOutOfRange({ maximum, minimum });
 }

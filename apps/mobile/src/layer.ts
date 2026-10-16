@@ -5,6 +5,8 @@ import * as Layer from "effect/Layer";
 
 import { AppleSignIn } from "@/features/authentication/services/apple-sign-in";
 import { GoogleSignIn } from "@/features/authentication/services/google-sign-in";
+import { Notifications } from "@/features/workout/services/notifications";
+import { WorkoutDocumentStorage } from "@/features/workout/services/workout-document-storage";
 import { Accessibility } from "@/shared/services/accessibility";
 import { AuthenticationClient } from "@/shared/services/authentication-client";
 import { Crypto } from "@/shared/services/crypto";
@@ -21,7 +23,9 @@ export const applicationLayer = Layer.mergeAll(
   AuthenticationClient.layer,
   Crypto.layer,
   GoogleSignIn.layer,
+  Notifications.layer,
   TrpcClient.layer,
+  WorkoutDocumentStorage.layer,
 ).pipe(
   Layer.provide(
     ConfigProvider.layer(

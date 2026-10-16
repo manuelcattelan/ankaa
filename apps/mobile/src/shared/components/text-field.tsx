@@ -3,7 +3,7 @@ import type { TextInputProps } from "react-native";
 import { StatusMessage } from "@/shared/components/status-message";
 import { Text } from "@/shared/components/text";
 import { TextInput } from "@/shared/components/text-input";
-import { messages } from "@/utilities/messages";
+import { textFieldMessages } from "@/shared/messages/text-field-messages";
 
 type TextFieldProperties = TextInputProps & {
   errorMessage?: string;
@@ -16,7 +16,7 @@ export function TextField({
   ...rest
 }: TextFieldProperties) {
   const accessibilityLabel = errorMessage
-    ? messages.textField.errorLabel({ errorMessage, label })
+    ? textFieldMessages.errorLabel({ errorMessage, label })
     : label;
 
   return (

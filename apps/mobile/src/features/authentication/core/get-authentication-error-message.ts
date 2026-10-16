@@ -10,7 +10,7 @@ import { GoogleSignInCanceledError } from "@/features/authentication/errors/goog
 import { GoogleSignInInProgressError } from "@/features/authentication/errors/google-sign-in-in-progress-error";
 import { authenticationErrorMessages } from "@/features/authentication/messages/authentication-error-messages";
 import { AuthenticationError } from "@/shared/errors/authentication-error";
-import { messages } from "@/utilities/messages";
+import { errorMessages } from "@/shared/messages/error-messages";
 
 type AuthenticationErrorCode =
   | "EMAIL_NOT_VERIFIED"
@@ -63,15 +63,15 @@ function getAuthenticationFailureMessage(error: AuthenticationError) {
     ? AUTHENTICATION_ERROR_CODE_MESSAGES[error.code]
     : undefined;
 
-  return errorCodeMessage ?? messages.error.unknown;
+  return errorCodeMessage ?? errorMessages.unknown;
 }
 
 function getUnexpectedErrorMessage(error: unknown) {
   if (!Predicate.hasProperty(error, "code")) {
-    return messages.error.serverUnreachable;
+    return errorMessages.serverUnreachable;
   }
 
   return error.code === REQUEST_CANCELED_ERROR_CODE
     ? ""
-    : messages.error.unknown;
+    : errorMessages.unknown;
 }

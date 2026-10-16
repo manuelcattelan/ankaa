@@ -198,7 +198,7 @@ The one place in each app that builds the application [Layer](#layer) and the [R
 
 ### Core
 
-The code that makes every decision, written in plain TypeScript: given values, it returns values, including an [Outcome](#outcome) for every rule it checks, and it never does I/O, reads the clock or throws. It lives in the `core/` folder of each [Feature](#feature), and in `@ankaa/core` for what both the server and the mobile app run.
+The code that makes every decision, written in plain TypeScript: given values, it returns values, including an [Outcome](#outcome) for every rule it checks, and it never does I/O, reads the clock or throws. It lives in the `core/` folder of each [Feature](#feature), and in `@ankaa/core` for what more than one workspace runs.
 
 - **Avoid**: domain, domain layer, business logic, pure layer
 - **Distinct from**: [Shell](#shell): the Shell does the I/O and asks the Core for every decision.

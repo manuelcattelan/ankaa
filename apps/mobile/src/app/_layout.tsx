@@ -32,20 +32,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { ApplicationRuntime } from "@/layer";
 
-import { TrpcProvider } from "@/clients/trpc";
 import { createAppleSignInMutationOptions } from "@/features/authentication/mutations/create-apple-sign-in-mutation-options";
 import { createGoogleSignInMutationOptions } from "@/features/authentication/mutations/create-google-sign-in-mutation-options";
 import { createOtpCodeRequestMutationOptions } from "@/features/authentication/mutations/create-otp-code-request-mutation-options";
 import { createOtpCodeSignInMutationOptions } from "@/features/authentication/mutations/create-otp-code-sign-in-mutation-options";
+import { createSignOutMutationOptions } from "@/features/authentication/mutations/create-sign-out-mutation-options";
 import { createRoutineDeleteMutationOptions } from "@/features/routine/mutations/create-routine-delete-mutation-options";
 import { createRoutineSaveMutationOptions } from "@/features/routine/mutations/create-routine-save-mutation-options";
+import { createWorkoutSaveMutationOptions } from "@/features/workout/mutations/create-workout-save-mutation-options";
+import { WorkoutDocumentsProvider } from "@/features/workout/providers/workout-documents-provider";
 import { applicationLayer } from "@/layer";
-import { WorkoutDocumentsProvider } from "@/providers/workout-documents";
 import { Text } from "@/shared/components/text";
 import { useAuthenticationClient } from "@/shared/hooks/use-authentication-client";
+import { errorMessages } from "@/shared/messages/error-messages";
 import { RuntimeContext } from "@/shared/providers/runtime-context";
-import { TrpcClient } from "@/shared/services/trpc-client";
-import { messages } from "@/utilities/messages";
 
 type QueryCacheControllerProperties = {
   queryPersister: Persister;
@@ -64,7 +64,7 @@ export function ErrorBoundary() {
   return (
     <ThemeProvider value={getNavigationTheme(colorScheme)}>
       <SafeAreaView>
-        <Text selectable>{messages.error.unknown}</Text>
+        <Text selectable>{errorMessages.unknown}</Text>
       </SafeAreaView>
     </ThemeProvider>
   );
@@ -76,8 +76,6 @@ export default function RootLayout() {
   const [runtime] = useState(createRuntime);
   const [queryClient] = useState(createQueryClient);
   const [queryPersister] = useState(createQueryPersister);
-
-  const trpcClient = runtime.runSync(TrpcClient).vanillaTrpcClient;
 
   useEffect(() => {
     registerMutationDefaults({ queryClient, runtime });
@@ -131,15 +129,13 @@ export default function RootLayout() {
           }}
         >
           <QueryCacheController queryPersister={queryPersister} />
-          <TrpcProvider queryClient={queryClient} trpcClient={trpcClient}>
-            <WorkoutDocumentsProvider>
-              <ThemeProvider value={getNavigationTheme(colorScheme)}>
-                <SplashScreenController />
-                <RootNavigator />
-                <StatusBar style="auto" />
-              </ThemeProvider>
-            </WorkoutDocumentsProvider>
-          </TrpcProvider>
+          <WorkoutDocumentsProvider>
+            <ThemeProvider value={getNavigationTheme(colorScheme)}>
+              <SplashScreenController />
+              <RootNavigator />
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </WorkoutDocumentsProvider>
         </PersistQueryClientProvider>
       </KeyboardProvider>
     </RuntimeContext>
@@ -238,6 +234,8 @@ function registerMutationDefaults({
   const routineDeleteMutationOptions =
     createRoutineDeleteMutationOptions(runtime);
   const routineSaveMutationOptions = createRoutineSaveMutationOptions(runtime);
+  const signOutMutationOptions = createSignOutMutationOptions(runtime);
+  const workoutSaveMutationOptions = createWorkoutSaveMutationOptions(runtime);
 
   queryClient.setMutationDefaults(
     appleSignInMutationOptions.mutationKey,
@@ -267,6 +265,16 @@ function registerMutationDefaults({
   queryClient.setMutationDefaults(
     routineSaveMutationOptions.mutationKey,
     routineSaveMutationOptions,
+  );
+
+  queryClient.setMutationDefaults(
+    signOutMutationOptions.mutationKey,
+    signOutMutationOptions,
+  );
+
+  queryClient.setMutationDefaults(
+    workoutSaveMutationOptions.mutationKey,
+    workoutSaveMutationOptions,
   );
 }
 

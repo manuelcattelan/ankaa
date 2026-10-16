@@ -42,15 +42,6 @@ const ROUTE_IMPORTABLE_SHARED_PATHS = [
   "./shared/screens",
 ];
 
-const LEGACY_LAYOUT_PATHS = [
-  "./clients",
-  "./providers",
-  "./shared/constants",
-  "./shared/core",
-  "./shared/hooks",
-  "./utilities",
-];
-
 const DYNAMIC_ROUTE_FILE_NAME_PATTERN = /^\[[a-z][A-Za-z]*\]\.tsx$/;
 
 const WRAPPED_PRIMITIVES = ["Pressable", "ScrollView", "Text", "TextInput"];
@@ -82,7 +73,6 @@ const routeZone = {
       `./features/${featureName}/screens`,
     ]),
     ...ROUTE_IMPORTABLE_SHARED_PATHS,
-    ...LEGACY_LAYOUT_PATHS,
   ],
   from: "./src",
   message:
@@ -175,7 +165,7 @@ export const mobileConfiguration = defineConfig([
     },
   },
   {
-    files: ["src/**/messages/**", "src/utilities/messages.ts"],
+    files: ["src/**/messages/**"],
     rules: { "@ankaa/no-duplicate-string": "off" },
   },
 ]);

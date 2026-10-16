@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Fragment, useEffect } from "react";
 import { ActivityIndicator } from "react-native";
 
-import type { Routine } from "@/features/routine/interactors/list-routines";
+import type { Routine } from "@/shared/interactors/list-routines";
 
 import { routineListMessages } from "@/features/routine/messages/routine-list-messages";
 import { createRoutineListQueryOptions } from "@/features/routine/queries/create-routine-list-query-options";

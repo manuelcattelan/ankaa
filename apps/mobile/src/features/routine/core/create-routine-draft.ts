@@ -5,7 +5,7 @@ import type {
   RoutineDraftBlock,
   RoutineDraftExercise,
 } from "@/features/routine/core/routine-draft-reducer";
-import type { Routine } from "@/features/routine/interactors/list-routines";
+import type { Routine } from "@/shared/interactors/list-routines";
 
 import { createRoutineDraftSections } from "@/features/routine/core/create-routine-draft-sections";
 

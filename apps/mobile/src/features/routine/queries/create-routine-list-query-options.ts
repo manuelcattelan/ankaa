@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 
 import type { ApplicationRuntime } from "@/layer";
 
-import { listRoutines } from "@/features/routine/interactors/list-routines";
+import { listRoutines } from "@/shared/interactors/list-routines";
 
 export function createRoutineListQueryOptions(runtime: ApplicationRuntime) {
   return queryOptions({
