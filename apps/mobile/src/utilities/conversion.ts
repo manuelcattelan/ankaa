@@ -1,7 +1,7 @@
 import {
   WEIGHT_VALUE_MAXIMUM,
   WEIGHT_VALUE_MINIMUM,
-} from "@ankaa/database/constants";
+} from "@ankaa/core/features/workout/constants/weight";
 
 const WEIGHT_VALUE_PATTERN = /^\d+(\.\d{1,2})?$/;
 

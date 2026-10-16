@@ -1,5 +1,6 @@
 import type { AppRouter } from "@ankaa/api";
-import type { Equipment, MuscleGroup } from "@ankaa/database/constants";
+import type { Equipment } from "@ankaa/core/features/exercise/constants/equipment";
+import type { MuscleGroup } from "@ankaa/core/features/exercise/constants/muscle-group";
 import type { inferRouterOutputs } from "@trpc/server";
 
 import { useQuery } from "@tanstack/react-query";

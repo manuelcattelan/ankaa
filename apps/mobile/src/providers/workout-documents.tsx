@@ -1,9 +1,9 @@
 import type { AppRouter } from "@ankaa/api";
-import type { WeightType } from "@ankaa/database/constants";
+import type { WeightType } from "@ankaa/core/shared/constants/weight-type";
 import type { TRPCClientErrorLike } from "@trpc/client";
 import type { inferRouterInputs } from "@trpc/server";
 
-import { AMOUNT_MINIMUM } from "@ankaa/database/constants";
+import { AMOUNT_MINIMUM } from "@ankaa/core/shared/constants/amount";
 import { useMutation } from "@tanstack/react-query";
 import * as ExpoSqliteKeyValueStore from "expo-sqlite/kv-store";
 import { useEffect, useReducer, useState } from "react";

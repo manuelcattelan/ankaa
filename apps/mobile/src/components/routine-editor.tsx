@@ -1,26 +1,24 @@
 import type { AppRouter } from "@ankaa/api";
-import type {
-  DayOfWeek,
-  Section,
-  SetType,
-  Variation,
-} from "@ankaa/database/constants";
+import type { DayOfWeek } from "@ankaa/core/features/routine/constants/day-of-week";
+import type { Variation } from "@ankaa/core/shared/constants/intensity-technique";
+import type { Section } from "@ankaa/core/shared/constants/section";
+import type { SetType } from "@ankaa/core/shared/constants/set-type";
 import type { SnapPoint } from "@expo/ui";
 import type { TRPCClientErrorLike } from "@trpc/client";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 
+import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/day-of-week";
 import {
-  AMOUNT_MINIMUM,
-  DAYS_OF_WEEK,
   DROP_SET_WEIGHT_PERCENTAGE_MAXIMUM,
   DROP_SET_WEIGHT_PERCENTAGE_MINIMUM,
-  REST_SECONDS_MINIMUM,
-  SECTIONS,
-  SEGMENT_COUNT_MINIMUM,
-  SET_TYPES,
-  TEMPO_PATTERN,
-  VARIATIONS,
-} from "@ankaa/database/constants";
+} from "@ankaa/core/features/routine/constants/drop-set";
+import { REST_SECONDS_MINIMUM } from "@ankaa/core/features/routine/constants/rest";
+import { SEGMENT_COUNT_MINIMUM } from "@ankaa/core/features/routine/constants/segment";
+import { AMOUNT_MINIMUM } from "@ankaa/core/shared/constants/amount";
+import { VARIATIONS } from "@ankaa/core/shared/constants/intensity-technique";
+import { SECTIONS } from "@ankaa/core/shared/constants/section";
+import { SET_TYPES } from "@ankaa/core/shared/constants/set-type";
+import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo";
 import { BottomSheet, Host, RNHostView, Switch } from "@expo/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";

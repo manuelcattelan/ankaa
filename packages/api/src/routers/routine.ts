@@ -1,17 +1,17 @@
-import { database } from "@ankaa/database";
+import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/day-of-week";
 import {
-  AMOUNT_MINIMUM,
-  DAYS_OF_WEEK,
   DROP_SET_WEIGHT_PERCENTAGE_MAXIMUM,
   DROP_SET_WEIGHT_PERCENTAGE_MINIMUM,
-  POSITION_MINIMUM,
-  REST_SECONDS_MINIMUM,
-  SECTIONS,
-  SEGMENT_COUNT_MINIMUM,
-  SET_TYPES,
-  TEMPO_PATTERN,
-  VARIATIONS,
-} from "@ankaa/database/constants";
+} from "@ankaa/core/features/routine/constants/drop-set";
+import { REST_SECONDS_MINIMUM } from "@ankaa/core/features/routine/constants/rest";
+import { SEGMENT_COUNT_MINIMUM } from "@ankaa/core/features/routine/constants/segment";
+import { AMOUNT_MINIMUM } from "@ankaa/core/shared/constants/amount";
+import { VARIATIONS } from "@ankaa/core/shared/constants/intensity-technique";
+import { POSITION_MINIMUM } from "@ankaa/core/shared/constants/position";
+import { SECTIONS } from "@ankaa/core/shared/constants/section";
+import { SET_TYPES } from "@ankaa/core/shared/constants/set-type";
+import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo";
+import { database } from "@ankaa/database";
 import { and, eq, isNull, ne, sql } from "@ankaa/database/operators";
 import * as Schema from "@ankaa/database/schema";
 import { TRPCError } from "@trpc/server";

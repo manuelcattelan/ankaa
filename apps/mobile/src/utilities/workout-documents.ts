@@ -1,14 +1,12 @@
-import type { SkipReason } from "@ankaa/database/constants";
+import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reason";
 
-import {
-  AMOUNT_UNITS,
-  SECTIONS,
-  SET_TYPES,
-  SKIP_REASONS,
-  VARIATIONS,
-  WEIGHT_TYPES,
-  WEIGHT_UNITS,
-} from "@ankaa/database/constants";
+import { SKIP_REASONS } from "@ankaa/core/features/workout/constants/skip-reason";
+import { WEIGHT_UNITS } from "@ankaa/core/features/workout/constants/weight";
+import { AMOUNT_UNITS } from "@ankaa/core/shared/constants/amount";
+import { VARIATIONS } from "@ankaa/core/shared/constants/intensity-technique";
+import { SECTIONS } from "@ankaa/core/shared/constants/section";
+import { SET_TYPES } from "@ankaa/core/shared/constants/set-type";
+import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-type";
 import { z } from "zod";
 
 export type WorkoutDocument = z.infer<typeof workoutDocumentSchema>;

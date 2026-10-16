@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@ankaa/authentication": "workspace:*",
+    "@ankaa/core": "workspace:*",
     "@ankaa/database": "workspace:*",
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",

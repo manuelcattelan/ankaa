@@ -1,3 +1,18 @@
+import { SKIP_REASONS } from "@ankaa/core/features/workout/constants/skip-reason";
+import {
+  WEIGHT_UNITS,
+  WEIGHT_VALUE_MINIMUM,
+} from "@ankaa/core/features/workout/constants/weight";
+import {
+  AMOUNT_MINIMUM,
+  AMOUNT_UNITS,
+} from "@ankaa/core/shared/constants/amount";
+import { VARIATIONS } from "@ankaa/core/shared/constants/intensity-technique";
+import { POSITION_MINIMUM } from "@ankaa/core/shared/constants/position";
+import { SECTIONS } from "@ankaa/core/shared/constants/section";
+import { SET_TYPES } from "@ankaa/core/shared/constants/set-type";
+import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo";
+import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-type";
 import { defineRelationsPart, gte, inArray, isNull, sql } from "drizzle-orm";
 import {
   boolean,
@@ -14,19 +29,6 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import {
-  AMOUNT_MINIMUM,
-  AMOUNT_UNITS,
-  POSITION_MINIMUM,
-  SECTIONS,
-  SET_TYPES,
-  SKIP_REASONS,
-  TEMPO_PATTERN,
-  VARIATIONS,
-  WEIGHT_TYPES,
-  WEIGHT_UNITS,
-  WEIGHT_VALUE_MINIMUM,
-} from "../constants.ts";
 import { user } from "./authentication.ts";
 import { commonColumns } from "./common-columns.ts";
 import { exercise } from "./exercise.ts";

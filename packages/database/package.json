@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@ankaa/core": "workspace:*",
     "@ankaa/environment": "workspace:*",
     "drizzle-orm": "1.0.0-rc.4",
     "pg": "^8.23.0",
@@ -20,7 +21,6 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./constants": "./src/constants.ts",
     "./operators": "./src/operators.ts",
     "./schema": "./src/schema/index.ts"
   },

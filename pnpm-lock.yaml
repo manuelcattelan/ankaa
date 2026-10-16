@@ -175,9 +175,9 @@ importers:
 
   apps/mobile:
     dependencies:
-      '@ankaa/database':
+      '@ankaa/core':
         specifier: workspace:*
-        version: link:../../packages/database
+        version: link:../../packages/core
       '@ankaa/environment':
         specifier: workspace:*
         version: link:../../packages/environment
@@ -423,6 +423,9 @@ importers:
       '@ankaa/authentication':
         specifier: workspace:*
         version: link:../authentication
+      '@ankaa/core':
+        specifier: workspace:*
+        version: link:../core
       '@ankaa/database':
         specifier: workspace:*
         version: link:../database
@@ -513,8 +516,38 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
+  packages/core:
+    devDependencies:
+      '@ankaa/eslint':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@ankaa/prettier':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
+      '@ankaa/typescript':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      '@types/node':
+        specifier: ^26.4.1
+        version: 26.4.1
+      eslint:
+        specifier: ^10.10.0
+        version: 10.10.0(jiti@2.7.0)(supports-color@8.1.1)
+      jiti:
+        specifier: ^2.7.0
+        version: 2.7.0
+      prettier:
+        specifier: 'catalog:'
+        version: 3.9.6
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
   packages/database:
     dependencies:
+      '@ankaa/core':
+        specifier: workspace:*
+        version: link:../core
       '@ankaa/environment':
         specifier: workspace:*
         version: link:../environment
