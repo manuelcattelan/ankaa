@@ -7,28 +7,38 @@ import { SEGMENT_COUNT_MINIMUM } from "@ankaa/core/features/routine/constants/se
 import { AMOUNT_MINIMUM } from "@ankaa/core/shared/constants/amount";
 import { tempoFilter } from "@ankaa/core/shared/filters/tempo-filter";
 import * as Data from "effect/Data";
+import * as Match from "effect/Match";
 import * as Schema from "effect/Schema";
 
 import type { RoutineDraftExerciseSet } from "@/features/routine/core/routine-draft-reducer";
 import type { WholeNumberValidationOutcome } from "@/shared/core/validate-whole-number";
 
 import { formatTempo } from "@/features/routine/core/format-tempo";
+import { isWholeNumberValid } from "@/shared/core/is-whole-number-valid";
 import { validateWholeNumber } from "@/shared/core/validate-whole-number";
 
-export type RoutineDraftExerciseSetValidationOutcomes = {
-  amount: WholeNumberValidationOutcome;
-  dropSetSegmentCount: undefined | WholeNumberValidationOutcome;
-  dropSetWeightPercentage: undefined | WholeNumberValidationOutcome;
-  restPauseRestSeconds: undefined | WholeNumberValidationOutcome;
-  restPauseSegmentCount: undefined | WholeNumberValidationOutcome;
-  restSeconds: WholeNumberValidationOutcome;
-  tempo: TempoValidationOutcome;
+export type RoutineDraftExerciseSetValidationOutcome = Data.TaggedEnum<{
+  RoutineDraftExerciseSetInvalid: RoutineDraftExerciseSetFieldValidationOutcomes;
+  RoutineDraftExerciseSetValid: object;
+}>;
+
+type RoutineDraftExerciseSetFieldValidationOutcomes = {
+  readonly amount: WholeNumberValidationOutcome;
+  readonly dropSetSegmentCount: undefined | WholeNumberValidationOutcome;
+  readonly dropSetWeightPercentage: undefined | WholeNumberValidationOutcome;
+  readonly restPauseRestSeconds: undefined | WholeNumberValidationOutcome;
+  readonly restPauseSegmentCount: undefined | WholeNumberValidationOutcome;
+  readonly restSeconds: WholeNumberValidationOutcome;
+  readonly tempo: TempoValidationOutcome;
 };
 
 type TempoValidationOutcome = Data.TaggedEnum<{
   TempoFormatInvalid: object;
   TempoValid: object;
 }>;
+
+const RoutineDraftExerciseSetValidationOutcome =
+  Data.taggedEnum<RoutineDraftExerciseSetValidationOutcome>();
 
 const TempoValidationOutcome = Data.taggedEnum<TempoValidationOutcome>();
 
@@ -38,7 +48,7 @@ export function validateRoutineDraftExerciseSet(
   const isRestPause = routineDraftExerciseSet.variation === "rest_pause";
   const isDropSet = routineDraftExerciseSet.variation === "drop_set";
 
-  const routineDraftExerciseSetValidationOutcomes: RoutineDraftExerciseSetValidationOutcomes =
+  const routineDraftExerciseSetFieldValidationOutcomes: RoutineDraftExerciseSetFieldValidationOutcomes =
     {
       amount: validateWholeNumber({
         isRequired: false,
@@ -82,7 +92,25 @@ export function validateRoutineDraftExerciseSet(
       tempo: validateTempo(routineDraftExerciseSet.tempo),
     };
 
-  return routineDraftExerciseSetValidationOutcomes;
+  const isRoutineDraftExerciseSetValid =
+    [
+      routineDraftExerciseSetFieldValidationOutcomes.amount,
+      routineDraftExerciseSetFieldValidationOutcomes.dropSetSegmentCount,
+      routineDraftExerciseSetFieldValidationOutcomes.dropSetWeightPercentage,
+      routineDraftExerciseSetFieldValidationOutcomes.restPauseRestSeconds,
+      routineDraftExerciseSetFieldValidationOutcomes.restPauseSegmentCount,
+      routineDraftExerciseSetFieldValidationOutcomes.restSeconds,
+    ].every(isWholeNumberValid) &&
+    Match.valueTags(routineDraftExerciseSetFieldValidationOutcomes.tempo, {
+      TempoFormatInvalid: () => false,
+      TempoValid: () => true,
+    });
+
+  return isRoutineDraftExerciseSetValid
+    ? RoutineDraftExerciseSetValidationOutcome.RoutineDraftExerciseSetValid()
+    : RoutineDraftExerciseSetValidationOutcome.RoutineDraftExerciseSetInvalid(
+        routineDraftExerciseSetFieldValidationOutcomes,
+      );
 }
 
 function validateTempo(tempoText: string) {

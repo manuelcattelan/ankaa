@@ -6,7 +6,6 @@ import type {
 } from "@/features/workout/core/workout-document-schema";
 
 import { validateWorkoutDocumentExerciseSetSegment } from "@/features/workout/core/validate-workout-document-exercise-set-segment";
-import { isWholeNumberValid } from "@/shared/core/is-whole-number-valid";
 
 export function hasWorkoutDocumentValidationErrors(
   workoutDocument: WorkoutDocument,
@@ -24,21 +23,13 @@ export function hasWorkoutDocumentValidationErrors(
 function isWorkoutDocumentExerciseSetSegmentValid(
   workoutDocumentExerciseSetSegment: WorkoutDocumentExerciseSetSegment,
 ) {
-  const workoutDocumentExerciseSetSegmentValidationOutcomes =
+  return Match.valueTags(
     validateWorkoutDocumentExerciseSetSegment(
       workoutDocumentExerciseSetSegment,
-    );
-
-  return (
-    isWholeNumberValid(
-      workoutDocumentExerciseSetSegmentValidationOutcomes.amount,
-    ) &&
-    Match.valueTags(
-      workoutDocumentExerciseSetSegmentValidationOutcomes.weightValue,
-      {
-        WeightValueOutOfRange: () => false,
-        WeightValueValid: () => true,
-      },
-    )
+    ),
+    {
+      WorkoutDocumentExerciseSetSegmentInvalid: () => false,
+      WorkoutDocumentExerciseSetSegmentValid: () => true,
+    },
   );
 }
