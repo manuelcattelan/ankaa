@@ -19,7 +19,7 @@ import { insertRoutineExerciseSets } from "../queries/insert-routine-exercise-se
 import { insertRoutineExercises } from "../queries/insert-routine-exercises.ts";
 import { upsertRoutine } from "../queries/upsert-routine.ts";
 
-type WriteRoutineOptions = {
+type WriteRoutineSaveOptions = {
   database: DrizzleDatabase;
   routineSaveInput: RoutineSaveInput;
   userId: string;
@@ -54,7 +54,7 @@ export const saveRoutine = Effect.fn("saveRoutine")(function* (
         RoutineNameConflict: () => Promise.resolve(),
         RoutineNotFound: () => Promise.resolve(),
         RoutineSaveAllowed: () =>
-          writeRoutine({
+          writeRoutineSave({
             database: transaction,
             routineSaveInput,
             userId: currentSession.user.id,
@@ -75,11 +75,11 @@ export const saveRoutine = Effect.fn("saveRoutine")(function* (
     );
 });
 
-async function writeRoutine({
+async function writeRoutineSave({
   database,
   routineSaveInput,
   userId,
-}: WriteRoutineOptions) {
+}: WriteRoutineSaveOptions) {
   const routineSaveRows = buildRoutineSaveRows({ routineSaveInput });
 
   await upsertRoutine({

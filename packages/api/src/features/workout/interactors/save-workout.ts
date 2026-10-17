@@ -20,7 +20,7 @@ import { insertWorkoutExerciseSets } from "../queries/insert-workout-exercise-se
 import { insertWorkoutExercises } from "../queries/insert-workout-exercises.ts";
 import { upsertWorkout } from "../queries/upsert-workout.ts";
 
-type WriteWorkoutOptions = {
+type WriteWorkoutSaveOptions = {
   database: DrizzleDatabase;
   userId: string;
   workoutSaveInput: WorkoutSaveInput;
@@ -62,7 +62,7 @@ export const saveWorkout = Effect.fn("saveWorkout")(function* (
         WorkoutInProgressConflict: () => Promise.resolve(),
         WorkoutNotFound: () => Promise.resolve(),
         WorkoutSaveAllowed: () =>
-          writeWorkout({
+          writeWorkoutSave({
             database: transaction,
             userId: currentSession.user.id,
             workoutSaveInput,
@@ -86,11 +86,11 @@ export const saveWorkout = Effect.fn("saveWorkout")(function* (
     );
 });
 
-async function writeWorkout({
+async function writeWorkoutSave({
   database,
   userId,
   workoutSaveInput,
-}: WriteWorkoutOptions) {
+}: WriteWorkoutSaveOptions) {
   const workoutSaveRows = buildWorkoutSaveRows({ userId, workoutSaveInput });
 
   await upsertWorkout({ database, workoutRow: workoutSaveRows.workoutRow });
