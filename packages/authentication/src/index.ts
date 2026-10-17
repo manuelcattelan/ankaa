@@ -50,7 +50,7 @@ export class Authentication extends Context.Service<Authentication>()(
           sendVerificationOtpCode: ({ email: emailAddress, otpCode }) =>
             Effect.runPromiseWith(context)(
               email.send({
-                subject: "Your sign-in OTP code",
+                subject: "Your sign-in verification code",
                 text: otpCode,
                 to: emailAddress,
               }),

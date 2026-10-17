@@ -9,7 +9,6 @@
     "@tanstack/react-query-persist-client": "^5.104.1",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
-    "@trpc/tanstack-react-query": "catalog:",
     "better-auth": "catalog:",
     "effect": "catalog:",
     "expo": "~57.0.24",
