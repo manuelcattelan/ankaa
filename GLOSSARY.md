@@ -46,9 +46,10 @@ One place an [Exercise](#exercise) takes in a [Routine](#routine), with its own 
 
 ### Save
 
-To store a [Routine](#routine) or a [Workout](#workout) on the server. A person saves a Routine from the editor. A Workout saves itself after every change, and the device keeps the change until the server has stored it.
+To send a [Routine](#routine) or a [Workout](#workout) to the server, which writes it to the database. A person saves a Routine from the editor. A Workout saves itself after every change, and the device [Stores](#store) it until its Save succeeds.
 
 - **Avoid**: sync, upload, persist, submit
+- **Distinct from**: [Store](#store): the device Stores a Workout, and a Save sends it to the server.
 
 ### Section
 
@@ -61,6 +62,13 @@ One of the three parts, done in order, that every [Routine](#routine) and [Worko
 A [Workout exercise](#workout-exercise) the person marked as not done as planned, with a reason: low on time, low energy, pain or other, and an optional note. It keeps any [Sets](#set) recorded before it was skipped.
 
 - **Avoid**: missed exercise, dropped exercise, abandoned exercise
+
+### Store
+
+To keep a [Workout](#workout) on the device, as its [Workout document](#workout-document), until its [Save](#save) succeeds, so no change is lost before the server has it.
+
+- **Avoid**: save locally, keep offline
+- **Distinct from**: [Save](#save): a Save sends the Workout to the server, and the device Stores it until that Save succeeds.
 
 ### Superset
 
@@ -82,6 +90,13 @@ One training session a person does, started from a [Routine](#routine) and recor
 
 - **Avoid**: session, training session, workout log, log
 - **Distinct from**: [Routine](#routine): a Routine is the reusable plan, and each Workout records one time a person followed it.
+
+### Workout document
+
+A [Workout](#workout) as the device [Stores](#store) it: everything recorded so far, with a version number that every change increases and the version of its last successful [Save](#save), so the device knows which changes the server doesn't have yet.
+
+- **Avoid**: local workout, workout draft, offline workout, cached workout
+- **Distinct from**: [Workout](#workout): the Workout is what the person does, and the Workout document is the copy of it that the device keeps.
 
 ### Workout exercise
 
@@ -172,3 +187,94 @@ A lighter [Set](#set) done to prepare for the [Working sets](#working-set) of th
 A [Set](#set) done for the training its exercise is there for, rather than to prepare for it. A [Workout](#workout) counts its progress in Working sets only.
 
 - **Avoid**: work set, main set
+
+## Architecture
+
+### Composition root
+
+The one place in each app that builds the application [Layer](#layer) and the [Runtime](#runtime), and wires the rest of the app to them: `src/server.ts` on the server and the root `src/app/_layout.tsx` on the mobile app.
+
+- **Avoid**: bootstrap, main module
+
+### Core
+
+The code that makes every decision, written in plain TypeScript: given values, it returns values, including an [Outcome](#outcome) for every rule it checks, and it never does I/O, reads the clock or throws. It lives in the `core/` folder of each [Feature](#feature), and in `@ankaa/core` for what more than one workspace runs.
+
+- **Avoid**: domain, domain layer, business logic, pure layer
+- **Distinct from**: [Shell](#shell): the Shell does the I/O and asks the Core for every decision.
+
+### Database query
+
+One Drizzle query of a server [Feature](#feature), in its own file in the `queries/` folder of that Feature: a plain async function over the database or a transaction, with no business branching. Only the [Interactors](#interactor) of the same Feature call it.
+
+- **Avoid**: repository, data access object, DAO
+- **Distinct from**: [Query procedure](#query-procedure): a tRPC procedure that the mobile app calls to read data.
+- **Distinct from**: [Query options](#query-options): what TanStack Query uses on the mobile app to fetch and cache data.
+
+### Feature
+
+One area of the product, such as Workouts or Routines, whose code sits together in one `features/<feature>/` folder on the server, in `@ankaa/core` and on the mobile app. Features don't import each other, except when a route file composes components from several Features, or a server [Interactor](#interactor) calls an Interactor of another Feature. The `shared/` folder holds what several Features use, in the same folders a Feature has.
+
+- **Avoid**: slice, vertical slice
+
+### Filter
+
+A reusable rule of an Effect Schema, made with `Schema.makeFilter` or taken from Effect's built-in ones, such as `Schema.isMaxLength`, and added to a Schema with `.check()`. `@ankaa/core` keeps the Filters that both the server and the mobile app enforce. Narrowing a list, such as the Exercises shown in a picker, isn't a Filter.
+
+- **Avoid**: refinement
+
+### Interactor
+
+One business operation, such as saving a Workout, written as a standalone `Effect.fn` in its own file in the `interactors/` folder of a [Feature](#feature). It yields the [Services](#service) it needs, reads, asks the [Core](#core) to decide, and then writes. Robert C. Martin's interactors must not depend on the database, but ours are [Shell](#shell) programs, which on the server read and write through [Database queries](#database-query).
+
+- **Avoid**: use case
+- **Distinct from**: [Service](#service): a Service wraps an implementation that can be swapped, and an Interactor uses Services to carry out one operation.
+
+### Layer
+
+An Effect Layer: what builds a [Service](#service) when the [Runtime](#runtime) starts, reading its settings with Effect `Config` and taking the other Services it needs from their Layers. A Service's `layer` provides its default dependencies, its `layerNoDeps` leaves them open, and other variants carry a descriptive suffix, such as `layerTest`. The application Layer, `applicationLayer`, combines every Layer that one app needs.
+
+- **Avoid**: live layer, default layer
+- **Distinct from**: [Service](#service): code yields the Service, and the Layer is how the Runtime builds it.
+
+### Outcome
+
+One possible return of a [Core](#core) function, as a variant of the discriminated union that it returns: a success or a broken rule, with a PascalCase `_tag`. The Core returns an Outcome instead of throwing, and the [Shell](#shell) turns each one into a write, a no-op or a typed error.
+
+- **Avoid**: result union, verdict
+
+### Query options
+
+The options, built with TanStack Query's `queryOptions`, that tell the mobile app how to fetch and cache one piece of server data. Each mobile [Feature](#feature) keeps its own in its `queries/` folder, as factory functions that take the [Runtime](#runtime), such as `createRoutineListQueryOptions(runtime)`.
+
+- **Avoid**: query config, query hook
+- **Distinct from**: [Database query](#database-query): a server function that reads or writes the database.
+- **Distinct from**: [Query procedure](#query-procedure): the tRPC procedure that Query options may call.
+
+### Query procedure
+
+A tRPC procedure, defined with `.query()`, that the mobile app calls to read data, as opposed to a mutation procedure, which changes data. Each server [Feature](#feature) defines its procedures in its `router.ts`.
+
+- **Avoid**: query route, read procedure
+- **Distinct from**: [Database query](#database-query): a server function that a Query procedure's [Interactor](#interactor) calls to read the database.
+- **Distinct from**: [Query options](#query-options): what TanStack Query uses on the mobile app to fetch and cache data.
+
+### Runtime
+
+The Effect `ManagedRuntime` that the [Composition root](#composition-root) of each app builds once from the application [Layer](#layer), and that runs every Effect program of that app. The server keeps it in tRPC's inner context, and the mobile app provides it through React context, read with `useRuntime()`. The JavaScript engine that runs the code, such as Node or Hermes, isn't a Runtime.
+
+- **Avoid**: container, injector, executor
+
+### Service
+
+An implementation that can be swapped, such as in a test, wrapped in an Effect `Context.Service` class with static [Layers](#layer): infrastructure on the server, such as `Database`, `Email`, `Authentication` and `CurrentSession`, and device and platform APIs on the mobile app, such as the API client, storage on the device and notifications. Code yields a Service to use it.
+
+- **Avoid**: adapter, port, gateway
+- **Distinct from**: [Interactor](#interactor): an Interactor is one business operation, and a Service is something it uses.
+
+### Shell
+
+The code that does every I/O, such as reading the database, calling the server or showing a notification, and asks the [Core](#core) for every decision: [Services](#service), [Interactors](#interactor) and every other Effect program, and the code that runs them, such as tRPC procedures and React components.
+
+- **Avoid**: I/O layer, effectful code, side-effect layer
+- **Distinct from**: [Core](#core): the Core decides, and the Shell carries the decision out.

@@ -9,9 +9,17 @@ import eslintPluginPerfectionist from "eslint-plugin-perfectionist";
 import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import eslintPluginYml from "eslint-plugin-yml";
 import { defineConfig } from "eslint/config";
+import { existsSync, readdirSync } from "node:fs";
+import path from "node:path";
 import typescriptEslint from "typescript-eslint";
 
 import { plugin } from "./plugin.ts";
+
+type CreateFeatureIsolationZoneOptions = {
+  allowedFeaturePaths?: string[];
+  featureName: string;
+  target: string | string[];
+};
 
 type CreateGeneratedFilesConfigurationOptions = {
   configuration: Linter.Config[];
@@ -47,11 +55,13 @@ export const RESTRICTED_SYNTAX = [
   {
     message:
       "Use a function declaration for a named function and an arrow function for a function passed as a value.",
-    selector: "FunctionExpression",
+    selector:
+      "FunctionExpression:not(CallExpression[callee.object.name='Effect'][callee.property.name=/^(fn|gen)$/] > .arguments[generator=true], CallExpression[callee.callee.object.name='Effect'][callee.callee.property.name='fn'] > .arguments[generator=true])",
   },
   {
     message: "Use functions and plain objects instead of a class.",
-    selector: "ClassDeclaration, ClassExpression",
+    selector:
+      "ClassDeclaration:not([superClass.callee.object.name='Data'][superClass.callee.property.name='TaggedError'], [superClass.callee.callee.object.name='Context'][superClass.callee.callee.property.name='Service']), ClassExpression",
   },
   {
     message: "Use a union of string literals instead of an enum.",
@@ -72,7 +82,7 @@ export const RESTRICTED_SYNTAX = [
   {
     message: "Use await instead of then(), catch() or finally().",
     selector:
-      "CallExpression > MemberExpression.callee[property.name=/^(then|catch|finally)$/]",
+      "CallExpression > MemberExpression.callee[property.name=/^(then|catch|finally)$/]:not([object.name='Effect'][property.name='catch'])",
   },
   {
     message:
@@ -108,7 +118,39 @@ const NUMERIC_SEPARATOR_MINIMUM_DIGITS = 4;
 
 const GENERATED_FILES_KEPT_RULE_PREFIXES = ["@stylistic/", "perfectionist/"];
 
-export const PREVENT_ABBREVIATIONS_OPTIONS = {
+export const FEATURES_PATH = "./src/features";
+
+export const CORE_RESTRICTED_IMPORT_PATTERNS = [
+  {
+    caseSensitive: true,
+    message:
+      "Keep core code pure: import only Effect's data modules, such as effect/Schema, from their subpaths.",
+    regex: "^effect(?:/(?:Context|Effect|Layer|ManagedRuntime))?$",
+  },
+  {
+    caseSensitive: true,
+    message:
+      "Keep core code pure: move code that needs React, React Native or Expo to the shell.",
+    regex:
+      "^(?:@expo/|@react-native(?:-[^/]+)?/|expo(?:$|[/-])|react(?:$|[/-]))",
+  },
+];
+
+export const CORE_FILES = ["**/core/**"];
+
+const CORE_PURITY_RULES: Linter.RulesRecord = {
+  "no-restricted-imports": [
+    "error",
+    { patterns: CORE_RESTRICTED_IMPORT_PATTERNS },
+  ],
+};
+
+const corePackagePath = path.resolve(
+  import.meta.dirname,
+  "../../packages/core",
+);
+
+const PREVENT_ABBREVIATIONS_OPTIONS = {
   checkShorthandImports: false,
   ignore: ["\\.config$", "^eslint-config-"],
   replacements: {
@@ -128,69 +170,7 @@ export const rulesConfiguration = defineConfig([
       unicorn: eslintPluginUnicorn,
     },
     rules: {
-      "@ankaa/no-comments": "error",
-      "@ankaa/no-duplicate-string": "error",
-      "@ankaa/no-single-use-string": "error",
-      "@stylistic/padding-line-between-statements": [
-        "error",
-        { blankLine: "never", next: "*", prev: "*" },
-        { blankLine: "always", next: "*", prev: "import" },
-        { blankLine: "always", next: "*", prev: DECLARATION_STATEMENTS },
-        { blankLine: "always", next: DECLARATION_STATEMENTS, prev: "*" },
-        { blankLine: "always", next: "*", prev: "type" },
-        { blankLine: "always", next: "type", prev: "*" },
-        { blankLine: "any", next: "type", prev: "type" },
-        { blankLine: "always", next: "*", prev: "export" },
-        { blankLine: "always", next: "export", prev: "*" },
-        { blankLine: "any", next: "export", prev: "export" },
-        {
-          blankLine: "always",
-          next: "*",
-          prev: { lineMode: "multiline", selector: "*" },
-        },
-        {
-          blankLine: "always",
-          next: { lineMode: "multiline", selector: "*" },
-          prev: "*",
-        },
-        {
-          blankLine: "any",
-          next: DECLARATION_STATEMENTS,
-          prev: DECLARATION_STATEMENTS,
-        },
-        {
-          blankLine: "any",
-          next: "*",
-          prev: { selector: HOOK_STATEMENT_SELECTOR },
-        },
-        {
-          blankLine: "any",
-          next: { selector: HOOK_STATEMENT_SELECTOR },
-          prev: "*",
-        },
-        { blankLine: "any", next: "import", prev: "import" },
-        { blankLine: "always", next: "return", prev: "*" },
-        {
-          blankLine: "always",
-          next: "*",
-          prev: { selector: ACTION_STATEMENT_SELECTOR },
-        },
-        {
-          blankLine: "always",
-          next: { selector: ACTION_STATEMENT_SELECTOR },
-          prev: "*",
-        },
-      ],
-      "@typescript-eslint/consistent-type-assertions": [
-        "error",
-        { assertionStyle: "never" },
-      ],
-      "@typescript-eslint/consistent-type-definitions": ["error", "type"],
-      "@typescript-eslint/consistent-type-imports": [
-        "error",
-        { fixStyle: "separate-type-imports", prefer: "type-imports" },
-      ],
-      "@typescript-eslint/naming-convention": [
+      "@ankaa/naming-convention": [
         "error",
         {
           format: ["strictCamelCase"],
@@ -267,6 +247,68 @@ export const rulesConfiguration = defineConfig([
           selector: "typeProperty",
         },
       ],
+      "@ankaa/no-comments": "error",
+      "@ankaa/no-duplicate-string": "error",
+      "@ankaa/no-single-use-string": "error",
+      "@stylistic/padding-line-between-statements": [
+        "error",
+        { blankLine: "never", next: "*", prev: "*" },
+        { blankLine: "always", next: "*", prev: "import" },
+        { blankLine: "always", next: "*", prev: DECLARATION_STATEMENTS },
+        { blankLine: "always", next: DECLARATION_STATEMENTS, prev: "*" },
+        { blankLine: "always", next: "*", prev: "type" },
+        { blankLine: "always", next: "type", prev: "*" },
+        { blankLine: "any", next: "type", prev: "type" },
+        { blankLine: "always", next: "*", prev: "export" },
+        { blankLine: "always", next: "export", prev: "*" },
+        { blankLine: "any", next: "export", prev: "export" },
+        {
+          blankLine: "always",
+          next: "*",
+          prev: { lineMode: "multiline", selector: "*" },
+        },
+        {
+          blankLine: "always",
+          next: { lineMode: "multiline", selector: "*" },
+          prev: "*",
+        },
+        {
+          blankLine: "any",
+          next: DECLARATION_STATEMENTS,
+          prev: DECLARATION_STATEMENTS,
+        },
+        {
+          blankLine: "any",
+          next: "*",
+          prev: { selector: HOOK_STATEMENT_SELECTOR },
+        },
+        {
+          blankLine: "any",
+          next: { selector: HOOK_STATEMENT_SELECTOR },
+          prev: "*",
+        },
+        { blankLine: "any", next: "import", prev: "import" },
+        { blankLine: "always", next: "return", prev: "*" },
+        {
+          blankLine: "always",
+          next: "*",
+          prev: { selector: ACTION_STATEMENT_SELECTOR },
+        },
+        {
+          blankLine: "always",
+          next: { selector: ACTION_STATEMENT_SELECTOR },
+          prev: "*",
+        },
+      ],
+      "@typescript-eslint/consistent-type-assertions": [
+        "error",
+        { assertionStyle: "never" },
+      ],
+      "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        { fixStyle: "separate-type-imports", prefer: "type-imports" },
+      ],
       "@typescript-eslint/no-magic-numbers": [
         "error",
         {
@@ -314,6 +356,15 @@ export const rulesConfiguration = defineConfig([
       ],
       "unicorn/prevent-abbreviations": ["error", PREVENT_ABBREVIATIONS_OPTIONS],
     },
+  },
+  {
+    files: [[...CORE_FILES, ...JAVASCRIPT_FILES]],
+    rules: CORE_PURITY_RULES,
+  },
+  {
+    basePath: corePackagePath,
+    files: JAVASCRIPT_FILES,
+    rules: CORE_PURITY_RULES,
   },
   {
     files: ["tooling/eslint/*.ts", "**/eslint.config.ts"],
@@ -377,6 +428,20 @@ export const baseConfiguration = defineConfig([
   },
 ]);
 
+export function createFeatureIsolationZone({
+  allowedFeaturePaths = [],
+  featureName,
+  target,
+}: CreateFeatureIsolationZoneOptions) {
+  return {
+    except: [`./${featureName}`, ...allowedFeaturePaths],
+    from: FEATURES_PATH,
+    message:
+      "Import nothing from another feature, so each feature stays isolated.",
+    target,
+  };
+}
+
 export function createGeneratedFilesConfiguration({
   configuration,
   files,
@@ -397,4 +462,16 @@ export function createGeneratedFilesConfiguration({
       disabledRuleNames.map((ruleName) => [ruleName, "off"]),
     ),
   });
+}
+
+export function getFeatureNames() {
+  const featuresAbsolutePath = path.resolve(FEATURES_PATH);
+
+  if (!existsSync(featuresAbsolutePath)) {
+    return [];
+  }
+
+  return readdirSync(featuresAbsolutePath, { withFileTypes: true })
+    .filter((directoryEntry) => directoryEntry.isDirectory())
+    .map((directoryEntry) => directoryEntry.name);
 }

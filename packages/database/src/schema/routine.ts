@@ -1,3 +1,16 @@
+import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/day-of-week";
+import {
+  DROP_SET_WEIGHT_PERCENTAGE_MAXIMUM,
+  DROP_SET_WEIGHT_PERCENTAGE_MINIMUM,
+} from "@ankaa/core/features/routine/constants/drop-set";
+import { REST_SECONDS_MINIMUM } from "@ankaa/core/features/routine/constants/rest";
+import { SEGMENT_COUNT_MINIMUM } from "@ankaa/core/features/routine/constants/segment";
+import { AMOUNT_MINIMUM } from "@ankaa/core/shared/constants/amount";
+import { VARIATIONS } from "@ankaa/core/shared/constants/intensity-technique";
+import { POSITION_MINIMUM } from "@ankaa/core/shared/constants/position";
+import { SECTIONS } from "@ankaa/core/shared/constants/section";
+import { SET_TYPES } from "@ankaa/core/shared/constants/set-type";
+import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo";
 import {
   between,
   defineRelationsPart,
@@ -20,19 +33,6 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import {
-  AMOUNT_MINIMUM,
-  DAYS_OF_WEEK,
-  DROP_SET_WEIGHT_PERCENTAGE_MAXIMUM,
-  DROP_SET_WEIGHT_PERCENTAGE_MINIMUM,
-  POSITION_MINIMUM,
-  REST_SECONDS_MINIMUM,
-  SECTIONS,
-  SEGMENT_COUNT_MINIMUM,
-  SET_TYPES,
-  TEMPO_PATTERN,
-  VARIATIONS,
-} from "../constants.ts";
 import { user } from "./authentication.ts";
 import { commonColumns } from "./common-columns.ts";
 import { exercise } from "./exercise.ts";

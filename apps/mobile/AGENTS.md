@@ -16,15 +16,38 @@ Then follow these rules for common tasks:
 
 ## Structure
 
-- `src/app/` holds routes only: screens, layouts and other Expo Router special files, as described in https://docs.expo.dev/router/basics/notation/. Expo Router treats every file in this directory as a route, so put everything else in the directories below.
-- `src/components/` holds the building blocks of the user interface: styled versions of React Native primitives, which screens use instead of the primitives themselves, and the components built from them that more than one file uses. Keep a component in one file together with the parts that exist only to be used inside it.
-- `src/providers/` holds the components that make a React context available to the whole application, one per file. The root layout then imports and renders them.
-- `src/clients/` holds the library clients and contexts that are created once when their module loads. A client that a provider creates with `useState` stays in that provider's file.
-- `src/utilities/` holds the functions and constants that more than one file uses, one file per concept. `constants.ts` holds the shared constants that belong to no single concept, and `messages.ts` holds every string that users see or hear.
+The mobile app follows the architecture in the root `AGENTS.md`: its Core decides, and its Shell runs module-level Effect programs through one Runtime, inside TanStack Query functions, event handlers and React effects, and, only for initial state that must be read synchronously from storage on the device, in a `useReducer` or `useState` initializer of a provider, as the root `AGENTS.md` describes.
 
-Screens and layouts take their names from the path of their file:
+- `src/app/` holds routes only: route components, layouts and other Expo Router special files, as described in https://docs.expo.dev/router/basics/notation/. Expo Router treats every file in this directory as a route, so put everything else in the folders below.
+- A route file only reads its params and renders a screen or the components of a Feature. It may compose components of several Features, such as the Routine list and starting a Workout on the home route, because composing in the route keeps the Features isolated.
+- When a component of a Feature needs the user interface of another Feature, let it take that interface through a render prop, such as `renderExercisePicker` or `renderRoutineActions`, or through `children`, and let the route file, which may compose several Features, pass it in, because a Feature imports no other Feature.
+- When one Feature owns every screen of a route group and the group's navigator needs code of that Feature, such as screen titles from its messages, put the navigator in a component in the `components/` folder of that Feature, named after the group followed by `Stack`, such as `AuthenticationStack`, and let the layout only render it, because a route file imports only screens and components. When the screens of a group belong to several Features, let each screen set its own title from the messages of its Feature, with `<Stack.Screen options={{ title }} />` inside the screen component, as Expo Router documents, so the layout imports no Feature code.
+- When a route composes several Features, render them inside a screen in `src/shared/screens/` that sets the title from `src/shared/messages/` and takes the Features through `children`, as `HomeScreen` does on the home route, because the title belongs to none of the Features, the layout can't import messages, and `children` lets the screen stay free of Feature code.
+- The root layout, `src/app/_layout.tsx`, is the Composition root of the mobile app, and the one route file that wires the app, because Expo documents the root layout as the place for "initialization code" and "adding context providers":
+  - It creates the Runtime from `applicationLayer`, the QueryClient and the persister once, each with a `useState` initializer, so nothing runs at import time.
+  - It provides the Runtime through React context, read with `useRuntime()`, so every hook, screen and mutation default can receive a Runtime built from other Layers, such as in a test.
+  - It registers the mutation defaults of each Feature.
+  - It keeps the authentication guard, the `Stack.Protected` navigator, as Expo's authentication guide does.
+  - Code that must run at startup, such as configuring Google sign-in, setting the notification handler or keeping the splash screen visible, runs in a Layer or in an effect of the root layout, never at import time.
+- `src/layer.ts` defines `applicationLayer`, the application Layer of the mobile app. It installs `ConfigProvider.fromUnknown`, with one static `process.env.EXPO_PUBLIC_*` reference per variable, as the root `AGENTS.md` describes. It also exports the type of the mobile Runtime as `ApplicationRuntime`, which every factory of Query options and mutation options takes, so the Runtime has one type next to the Layer it's built from.
+- `src/features/<feature>/` holds the code of one Feature, and `src/shared/` holds what several Features use. Both use the same role folders, so `shared/` reads exactly like a Feature, and each folder exists only when it holds a file:
+  - `core/`: the Core of the Feature, such as reducers with their action unions, builders, selectors, the classification of errors to retry, validators and formatters.
+  - `constants/`: the value sets and limits that only the mobile app uses, one file per concept, as the `constants/` folders of `@ankaa/core` hold them. A constant that the server uses too goes in `@ankaa/core` instead.
+  - `services/`: the Services that wrap a device or platform API, such as the API client, the better-auth client, Apple sign-in, Google sign-in, storage on the device, notifications, crypto and accessibility announcements.
+  - `interactors/`: the Interactors, one business operation each, and the other Effect programs that several files run, such as announcing a message, one `Effect.fn` per file, so every Shell program that a component runs has one home. Put a program that several Features run in `src/shared/interactors/`. Export the type of the server data that an Interactor reads from its file, such as `Routine` in `list-routines.ts` and `Exercise` in `list-exercises.ts`, so the type follows the call that returns it and every file that needs it imports it from one place.
+  - `errors/`: the error classes of the Feature.
+  - `queries/`: the Query options of the Feature, one factory function per file that takes the Runtime and returns `queryOptions(...)`, which hooks and screens import.
+  - `mutations/`: the mutation options of the Feature, one factory function per file that takes the Runtime and returns `mutationOptions(...)` with a required `mutationKey`. The root layout registers the result of each factory as a mutation default, with `queryClient.setMutationDefaults(options.mutationKey, options)`, because TanStack Query's documentation says that persisted offline mutations "cannot be resumed when the page is reloaded unless you provide a default mutation function".
+  - `hooks/`: the custom hooks, including the hook that reads a context of the Feature, such as `useWorkoutDocuments()`.
+  - `providers/`: the components that make React state available to the whole Feature through a context, and each React context in its own file, such as `workout-documents-context.ts` next to `workout-documents-provider.tsx`, so the provider, the context and the hook that reads it each have one file and one exported unit.
+  - `screens/`: the screen components.
+  - `components/`: the building blocks of the user interface. `shared/components/` holds the styled versions of React Native primitives, which screens use instead of the primitives themselves, and the components built from them that more than one Feature uses. Keep a component in one file together with the parts that exist only to be used inside it.
+  - `messages/`: the text that users see or hear, grouped by concept, as [Messages](#messages) describes.
 
-- Name a screen after its file in `PascalCase`, followed by `Screen`, such as `EditProfileScreen` for `edit-profile.tsx`. Leave out the `+` of a special file. When the file is `index.tsx`, use the name of its directory instead, without the parentheses of a group. `src/app/index.tsx` is `RootScreen`.
+Route components, screens and layouts take their names this way:
+
+- Name a route component after its file in `PascalCase`, followed by `Route`, such as `EditProfileRoute` for `edit-profile.tsx`. Leave out the `+` of a special file. When the file is `index.tsx`, use the name of its directory instead, without the parentheses of a group. `src/app/index.tsx` is `RootRoute`. "Route" is Expo Router's own word, and it keeps route components apart from screen components, while a bare name such as `Workout` would collide with the glossary concept and its type.
+- Name a screen component after what it shows, followed by `Screen`, such as `WorkoutScreen`.
 - Name a layout after its directory in `PascalCase`, followed by `Layout`, without the parentheses of a group. `src/app/_layout.tsx` is `RootLayout`.
 
 ## Components
@@ -32,13 +55,18 @@ Screens and layouts take their names from the path of their file:
 Components and custom hooks all follow the same shape, so you always know where to find a value and what it is called.
 
 - Order the body this way: hooks, state, queries and mutations, derived values, effects, early returns, handlers, returned JSX. State means `useState`, `useRef` and `useReducer`, and hooks means every other hook, such as `useRouter` or a custom hook. A statement may come later when it uses a value from a later step.
-- Name a mutation after what the user does, as `<verb><Object>`, and the function it calls after what that function does, so two mutations can share one function, as `sendOtpCode` and `resendOtpCode` both call `requestOtpCode`. Name a query after the data it returns. Name a handler `handle` followed by the mutation it triggers, or by its event when it triggers none. The example below shows each of them.
+- In a component or a screen, validate only by calling a Core function of its Feature, such as `validateEmail` or `validateRoutineName`, and never call Effect Schema directly, so every rule that a form checks lives in the Core, where a test checks it without rendering anything.
+- In a screen, decide on a validator's result by handling its Outcomes with `Match.valueTags`, as `WithEmailScreen` does with `validateEmail`, and take the message that users see only from `get<Concept>ValidationErrorMessage` or `get<Concept>ValidationErrorMessages`, so the text never takes part in the decision, and a new Outcome fails to compile until the screen handles it.
+- Read the Runtime with `useRuntime()`, pass it to the factory of the Query options or mutation options, and pass the result to `useQuery` or `useMutation`, spreading it to add callbacks. This follows tRPC's TanStack Query integration, `useQuery(trpc.routine.list.queryOptions())`, with the Runtime in place of the tRPC proxy, and TanStack Query's `queryOptions` factories. The Runtime is only available through React context, so options built when their module loads can't reach it.
+- Name a factory `create`, followed by its concept and `QueryOptions` or `MutationOptions`, such as `createRoutineListQueryOptions` or `createRoutineSaveMutationOptions`.
+- Write each query key or mutation key that you write by hand as an array of kebab-case strings that names its concept, such as `["routine-save"]`, so keys stay consistent and a search for the concept finds them. Keep a key that tRPC generated, such as `[["routine", "list"], { type: "query" }]`, as it is, because the persisted query cache is stored under it.
+- Name a mutation after what the user does, as `<verb><Object>`, and the Interactor it runs after what that Interactor does, so two mutations can share one Interactor, as `sendOtpCode` and `resendOtpCode` both run `requestOtpCode`. Name a query after the data it returns. Name a handler `handle` followed by the mutation it triggers, or by its event when it triggers none. The example below shows each of them.
 - Name a component after what it shows, starting with its concept, such as `StatusMessage`, and a custom hook `use` followed by what it keeps track of, such as `useCooldown`, because both read as things, not actions: a hook that loads the profile is `useUserProfile`, not `useFetchUserProfile`.
 - In a screen, when code other than the returned JSX needs a value that an early return narrows, move that code into `<Name>Content` and pass it the narrowed value, as `EditProfileScreen` would with `EditProfileContent`. Hooks can't come after an early return and handlers lose the narrowing, while typing the value as required or adding `?? ""` would hide a missing value.
-- Screens never set colors: they don't read theme colors, and they pass `style` only to change the layout, so every color comes from `src/components/`. A screen may call `useColorScheme` only to pick the variant of a third-party component, such as a sign-in button that comes in a light and a dark version.
+- Screens never set colors: they don't read theme colors, and they pass `style` only to change the layout, so every color comes from `src/shared/components/`. A screen may call `useColorScheme` only to pick the variant of a third-party component, such as a sign-in button that comes in a light and a dark version.
 - Use the `role` and `aria-*` props, because they are the web standard and each state is its own prop, so a caller's `...rest` can't overwrite them all at once as it would an `accessibilityState` object. Use an `accessibility*` prop only when it has no `aria-*` alias, such as `accessibilityHint`.
 - In a component that passes `...rest` on, put the props a caller may override before `{...rest}`, the props the component owns after it, and the caller's `style` last in the style array, so callers can change the defaults and the layout without breaking the component.
-- When the same JSX structure appears a second time, turn it into one component, in the file that uses it or in `src/components/` when another file uses it too, so a change to the layout lands in one place.
+- When the same JSX structure appears a second time, turn it into one component, in the file that uses it, in the `components/` folder of its Feature when another file of the Feature uses it too, or in `src/shared/components/` when another Feature uses it too, so a change to the layout lands in one place.
 
 🟢 Do this:
 
@@ -48,15 +76,14 @@ type ProfileFormProperties = {
 };
 
 export function ProfileForm({ onSave }: ProfileFormProperties) {
+  const runtime = useRuntime();
+
   const [email, setEmail] = useState("");
 
-  const userProfile = useQuery({
-    queryFn: getUserProfile,
-    queryKey: ["user-profile"],
-  });
+  const userProfile = useQuery(createUserProfileQueryOptions(runtime));
 
   const updateProfile = useMutation({
-    mutationFn: saveProfile,
+    ...createProfileSaveMutationOptions(runtime),
     onSuccess: onSave,
   });
 
@@ -74,14 +101,14 @@ export function ProfileForm({ onSave }: ProfileFormProperties) {
   return (
     <>
       <TextField
-        label={messages.profileForm.emailLabel}
+        label={profileFormMessages.emailLabel}
         onChangeText={handleChangeEmail}
         value={email}
       />
       <Button
         disabled={!isEmailChanged}
         onPress={handleUpdateProfile}
-        title={messages.profileForm.updateProfileButton}
+        title={profileFormMessages.updateProfileButton}
       />
     </>
   );
@@ -96,15 +123,14 @@ type Props = {
 };
 
 export function ProfileForm({ save }: Props) {
+  const runtime = useRuntime();
+
   const [email, setEmail] = useState("");
 
-  const query = useQuery({
-    queryFn: getUserProfile,
-    queryKey: ["user-profile"],
-  });
+  const query = useQuery(createUserProfileQueryOptions(runtime));
 
   const mutation = useMutation({
-    mutationFn: saveProfile,
+    ...createProfileSaveMutationOptions(runtime),
     onSuccess: save,
   });
 
@@ -122,14 +148,14 @@ export function ProfileForm({ save }: Props) {
   return (
     <>
       <TextField
-        label={messages.profileForm.emailLabel}
+        label={profileFormMessages.emailLabel}
         onChangeText={onEmailChange}
         value={email}
       />
       <Button
         disabled={!changed}
         onPress={submit}
-        title={messages.profileForm.updateProfileButton}
+        title={profileFormMessages.updateProfileButton}
       />
     </>
   );
@@ -138,11 +164,12 @@ export function ProfileForm({ save }: Props) {
 
 ## Messages
 
-All the text that users see or hear lives in `src/utilities/messages.ts`, so it can be reviewed in one place, translated later, and shared by every file that shows the same message. When you add or change a message, follow these rules:
+All the text that users see or hear lives in the `messages/` folders, never in other files, so it can be reviewed, translated later, and shared by every file that shows the same message. When you add or change a message, follow these rules:
 
-- Group messages by the screen or component that shows them, in `camelCase` and without `Screen`, such as `withEmail` for `WithEmailScreen`. Put an error in the shared `error` group only when more than one file shows it, such as `error.emailInvalid`.
-- End each key with the role of its message, such as `app.signOutButton` or `withEmail.emailLabel`, so the path reads as one name and a key used in the wrong role stands out. Name a key in `error` after its subject and then its state, such as `error.otpCodeExpired`.
-- Reuse a key only for the same message in the same role, such as an error in the error group. Otherwise, give each use its own key even when the text matches, because the two can change separately later. This is why `@ankaa/no-duplicate-string` is off in `messages.ts`.
+- Group messages by concept, one file per concept, in the `messages/` folder of the Feature that shows them, or in `src/shared/messages/` when more than one Feature shows them. A concept is the screen or component that shows the messages, or something that more than one file shows, such as errors or rest notifications. Put an error in a group of errors only when more than one file shows it.
+- Export one object from each messages file, named after its concept followed by `Messages`, such as `profileFormMessages` in `profile-form-messages.ts`, and read a message as `profileFormMessages.emailLabel`.
+- End each key with the role of its message, such as `signOutButton` or `emailLabel`, so a key used in the wrong role stands out. Name a key for an error after its subject and then its state, such as `otpCodeExpired`.
+- Reuse a key only for the same message in the same role, such as an error in a group of errors. Otherwise, give each use its own key even when the text matches, because the two can change separately later. This is why `@ankaa/no-duplicate-string` is off for messages.
 - Address users as "you", and never write "we", as Apple recommends at https://developer.apple.com/design/human-interface-guidelines/writing: "The server can't be reached", not "We couldn't reach our server".
-- Use the words that users know, even when the code uses a different name: users see "verification code" where the code says `otpCode`. Once a word is in `messages.ts`, keep using it, such as "resend" for sending a verification code again.
+- Use the words that users know, even when the code uses a different name: users see "verification code" where the code says `otpCode`. Once a word is in a message, keep using it, such as "resend" for sending a verification code again.
 - Write an accessibility hint only when the label doesn't already make the result clear, because VoiceOver reads the hint after the label, so repeating the label only slows users down. Write it as a third-person verb with a final period, such as "Sends a new verification code to your email address."

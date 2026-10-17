@@ -1,9 +1,11 @@
 import type { FastifyPluginCallback } from "fastify";
 
-import { auth } from "@ankaa/authentication";
+import { Authentication } from "@ankaa/authentication";
 import { fromNodeHeaders } from "better-auth/node";
 
-export default ((server, options, done) => {
+import type { ApplicationPluginOptions } from "../../../application.ts";
+
+export default ((server, { runtime }, done) => {
   server.route({
     handler: async (request, reply) => {
       const url = new URL(request.url, `http://${request.headers.host}`);
@@ -13,7 +15,11 @@ export default ((server, options, done) => {
         ...(request.body ? { body: JSON.stringify(request.body) } : {}),
       });
 
-      const response = await auth.handler(webRequest);
+      const response = await runtime.runPromise(
+        Authentication.use((authentication) =>
+          authentication.handleRequest(webRequest),
+        ),
+      );
 
       reply.status(response.status);
 
@@ -28,4 +34,4 @@ export default ((server, options, done) => {
   });
 
   done();
-}) satisfies FastifyPluginCallback;
+}) satisfies FastifyPluginCallback<ApplicationPluginOptions>;

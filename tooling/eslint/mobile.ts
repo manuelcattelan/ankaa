@@ -1,8 +1,15 @@
 import eslintConfigExpoFlat from "eslint-config-expo/flat";
+import { createNodeResolver } from "eslint-plugin-import-x";
 import { defineConfig } from "eslint/config";
+import path from "node:path";
 
 import {
   baseConfiguration,
+  CORE_FILES,
+  CORE_RESTRICTED_IMPORT_PATTERNS,
+  createFeatureIsolationZone,
+  FEATURES_PATH,
+  getFeatureNames,
   JAVASCRIPT_FILES,
   RESTRICTED_SYNTAX,
   rulesConfiguration,
@@ -26,6 +33,15 @@ const MOBILE_RESTRICTED_SYNTAX = [
   },
 ];
 
+const RESOLVED_FILE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".json"];
+
+const ROUTE_FILES = ["./src/app/!(_layout.tsx)", "./src/app/*/**"];
+
+const ROUTE_IMPORTABLE_SHARED_PATHS = [
+  "./shared/components",
+  "./shared/screens",
+];
+
 const DYNAMIC_ROUTE_FILE_NAME_PATTERN = /^\[[a-z][A-Za-z]*\]\.tsx$/;
 
 const WRAPPED_PRIMITIVES = ["Pressable", "ScrollView", "Text", "TextInput"];
@@ -35,10 +51,39 @@ const RELATIVE_IMPORT_PATTERN = {
   message: "Import through @/ instead of a relative path.",
 };
 
+const ROUTE_PACKAGE_IMPORT_PATTERN = {
+  message:
+    "Import only screens and components in a route file, and expo-router for its params and navigators. The root layout wires the rest of the app.",
+  regex: "^(?!@/|expo-router$|react$)",
+};
+
 const WRAPPED_PRIMITIVES_IMPORT = {
   importNames: WRAPPED_PRIMITIVES,
-  message: "Use the component with the same name from @/components.",
+  message: "Use the component with the same name from @/shared/components.",
   name: "react-native",
+};
+
+const featureNames = getFeatureNames();
+
+const featureIsolationZones = featureNames.map((featureName) =>
+  createFeatureIsolationZone({
+    featureName,
+    target: `${FEATURES_PATH}/${featureName}`,
+  }),
+);
+
+const routeZone = {
+  except: [
+    ...featureNames.flatMap((featureName) => [
+      `./features/${featureName}/components`,
+      `./features/${featureName}/screens`,
+    ]),
+    ...ROUTE_IMPORTABLE_SHARED_PATHS,
+  ],
+  from: "./src",
+  message:
+    "Import only screens and components in a route file. The root layout wires the rest of the app.",
+  target: ROUTE_FILES,
 };
 
 export const mobileConfiguration = defineConfig([
@@ -56,7 +101,12 @@ export const mobileConfiguration = defineConfig([
       ],
       "@stylistic/jsx-newline": ["error", { prevent: true }],
       "@stylistic/jsx-self-closing-comp": "error",
+      "@typescript-eslint/no-redeclare": "off",
       "import-x/extensions": "off",
+      "import-x/no-restricted-paths": [
+        "error",
+        { zones: [...featureIsolationZones, routeZone] },
+      ],
       "no-restricted-imports": [
         "error",
         {
@@ -78,6 +128,14 @@ export const mobileConfiguration = defineConfig([
       ],
       "react/jsx-props-no-spreading": "error",
     },
+    settings: {
+      "import-x/resolver-next": [
+        createNodeResolver({
+          extensions: RESOLVED_FILE_EXTENSIONS,
+          tsconfig: { configFile: path.resolve("tsconfig.json") },
+        }),
+      ],
+    },
   },
   {
     files: ["src/app/**"],
@@ -90,7 +148,20 @@ export const mobileConfiguration = defineConfig([
     },
   },
   {
-    files: ["src/components/**"],
+    files: ["src/app/**"],
+    ignores: ["src/app/_layout.tsx"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [WRAPPED_PRIMITIVES_IMPORT],
+          patterns: [RELATIVE_IMPORT_PATTERN, ROUTE_PACKAGE_IMPORT_PATTERN],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/shared/components/**"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -100,7 +171,21 @@ export const mobileConfiguration = defineConfig([
     },
   },
   {
-    files: ["src/utilities/messages.ts"],
+    files: [[...CORE_FILES, ...JAVASCRIPT_FILES]],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            RELATIVE_IMPORT_PATTERN,
+            ...CORE_RESTRICTED_IMPORT_PATTERNS,
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/**/messages/**"],
     rules: { "@ankaa/no-duplicate-string": "off" },
   },
 ]);

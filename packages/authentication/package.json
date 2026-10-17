@@ -1,26 +1,27 @@
 {
   "dependencies": {
+    "@ankaa/core": "workspace:*",
     "@ankaa/database": "workspace:*",
     "@ankaa/email": "workspace:*",
-    "@ankaa/environment": "workspace:*",
     "@better-auth/drizzle-adapter": "catalog:",
     "@better-auth/expo": "catalog:",
     "better-auth": "catalog:",
-    "zod": "catalog:"
+    "effect": "catalog:"
   },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
     "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
-    "@types/node": "^26.4.1",
+    "@types/node": "catalog:",
     "auth": "catalog:",
-    "eslint": "^10.10.0",
-    "jiti": "^2.7.0",
+    "eslint": "catalog:",
+    "jiti": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "exports": {
-    ".": "./src/authentication.ts"
+    ".": "./src/index.ts",
+    "./current-session": "./src/current-session.ts"
   },
   "name": "@ankaa/authentication",
   "private": true,
@@ -28,7 +29,7 @@
     "check-types": "tsc --noEmit",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
-    "generate": "auth generate --config src/authentication.ts --output ../database/src/schema/authentication.ts",
+    "generate": "auth generate --config better-auth.config.ts --output ../database/src/schema/authentication.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },

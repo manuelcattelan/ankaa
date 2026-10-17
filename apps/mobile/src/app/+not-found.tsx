@@ -1,20 +1,5 @@
-import { Link, Stack } from "expo-router";
-import { View } from "react-native";
+import { NotFoundScreen } from "@/shared/screens/not-found-screen";
 
-import { Button } from "@/components/button";
-import { Text } from "@/components/text";
-import { messages } from "@/utilities/messages";
-
-export default function NotFoundScreen() {
-  return (
-    <View>
-      <Stack.Screen
-        options={{ headerShown: true, title: messages.notFound.title }}
-      />
-      <Text>{messages.notFound.body}</Text>
-      <Link asChild href="/">
-        <Button title={messages.notFound.goHomeButton} />
-      </Link>
-    </View>
-  );
+export default function NotFoundRoute() {
+  return <NotFoundScreen />;
 }

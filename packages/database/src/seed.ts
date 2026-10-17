@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
+import * as Effect from "effect/Effect";
 
-import { database } from "./index.ts";
+import { Database } from "./index.ts";
 import {
   exercise,
   exerciseEquipment,
@@ -39,54 +40,59 @@ const EXERCISE_SEEDS: ExerciseSeed[] = [
 
 const nowSql = sql`now()`;
 
-try {
-  await database.transaction(async (transaction) => {
-    for (const exerciseSeed of EXERCISE_SEEDS) {
-      await transaction
-        .insert(exercise)
-        .values({
-          amountUnit: exerciseSeed.amountUnit,
-          id: exerciseSeed.id,
-          name: exerciseSeed.name,
-          weightType: exerciseSeed.weightType,
-        })
-        .onConflictDoUpdate({
-          set: {
-            amountUnit: exerciseSeed.amountUnit,
-            name: exerciseSeed.name,
-            updatedAt: nowSql,
-            weightType: exerciseSeed.weightType,
-          },
-          target: exercise.id,
-        });
+await Effect.runPromise(
+  Effect.gen(function* () {
+    const database = yield* Database;
 
-      for (const exerciseMuscleGroupSeed of exerciseSeed.exerciseMuscleGroups) {
+    yield* database.transaction(async (transaction) => {
+      for (const exerciseSeed of EXERCISE_SEEDS) {
         await transaction
-          .insert(exerciseMuscleGroup)
-          .values({ ...exerciseMuscleGroupSeed, exerciseId: exerciseSeed.id })
+          .insert(exercise)
+          .values({
+            amountUnit: exerciseSeed.amountUnit,
+            id: exerciseSeed.id,
+            name: exerciseSeed.name,
+            weightType: exerciseSeed.weightType,
+          })
           .onConflictDoUpdate({
             set: {
-              muscleGroupRole: exerciseMuscleGroupSeed.muscleGroupRole,
+              amountUnit: exerciseSeed.amountUnit,
+              name: exerciseSeed.name,
               updatedAt: nowSql,
+              weightType: exerciseSeed.weightType,
             },
-            target: [
-              exerciseMuscleGroup.exerciseId,
-              exerciseMuscleGroup.muscleGroup,
-            ],
+            target: exercise.id,
           });
-      }
 
-      for (const exerciseEquipmentSeed of exerciseSeed.exerciseEquipment) {
-        await transaction
-          .insert(exerciseEquipment)
-          .values({ ...exerciseEquipmentSeed, exerciseId: exerciseSeed.id })
-          .onConflictDoUpdate({
-            set: { updatedAt: nowSql },
-            target: [exerciseEquipment.exerciseId, exerciseEquipment.equipment],
-          });
+        for (const exerciseMuscleGroupSeed of exerciseSeed.exerciseMuscleGroups) {
+          await transaction
+            .insert(exerciseMuscleGroup)
+            .values({ ...exerciseMuscleGroupSeed, exerciseId: exerciseSeed.id })
+            .onConflictDoUpdate({
+              set: {
+                muscleGroupRole: exerciseMuscleGroupSeed.muscleGroupRole,
+                updatedAt: nowSql,
+              },
+              target: [
+                exerciseMuscleGroup.exerciseId,
+                exerciseMuscleGroup.muscleGroup,
+              ],
+            });
+        }
+
+        for (const exerciseEquipmentSeed of exerciseSeed.exerciseEquipment) {
+          await transaction
+            .insert(exerciseEquipment)
+            .values({ ...exerciseEquipmentSeed, exerciseId: exerciseSeed.id })
+            .onConflictDoUpdate({
+              set: { updatedAt: nowSql },
+              target: [
+                exerciseEquipment.exerciseId,
+                exerciseEquipment.equipment,
+              ],
+            });
+        }
       }
-    }
-  });
-} finally {
-  await database.$client.end();
-}
+    });
+  }).pipe(Effect.provide(Database.layer)),
+);

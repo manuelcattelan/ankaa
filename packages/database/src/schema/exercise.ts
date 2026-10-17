@@ -1,13 +1,13 @@
+import { EQUIPMENT } from "@ankaa/core/features/exercise/constants/equipment";
+import {
+  MUSCLE_GROUP_ROLES,
+  MUSCLE_GROUPS,
+} from "@ankaa/core/features/exercise/constants/muscle-group";
+import { AMOUNT_UNITS } from "@ankaa/core/shared/constants/amount";
+import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-type";
 import { defineRelationsPart, inArray } from "drizzle-orm";
 import { check, snakeCase, text, unique, uuid } from "drizzle-orm/pg-core";
 
-import {
-  AMOUNT_UNITS,
-  EQUIPMENT,
-  MUSCLE_GROUP_ROLES,
-  MUSCLE_GROUPS,
-  WEIGHT_TYPES,
-} from "../constants.ts";
 import { commonColumns } from "./common-columns.ts";
 
 export const exercise = snakeCase.table(

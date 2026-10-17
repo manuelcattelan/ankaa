@@ -1,23 +1,25 @@
 {
   "dependencies": {
     "@ankaa/authentication": "workspace:*",
+    "@ankaa/core": "workspace:*",
     "@ankaa/database": "workspace:*",
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",
-    "zod": "catalog:"
+    "drizzle-orm": "catalog:",
+    "effect": "catalog:"
   },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
     "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
-    "@types/node": "^26.4.1",
-    "eslint": "^10.10.0",
-    "jiti": "^2.7.0",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "jiti": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "exports": {
-    ".": "./src/index.ts"
+    "./*": "./src/*.ts"
   },
   "name": "@ankaa/api",
   "private": true,

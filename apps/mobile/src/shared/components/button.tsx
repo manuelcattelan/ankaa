@@ -1,0 +1,50 @@
+import { useTheme } from "expo-router";
+import * as ReactNative from "react-native";
+
+import { Text } from "@/shared/components/text";
+import { TOUCH_TARGET_SIZE_MINIMUM } from "@/shared/constants/touch-target";
+
+type ButtonProperties = Omit<
+  ReactNative.PressableProps,
+  "children" | "style"
+> & {
+  isBusy?: boolean;
+  style?: ReactNative.StyleProp<ReactNative.ViewStyle>;
+  title: string;
+};
+
+const DISABLED_OPACITY = 0.4;
+
+export function Button({
+  disabled,
+  isBusy = false,
+  style,
+  title,
+  ...rest
+}: ButtonProperties) {
+  const theme = useTheme();
+
+  const titleStyle = { color: theme.colors.primary };
+
+  return (
+    <ReactNative.Pressable
+      role="button"
+      {...rest}
+      aria-busy={isBusy}
+      aria-label={title}
+      disabled={disabled}
+      style={[styles.button, disabled ? styles.disabled : undefined, style]}
+    >
+      {isBusy ? (
+        <ReactNative.ActivityIndicator />
+      ) : (
+        <Text style={titleStyle}>{title}</Text>
+      )}
+    </ReactNative.Pressable>
+  );
+}
+
+const styles = ReactNative.StyleSheet.create({
+  button: { minHeight: TOUCH_TARGET_SIZE_MINIMUM },
+  disabled: { opacity: DISABLED_OPACITY },
+});
