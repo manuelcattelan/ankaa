@@ -1,11 +1,15 @@
 import { useMutation } from "@tanstack/react-query";
+import * as Match from "effect/Match";
 import { Redirect } from "expo-router";
 import { useState } from "react";
 import { Platform } from "react-native";
 
+import { OTP_CODE_LENGTH } from "@/features/authentication/constants/otp-code";
 import { getCooldownDeadline } from "@/features/authentication/core/get-cooldown-deadline";
 import { getOtpCodeErrorMessage } from "@/features/authentication/core/get-otp-code-error-message";
+import { getOtpCodeLengthValidationErrorMessage } from "@/features/authentication/core/get-otp-code-length-validation-error-message";
 import { isAuthenticationRateLimited } from "@/features/authentication/core/is-authentication-rate-limited";
+import { validateOtpCodeLength } from "@/features/authentication/core/validate-otp-code-length";
 import { useCooldown } from "@/features/authentication/hooks/use-cooldown";
 import { announceAuthenticationError } from "@/features/authentication/interactors/announce-authentication-error";
 import { validateOtpCodeScreenMessages } from "@/features/authentication/messages/validate-otp-code-screen-messages";
@@ -26,8 +30,6 @@ type ValidateOtpCodeContentProperties = {
 type ValidateOtpCodeScreenProperties = {
   email?: string;
 };
-
-const OTP_CODE_LENGTH = 6;
 
 const COOLDOWN_SECONDS = 60;
 
@@ -150,17 +152,22 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
     validateOtpCode.reset();
     resendOtpCode.reset();
 
-    if (otpCode.length !== OTP_CODE_LENGTH) {
-      const otpCodeLengthError =
-        validateOtpCodeScreenMessages.otpCodeLengthError(OTP_CODE_LENGTH);
+    const otpCodeLengthValidationOutcome = validateOtpCodeLength(otpCode);
+    const otpCodeLengthValidationErrorMessage =
+      getOtpCodeLengthValidationErrorMessage(otpCodeLengthValidationOutcome);
 
-      setOtpCodeValidationError(otpCodeLengthError);
-      runtime.runSync(announceMessage(otpCodeLengthError));
+    Match.valueTags(otpCodeLengthValidationOutcome, {
+      OtpCodeLength: () => {
+        setOtpCodeValidationError(otpCodeLengthValidationErrorMessage);
 
-      return;
-    }
-
-    validateOtpCode.mutate({ email, otpCode });
+        if (otpCodeLengthValidationErrorMessage) {
+          runtime.runSync(announceMessage(otpCodeLengthValidationErrorMessage));
+        }
+      },
+      OtpCodeLengthValid: () => {
+        validateOtpCode.mutate({ email, otpCode });
+      },
+    });
   }
 
   return (

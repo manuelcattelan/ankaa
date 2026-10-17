@@ -1,11 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
+import * as Match from "effect/Match";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 
 import { getAuthenticationErrorMessage } from "@/features/authentication/core/get-authentication-error-message";
-import { isEmailValid } from "@/features/authentication/core/is-email-valid";
+import { getEmailValidationErrorMessage } from "@/features/authentication/core/get-email-validation-error-message";
+import { validateEmail } from "@/features/authentication/core/validate-email";
 import { announceAuthenticationError } from "@/features/authentication/interactors/announce-authentication-error";
-import { authenticationErrorMessages } from "@/features/authentication/messages/authentication-error-messages";
 import { withEmailScreenMessages } from "@/features/authentication/messages/with-email-screen-messages";
 import { createOtpCodeRequestMutationOptions } from "@/features/authentication/mutations/create-otp-code-request-mutation-options";
 import { Button } from "@/shared/components/button";
@@ -42,28 +43,33 @@ export function WithEmailScreen() {
     sendOtpCode.reset();
 
     const trimmedEmail = email.trim();
-
-    if (!isEmailValid(trimmedEmail)) {
-      setEmailValidationError(authenticationErrorMessages.emailInvalid);
-
-      runtime.runSync(
-        announceMessage(authenticationErrorMessages.emailInvalid),
-      );
-
-      return;
-    }
-
-    sendOtpCode.mutate(
-      { email: trimmedEmail },
-      {
-        onSuccess: () => {
-          router.push({
-            params: { email: trimmedEmail },
-            pathname: "/sign-in/with-email/validate-otp-code",
-          });
-        },
-      },
+    const emailValidationOutcome = validateEmail(trimmedEmail);
+    const emailValidationErrorMessage = getEmailValidationErrorMessage(
+      emailValidationOutcome,
     );
+
+    Match.valueTags(emailValidationOutcome, {
+      EmailInvalid: () => {
+        setEmailValidationError(emailValidationErrorMessage);
+
+        if (emailValidationErrorMessage) {
+          runtime.runSync(announceMessage(emailValidationErrorMessage));
+        }
+      },
+      EmailValid: () => {
+        sendOtpCode.mutate(
+          { email: trimmedEmail },
+          {
+            onSuccess: () => {
+              router.push({
+                params: { email: trimmedEmail },
+                pathname: "/sign-in/with-email/validate-otp-code",
+              });
+            },
+          },
+        );
+      },
+    });
   }
 
   return (

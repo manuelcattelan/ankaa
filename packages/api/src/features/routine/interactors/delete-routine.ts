@@ -1,4 +1,5 @@
 import type { RoutineDeleteInput } from "@ankaa/core/features/routine/schemas/routine-delete-input-schema";
+import type { DrizzleDatabase } from "@ankaa/database";
 
 import { CurrentSession } from "@ankaa/authentication/current-session";
 import { Database } from "@ankaa/database";
@@ -9,6 +10,11 @@ import { RoutineNotFoundError } from "../../../shared/errors/routine-not-found-e
 import { decideRoutineDelete } from "../core/decide-routine-delete.ts";
 import { findRoutine } from "../queries/find-routine.ts";
 import { updateRoutineDeletedAt } from "../queries/update-routine-deleted-at.ts";
+
+type WriteRoutineDeleteOptions = {
+  database: DrizzleDatabase;
+  routineId: string;
+};
 
 export const deleteRoutine = Effect.fn("deleteRoutine")(function* (
   routineDeleteInput: RoutineDeleteInput,
@@ -28,7 +34,7 @@ export const deleteRoutine = Effect.fn("deleteRoutine")(function* (
 
       await Match.valueTags(routineDeleteOutcome, {
         RoutineDeleteAllowed: () =>
-          updateRoutineDeletedAt({
+          writeRoutineDelete({
             database: transaction,
             routineId: routineDeleteInput.id,
           }),
@@ -46,3 +52,10 @@ export const deleteRoutine = Effect.fn("deleteRoutine")(function* (
       ),
     );
 });
+
+async function writeRoutineDelete({
+  database,
+  routineId,
+}: WriteRoutineDeleteOptions) {
+  await updateRoutineDeletedAt({ database, routineId });
+}
