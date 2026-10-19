@@ -3,7 +3,7 @@ import { describe, expect, it } from "@effect/vitest";
 import { decideRoutineSave } from "./decide-routine-save.ts";
 
 describe("decideRoutineSave", () => {
-  it("allows a new Routine whose name the user doesn't use yet", () => {
+  it("allows a new Routine whose name the person doesn't use yet", () => {
     expect(
       decideRoutineSave({
         routineWithSameId: undefined,
@@ -13,7 +13,7 @@ describe("decideRoutineSave", () => {
     ).toEqual({ _tag: "RoutineSaveAllowed" });
   });
 
-  it("allows an update of a Routine that the user owns and hasn't deleted", () => {
+  it("allows an update of a Routine that the person owns and hasn't deleted", () => {
     expect(
       decideRoutineSave({
         routineWithSameId: { deletedAt: null, userId: "first-user" },
@@ -23,7 +23,7 @@ describe("decideRoutineSave", () => {
     ).toEqual({ _tag: "RoutineSaveAllowed" });
   });
 
-  it("returns RoutineNameConflict when another Routine of the user has the same name", () => {
+  it("returns RoutineNameConflict when another Routine of the person has the same name", () => {
     expect(
       decideRoutineSave({
         routineWithSameId: undefined,
@@ -33,7 +33,7 @@ describe("decideRoutineSave", () => {
     ).toEqual({ _tag: "RoutineNameConflict" });
   });
 
-  it("returns RoutineNotFound when the Routine belongs to another user", () => {
+  it("returns RoutineNotFound when the Routine belongs to another person", () => {
     expect(
       decideRoutineSave({
         routineWithSameId: { deletedAt: null, userId: "second-user" },
@@ -43,7 +43,7 @@ describe("decideRoutineSave", () => {
     ).toEqual({ _tag: "RoutineNotFound" });
   });
 
-  it("returns RoutineNotFound when the user has deleted the Routine", () => {
+  it("returns RoutineNotFound when the person has deleted the Routine", () => {
     expect(
       decideRoutineSave({
         routineWithSameId: {

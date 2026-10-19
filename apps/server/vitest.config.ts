@@ -1,12 +1,3 @@
-import { configuration } from "@ankaa/vitest";
-import { loadEnv } from "vite";
-import { defineConfig, mergeConfig } from "vitest/config";
+import { databaseConfiguration } from "@ankaa/vitest/database-configuration";
 
-export default defineConfig(({ mode }) =>
-  mergeConfig(configuration, {
-    test: {
-      env: loadEnv(mode, process.cwd(), ""),
-      globalSetup: ["@ankaa/vitest/postgres-global-setup"],
-    },
-  }),
-);
+export default databaseConfiguration;

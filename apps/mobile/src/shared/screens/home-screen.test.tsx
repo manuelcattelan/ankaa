@@ -1,70 +1,25 @@
-import { screen, waitFor } from "@testing-library/react-native";
+import { screen, userEvent, waitFor } from "@testing-library/react-native";
 import { TRPCError } from "@trpc/server";
-
-import type { Exercise } from "@/shared/interactors/list-exercises";
-import type { Routine } from "@/shared/interactors/list-routines";
 
 import { Accessibility } from "@/shared/services/accessibility";
 import { AuthenticationClient } from "@/shared/services/authentication-client";
 import { TrpcClient } from "@/shared/services/trpc-client";
+import { benchPressExercise } from "@/shared/testing/bench-press-exercise";
+import { emptyHomeScreenTrpcClientLayer } from "@/shared/testing/empty-home-screen-trpc-client-layer";
+import { pushDayRoutine } from "@/shared/testing/push-day-routine";
 import { renderScreen } from "@/shared/testing/render-screen";
+import { signedInAuthenticationClientLayer } from "@/shared/testing/signed-in-authentication-client-layer";
 import { signedInSession } from "@/shared/testing/signed-in-session";
-
-const BENCH_PRESS_EXERCISE: Exercise = {
-  amountUnit: "repetition",
-  exerciseEquipment: [{ equipment: "barbell" }, { equipment: "bench" }],
-  exerciseMuscleGroups: [{ muscleGroup: "chest", muscleGroupRole: "primary" }],
-  id: "01900000-0000-7000-8000-000000000001",
-  name: "Bench Press (Barbell)",
-  weightType: "total",
-};
-
-const PUSH_DAY_ROUTINE: Routine = {
-  days: ["monday"],
-  exercises: [
-    {
-      exerciseId: "01900000-0000-7000-8000-000000000001",
-      id: "01900000-0000-7000-8000-000000000002",
-      note: null,
-      position: 0,
-      section: "main",
-      sets: [
-        {
-          amount: 8,
-          dropSetSegmentCount: null,
-          dropSetWeightPercentage: null,
-          id: "01900000-0000-7000-8000-000000000003",
-          isToFailure: false,
-          position: 0,
-          restPauseRestSeconds: null,
-          restPauseSegmentCount: null,
-          restSeconds: 120,
-          setType: "working",
-          tempo: null,
-          variation: null,
-        },
-      ],
-      superset: null,
-      warmUpForRoutineExerciseId: null,
-    },
-  ],
-  id: "01900000-0000-7000-8000-000000000004",
-  name: "Push day",
-};
-
-const SIGNED_IN_AUTHENTICATION_CLIENT_LAYER = AuthenticationClient.layerTest({
-  "/get-session": () => Response.json(signedInSession),
-});
 
 describe("HomeScreen", () => {
   it("shows each Routine that the server returns", async () => {
     renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
-        authenticationClientLayer: SIGNED_IN_AUTHENTICATION_CLIENT_LAYER,
+        authenticationClientLayer: signedInAuthenticationClientLayer,
         trpcClientLayer: TrpcClient.layerTest({
-          exercise: { list: () => [BENCH_PRESS_EXERCISE] },
-          routine: { list: () => [PUSH_DAY_ROUTINE] },
+          exercise: { list: () => [benchPressExercise] },
+          routine: { list: () => [pushDayRoutine] },
         }),
       },
     });
@@ -78,9 +33,9 @@ describe("HomeScreen", () => {
     renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
-        authenticationClientLayer: SIGNED_IN_AUTHENTICATION_CLIENT_LAYER,
+        authenticationClientLayer: signedInAuthenticationClientLayer,
         trpcClientLayer: TrpcClient.layerTest({
-          exercise: { list: () => [BENCH_PRESS_EXERCISE] },
+          exercise: { list: () => [benchPressExercise] },
           routine: { list: () => [] },
         }),
       },
@@ -95,9 +50,9 @@ describe("HomeScreen", () => {
     renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
-        authenticationClientLayer: SIGNED_IN_AUTHENTICATION_CLIENT_LAYER,
+        authenticationClientLayer: signedInAuthenticationClientLayer,
         trpcClientLayer: TrpcClient.layerTest({
-          exercise: { list: () => [BENCH_PRESS_EXERCISE] },
+          exercise: { list: () => [benchPressExercise] },
           routine: {
             list: () => {
               throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -119,9 +74,9 @@ describe("HomeScreen", () => {
       initialUrl: "/",
       testRuntimeLayers: {
         accessibilityLayer: Accessibility.layerTest(announcedMessages),
-        authenticationClientLayer: SIGNED_IN_AUTHENTICATION_CLIENT_LAYER,
+        authenticationClientLayer: signedInAuthenticationClientLayer,
         trpcClientLayer: TrpcClient.layerTest({
-          exercise: { list: () => [BENCH_PRESS_EXERCISE] },
+          exercise: { list: () => [benchPressExercise] },
           routine: {
             list: () => {
               throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -134,5 +89,57 @@ describe("HomeScreen", () => {
     await waitFor(() => {
       expect(announcedMessages).toEqual(["Something went wrong: try again."]);
     });
+  });
+
+  it("opens the Workout screen with the Sets that the Routine plans when the person starts a Workout from it", async () => {
+    const user = userEvent.setup();
+
+    renderScreen({
+      initialUrl: "/",
+      testRuntimeLayers: {
+        authenticationClientLayer: signedInAuthenticationClientLayer,
+        trpcClientLayer: TrpcClient.layerTest({
+          exercise: { list: () => [benchPressExercise] },
+          routine: { list: () => [pushDayRoutine] },
+        }),
+      },
+    });
+
+    await user.press(
+      await screen.findByRole("button", {
+        disabled: false,
+        name: "Start Push day",
+      }),
+    );
+
+    expect(
+      await screen.findByText("0 working sets done, 1 left."),
+    ).toBeOnTheScreen();
+  });
+
+  it("takes the person to the sign-in screen when they sign out", async () => {
+    const user = userEvent.setup();
+    let currentSession: null | typeof signedInSession = signedInSession;
+
+    renderScreen({
+      initialUrl: "/",
+      testRuntimeLayers: {
+        authenticationClientLayer: AuthenticationClient.layerTest({
+          "/get-session": () => Response.json(currentSession),
+          "/sign-out": () => {
+            currentSession = null;
+
+            return Response.json({ success: true });
+          },
+        }),
+        trpcClientLayer: emptyHomeScreenTrpcClientLayer,
+      },
+    });
+
+    await user.press(await screen.findByRole("button", { name: "Sign out" }));
+
+    expect(
+      await screen.findByRole("link", { name: "Continue with email address" }),
+    ).toBeOnTheScreen();
   });
 });

@@ -17,14 +17,14 @@ export type AuthenticationTestResponses = Partial<
   Record<string, (request: Request) => Promise<Response> | Response>
 >;
 
-type AuthenticationClientServiceOptions = {
-  apiUrl: string;
-  betterAuthenticationClient: BetterAuthenticationClient;
+type AnswerAuthenticationTestRequestOptions = {
+  authenticationTestResponses: AuthenticationTestResponses;
+  request: Request;
 };
 
 type AuthenticationFetch = (
   input: Request | string | URL,
-  init?: RequestInit,
+  options?: RequestInit,
 ) => Promise<Response>;
 
 type AuthenticationFetchErrorContext = {
@@ -55,16 +55,16 @@ type AuthenticationResponseSuccess<TData> = {
   error: null;
 };
 
-type AuthenticationTestRequest = {
-  authenticationTestResponses: AuthenticationTestResponses;
-  request: Request;
-};
-
 type BetterAuthenticationClient = ReturnType<
   typeof createBetterAuthenticationClient
 >;
 
-type BetterAuthenticationClientOptions = {
+type CreateAuthenticationClientServiceOptions = {
+  apiUrl: string;
+  betterAuthenticationClient: BetterAuthenticationClient;
+};
+
+type CreateBetterAuthenticationClientOptions = {
   apiUrl: string;
   authenticationFetch: AuthenticationFetch;
   authenticationStorage: ExpoClientStorage;
@@ -77,7 +77,7 @@ type SendAuthenticationRequest<TData> = (
 
 const APP_SLUG = "ankaa";
 
-const AUTHENTICATION_TEST_API_URL = "https://api.ankaa.test";
+const TEST_API_URL = "https://api.ankaa.test";
 
 const HTTP_STATUS_NOT_FOUND = 404;
 
@@ -117,27 +117,34 @@ export class AuthenticationClient extends Context.Service<AuthenticationClient>(
     authenticationTestResponses: AuthenticationTestResponses,
   ) =>
     Layer.sync(this, () => {
-      const storedItems = new Map<string, string>();
+      const authenticationStorageItems = new Map<string, string>();
 
       return this.of(
         createAuthenticationClientService({
-          apiUrl: AUTHENTICATION_TEST_API_URL,
+          apiUrl: TEST_API_URL,
           betterAuthenticationClient: createBetterAuthenticationClient({
-            apiUrl: AUTHENTICATION_TEST_API_URL,
-            authenticationFetch: (input, init) =>
+            apiUrl: TEST_API_URL,
+            authenticationFetch: (input, options) =>
               answerAuthenticationTestRequest({
-                authenticationTestResponses,
-                request: new Request(input, init),
+                authenticationTestResponses: {
+                  "/get-session": () =>
+                    Response.json(convertUndefinedToNull(undefined)),
+                  ...authenticationTestResponses,
+                },
+                request: new Request(input, options),
               }),
             authenticationStorage: {
-              getItem: (key) => convertUndefinedToNull(storedItems.get(key)),
+              getItem: (key) =>
+                convertUndefinedToNull(authenticationStorageItems.get(key)),
               getItemAsync: (key) =>
-                Promise.resolve(convertUndefinedToNull(storedItems.get(key))),
+                Promise.resolve(
+                  convertUndefinedToNull(authenticationStorageItems.get(key)),
+                ),
               setItem: (key, item) => {
-                storedItems.set(key, item);
+                authenticationStorageItems.set(key, item);
               },
               setItemAsync: (key, item) => {
-                storedItems.set(key, item);
+                authenticationStorageItems.set(key, item);
 
                 return Promise.resolve();
               },
@@ -151,7 +158,7 @@ export class AuthenticationClient extends Context.Service<AuthenticationClient>(
 function answerAuthenticationTestRequest({
   authenticationTestResponses,
   request,
-}: AuthenticationTestRequest) {
+}: AnswerAuthenticationTestRequestOptions) {
   const authenticationTestResponse =
     authenticationTestResponses[
       new URL(request.url).pathname.replace("/api/auth", "")
@@ -169,7 +176,7 @@ function answerAuthenticationTestRequest({
 function createAuthenticationClientService({
   apiUrl,
   betterAuthenticationClient,
-}: AuthenticationClientServiceOptions) {
+}: CreateAuthenticationClientServiceOptions) {
   function request<TData>(sendRequest: SendAuthenticationRequest<TData>) {
     return Effect.tryPromise({
       catch: (cause) => new AuthenticationError({ cause }),
@@ -214,7 +221,7 @@ function createBetterAuthenticationClient({
   apiUrl,
   authenticationFetch,
   authenticationStorage,
-}: BetterAuthenticationClientOptions) {
+}: CreateBetterAuthenticationClientOptions) {
   return createAuthClient({
     baseURL: apiUrl,
     fetchOptions: { customFetchImpl: authenticationFetch },

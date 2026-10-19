@@ -2,25 +2,17 @@ import { screen, userEvent, waitFor } from "@testing-library/react-native";
 import { TRPCError } from "@trpc/server";
 
 import type { WorkoutDocument } from "@/features/workout/core/workout-document-schema";
-import type { Exercise } from "@/shared/interactors/list-exercises";
+import type { ScheduledNotification } from "@/features/workout/services/notifications";
 import type { TestRuntimeLayers } from "@/shared/testing/create-test-runtime";
 
 import { parseStoredWorkoutDocument } from "@/features/workout/core/parse-stored-workout-document";
+import { Notifications } from "@/features/workout/services/notifications";
 import { WorkoutDocumentStorage } from "@/features/workout/services/workout-document-storage";
-import { AuthenticationClient } from "@/shared/services/authentication-client";
 import { TrpcClient } from "@/shared/services/trpc-client";
+import { benchPressExercise } from "@/shared/testing/bench-press-exercise";
 import { choosePickerFieldOption } from "@/shared/testing/choose-picker-field-option";
 import { renderScreen } from "@/shared/testing/render-screen";
-import { signedInSession } from "@/shared/testing/signed-in-session";
-
-const BENCH_PRESS_EXERCISE: Exercise = {
-  amountUnit: "repetition",
-  exerciseEquipment: [{ equipment: "barbell" }, { equipment: "bench" }],
-  exerciseMuscleGroups: [{ muscleGroup: "chest", muscleGroupRole: "primary" }],
-  id: "01900000-0000-7000-8000-000000000001",
-  name: "Bench Press (Barbell)",
-  weightType: "total",
-};
+import { signedInAuthenticationClientLayer } from "@/shared/testing/signed-in-authentication-client-layer";
 
 const PUSH_DAY_WORKOUT_DOCUMENT: WorkoutDocument = {
   exercises: [
@@ -47,19 +39,15 @@ const PUSH_DAY_WORKOUT_DOCUMENT: WorkoutDocument = {
   version: 1,
 };
 
-const SIGNED_IN_AUTHENTICATION_CLIENT_LAYER = AuthenticationClient.layerTest({
-  "/get-session": () => Response.json(signedInSession),
-});
-
-const TRPC_CLIENT_LAYER = TrpcClient.layerTest({
-  exercise: { list: () => [BENCH_PRESS_EXERCISE] },
+const benchPressExerciseTrpcClientLayer = TrpcClient.layerTest({
+  exercise: { list: () => [benchPressExercise] },
   routine: { list: () => [] },
 });
 
 describe("WorkoutScreen", () => {
   it("shows one more working Set done when the person adds a Set", async () => {
     const user = await openWorkoutScreen({
-      trpcClientLayer: TRPC_CLIENT_LAYER,
+      trpcClientLayer: benchPressExerciseTrpcClientLayer,
       workoutDocumentStorageLayer: WorkoutDocumentStorage.layerTest(
         storeWorkoutDocument(PUSH_DAY_WORKOUT_DOCUMENT),
       ),
@@ -77,7 +65,7 @@ describe("WorkoutScreen", () => {
       PUSH_DAY_WORKOUT_DOCUMENT,
     );
     const user = await openWorkoutScreen({
-      trpcClientLayer: TRPC_CLIENT_LAYER,
+      trpcClientLayer: benchPressExerciseTrpcClientLayer,
       workoutDocumentStorageLayer: WorkoutDocumentStorage.layerTest(
         storedWorkoutDocumentJsons,
       ),
@@ -107,7 +95,7 @@ describe("WorkoutScreen", () => {
     );
     const user = await openWorkoutScreen({
       trpcClientLayer: TrpcClient.layerTest({
-        exercise: { list: () => [BENCH_PRESS_EXERCISE] },
+        exercise: { list: () => [benchPressExercise] },
         routine: { list: () => [] },
         workout: { save: () => undefined },
       }),
@@ -133,7 +121,7 @@ describe("WorkoutScreen", () => {
     );
     const user = await openWorkoutScreen({
       trpcClientLayer: TrpcClient.layerTest({
-        exercise: { list: () => [BENCH_PRESS_EXERCISE] },
+        exercise: { list: () => [benchPressExercise] },
         routine: { list: () => [] },
         workout: { save: () => undefined },
       }),
@@ -163,7 +151,7 @@ describe("WorkoutScreen", () => {
     );
     const user = await openWorkoutScreen({
       trpcClientLayer: TrpcClient.layerTest({
-        exercise: { list: () => [BENCH_PRESS_EXERCISE] },
+        exercise: { list: () => [benchPressExercise] },
         routine: { list: () => [] },
         workout: { save: () => workoutSaveResponses.shift()?.() },
       }),
@@ -186,7 +174,7 @@ describe("WorkoutScreen", () => {
   it("tells the person on the home screen that a Workout couldn't be saved when the server rejects its Save with a conflict", async () => {
     const user = await openWorkoutScreen({
       trpcClientLayer: TrpcClient.layerTest({
-        exercise: { list: () => [BENCH_PRESS_EXERCISE] },
+        exercise: { list: () => [benchPressExercise] },
         routine: { list: () => [] },
         workout: {
           save: () => {
@@ -212,7 +200,7 @@ describe("WorkoutScreen", () => {
 
   it("counts the time elapsed since the Workout started up as time passes", async () => {
     await openWorkoutScreen({
-      trpcClientLayer: TRPC_CLIENT_LAYER,
+      trpcClientLayer: benchPressExerciseTrpcClientLayer,
       workoutDocumentStorageLayer: WorkoutDocumentStorage.layerTest(
         storeWorkoutDocument(PUSH_DAY_WORKOUT_DOCUMENT),
       ),
@@ -225,7 +213,7 @@ describe("WorkoutScreen", () => {
 
   it("asks the person why they skipped an exercise once they choose a reason", async () => {
     await openWorkoutScreen({
-      trpcClientLayer: TRPC_CLIENT_LAYER,
+      trpcClientLayer: benchPressExerciseTrpcClientLayer,
       workoutDocumentStorageLayer: WorkoutDocumentStorage.layerTest(
         storeWorkoutDocument(PUSH_DAY_WORKOUT_DOCUMENT),
       ),
@@ -244,7 +232,7 @@ describe("WorkoutScreen", () => {
     );
 
     await openWorkoutScreen({
-      trpcClientLayer: TRPC_CLIENT_LAYER,
+      trpcClientLayer: benchPressExerciseTrpcClientLayer,
       workoutDocumentStorageLayer: WorkoutDocumentStorage.layerTest(
         storedWorkoutDocumentJsons,
       ),
@@ -266,7 +254,7 @@ describe("WorkoutScreen", () => {
 
   it("counts the Rest down as time passes", async () => {
     const user = await openWorkoutScreen({
-      trpcClientLayer: TRPC_CLIENT_LAYER,
+      trpcClientLayer: benchPressExerciseTrpcClientLayer,
       workoutDocumentStorageLayer: WorkoutDocumentStorage.layerTest(
         storeWorkoutDocument(PUSH_DAY_WORKOUT_DOCUMENT),
       ),
@@ -280,6 +268,53 @@ describe("WorkoutScreen", () => {
 
     expect(screen.getByText("Rest: 90 seconds left.")).toBeOnTheScreen();
   });
+
+  it("schedules a notification for the end of the Rest when the person starts it", async () => {
+    const scheduledNotifications = new Map<string, ScheduledNotification>();
+    const user = await openWorkoutScreen({
+      notificationsLayer: Notifications.layerTest(scheduledNotifications),
+      trpcClientLayer: benchPressExerciseTrpcClientLayer,
+      workoutDocumentStorageLayer: WorkoutDocumentStorage.layerTest(
+        storeWorkoutDocument(PUSH_DAY_WORKOUT_DOCUMENT),
+      ),
+    });
+
+    await user.press(screen.getByRole("button", { name: "Start rest" }));
+
+    await waitFor(() => {
+      expect(scheduledNotifications).toEqual(
+        new Map([
+          [
+            "notification-1",
+            {
+              body: "Start your next set.",
+              delaySeconds: 120,
+              title: "Your rest is over",
+            },
+          ],
+        ]),
+      );
+    });
+  });
+
+  it("cancels the notification of the Rest when the person skips the Rest", async () => {
+    const scheduledNotifications = new Map<string, ScheduledNotification>();
+    const user = await openWorkoutScreen({
+      notificationsLayer: Notifications.layerTest(scheduledNotifications),
+      trpcClientLayer: benchPressExerciseTrpcClientLayer,
+      workoutDocumentStorageLayer: WorkoutDocumentStorage.layerTest(
+        storeWorkoutDocument(PUSH_DAY_WORKOUT_DOCUMENT),
+      ),
+    });
+
+    await user.press(screen.getByRole("button", { name: "Start rest" }));
+
+    await user.press(await screen.findByRole("button", { name: "Skip rest" }));
+
+    await waitFor(() => {
+      expect(scheduledNotifications).toEqual(new Map());
+    });
+  });
 });
 
 async function openWorkoutScreen(testRuntimeLayers: TestRuntimeLayers) {
@@ -288,7 +323,7 @@ async function openWorkoutScreen(testRuntimeLayers: TestRuntimeLayers) {
   renderScreen({
     initialUrl: "/",
     testRuntimeLayers: {
-      authenticationClientLayer: SIGNED_IN_AUTHENTICATION_CLIENT_LAYER,
+      authenticationClientLayer: signedInAuthenticationClientLayer,
       ...testRuntimeLayers,
     },
   });

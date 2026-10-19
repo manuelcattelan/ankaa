@@ -6,18 +6,18 @@ import type { TestRuntimeLayers } from "@/shared/testing/create-test-runtime";
 
 import { registerMutationDefaults } from "@/defaults";
 import { WorkoutDocumentsProvider } from "@/features/workout/providers/workout-documents-provider";
-import { RootNavigator } from "@/shared/components/root-navigator";
+import { RootNavigator } from "@/root";
 import { RuntimeContext } from "@/shared/providers/runtime-context";
 import { createTestRuntime } from "@/shared/testing/create-test-runtime";
+
+type CreateTestRootLayoutOptions = {
+  queryClient: QueryClient;
+  runtime: ApplicationRuntime;
+};
 
 type RenderScreenOptions = {
   initialUrl: string;
   testRuntimeLayers?: TestRuntimeLayers;
-};
-
-type TestRootLayoutOptions = {
-  queryClient: QueryClient;
-  runtime: ApplicationRuntime;
 };
 
 export function renderScreen({
@@ -43,7 +43,10 @@ export function renderScreen({
   );
 }
 
-function createTestRootLayout({ queryClient, runtime }: TestRootLayoutOptions) {
+function createTestRootLayout({
+  queryClient,
+  runtime,
+}: CreateTestRootLayoutOptions) {
   function TestRootLayout() {
     return (
       <RuntimeContext value={runtime}>

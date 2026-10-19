@@ -10,9 +10,6 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import * as Cause from "effect/Cause";
-import * as Exit from "effect/Exit";
-import * as ManagedRuntime from "effect/ManagedRuntime";
 import expoConstants from "expo-constants";
 import * as ExpoNetwork from "expo-network";
 import * as ExpoNotifications from "expo-notifications";
@@ -32,8 +29,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { registerMutationDefaults } from "@/defaults";
 import { requestNotificationPermission } from "@/features/workout/interactors/request-notification-permission";
 import { WorkoutDocumentsProvider } from "@/features/workout/providers/workout-documents-provider";
-import { applicationLayer } from "@/layer";
-import { RootNavigator } from "@/shared/components/root-navigator";
+import { applicationLayer, createRuntime } from "@/layer";
+import { RootNavigator } from "@/root";
 import { Text } from "@/shared/components/text";
 import { useAuthenticationSession } from "@/shared/hooks/use-authentication-session";
 import { errorMessages } from "@/shared/messages/error-messages";
@@ -60,7 +57,7 @@ export function ErrorBoundary() {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
-  const [runtime] = useState(createRuntime);
+  const [runtime] = useState(createApplicationRuntime);
   const [queryClient] = useState(createQueryClient);
   const [queryPersister] = useState(createQueryPersister);
 
@@ -129,6 +126,10 @@ export default function RootLayout() {
   );
 }
 
+function createApplicationRuntime() {
+  return createRuntime(applicationLayer);
+}
+
 function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
@@ -141,18 +142,6 @@ function createQueryPersister() {
   return createAsyncStoragePersister({
     storage: ExpoSqliteKeyValueStore.Storage,
   });
-}
-
-function createRuntime() {
-  const runtime = ManagedRuntime.make(applicationLayer);
-
-  const runtimeContextExit = runtime.runSyncExit(runtime.contextEffect);
-
-  if (Exit.isFailure(runtimeContextExit)) {
-    throw new Error(Cause.pretty(runtimeContextExit.cause));
-  }
-
-  return runtime;
 }
 
 function getNavigationTheme(colorScheme: ColorSchemeName) {

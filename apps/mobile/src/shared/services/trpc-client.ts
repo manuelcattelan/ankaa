@@ -33,10 +33,9 @@ type TrpcRouterInputs = inferRouterInputs<AppRouter>;
 
 type TrpcRouterOutputs = inferRouterOutputs<AppRouter>;
 
-type TrpcTestRequest<TInput, TOutput> = {
+type TrpcTestResolverOptions<TInput> = {
   input: TInput;
   path: string;
-  trpcTestResponse: TrpcTestResponse<TInput, TOutput> | undefined;
 };
 
 type TrpcTestResponse<TInput, TOutput> = (
@@ -80,11 +79,14 @@ export class TrpcClient extends Context.Service<TrpcClient>()(
   );
 
   static readonly layerTest = (trpcTestResponses: TrpcTestResponses) =>
-    Layer.sync(this, () => {
-      const trpcTestRouter = createTrpcTestRouter(trpcTestResponses);
+    Layer.effect(
+      this,
+      Effect.gen(function* () {
+        const authenticationClient = yield* AuthenticationClient;
 
-      return this.of(
-        createTrpcClientService(
+        const trpcTestRouter = createTrpcTestRouter(trpcTestResponses);
+
+        return createTrpcClientService(
           createTRPCClient<AppRouter>({
             links: [
               httpBatchLink({
@@ -94,28 +96,13 @@ export class TrpcClient extends Context.Service<TrpcClient>()(
                     req: new Request(url, options),
                     router: trpcTestRouter,
                   }),
-                url: "https://api.ankaa.test/trpc",
+                url: `${authenticationClient.apiUrl}/trpc`,
               }),
             ],
           }),
-        ),
-      );
-    });
-}
-
-async function answerTrpcTestRequest<TInput, TOutput>({
-  input,
-  path,
-  trpcTestResponse,
-}: TrpcTestRequest<TInput, TOutput>) {
-  if (!trpcTestResponse) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: `No test response for "${path}"`,
-    });
-  }
-
-  return await trpcTestResponse(input);
+        );
+      }),
+    );
 }
 
 function createTrpcClientService(vanillaTrpcClient: TRPCClient<AppRouter>) {
@@ -129,56 +116,45 @@ function createTrpcClientService(vanillaTrpcClient: TRPCClient<AppRouter>) {
   return { request, vanillaTrpcClient };
 }
 
+function createTrpcTestResolver<TInput, TOutput>(
+  trpcTestResponse: TrpcTestResponse<TInput, TOutput> | undefined,
+) {
+  return async ({ input, path }: TrpcTestResolverOptions<TInput>) => {
+    if (!trpcTestResponse) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: `No test response for "${path}"`,
+      });
+    }
+
+    return await trpcTestResponse(input);
+  };
+}
+
 function createTrpcTestRouter(trpcTestResponses: TrpcTestResponses) {
   const trpc = initTRPC.create();
 
   return trpc.router({
     exercise: trpc.router({
-      list: trpc.procedure.query(({ path }) =>
-        answerTrpcTestRequest({
-          input: undefined,
-          path,
-          trpcTestResponse: trpcTestResponses.exercise?.list,
-        }),
+      list: trpc.procedure.query(
+        createTrpcTestResolver(trpcTestResponses.exercise?.list),
       ),
     }),
     routine: trpc.router({
       delete: trpc.procedure
         .input(Schema.toStandardSchemaV1(routineDeleteInputSchema))
-        .mutation(({ input, path }) =>
-          answerTrpcTestRequest({
-            input,
-            path,
-            trpcTestResponse: trpcTestResponses.routine?.delete,
-          }),
-        ),
-      list: trpc.procedure.query(({ path }) =>
-        answerTrpcTestRequest({
-          input: undefined,
-          path,
-          trpcTestResponse: trpcTestResponses.routine?.list,
-        }),
+        .mutation(createTrpcTestResolver(trpcTestResponses.routine?.delete)),
+      list: trpc.procedure.query(
+        createTrpcTestResolver(trpcTestResponses.routine?.list),
       ),
       save: trpc.procedure
         .input(Schema.toStandardSchemaV1(routineSaveInputSchema))
-        .mutation(({ input, path }) =>
-          answerTrpcTestRequest({
-            input,
-            path,
-            trpcTestResponse: trpcTestResponses.routine?.save,
-          }),
-        ),
+        .mutation(createTrpcTestResolver(trpcTestResponses.routine?.save)),
     }),
     workout: trpc.router({
       save: trpc.procedure
         .input(Schema.toStandardSchemaV1(workoutSaveInputSchema))
-        .mutation(({ input, path }) =>
-          answerTrpcTestRequest({
-            input,
-            path,
-            trpcTestResponse: trpcTestResponses.workout?.save,
-          }),
-        ),
+        .mutation(createTrpcTestResolver(trpcTestResponses.workout?.save)),
     }),
   });
 }

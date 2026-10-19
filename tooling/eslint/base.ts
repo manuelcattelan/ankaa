@@ -37,6 +37,8 @@ export const JAVASCRIPT_FILES = ["**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"];
 
 export const TEST_FILES = ["**/*.test.{ts,tsx}"];
 
+export const TEST_HELPER_FILES = ["**/src/shared/testing/**"];
+
 export const RESTRICTED_SYNTAX = [
   {
     message: "Remove this return type and let TypeScript infer it.",
@@ -386,6 +388,13 @@ export const rulesConfiguration = defineConfig([
     rules: {
       "@ankaa/no-duplicate-string": "off",
       "@ankaa/no-single-use-string": "off",
+      "@typescript-eslint/no-magic-numbers": "off",
+      "no-restricted-syntax": ["error", ...nullAllowingRestrictedSyntax],
+    },
+  },
+  {
+    files: TEST_HELPER_FILES,
+    rules: {
       "@typescript-eslint/no-magic-numbers": "off",
       "no-restricted-syntax": ["error", ...nullAllowingRestrictedSyntax],
     },

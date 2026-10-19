@@ -1,7 +1,8 @@
-import type * as ManagedRuntime from "effect/ManagedRuntime";
-
+import * as Cause from "effect/Cause";
 import * as ConfigProvider from "effect/ConfigProvider";
+import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
+import * as ManagedRuntime from "effect/ManagedRuntime";
 
 import { AppleSignIn } from "@/features/authentication/services/apple-sign-in";
 import { GoogleSignIn } from "@/features/authentication/services/google-sign-in";
@@ -39,3 +40,17 @@ export const applicationLayer = Layer.mergeAll(
     ),
   ),
 );
+
+export function createRuntime<TServices, TError>(
+  layer: Layer.Layer<TServices, TError>,
+) {
+  const runtime = ManagedRuntime.make(layer);
+
+  const runtimeContextExit = runtime.runSyncExit(runtime.contextEffect);
+
+  if (Exit.isFailure(runtimeContextExit)) {
+    throw new Error(Cause.pretty(runtimeContextExit.cause));
+  }
+
+  return runtime;
+}

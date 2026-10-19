@@ -1,8 +1,8 @@
-import { screen, userEvent } from "@testing-library/react-native";
+import { screen, userEvent, waitFor } from "@testing-library/react-native";
 
 import { AuthenticationClient } from "@/shared/services/authentication-client";
-import { TrpcClient } from "@/shared/services/trpc-client";
 import { createSignInTestResponses } from "@/shared/testing/create-sign-in-test-responses";
+import { emptyHomeScreenTrpcClientLayer } from "@/shared/testing/empty-home-screen-trpc-client-layer";
 import { renderScreen } from "@/shared/testing/render-screen";
 
 const VALIDATE_OTP_CODE_URL =
@@ -34,10 +34,7 @@ describe("ValidateOtpCodeScreen", () => {
         authenticationClientLayer: AuthenticationClient.layerTest(
           createSignInTestResponses("/sign-in/email-otp"),
         ),
-        trpcClientLayer: TrpcClient.layerTest({
-          exercise: { list: () => [] },
-          routine: { list: () => [] },
-        }),
+        trpcClientLayer: emptyHomeScreenTrpcClientLayer,
       },
     });
 
@@ -60,7 +57,6 @@ describe("ValidateOtpCodeScreen", () => {
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
         authenticationClientLayer: AuthenticationClient.layerTest({
-          "/get-session": () => Response.json(null),
           "/sign-in/email-otp": () =>
             Response.json(
               { code: "INVALID_OTP", message: "Invalid OTP" },
@@ -110,5 +106,71 @@ describe("ValidateOtpCodeScreen", () => {
     expect(
       screen.getByRole("button", { name: "Resend verification code" }),
     ).toBeEnabled();
+  });
+
+  it("requests a new verification code when the person resends it once the resend cooldown ends", async () => {
+    const otpCodeRequestBodies: unknown[] = [];
+    const user = userEvent.setup();
+
+    renderScreen({
+      initialUrl: VALIDATE_OTP_CODE_URL,
+      testRuntimeLayers: {
+        authenticationClientLayer: AuthenticationClient.layerTest({
+          "/email-otp/send-verification-otp": async (request) => {
+            const otpCodeRequestBody: unknown = await request.json();
+
+            otpCodeRequestBodies.push(otpCodeRequestBody);
+
+            return Response.json({ success: true });
+          },
+        }),
+      },
+    });
+
+    await screen.findByText(
+      "You can resend the verification code in 60 seconds.",
+    );
+
+    await jest.advanceTimersByTimeAsync(60_000);
+
+    await user.press(
+      screen.getByRole("button", { name: "Resend verification code" }),
+    );
+
+    await waitFor(() => {
+      expect(otpCodeRequestBodies).toEqual([
+        { email: "athlete@example.com", type: "sign-in" },
+      ]);
+    });
+  });
+
+  it("restarts the resend cooldown once the person resends the verification code", async () => {
+    const user = userEvent.setup();
+
+    renderScreen({
+      initialUrl: VALIDATE_OTP_CODE_URL,
+      testRuntimeLayers: {
+        authenticationClientLayer: AuthenticationClient.layerTest({
+          "/email-otp/send-verification-otp": () =>
+            Response.json({ success: true }),
+        }),
+      },
+    });
+
+    await screen.findByText(
+      "You can resend the verification code in 60 seconds.",
+    );
+
+    await jest.advanceTimersByTimeAsync(60_000);
+
+    await user.press(
+      screen.getByRole("button", { name: "Resend verification code" }),
+    );
+
+    expect(
+      await screen.findByText(
+        "You can resend the verification code in 60 seconds.",
+      ),
+    ).toBeOnTheScreen();
   });
 });

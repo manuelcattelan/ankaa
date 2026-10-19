@@ -1,6 +1,11 @@
-import type { TestAuthentication } from "@ankaa/authentication/testing/create-test-authentication";
+import { createTestAuthentication } from "@ankaa/authentication/testing/create-test-authentication";
 
-export async function createTestUser(testAuthentication: TestAuthentication) {
+import type { TestRuntime } from "./create-test-runtime.ts";
+
+export async function createTestUser(runtime: TestRuntime) {
+  const testAuthentication = await runtime.runPromise(
+    createTestAuthentication(),
+  );
   const testAuthenticationContext = await testAuthentication.$context;
 
   const user = await testAuthenticationContext.test.saveUser(

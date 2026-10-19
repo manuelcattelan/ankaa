@@ -1,4 +1,4 @@
-import type { Client as PostgresClient } from "pg";
+import type { Client } from "pg";
 import type { TestProject } from "vitest/node";
 
 import { migrationsFolderPath } from "@ankaa/database/migrations-folder-path";
@@ -10,14 +10,17 @@ import { createHash } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
-import { Client, escapeIdentifier } from "pg";
+import { escapeIdentifier } from "pg";
 import { lock } from "proper-lockfile";
 
+import { dropDatabase } from "./drop-database.ts";
+import { getDatabaseUrl } from "./get-database-url.ts";
+import { queryDatabase } from "./query-database.ts";
 import "./provided-context.ts";
 
 type BuildTemplateDatabaseOptions = {
-  maintenanceClient: PostgresClient;
-  maintenanceDatabaseUrl: URL;
+  maintenanceClient: Client;
+  maintenanceDatabaseUrl: string;
   templateDatabaseName: string;
 };
 
@@ -42,19 +45,16 @@ const postgresContainerLockFolderPath = path.join(homedir(), ".cache", "ankaa");
 export async function setup(project: TestProject) {
   const postgresContainer = await startPostgresContainer();
 
-  const maintenanceDatabaseUrl = new URL(postgresContainer.getConnectionUri());
-
-  maintenanceDatabaseUrl.pathname = "/postgres";
+  const maintenanceDatabaseUrl = getDatabaseUrl({
+    databaseName: "postgres",
+    postgresServerUrl: postgresContainer.getConnectionUri(),
+  });
 
   const templateDatabaseName = await createTemplateDatabase(
     maintenanceDatabaseUrl,
   );
 
-  project.provide(
-    "postgresMaintenanceDatabaseUrl",
-    maintenanceDatabaseUrl.href,
-  );
-
+  project.provide("postgresMaintenanceDatabaseUrl", maintenanceDatabaseUrl);
   project.provide("postgresTemplateDatabaseName", templateDatabaseName);
 }
 
@@ -65,31 +65,25 @@ async function buildTemplateDatabase({
 }: BuildTemplateDatabaseOptions) {
   const buildingDatabaseName = `${templateDatabaseName}_building`;
 
-  await maintenanceClient.query(
-    `DROP DATABASE IF EXISTS ${escapeIdentifier(buildingDatabaseName)} WITH (FORCE)`,
-  );
+  await dropDatabase({
+    databaseName: buildingDatabaseName,
+    postgresClient: maintenanceClient,
+  });
 
   await maintenanceClient.query(
     `CREATE DATABASE ${escapeIdentifier(buildingDatabaseName)}`,
   );
 
-  const buildingDatabaseUrl = new URL(maintenanceDatabaseUrl);
-
-  buildingDatabaseUrl.pathname = `/${buildingDatabaseName}`;
-
-  const migrationClient = new Client({
-    connectionString: buildingDatabaseUrl.href,
+  await queryDatabase({
+    databaseUrl: getDatabaseUrl({
+      databaseName: buildingDatabaseName,
+      postgresServerUrl: maintenanceDatabaseUrl,
+    }),
+    execute: (migrationClient) =>
+      migrate(drizzle({ client: migrationClient }), {
+        migrationsFolder: migrationsFolderPath,
+      }),
   });
-
-  await migrationClient.connect();
-
-  try {
-    await migrate(drizzle({ client: migrationClient }), {
-      migrationsFolder: migrationsFolderPath,
-    });
-  } finally {
-    await migrationClient.end();
-  }
 
   await maintenanceClient.query(
     `ALTER DATABASE ${escapeIdentifier(buildingDatabaseName)} RENAME TO ${escapeIdentifier(templateDatabaseName)}`,
@@ -100,35 +94,30 @@ async function buildTemplateDatabase({
   );
 }
 
-async function createTemplateDatabase(maintenanceDatabaseUrl: URL) {
+async function createTemplateDatabase(maintenanceDatabaseUrl: string) {
   const templateDatabaseName = `ankaa_template_${getMigrationsHash()}`;
 
-  const maintenanceClient = new Client({
-    connectionString: maintenanceDatabaseUrl.href,
+  await queryDatabase({
+    databaseUrl: maintenanceDatabaseUrl,
+    execute: async (maintenanceClient) => {
+      await maintenanceClient.query("SELECT pg_advisory_lock($1)", [
+        TEMPLATE_DATABASE_LOCK_KEY,
+      ]);
+
+      const templateDatabaseQueryResult = await maintenanceClient.query(
+        "SELECT 1 FROM pg_database WHERE datname = $1",
+        [templateDatabaseName],
+      );
+
+      if (templateDatabaseQueryResult.rows.length === 0) {
+        await buildTemplateDatabase({
+          maintenanceClient,
+          maintenanceDatabaseUrl,
+          templateDatabaseName,
+        });
+      }
+    },
   });
-
-  await maintenanceClient.connect();
-
-  try {
-    await maintenanceClient.query("SELECT pg_advisory_lock($1)", [
-      TEMPLATE_DATABASE_LOCK_KEY,
-    ]);
-
-    const templateDatabaseQueryResult = await maintenanceClient.query(
-      "SELECT 1 FROM pg_database WHERE datname = $1",
-      [templateDatabaseName],
-    );
-
-    if (templateDatabaseQueryResult.rows.length === 0) {
-      await buildTemplateDatabase({
-        maintenanceClient,
-        maintenanceDatabaseUrl,
-        templateDatabaseName,
-      });
-    }
-  } finally {
-    await maintenanceClient.end();
-  }
 
   return templateDatabaseName;
 }

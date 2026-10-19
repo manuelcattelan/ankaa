@@ -16,6 +16,7 @@
     "fastify-plugin": "^6.0.0"
   },
   "devDependencies": {
+    "@ankaa/email": "workspace:*",
     "@ankaa/eslint": "workspace:*",
     "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
@@ -28,7 +29,6 @@
     "prettier": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
-    "vite": "catalog:",
     "vitest": "catalog:"
   },
   "name": "@ankaa/server",

@@ -3,64 +3,21 @@ import type { RoutineSaveInput } from "@ankaa/core/features/routine/schemas/rout
 import { screen, userEvent, waitFor } from "@testing-library/react-native";
 import { TRPCError } from "@trpc/server";
 
-import type { Exercise } from "@/shared/interactors/list-exercises";
-import type { Routine } from "@/shared/interactors/list-routines";
 import type { TrpcTestResponses } from "@/shared/services/trpc-client";
 
-import { AuthenticationClient } from "@/shared/services/authentication-client";
 import { TrpcClient } from "@/shared/services/trpc-client";
+import { benchPressExercise } from "@/shared/testing/bench-press-exercise";
+import { pushDayRoutine } from "@/shared/testing/push-day-routine";
 import { renderScreen } from "@/shared/testing/render-screen";
-import { signedInSession } from "@/shared/testing/signed-in-session";
-
-const BENCH_PRESS_EXERCISE: Exercise = {
-  amountUnit: "repetition",
-  exerciseEquipment: [{ equipment: "barbell" }, { equipment: "bench" }],
-  exerciseMuscleGroups: [{ muscleGroup: "chest", muscleGroupRole: "primary" }],
-  id: "01900000-0000-7000-8000-000000000001",
-  name: "Bench Press (Barbell)",
-  weightType: "total",
-};
-
-const PUSH_DAY_ROUTINE: Routine = {
-  days: ["monday"],
-  exercises: [
-    {
-      exerciseId: "01900000-0000-7000-8000-000000000001",
-      id: "01900000-0000-7000-8000-000000000002",
-      note: null,
-      position: 0,
-      section: "main",
-      sets: [
-        {
-          amount: 8,
-          dropSetSegmentCount: null,
-          dropSetWeightPercentage: null,
-          id: "01900000-0000-7000-8000-000000000003",
-          isToFailure: false,
-          position: 0,
-          restPauseRestSeconds: null,
-          restPauseSegmentCount: null,
-          restSeconds: 120,
-          setType: "working",
-          tempo: null,
-          variation: null,
-        },
-      ],
-      superset: null,
-      warmUpForRoutineExerciseId: null,
-    },
-  ],
-  id: "01900000-0000-7000-8000-000000000004",
-  name: "Push day",
-};
+import { signedInAuthenticationClientLayer } from "@/shared/testing/signed-in-authentication-client-layer";
 
 describe("EditRoutineScreen", () => {
   it("Saves the changes that the person makes to the Routine", async () => {
     const savedRoutineSaveInputs: RoutineSaveInput[] = [];
     const user = await openEditRoutineScreen({
-      exercise: { list: () => [BENCH_PRESS_EXERCISE] },
+      exercise: { list: () => [benchPressExercise] },
       routine: {
-        list: () => [PUSH_DAY_ROUTINE],
+        list: () => [pushDayRoutine],
         save: (routineSaveInput) => {
           savedRoutineSaveInputs.push(routineSaveInput);
         },
@@ -117,9 +74,9 @@ describe("EditRoutineScreen", () => {
 
   it("shows that the name is taken when the server rejects the Save because another Routine has it", async () => {
     const user = await openEditRoutineScreen({
-      exercise: { list: () => [BENCH_PRESS_EXERCISE] },
+      exercise: { list: () => [benchPressExercise] },
       routine: {
-        list: () => [PUSH_DAY_ROUTINE],
+        list: () => [pushDayRoutine],
         save: () => {
           throw new TRPCError({ code: "CONFLICT" });
         },
@@ -136,9 +93,9 @@ describe("EditRoutineScreen", () => {
   });
 
   it("deletes the Routine and takes the person back to the home screen, which no longer lists it", async () => {
-    let listedRoutines = [PUSH_DAY_ROUTINE];
+    let listedRoutines = [pushDayRoutine];
     const user = await openEditRoutineScreen({
-      exercise: { list: () => [BENCH_PRESS_EXERCISE] },
+      exercise: { list: () => [benchPressExercise] },
       routine: {
         delete: () => {
           listedRoutines = [];
@@ -161,9 +118,7 @@ async function openEditRoutineScreen(trpcTestResponses: TrpcTestResponses) {
   renderScreen({
     initialUrl: "/",
     testRuntimeLayers: {
-      authenticationClientLayer: AuthenticationClient.layerTest({
-        "/get-session": () => Response.json(signedInSession),
-      }),
+      authenticationClientLayer: signedInAuthenticationClientLayer,
       trpcClientLayer: TrpcClient.layerTest(trpcTestResponses),
     },
   });

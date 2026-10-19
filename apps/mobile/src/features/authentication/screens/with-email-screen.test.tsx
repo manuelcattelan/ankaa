@@ -34,7 +34,6 @@ describe("WithEmailScreen", () => {
         authenticationClientLayer: AuthenticationClient.layerTest({
           "/email-otp/send-verification-otp": () =>
             Response.json({ success: true }),
-          "/get-session": () => Response.json(null),
         }),
       },
     });

@@ -1,31 +1,17 @@
-import type { TestAuthentication } from "@ankaa/authentication/testing/create-test-authentication";
-
-import { Authentication } from "@ankaa/authentication";
-import { createTestAuthentication } from "@ankaa/authentication/testing/create-test-authentication";
-import { createTestDatabase } from "@ankaa/vitest/create-test-database";
+import { Database } from "@ankaa/database";
 import { createTestRuntime } from "@ankaa/vitest/create-test-runtime";
-import { createTestUser } from "@ankaa/vitest/create-test-user";
-import { dropTestDatabase } from "@ankaa/vitest/drop-test-database";
 import { afterAll, beforeAll, describe, expect, it } from "@effect/vitest";
 
+import { createCaller } from "../../shared/testing/create-caller.ts";
+import { createSignedInCaller } from "../../shared/testing/create-signed-in-caller.ts";
 import { createTestExercise } from "../../shared/testing/create-test-exercise.ts";
 import { createInnerContext } from "../../trpc/context.ts";
-import { createCallerFactory } from "../../trpc/procedures.ts";
-import { appRouter } from "../../trpc/router.ts";
-
-const createCaller = createCallerFactory(appRouter);
 
 const BENCH_PRESS_EXERCISE_ID = "019a0000-0000-7000-8000-000000000021";
 
-let testDatabaseUrl: string;
-let runtime: ReturnType<typeof createTestRuntime>;
-let testAuthentication: TestAuthentication;
+const runtime = createTestRuntime();
 
 beforeAll(async () => {
-  testDatabaseUrl = await createTestDatabase();
-  runtime = createTestRuntime(testDatabaseUrl);
-  testAuthentication = await runtime.runPromise(createTestAuthentication());
-
   await runtime.runPromise(
     createTestExercise({
       id: BENCH_PRESS_EXERCISE_ID,
@@ -36,20 +22,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await runtime.dispose();
-
-  await dropTestDatabase(testDatabaseUrl);
 });
-
-async function createSignedInCaller() {
-  const testUser = await createTestUser(testAuthentication);
-  const session = await runtime.runPromise(
-    Authentication.use((authentication) =>
-      authentication.getSession(testUser.headers),
-    ),
-  );
-
-  return createCaller(createInnerContext({ runtime, session }));
-}
 
 describe("workout.save", () => {
   it("fails with UNAUTHORIZED without a session", async () => {
@@ -67,8 +40,8 @@ describe("workout.save", () => {
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 
-  it("saves a signed-in user's Workout started from their Routine", async () => {
-    const caller = await createSignedInCaller();
+  it("saves a signed-in person's Workout started from their Routine", async () => {
+    const caller = await createSignedInCaller(runtime);
 
     await caller.routine.save({
       days: [],
@@ -123,7 +96,7 @@ describe("workout.save", () => {
   });
 
   it("fails with CONFLICT for a second Workout in progress", async () => {
-    const caller = await createSignedInCaller();
+    const caller = await createSignedInCaller(runtime);
 
     await caller.routine.save({
       days: [],
@@ -154,7 +127,7 @@ describe("workout.save", () => {
   });
 
   it("fails with NOT_FOUND for a Routine that doesn't exist", async () => {
-    const caller = await createSignedInCaller();
+    const caller = await createSignedInCaller(runtime);
 
     await expect(
       caller.workout.save({
@@ -169,8 +142,8 @@ describe("workout.save", () => {
   });
 
   it("fails with NOT_FOUND for another person's Routine", async () => {
-    const routineOwnerCaller = await createSignedInCaller();
-    const caller = await createSignedInCaller();
+    const routineOwnerCaller = await createSignedInCaller(runtime);
+    const caller = await createSignedInCaller(runtime);
 
     await routineOwnerCaller.routine.save({
       days: [],
@@ -192,8 +165,8 @@ describe("workout.save", () => {
   });
 
   it("fails with NOT_FOUND for another person's Workout", async () => {
-    const workoutOwnerCaller = await createSignedInCaller();
-    const caller = await createSignedInCaller();
+    const workoutOwnerCaller = await createSignedInCaller(runtime);
+    const caller = await createSignedInCaller(runtime);
 
     await workoutOwnerCaller.routine.save({
       days: [],
@@ -231,7 +204,7 @@ describe("workout.save", () => {
   });
 
   it("succeeds when the same version of a Workout is saved again", async () => {
-    const caller = await createSignedInCaller();
+    const caller = await createSignedInCaller(runtime);
 
     await caller.routine.save({
       days: [],
@@ -262,7 +235,7 @@ describe("workout.save", () => {
   });
 
   it("doesn't write a version of a Workout that was already saved", async () => {
-    const caller = await createSignedInCaller();
+    const caller = await createSignedInCaller(runtime);
 
     await caller.routine.save({
       days: [],
@@ -302,7 +275,7 @@ describe("workout.save", () => {
   });
 
   it("writes a newer version of a Workout", async () => {
-    const caller = await createSignedInCaller();
+    const caller = await createSignedInCaller(runtime);
 
     await caller.routine.save({
       days: [],
@@ -423,4 +396,325 @@ describe("workout.save", () => {
       }),
     ).resolves.toBeUndefined();
   });
+
+  it("writes the Workout exercises, Sets and Segments of a Workout", async () => {
+    const caller = await createSignedInCaller(runtime);
+
+    await caller.routine.save({
+      days: [],
+      exercises: [],
+      id: "019a0000-0000-7000-8000-000000000901",
+      name: "Push Day",
+    });
+
+    await caller.workout.save({
+      endedAt: null,
+      exercises: [
+        {
+          amountUnit: "repetition",
+          exerciseId: BENCH_PRESS_EXERCISE_ID,
+          id: "019a0000-0000-7000-8000-000000000903",
+          note: "Pause at the chest",
+          position: 0,
+          section: "main",
+          sets: [
+            {
+              id: "019a0000-0000-7000-8000-000000000904",
+              isToFailure: true,
+              position: 0,
+              segments: [
+                {
+                  amount: 8,
+                  id: "019a0000-0000-7000-8000-000000000905",
+                  position: 0,
+                  weightUnit: "kilogram",
+                  weightValue: 80,
+                },
+                {
+                  amount: 4,
+                  id: "019a0000-0000-7000-8000-000000000906",
+                  position: 1,
+                  weightUnit: "kilogram",
+                  weightValue: 62.5,
+                },
+              ],
+              setType: "working",
+              tempo: "3-0-1-2",
+              variation: "drop_set",
+            },
+          ],
+          skipReason: null,
+          skipReasonNote: null,
+          superset: null,
+          warmUpForWorkoutExerciseId: null,
+          weightType: "total",
+        },
+      ],
+      id: "019a0000-0000-7000-8000-000000000902",
+      routineId: "019a0000-0000-7000-8000-000000000901",
+      startedAt: "2026-10-19T08:30:00Z",
+      version: 1,
+    });
+
+    await expect(
+      findWorkoutExercises("019a0000-0000-7000-8000-000000000902"),
+    ).resolves.toStrictEqual([
+      {
+        amountUnit: "repetition",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        id: "019a0000-0000-7000-8000-000000000903",
+        note: "Pause at the chest",
+        position: 0,
+        section: "main",
+        skipReason: null,
+        skipReasonNote: null,
+        superset: null,
+        warmUpForWorkoutExerciseId: null,
+        weightType: "total",
+        workoutExerciseSets: [
+          {
+            id: "019a0000-0000-7000-8000-000000000904",
+            isToFailure: true,
+            position: 0,
+            setType: "working",
+            tempo: "3-0-1-2",
+            variation: "drop_set",
+            workoutExerciseSetSegments: [
+              {
+                amount: 8,
+                id: "019a0000-0000-7000-8000-000000000905",
+                position: 0,
+                weightUnit: "kilogram",
+                weightValue: 80,
+              },
+              {
+                amount: 4,
+                id: "019a0000-0000-7000-8000-000000000906",
+                position: 1,
+                weightUnit: "kilogram",
+                weightValue: 62.5,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("replaces the Workout exercises, Sets and Segments of a Workout with those of its newer version", async () => {
+    const caller = await createSignedInCaller(runtime);
+
+    await caller.routine.save({
+      days: [],
+      exercises: [],
+      id: "019a0000-0000-7000-8000-000000001001",
+      name: "Push Day",
+    });
+
+    await caller.workout.save({
+      endedAt: null,
+      exercises: [
+        {
+          amountUnit: "repetition",
+          exerciseId: BENCH_PRESS_EXERCISE_ID,
+          id: "019a0000-0000-7000-8000-000000001003",
+          note: null,
+          position: 0,
+          section: "main",
+          sets: [
+            {
+              id: "019a0000-0000-7000-8000-000000001004",
+              isToFailure: false,
+              position: 0,
+              segments: [
+                {
+                  amount: 8,
+                  id: "019a0000-0000-7000-8000-000000001005",
+                  position: 0,
+                  weightUnit: "kilogram",
+                  weightValue: 80,
+                },
+              ],
+              setType: "working",
+              tempo: null,
+              variation: null,
+            },
+          ],
+          skipReason: null,
+          skipReasonNote: null,
+          superset: null,
+          warmUpForWorkoutExerciseId: null,
+          weightType: "total",
+        },
+      ],
+      id: "019a0000-0000-7000-8000-000000001002",
+      routineId: "019a0000-0000-7000-8000-000000001001",
+      startedAt: "2026-10-19T08:30:00Z",
+      version: 1,
+    });
+
+    await caller.workout.save({
+      endedAt: null,
+      exercises: [
+        {
+          amountUnit: "repetition",
+          exerciseId: BENCH_PRESS_EXERCISE_ID,
+          id: "019a0000-0000-7000-8000-000000001003",
+          note: null,
+          position: 0,
+          section: "main",
+          sets: [
+            {
+              id: "019a0000-0000-7000-8000-000000001004",
+              isToFailure: false,
+              position: 0,
+              segments: [
+                {
+                  amount: 10,
+                  id: "019a0000-0000-7000-8000-000000001005",
+                  position: 0,
+                  weightUnit: "kilogram",
+                  weightValue: 80,
+                },
+              ],
+              setType: "working",
+              tempo: null,
+              variation: null,
+            },
+            {
+              id: "019a0000-0000-7000-8000-000000001006",
+              isToFailure: false,
+              position: 1,
+              segments: [
+                {
+                  amount: 8,
+                  id: "019a0000-0000-7000-8000-000000001007",
+                  position: 0,
+                  weightUnit: "kilogram",
+                  weightValue: 85,
+                },
+              ],
+              setType: "working",
+              tempo: null,
+              variation: null,
+            },
+          ],
+          skipReason: null,
+          skipReasonNote: null,
+          superset: null,
+          warmUpForWorkoutExerciseId: null,
+          weightType: "total",
+        },
+      ],
+      id: "019a0000-0000-7000-8000-000000001002",
+      routineId: "019a0000-0000-7000-8000-000000001001",
+      startedAt: "2026-10-19T08:30:00Z",
+      version: 2,
+    });
+
+    await expect(
+      findWorkoutExercises("019a0000-0000-7000-8000-000000001002"),
+    ).resolves.toStrictEqual([
+      {
+        amountUnit: "repetition",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        id: "019a0000-0000-7000-8000-000000001003",
+        note: null,
+        position: 0,
+        section: "main",
+        skipReason: null,
+        skipReasonNote: null,
+        superset: null,
+        warmUpForWorkoutExerciseId: null,
+        weightType: "total",
+        workoutExerciseSets: [
+          {
+            id: "019a0000-0000-7000-8000-000000001004",
+            isToFailure: false,
+            position: 0,
+            setType: "working",
+            tempo: null,
+            variation: null,
+            workoutExerciseSetSegments: [
+              {
+                amount: 10,
+                id: "019a0000-0000-7000-8000-000000001005",
+                position: 0,
+                weightUnit: "kilogram",
+                weightValue: 80,
+              },
+            ],
+          },
+          {
+            id: "019a0000-0000-7000-8000-000000001006",
+            isToFailure: false,
+            position: 1,
+            setType: "working",
+            tempo: null,
+            variation: null,
+            workoutExerciseSetSegments: [
+              {
+                amount: 8,
+                id: "019a0000-0000-7000-8000-000000001007",
+                position: 0,
+                weightUnit: "kilogram",
+                weightValue: 85,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+  });
 });
+
+function findWorkoutExercises(workoutId: string) {
+  return runtime.runPromise(
+    Database.use((database) =>
+      database.query((drizzleDatabase) =>
+        drizzleDatabase.query.workoutExercise.findMany({
+          columns: {
+            amountUnit: true,
+            exerciseId: true,
+            id: true,
+            note: true,
+            position: true,
+            section: true,
+            skipReason: true,
+            skipReasonNote: true,
+            superset: true,
+            warmUpForWorkoutExerciseId: true,
+            weightType: true,
+          },
+          orderBy: { position: "asc" },
+          where: { workoutId },
+          with: {
+            workoutExerciseSets: {
+              columns: {
+                id: true,
+                isToFailure: true,
+                position: true,
+                setType: true,
+                tempo: true,
+                variation: true,
+              },
+              orderBy: { position: "asc" },
+              with: {
+                workoutExerciseSetSegments: {
+                  columns: {
+                    amount: true,
+                    id: true,
+                    position: true,
+                    weightUnit: true,
+                    weightValue: true,
+                  },
+                  orderBy: { position: "asc" },
+                },
+              },
+            },
+          },
+        }),
+      ),
+    ),
+  );
+}

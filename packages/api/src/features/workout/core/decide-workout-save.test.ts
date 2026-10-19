@@ -28,7 +28,7 @@ describe("decideWorkoutSave", () => {
     ).toEqual({ _tag: "WorkoutSaveAllowed" });
   });
 
-  it("allows the Save of a newer version of the user's Workout", () => {
+  it("allows the Save of a newer version of the person's Workout", () => {
     expect(
       decideWorkoutSave({
         userId: "user-1",
@@ -103,7 +103,7 @@ describe("decideWorkoutSave", () => {
     ).toEqual({ _tag: "WorkoutSaveAllowed" });
   });
 
-  it("rejects the Save of a Workout whose Routine the user doesn't have as RoutineNotFound", () => {
+  it("rejects the Save of a Workout whose Routine the person doesn't have as RoutineNotFound", () => {
     expect(
       decideWorkoutSave({
         userId: "user-1",

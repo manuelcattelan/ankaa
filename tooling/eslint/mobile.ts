@@ -16,6 +16,7 @@ import {
   RESTRICTED_SYNTAX,
   rulesConfiguration,
   TEST_FILES,
+  TEST_HELPER_FILES,
 } from "./base.ts";
 
 const MOBILE_RESTRICTED_SYNTAX = [
@@ -190,6 +191,16 @@ export const mobileConfiguration = defineConfig([
   {
     files: ["src/**/messages/**"],
     rules: { "@ankaa/no-duplicate-string": "off" },
+  },
+  {
+    files: TEST_HELPER_FILES,
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        ...nullAllowingRestrictedSyntax,
+        ...MOBILE_RESTRICTED_SYNTAX,
+      ],
+    },
   },
   {
     extends: [eslintPluginJest.configs["flat/recommended"]],

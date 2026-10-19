@@ -1,6 +1,12 @@
+import type { AuthenticationClient } from "@/shared/services/authentication-client";
+
 import { getSessionErrorMessage } from "@/features/authentication/core/get-session-error-message";
 
-const AUTHENTICATION_SESSION = {
+type AuthenticationSession = ReturnType<
+  AuthenticationClient["Service"]["betterAuthenticationClient"]["useSession"]
+>;
+
+const AUTHENTICATION_SESSION: AuthenticationSession = {
   data: null,
   error: null,
   isPending: false,

@@ -7,8 +7,8 @@ import { AppleSignIn } from "@/features/authentication/services/apple-sign-in";
 import { GoogleSignIn } from "@/features/authentication/services/google-sign-in";
 import { Accessibility } from "@/shared/services/accessibility";
 import { AuthenticationClient } from "@/shared/services/authentication-client";
-import { TrpcClient } from "@/shared/services/trpc-client";
 import { createSignInTestResponses } from "@/shared/testing/create-sign-in-test-responses";
+import { emptyHomeScreenTrpcClientLayer } from "@/shared/testing/empty-home-screen-trpc-client-layer";
 import { renderScreen } from "@/shared/testing/render-screen";
 
 const APPLE_AUTHENTICATION_CREDENTIAL: ExpoAppleAuthentication.AppleAuthenticationCredential =
@@ -41,11 +41,6 @@ const GOOGLE_SIGN_IN_RESPONSE: SignInResponse = {
   type: "success",
 };
 
-const EMPTY_HOME_TRPC_CLIENT_LAYER = TrpcClient.layerTest({
-  exercise: { list: () => [] },
-  routine: { list: () => [] },
-});
-
 describe("SignInScreen", () => {
   it("shows Apple sign-in when the device offers it", async () => {
     renderScreen({
@@ -77,7 +72,7 @@ describe("SignInScreen", () => {
         authenticationClientLayer: AuthenticationClient.layerTest(
           createSignInTestResponses("/sign-in/social"),
         ),
-        trpcClientLayer: EMPTY_HOME_TRPC_CLIENT_LAYER,
+        trpcClientLayer: emptyHomeScreenTrpcClientLayer,
       },
     });
 
@@ -116,7 +111,7 @@ describe("SignInScreen", () => {
           createSignInTestResponses("/sign-in/social"),
         ),
         googleSignInLayer: GoogleSignIn.layerTest(GOOGLE_SIGN_IN_RESPONSE),
-        trpcClientLayer: EMPTY_HOME_TRPC_CLIENT_LAYER,
+        trpcClientLayer: emptyHomeScreenTrpcClientLayer,
       },
     });
 
@@ -134,7 +129,6 @@ describe("SignInScreen", () => {
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         authenticationClientLayer: AuthenticationClient.layerTest({
-          "/get-session": () => Response.json(null),
           "/sign-in/social": () =>
             Response.json(
               {

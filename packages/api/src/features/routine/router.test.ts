@@ -1,20 +1,12 @@
-import type { TestAuthentication } from "@ankaa/authentication/testing/create-test-authentication";
 import type { RoutineSaveInput } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
 
-import { Authentication } from "@ankaa/authentication";
-import { createTestAuthentication } from "@ankaa/authentication/testing/create-test-authentication";
-import { createTestDatabase } from "@ankaa/vitest/create-test-database";
 import { createTestRuntime } from "@ankaa/vitest/create-test-runtime";
-import { createTestUser } from "@ankaa/vitest/create-test-user";
-import { dropTestDatabase } from "@ankaa/vitest/drop-test-database";
 import { afterAll, beforeAll, describe, expect, it } from "@effect/vitest";
 
+import { createCaller } from "../../shared/testing/create-caller.ts";
+import { createSignedInCaller } from "../../shared/testing/create-signed-in-caller.ts";
 import { createTestExercise } from "../../shared/testing/create-test-exercise.ts";
 import { createInnerContext } from "../../trpc/context.ts";
-import { createCallerFactory } from "../../trpc/procedures.ts";
-import { appRouter } from "../../trpc/router.ts";
-
-const createCaller = createCallerFactory(appRouter);
 
 const BENCH_PRESS_EXERCISE_ID = "019a0000-0000-7000-8000-000000000001";
 
@@ -36,15 +28,9 @@ const ROUTINE_EXERCISE_SET: RoutineSaveInput["exercises"][number]["sets"][number
     variation: null,
   };
 
-let testDatabaseUrl: string;
-let runtime: ReturnType<typeof createTestRuntime>;
-let testAuthentication: TestAuthentication;
+const runtime = createTestRuntime();
 
 beforeAll(async () => {
-  testDatabaseUrl = await createTestDatabase();
-  runtime = createTestRuntime(testDatabaseUrl);
-  testAuthentication = await runtime.runPromise(createTestAuthentication());
-
   await runtime.runPromise(
     createTestExercise({
       id: BENCH_PRESS_EXERCISE_ID,
@@ -63,20 +49,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await runtime.dispose();
-
-  await dropTestDatabase(testDatabaseUrl);
 });
-
-async function createSignedInCaller() {
-  const testUser = await createTestUser(testAuthentication);
-  const session = await runtime.runPromise(
-    Authentication.use((authentication) =>
-      authentication.getSession(testUser.headers),
-    ),
-  );
-
-  return createCaller(createInnerContext({ runtime, session }));
-}
 
 describe("routine.list", () => {
   it("fails with UNAUTHORIZED without a session", async () => {
@@ -87,9 +60,9 @@ describe("routine.list", () => {
     });
   });
 
-  it("returns only the Routines of the signed-in user, ordered by name", async () => {
-    const caller = await createSignedInCaller();
-    const otherCaller = await createSignedInCaller();
+  it("returns only the Routines of the signed-in person, ordered by name", async () => {
+    const caller = await createSignedInCaller(runtime);
+    const otherCaller = await createSignedInCaller(runtime);
 
     await caller.routine.save({
       days: [],
@@ -143,8 +116,8 @@ describe("routine.save", () => {
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 
-  it("saves a new Routine, which then appears in the routine.list of the user", async () => {
-    const caller = await createSignedInCaller();
+  it("saves a new Routine, which then appears in the routine.list of the person", async () => {
+    const caller = await createSignedInCaller(runtime);
 
     await caller.routine.save({
       days: ["thursday", "monday"],
@@ -275,8 +248,8 @@ describe("routine.save", () => {
     ]);
   });
 
-  it("updates a Routine of the user, replacing its name, days and Routine exercises in routine.list", async () => {
-    const caller = await createSignedInCaller();
+  it("updates a Routine of the person, replacing its name, days and Routine exercises in routine.list", async () => {
+    const caller = await createSignedInCaller(runtime);
 
     await caller.routine.save({
       days: ["monday"],
@@ -360,8 +333,8 @@ describe("routine.save", () => {
     ]);
   });
 
-  it("updates a Routine of the user that keeps its name, without a conflict with itself", async () => {
-    const caller = await createSignedInCaller();
+  it("updates a Routine of the person that keeps its name, without a conflict with itself", async () => {
+    const caller = await createSignedInCaller(runtime);
 
     await caller.routine.save({
       days: ["monday"],
@@ -387,8 +360,8 @@ describe("routine.save", () => {
     ]);
   });
 
-  it("fails with CONFLICT when another Routine of the user has the same name", async () => {
-    const caller = await createSignedInCaller();
+  it("fails with CONFLICT when another Routine of the person has the same name", async () => {
+    const caller = await createSignedInCaller(runtime);
 
     await caller.routine.save({
       days: [],
@@ -408,8 +381,8 @@ describe("routine.save", () => {
   });
 
   it("fails with NOT_FOUND when the Routine belongs to another person", async () => {
-    const caller = await createSignedInCaller();
-    const otherCaller = await createSignedInCaller();
+    const caller = await createSignedInCaller(runtime);
+    const otherCaller = await createSignedInCaller(runtime);
 
     await otherCaller.routine.save({
       days: [],
@@ -428,8 +401,8 @@ describe("routine.save", () => {
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
-  it("fails with NOT_FOUND when the user has deleted the Routine", async () => {
-    const caller = await createSignedInCaller();
+  it("fails with NOT_FOUND when the person has deleted the Routine", async () => {
+    const caller = await createSignedInCaller(runtime);
 
     await caller.routine.save({
       days: [],
@@ -449,6 +422,35 @@ describe("routine.save", () => {
       }),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
+
+  it("fails with INTERNAL_SERVER_ERROR when the database rejects the write of a Routine exercise whose Exercise doesn't exist", async () => {
+    const caller = await createSignedInCaller(runtime);
+
+    await expect(
+      caller.routine.save({
+        days: [],
+        exercises: [
+          {
+            exerciseId: "019a0000-0000-7000-8000-000000000009",
+            id: "019a0000-0000-7000-8000-000000000205",
+            note: null,
+            position: 0,
+            section: "main",
+            sets: [
+              {
+                ...ROUTINE_EXERCISE_SET,
+                id: "019a0000-0000-7000-8000-000000000306",
+              },
+            ],
+            superset: null,
+            warmUpForRoutineExerciseId: null,
+          },
+        ],
+        id: "019a0000-0000-7000-8000-000000000029",
+        name: "Push",
+      }),
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+  });
 });
 
 describe("routine.delete", () => {
@@ -460,8 +462,8 @@ describe("routine.delete", () => {
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 
-  it("deletes a Routine of the user, which then no longer appears in routine.list", async () => {
-    const caller = await createSignedInCaller();
+  it("deletes a Routine of the person, which then no longer appears in routine.list", async () => {
+    const caller = await createSignedInCaller(runtime);
 
     await caller.routine.save({
       days: [],
@@ -476,7 +478,7 @@ describe("routine.delete", () => {
   });
 
   it("fails with NOT_FOUND for an unknown Routine", async () => {
-    const caller = await createSignedInCaller();
+    const caller = await createSignedInCaller(runtime);
 
     await expect(
       caller.routine.delete({ id: "019a0000-0000-7000-8000-000000000033" }),
@@ -484,8 +486,8 @@ describe("routine.delete", () => {
   });
 
   it("fails with NOT_FOUND when the Routine belongs to another person", async () => {
-    const caller = await createSignedInCaller();
-    const otherCaller = await createSignedInCaller();
+    const caller = await createSignedInCaller(runtime);
+    const otherCaller = await createSignedInCaller(runtime);
 
     await otherCaller.routine.save({
       days: [],

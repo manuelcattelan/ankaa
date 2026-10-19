@@ -1,40 +1,21 @@
-import type { TestAuthentication } from "@ankaa/authentication/testing/create-test-authentication";
-
-import { Authentication } from "@ankaa/authentication";
-import { createTestAuthentication } from "@ankaa/authentication/testing/create-test-authentication";
 import { Database } from "@ankaa/database";
 import {
   exercise,
   exerciseEquipment,
   exerciseMuscleGroup,
 } from "@ankaa/database/schema/exercise";
-import { createTestDatabase } from "@ankaa/vitest/create-test-database";
 import { createTestRuntime } from "@ankaa/vitest/create-test-runtime";
-import { createTestUser } from "@ankaa/vitest/create-test-user";
-import { dropTestDatabase } from "@ankaa/vitest/drop-test-database";
-import { afterAll, beforeAll, describe, expect, it } from "@effect/vitest";
+import { afterAll, describe, expect, it } from "@effect/vitest";
 
+import { createCaller } from "../../shared/testing/create-caller.ts";
+import { createSignedInCaller } from "../../shared/testing/create-signed-in-caller.ts";
 import { createInnerContext } from "../../trpc/context.ts";
-import { createCallerFactory } from "../../trpc/procedures.ts";
-import { appRouter } from "../../trpc/router.ts";
-
-const createCaller = createCallerFactory(appRouter);
 
 describe("exercise.list", () => {
-  let testDatabaseUrl: string;
-  let runtime: ReturnType<typeof createTestRuntime>;
-  let testAuthentication: TestAuthentication;
-
-  beforeAll(async () => {
-    testDatabaseUrl = await createTestDatabase();
-    runtime = createTestRuntime(testDatabaseUrl);
-    testAuthentication = await runtime.runPromise(createTestAuthentication());
-  });
+  const runtime = createTestRuntime();
 
   afterAll(async () => {
     await runtime.dispose();
-
-    await dropTestDatabase(testDatabaseUrl);
   });
 
   it("fails with UNAUTHORIZED without a session", async () => {
@@ -45,7 +26,7 @@ describe("exercise.list", () => {
     });
   });
 
-  it("returns every Exercise with its Equipment and Muscle groups, ordered by name, to a signed-in user", async () => {
+  it("returns every Exercise with its Equipment and Muscle groups, ordered by name, to a signed-in person", async () => {
     await runtime.runPromise(
       Database.use((database) =>
         database.transaction(async (transaction) => {
@@ -105,13 +86,7 @@ describe("exercise.list", () => {
       ),
     );
 
-    const testUser = await createTestUser(testAuthentication);
-    const session = await runtime.runPromise(
-      Authentication.use((authentication) =>
-        authentication.getSession(testUser.headers),
-      ),
-    );
-    const caller = createCaller(createInnerContext({ runtime, session }));
+    const caller = await createSignedInCaller(runtime);
 
     const exercises = await caller.exercise.list();
 

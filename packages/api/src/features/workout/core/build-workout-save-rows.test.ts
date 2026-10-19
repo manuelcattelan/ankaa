@@ -103,7 +103,7 @@ const WORKOUT_SAVE_INPUT: WorkoutSaveInput = {
 };
 
 describe("buildWorkoutSaveRows", () => {
-  it("builds the Workout row of a Workout in progress for the user, with its start as a date and no end", () => {
+  it("builds the Workout row of a Workout in progress for the person, with its start as a date and no end", () => {
     expect(
       buildWorkoutSaveRows({
         userId: "user-1",

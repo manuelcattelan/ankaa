@@ -2,13 +2,13 @@ import { Database } from "@ankaa/database";
 import { exercise } from "@ankaa/database/schema/exercise";
 import * as Effect from "effect/Effect";
 
-type ExerciseRow = typeof exercise.$inferInsert;
-
-type TestExerciseOptions = Partial<ExerciseRow> &
+type CreateTestExerciseOptions = Partial<ExerciseRow> &
   Pick<ExerciseRow, "id" | "name">;
 
+type ExerciseRow = typeof exercise.$inferInsert;
+
 export const createTestExercise = Effect.fn("createTestExercise")(function* (
-  testExerciseOptions: TestExerciseOptions,
+  createTestExerciseOptions: CreateTestExerciseOptions,
 ) {
   const database = yield* Database;
 
@@ -16,7 +16,7 @@ export const createTestExercise = Effect.fn("createTestExercise")(function* (
     drizzleDatabase.insert(exercise).values({
       amountUnit: "repetition",
       weightType: "total",
-      ...testExerciseOptions,
+      ...createTestExerciseOptions,
     }),
   );
 });

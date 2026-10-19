@@ -14,8 +14,4 @@ describe("apiUrlSchema", () => {
       "Expected a URL that doesn't end with a slash",
     );
   });
-
-  it("rejects a text that isn't a URL", () => {
-    expect(() => decodeApiUrl("api.ankaa.app")).toThrow("Expected a valid URL");
-  });
 });

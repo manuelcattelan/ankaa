@@ -1,9 +1,8 @@
 import { screen, userEvent } from "@testing-library/react-native";
 
-import { AuthenticationClient } from "@/shared/services/authentication-client";
-import { TrpcClient } from "@/shared/services/trpc-client";
+import { emptyHomeScreenTrpcClientLayer } from "@/shared/testing/empty-home-screen-trpc-client-layer";
 import { renderScreen } from "@/shared/testing/render-screen";
-import { signedInSession } from "@/shared/testing/signed-in-session";
+import { signedInAuthenticationClientLayer } from "@/shared/testing/signed-in-authentication-client-layer";
 
 describe("NotFoundScreen", () => {
   it("tells the person that the screen they opened doesn't exist", async () => {
@@ -20,13 +19,8 @@ describe("NotFoundScreen", () => {
     renderScreen({
       initialUrl: "/screen-that-does-not-exist",
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest({
-          "/get-session": () => Response.json(signedInSession),
-        }),
-        trpcClientLayer: TrpcClient.layerTest({
-          exercise: { list: () => [] },
-          routine: { list: () => [] },
-        }),
+        authenticationClientLayer: signedInAuthenticationClientLayer,
+        trpcClientLayer: emptyHomeScreenTrpcClientLayer,
       },
     });
 

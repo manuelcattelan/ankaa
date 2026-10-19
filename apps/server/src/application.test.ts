@@ -1,15 +1,11 @@
-import type { TestAuthentication } from "@ankaa/authentication/testing/create-test-authentication";
+import type { SendEmailOptions } from "@ankaa/email";
 import type { FastifyInstance } from "fastify";
 
-import { createTestAuthentication } from "@ankaa/authentication/testing/create-test-authentication";
-import { createTestDatabase } from "@ankaa/vitest/create-test-database";
 import { createTestRuntime } from "@ankaa/vitest/create-test-runtime";
 import { createTestUser } from "@ankaa/vitest/create-test-user";
-import { dropTestDatabase } from "@ankaa/vitest/drop-test-database";
 import {
   afterAll,
   afterEach,
-  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -23,6 +19,8 @@ type SendRequestsUpToRateLimitOptions = {
   remoteAddress: string;
   server: FastifyInstance;
 };
+
+const OTP_CODE_PATTERN = /^\d{6}$/;
 
 const RATE_LIMIT_MAXIMUM_REQUEST_COUNT = 1_000;
 
@@ -38,16 +36,9 @@ function sendRequestsUpToRateLimit({
 }
 
 describe("applicationPlugin", () => {
-  let testDatabaseUrl: string;
-  let runtime: ReturnType<typeof createTestRuntime>;
-  let testAuthentication: TestAuthentication;
+  const sentEmails: SendEmailOptions[] = [];
+  const runtime = createTestRuntime(sentEmails);
   let server: FastifyInstance;
-
-  beforeAll(async () => {
-    testDatabaseUrl = await createTestDatabase();
-    runtime = createTestRuntime(testDatabaseUrl);
-    testAuthentication = await runtime.runPromise(createTestAuthentication());
-  });
 
   beforeEach(async () => {
     server = fastify();
@@ -61,12 +52,10 @@ describe("applicationPlugin", () => {
 
   afterAll(async () => {
     await runtime.dispose();
-
-    await dropTestDatabase(testDatabaseUrl);
   });
 
-  it("answers /api/auth/get-session with the session of the signed-in user whose session cookie the request carries", async () => {
-    const testUser = await createTestUser(testAuthentication);
+  it("answers /api/auth/get-session with the session of the signed-in person whose session cookie the request carries", async () => {
+    const testUser = await createTestUser(runtime);
 
     const response = await server.inject({
       headers: Object.fromEntries(testUser.headers),
@@ -79,6 +68,85 @@ describe("applicationPlugin", () => {
     expect(response.json()).toMatchObject({
       session: { userId: testUser.user.id },
       user: { email: testUser.user.email, id: testUser.user.id },
+    });
+  });
+
+  it("sends the verification code by email when /api/auth/email-otp/send-verification-otp is requested", async () => {
+    await server.inject({
+      method: "POST",
+      payload: { email: "athlete@example.com", type: "sign-in" },
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+
+    expect(sentEmails).toMatchObject([
+      { subject: "Your sign-in verification code", to: "athlete@example.com" },
+    ]);
+
+    expect(sentEmails[0]?.text).toMatch(OTP_CODE_PATTERN);
+  });
+
+  it("answers a tRPC procedure called by a signed-in person whose session cookie the request carries with its data", async () => {
+    const testUser = await createTestUser(runtime);
+
+    const response = await server.inject({
+      headers: Object.fromEntries(testUser.headers),
+      method: "GET",
+      url: "/trpc/routine.list",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toStrictEqual({ ["result"]: { data: [] } });
+  });
+
+  it("answers a tRPC procedure called without a session with 401 and the UNAUTHORIZED code", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/trpc/routine.list",
+    });
+
+    expect(response.statusCode).toBe(401);
+
+    expect(response.json()).toMatchObject({
+      error: {
+        data: { code: "UNAUTHORIZED", httpStatus: 401, path: "routine.list" },
+        message: "UNAUTHORIZED",
+      },
+    });
+  });
+
+  it("answers a tRPC procedure that fails with an internal error with 500 and its message hidden", async () => {
+    const testUser = await createTestUser(runtime);
+
+    const response = await server.inject({
+      headers: Object.fromEntries(testUser.headers),
+      method: "POST",
+      payload: {
+        days: [],
+        exercises: [
+          {
+            exerciseId: "019a0000-0000-7000-8000-000000000001",
+            id: "019a0000-0000-7000-8000-000000000002",
+            note: null,
+            position: 0,
+            section: "main",
+            sets: [],
+            superset: null,
+            warmUpForRoutineExerciseId: null,
+          },
+        ],
+        id: "019a0000-0000-7000-8000-000000000003",
+        name: "Push",
+      },
+      url: "/trpc/routine.save",
+    });
+
+    expect(response.statusCode).toBe(500);
+
+    expect(response.json()).toMatchObject({
+      error: {
+        data: { code: "INTERNAL_SERVER_ERROR", httpStatus: 500 },
+        message: "Internal Server Error",
+      },
     });
   });
 
@@ -120,6 +188,27 @@ describe("applicationPlugin", () => {
       error: "Internal Server Error",
       message: "Internal Server Error",
       statusCode: 500,
+    });
+  });
+
+  it("answers an error of a status below 500 with the error itself", async () => {
+    server.get("/rejecting-route", () => {
+      throw Object.assign(new Error("The request has no name"), {
+        statusCode: 400,
+      });
+    });
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/rejecting-route",
+    });
+
+    expect(response.statusCode).toBe(400);
+
+    expect(response.json()).toStrictEqual({
+      error: "Bad Request",
+      message: "The request has no name",
+      statusCode: 400,
     });
   });
 
