@@ -20,6 +20,7 @@ const LOGGER_CONFIGURATIONS = {
     },
   },
   production: true,
+  test: false,
 } satisfies Record<NodeEnvironment, FastifyServerOptions["logger"]>;
 
 const ROUTER_MAXIMUM_PARAMETER_LENGTH = 5_000;

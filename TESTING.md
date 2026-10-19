@@ -22,6 +22,7 @@ These rules describe how the tests in this repository are written and run, so ag
 - Separate the given, the when and the then of each test with a blank line, and write no comments. When the then wraps the when, such as a call that must throw, write them as one statement.
 - Write no test of its own for code without logic of its own, such as a constant, a Schema without a Filter, a route file, a Layer that only wraps a library, or Query options and mutation options, because such a test checks nothing that can break on its own. The tests of the code that uses it cover it.
 - When you find a defect while you write tests, report it in your final message, and write no test that pins it, with `it.fails` or otherwise, because each fix needs its own review.
+- Put a helper that several test files of one workspace use in the `src/shared/testing/` folder of that workspace, and a helper that several workspaces use in `@ankaa/vitest`, as the rules of `AGENTS.md` place shared code.
 
 ## Core
 
@@ -31,6 +32,41 @@ These rules describe how the tests in this repository are written and run, so ag
 - For each rule that a Filter checks, write one test that accepts a valid value, at the limit of the rule when it has one, and one test that rejects an invalid value. Check the rejection with `toThrow` and the message of the broken rule, followed by its path when the value is nested, such as `'Must be unique\n  at ["exercises"]'`.
 - In the test of a Schema, cover the rules that the Schema itself adds: its private Filters, its checks on arrays and structs, and each place where it applies a shared Filter, with one rejected value there. The other rules of a shared Filter are covered once, in the test of that Filter.
 - Build the inputs of a Schema test from module-level constants that each hold one valid value, such as `ROUTINE_SAVE_INPUT` and `ROUTINE_EXERCISE_SET`, and spread them to change only the field that the test is about, so each test shows the one thing that differs.
+
+## Procedures
+
+- Test the behavior of a procedure through the tRPC caller, as a client would call it, and write no test of its own for an Interactor or a Database query, so refactoring them breaks no test. One call through the caller covers `requireSession`, the runner, the Interactor, the Core and the Database queries.
+- Put the tests of the procedures of a Feature in `router.test.ts`, next to the `router.ts` of the Feature in `packages/api`, with one `describe` for each procedure, named after its path, such as `describe("exercise.list")`.
+- Build the caller with `createCallerFactory(appRouter)`, from `src/trpc/procedures.ts` and `src/trpc/router.ts`, and give it an inner context built with `createInnerContext({ runtime, session })`.
+- Run the procedures against a real PostgreSQL database that belongs to the test file. The `globalSetup` of `@ankaa/vitest` starts a `postgres:18` container with Testcontainers, or reuses the one already running, and migrates a template database once for each set of migrations. In `beforeAll`, clone the template with `createTestDatabase()` and build the Runtime of the file with `createTestRuntime(testDatabaseUrl)`. In `afterAll`, dispose the Runtime before you drop the database with `dropTestDatabase(testDatabaseUrl)`, because disposing it closes the pool that is connected to the database:
+
+  ```ts
+  describe("exercise.list", () => {
+    let testDatabaseUrl: string;
+    let runtime: ReturnType<typeof createTestRuntime>;
+
+    beforeAll(async () => {
+      testDatabaseUrl = await createTestDatabase();
+      runtime = createTestRuntime(testDatabaseUrl);
+    });
+
+    afterAll(async () => {
+      await runtime.dispose();
+
+      await dropTestDatabase(testDatabaseUrl);
+    });
+  });
+  ```
+
+- Keep the tests of one file independent of each other, because they share its database: sign in a new user in each test that needs one, and don't let two tests of one file create data that every user sees, such as Exercises, when either test reads all of it.
+- Sign a user in through the better-auth instance built only for tests: run `createTestAuthentication()` on the Runtime of the file once, in `beforeAll`, create a user and its auth headers with `createTestUser(testAuthentication)`, and pass the session that `Authentication.getSession(headers)` returns to the inner context. Pass `session: null` to call a procedure without a session.
+- Create the data that no procedure creates, such as Exercises, with the Drizzle tables of `@ankaa/database`, through the `Database` Service of the Runtime. Check what a mutation procedure wrote through a Query procedure where one exists, otherwise through the Outcomes of later calls, and read the database through `Database` only when neither shows the behavior.
+- Write a procedure test as a plain `async` test that awaits the caller, not with `it.effect`, because the procedure runs on the Runtime of the file, with the real clock, so the test clock of `it.effect` doesn't reach it.
+- Check that a procedure fails with `rejects.toMatchObject({ code: "UNAUTHORIZED" })` and the tRPC code it fails with. Never check the message of an `INTERNAL_SERVER_ERROR`: the caller skips the error formatter, so it carries the message of the original error, which HTTP clients never see.
+- The test Runtime replaces Resend with `Email.layerTest(sentEmails)`, a fake that pushes each email it sends into the array that the test passes in, so a test checks the emails sent by reading that array.
+- Read the settings of the tests from the `.env.test` of the workspace, which `vitest.config.ts` loads with `loadEnv`. Commit it with fake values only, and give it every setting that the Layers of the tests read, so a local `.env` never reaches a test. The URL of the database of each file isn't in it: `createTestRuntime` adds it with a `ConfigProvider` that takes precedence over the environment.
+- Docker must run for the tests of a workspace whose Vitest config has the Postgres `globalSetup`, such as `@ankaa/api`, even to run one Core test there, because the `globalSetup` runs whenever a test is queued. With Colima, set `DOCKER_HOST` to its socket, because Testcontainers doesn't read Docker contexts.
+- The container keeps running after the tests, so the next run starts faster, and runs started at the same time from several worktrees share it safely. Its old template databases, and the databases of runs that crashed, stay in it. To reset it, remove it with `docker rm -f $(docker ps -aq --filter label=org.testcontainers=true --filter ancestor=postgres:18)` while no test runs, and the next run creates a new one.
 
 ## Mobile
 

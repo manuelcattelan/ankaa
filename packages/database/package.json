@@ -3,14 +3,14 @@
     "@ankaa/core": "workspace:*",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
-    "pg": "^8.23.0"
+    "pg": "catalog:"
   },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
     "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
     "@types/node": "catalog:",
-    "@types/pg": "^8.23.1",
+    "@types/pg": "catalog:",
     "drizzle-kit": "1.0.0-rc.4",
     "eslint": "catalog:",
     "jiti": "catalog:",
@@ -21,6 +21,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./error": "./src/error.ts",
+    "./migrations-folder-path": "./src/migrations-folder-path.ts",
     "./schema/authentication": "./src/schema/authentication.ts",
     "./schema/exercise": "./src/schema/exercise.ts",
     "./schema/routine": "./src/schema/routine.ts",

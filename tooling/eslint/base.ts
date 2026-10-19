@@ -391,6 +391,10 @@ export const rulesConfiguration = defineConfig([
     },
   },
   {
+    files: ["tooling/vitest/provided-context.ts"],
+    rules: { "@typescript-eslint/consistent-type-definitions": "off" },
+  },
+  {
     files: ["tooling/eslint/base.ts"],
     rules: {
       "no-restricted-syntax": ["error", ...nullAllowingRestrictedSyntax],

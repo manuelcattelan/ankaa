@@ -8,7 +8,7 @@ import { Resend } from "resend";
 
 import { EmailError } from "./error.ts";
 
-type SendEmailOptions = {
+export type SendEmailOptions = {
   subject: string;
   text: string;
   to: string;
@@ -50,4 +50,14 @@ export class Email extends Context.Service<Email>()("@ankaa/email/Email", {
   }),
 }) {
   static readonly layer = Layer.effect(this, this.make);
+
+  static readonly layerTest = (sentEmails: SendEmailOptions[]) =>
+    Layer.succeed(this, {
+      send: (sendEmailOptions: SendEmailOptions) =>
+        Effect.sync(() => {
+          sentEmails.push(sendEmailOptions);
+
+          return undefined;
+        }),
+    });
 }

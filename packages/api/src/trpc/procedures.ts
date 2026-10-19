@@ -26,6 +26,7 @@ const requireSession = trpc.middleware(({ ctx, next }) => {
   return next({ ctx: { session: ctx.session } });
 });
 
+export const createCallerFactory = trpc.createCallerFactory;
 export const router = trpc.router;
 export const publicProcedure = trpc.procedure;
 export const protectedProcedure = trpc.procedure.use(requireSession);

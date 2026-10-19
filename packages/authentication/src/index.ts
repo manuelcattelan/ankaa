@@ -1,19 +1,14 @@
-import { NODE_ENVIRONMENTS } from "@ankaa/core/shared/constants/node-environment";
-import { urlSchema } from "@ankaa/core/shared/schemas/url-schema";
 import { Database } from "@ankaa/database";
 import { Email } from "@ankaa/email";
 import { betterAuth } from "better-auth";
-import * as Config from "effect/Config";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
-import * as Schema from "effect/Schema";
 
+import { authenticationConfiguration } from "./authentication-configuration.ts";
 import { createAuthenticationOptions } from "./create-authentication-options.ts";
 import { AuthenticationError } from "./error.ts";
-
-const BETTER_AUTH_SECRET_MINIMUM_LENGTH = 32;
 
 export class Authentication extends Context.Service<Authentication>()(
   "@ankaa/authentication/Authentication",
@@ -22,31 +17,15 @@ export class Authentication extends Context.Service<Authentication>()(
       const database = yield* Database;
       const email = yield* Email;
 
-      const authenticationConfiguration = yield* Config.all({
-        appleAppBundleIdentifier: Config.NonEmptyString(
-          "APPLE_APP_BUNDLE_IDENTIFIER",
-        ),
-        baseUrl: Config.schema(urlSchema, "BETTER_AUTH_URL"),
-        googleIosClientId: Config.NonEmptyString("GOOGLE_IOS_CLIENT_ID"),
-        googleWebClientId: Config.NonEmptyString("GOOGLE_WEB_CLIENT_ID"),
-        nodeEnvironment: Config.Literals(NODE_ENVIRONMENTS, "NODE_ENV"),
-        secret: Config.schema(
-          Schema.Redacted(
-            Schema.String.check(
-              Schema.isMinLength(BETTER_AUTH_SECRET_MINIMUM_LENGTH),
-            ),
-          ),
-          "BETTER_AUTH_SECRET",
-        ),
-      });
+      const authenticationSettings = yield* authenticationConfiguration;
 
       const context = yield* Effect.context();
 
       const betterAuthentication = betterAuth(
         createAuthenticationOptions({
-          ...authenticationConfiguration,
+          ...authenticationSettings,
           database: database.drizzleDatabase,
-          secret: Redacted.value(authenticationConfiguration.secret),
+          secret: Redacted.value(authenticationSettings.secret),
           sendVerificationOtpCode: ({ email: emailAddress, otpCode }) =>
             Effect.runPromiseWith(context)(
               email.send({
