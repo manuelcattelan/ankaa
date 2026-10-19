@@ -26,6 +26,7 @@ export function PickerField<TOption extends PickerItemValue>({
         <Picker
           onValueChange={onChangeSelectedOption}
           selectedValue={selectedOption}
+          testID={label}
         >
           {options.map((option) => (
             <Picker.Item

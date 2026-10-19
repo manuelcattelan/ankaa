@@ -7,6 +7,7 @@ import {
   FEATURES_PATH,
   getFeatureNames,
   JAVASCRIPT_FILES,
+  vitestConfiguration,
 } from "./base.ts";
 
 const DATABASE_QUERY_MESSAGE =
@@ -45,6 +46,7 @@ const featureZones = featureNames.flatMap((featureName) => {
 
 export const packageConfiguration = defineConfig([
   baseConfiguration,
+  vitestConfiguration,
   {
     files: JAVASCRIPT_FILES,
     languageOptions: { globals: globals.node },

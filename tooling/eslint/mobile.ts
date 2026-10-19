@@ -1,5 +1,6 @@
 import eslintConfigExpoFlat from "eslint-config-expo/flat";
 import { createNodeResolver } from "eslint-plugin-import-x";
+import eslintPluginJest from "eslint-plugin-jest";
 import { defineConfig } from "eslint/config";
 import path from "node:path";
 
@@ -11,8 +12,11 @@ import {
   FEATURES_PATH,
   getFeatureNames,
   JAVASCRIPT_FILES,
+  nullAllowingRestrictedSyntax,
   RESTRICTED_SYNTAX,
   rulesConfiguration,
+  TEST_FILES,
+  TEST_HELPER_FILES,
 } from "./base.ts";
 
 const MOBILE_RESTRICTED_SYNTAX = [
@@ -187,5 +191,28 @@ export const mobileConfiguration = defineConfig([
   {
     files: ["src/**/messages/**"],
     rules: { "@ankaa/no-duplicate-string": "off" },
+  },
+  {
+    files: TEST_HELPER_FILES,
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        ...nullAllowingRestrictedSyntax,
+        ...MOBILE_RESTRICTED_SYNTAX,
+      ],
+    },
+  },
+  {
+    extends: [eslintPluginJest.configs["flat/recommended"]],
+    files: TEST_FILES,
+    rules: {
+      "jest/no-conditional-in-test": "error",
+      "jest/no-disabled-tests": "error",
+      "no-restricted-syntax": [
+        "error",
+        ...nullAllowingRestrictedSyntax,
+        ...MOBILE_RESTRICTED_SYNTAX,
+      ],
+    },
   },
 ]);

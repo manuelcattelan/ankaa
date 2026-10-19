@@ -6,6 +6,8 @@ The `AGENTS.md` files in this repository hold the rules that tooling can't check
 
 Before you create new files or edit existing ones in a workspace, read the `AGENTS.md` at the root of that workspace if it has one, because an agent doesn't always load it on its own.
 
+Before you write or change a test, read `TESTING.md` at the root of the repository, because it holds every rule about how tests are written and run here, for every workspace.
+
 ## Structure
 
 - Keep code in the file that uses it. When a second file in the same workspace needs it, move it to the role folder that matches it, as the [Layout](#layout) section describes, so a reader finds each piece of code either where it's used or where its role says.

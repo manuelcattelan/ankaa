@@ -7,6 +7,11 @@ import * as ExpoAppleAuthentication from "expo-apple-authentication";
 import { REQUEST_CANCELED_ERROR_CODE } from "@/features/authentication/constants/request-error-code";
 import { AppleSignInCanceledError } from "@/features/authentication/errors/apple-sign-in-canceled-error";
 
+type AppleSignInTestOptions = {
+  appleAuthenticationCredential?: ExpoAppleAuthentication.AppleAuthenticationCredential;
+  isAvailable: boolean;
+};
+
 export class AppleSignIn extends Context.Service<AppleSignIn>()(
   "@ankaa/mobile/features/authentication/services/AppleSignIn",
   {
@@ -32,6 +37,21 @@ export class AppleSignIn extends Context.Service<AppleSignIn>()(
   },
 ) {
   static readonly layer = Layer.effect(this, this.make);
+
+  static readonly layerTest = ({
+    appleAuthenticationCredential,
+    isAvailable,
+  }: AppleSignInTestOptions) =>
+    Layer.succeed(
+      this,
+      this.of({
+        checkAvailability: () => Effect.succeed(isAvailable),
+        signIn: () =>
+          appleAuthenticationCredential
+            ? Effect.succeed(appleAuthenticationCredential)
+            : Effect.fail(new AppleSignInCanceledError()),
+      }),
+    );
 }
 
 function failWithAppleSignInError(defect: unknown) {

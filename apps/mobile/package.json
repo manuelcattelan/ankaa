@@ -49,11 +49,53 @@
     "@ankaa/eslint": "workspace:*",
     "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
+    "@react-native/jest-preset": "0.86.3",
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "29.5.14",
     "@types/react": "~19.2.2",
     "eslint": "^9.39.5",
+    "jest": "~29.7.0",
+    "jest-expo": "~57.0.6",
     "jiti": "catalog:",
     "prettier": "catalog:",
+    "react-test-renderer": "19.2.3",
     "typescript": "catalog:"
+  },
+  "jest": {
+    "fakeTimers": {
+      "doNotFake": [
+        "setImmediate",
+        "clearImmediate"
+      ],
+      "enableGlobally": true
+    },
+    "preset": "jest-expo",
+    "setupFiles": [
+      "<rootDir>/node_modules/@react-native-google-signin/google-signin/jest/build/jest/setup.js"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/shared/testing/setup.ts"
+    ],
+    "transform": {
+      "\\.mjs$": [
+        "babel-jest",
+        {
+          "caller": {
+            "bundler": "jest",
+            "name": "metro",
+            "platform": "ios"
+          },
+          "presets": [
+            "expo/internal/babel-preset"
+          ]
+        }
+      ]
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|effect|uuid|better-auth|@better-auth|nanostores))",
+      "/node_modules/react-native-reanimated/plugin/",
+      "/node_modules/@react-native/babel-preset/"
+    ]
   },
   "main": "expo-router/entry",
   "name": "@ankaa/mobile",
@@ -64,6 +106,7 @@
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test": "jest"
   }
 }

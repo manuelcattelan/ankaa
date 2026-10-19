@@ -1,0 +1,27 @@
+{
+  "dependencies": {
+    "@testcontainers/postgresql": "^12.2.1",
+    "@types/pg": "catalog:",
+    "@types/proper-lockfile": "^4.1.4",
+    "drizzle-orm": "catalog:",
+    "effect": "catalog:",
+    "pg": "catalog:",
+    "proper-lockfile": "^4.1.2",
+    "vite": "catalog:"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./create-test-runtime": "./create-test-runtime.ts",
+    "./create-test-user": "./create-test-user.ts",
+    "./database-configuration": "./database-configuration.ts"
+  },
+  "name": "@ankaa/vitest",
+  "peerDependencies": {
+    "@ankaa/authentication": "workspace:*",
+    "@ankaa/database": "workspace:*",
+    "@ankaa/email": "workspace:*",
+    "vitest": ">=5.0.0"
+  },
+  "private": true,
+  "type": "module"
+}

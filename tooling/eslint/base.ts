@@ -3,6 +3,7 @@ import type { Linter } from "eslint";
 import js from "@eslint/js";
 import json from "@eslint/json";
 import eslintPlugin from "@stylistic/eslint-plugin";
+import eslintPluginVitest from "@vitest/eslint-plugin";
 import eslintConfigPrettierFlat from "eslint-config-prettier/flat";
 import eslintPluginImportX from "eslint-plugin-import-x";
 import eslintPluginPerfectionist from "eslint-plugin-perfectionist";
@@ -33,6 +34,10 @@ const MISSING_VALUE_RESTRICTED_SYNTAX = {
 };
 
 export const JAVASCRIPT_FILES = ["**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"];
+
+export const TEST_FILES = ["**/*.test.{ts,tsx}"];
+
+export const TEST_HELPER_FILES = ["**/src/shared/testing/**"];
 
 export const RESTRICTED_SYNTAX = [
   {
@@ -91,6 +96,10 @@ export const RESTRICTED_SYNTAX = [
   },
   MISSING_VALUE_RESTRICTED_SYNTAX,
 ];
+
+export const nullAllowingRestrictedSyntax = RESTRICTED_SYNTAX.filter(
+  (restrictedSyntax) => restrictedSyntax !== MISSING_VALUE_RESTRICTED_SYNTAX,
+);
 
 const HOOK_STATEMENT_SELECTOR =
   ":matches(VariableDeclaration[declarations.0.init.callee.name=/^use[A-Z]/], VariableDeclaration[declarations.0.init.callee.property.name=/^use[A-Z]/], ExpressionStatement[expression.callee.name=/^use[A-Z]/], ExpressionStatement[expression.callee.property.name=/^use[A-Z]/])";
@@ -375,15 +384,29 @@ export const rulesConfiguration = defineConfig([
     rules: { "import-x/no-default-export": "off" },
   },
   {
+    files: TEST_FILES,
+    rules: {
+      "@ankaa/no-duplicate-string": "off",
+      "@ankaa/no-single-use-string": "off",
+      "@typescript-eslint/no-magic-numbers": "off",
+      "no-restricted-syntax": ["error", ...nullAllowingRestrictedSyntax],
+    },
+  },
+  {
+    files: TEST_HELPER_FILES,
+    rules: {
+      "@typescript-eslint/no-magic-numbers": "off",
+      "no-restricted-syntax": ["error", ...nullAllowingRestrictedSyntax],
+    },
+  },
+  {
+    files: ["tooling/vitest/provided-context.ts"],
+    rules: { "@typescript-eslint/consistent-type-definitions": "off" },
+  },
+  {
     files: ["tooling/eslint/base.ts"],
     rules: {
-      "no-restricted-syntax": [
-        "error",
-        ...RESTRICTED_SYNTAX.filter(
-          (restrictedSyntax) =>
-            restrictedSyntax !== MISSING_VALUE_RESTRICTED_SYNTAX,
-        ),
-      ],
+      "no-restricted-syntax": ["error", ...nullAllowingRestrictedSyntax],
     },
   },
 ]);
@@ -427,6 +450,16 @@ export const baseConfiguration = defineConfig([
     rules: { "@ankaa/no-comments": "error" },
   },
 ]);
+
+export const vitestConfiguration = defineConfig({
+  extends: [eslintPluginVitest.configs.recommended],
+  files: TEST_FILES,
+  rules: {
+    "vitest/no-conditional-in-test": "error",
+    "vitest/no-disabled-tests": "error",
+  },
+  settings: { vitest: { vitestImports: ["@effect/vitest"] } },
+});
 
 export function createFeatureIsolationZone({
   allowedFeaturePaths = [],

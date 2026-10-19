@@ -95,6 +95,7 @@ export function SignInScreen() {
           cornerRadius={APPLE_BUTTON_CORNER_RADIUS}
           onPress={handleSignInApple}
           style={styles.appleButton}
+          testID="apple-sign-in-button"
         />
       ) : null}
       <GoogleSigninButton
@@ -106,6 +107,7 @@ export function SignInScreen() {
         disabled={isSignInPending}
         onPress={handleSignInGoogle}
         size={GoogleSigninButton.Size.Wide}
+        testID="google-sign-in-button"
       />
       <LinkButton
         href="/sign-in/with-email"
