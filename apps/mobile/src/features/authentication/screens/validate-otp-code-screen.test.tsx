@@ -1,6 +1,7 @@
 import { screen, userEvent, waitFor } from "@testing-library/react-native";
 
 import { AuthenticationClient } from "@/shared/services/authentication-client";
+import { advanceFakeTime } from "@/shared/testing/advance-fake-time";
 import { createSignInTestResponses } from "@/shared/testing/create-sign-in-test-responses";
 import { emptyHomeScreenTrpcClientLayer } from "@/shared/testing/empty-home-screen-trpc-client-layer";
 import { renderScreen } from "@/shared/testing/render-screen";
@@ -87,7 +88,7 @@ describe("ValidateOtpCodeScreen", () => {
       "You can resend the verification code in 60 seconds.",
     );
 
-    await jest.advanceTimersByTimeAsync(1_000);
+    await advanceFakeTime(1_000);
 
     expect(
       screen.getByText("You can resend the verification code in 59 seconds."),
@@ -101,7 +102,7 @@ describe("ValidateOtpCodeScreen", () => {
       "You can resend the verification code in 60 seconds.",
     );
 
-    await jest.advanceTimersByTimeAsync(60_000);
+    await advanceFakeTime(60_000);
 
     expect(
       screen.getByRole("button", { name: "Resend verification code" }),
@@ -131,7 +132,7 @@ describe("ValidateOtpCodeScreen", () => {
       "You can resend the verification code in 60 seconds.",
     );
 
-    await jest.advanceTimersByTimeAsync(60_000);
+    await advanceFakeTime(60_000);
 
     await user.press(
       screen.getByRole("button", { name: "Resend verification code" }),
@@ -161,7 +162,7 @@ describe("ValidateOtpCodeScreen", () => {
       "You can resend the verification code in 60 seconds.",
     );
 
-    await jest.advanceTimersByTimeAsync(60_000);
+    await advanceFakeTime(60_000);
 
     await user.press(
       screen.getByRole("button", { name: "Resend verification code" }),

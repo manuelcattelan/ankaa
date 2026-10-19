@@ -9,6 +9,7 @@ import { parseStoredWorkoutDocument } from "@/features/workout/core/parse-stored
 import { Notifications } from "@/features/workout/services/notifications";
 import { WorkoutDocumentStorage } from "@/features/workout/services/workout-document-storage";
 import { TrpcClient } from "@/shared/services/trpc-client";
+import { advanceFakeTime } from "@/shared/testing/advance-fake-time";
 import { benchPressExercise } from "@/shared/testing/bench-press-exercise";
 import { choosePickerFieldOption } from "@/shared/testing/choose-picker-field-option";
 import { renderScreen } from "@/shared/testing/render-screen";
@@ -106,7 +107,7 @@ describe("WorkoutScreen", () => {
 
     await user.press(screen.getByRole("button", { name: "Add set" }));
 
-    await jest.advanceTimersByTimeAsync(2_000);
+    await advanceFakeTime(2_000);
 
     await waitFor(() => {
       expect(
@@ -132,7 +133,7 @@ describe("WorkoutScreen", () => {
 
     await user.press(screen.getByRole("button", { name: "Add set" }));
 
-    await jest.advanceTimersByTimeAsync(1_999);
+    await advanceFakeTime(1_999);
 
     expect(
       readStoredWorkoutDocuments(storedWorkoutDocumentJsons),
@@ -162,7 +163,7 @@ describe("WorkoutScreen", () => {
 
     await user.press(screen.getByRole("button", { name: "Add set" }));
 
-    await jest.advanceTimersByTimeAsync(3_000);
+    await advanceFakeTime(3_000);
 
     await waitFor(() => {
       expect(
@@ -189,7 +190,7 @@ describe("WorkoutScreen", () => {
 
     await user.press(screen.getByRole("button", { name: "Stop workout" }));
 
-    await jest.advanceTimersByTimeAsync(2_000);
+    await advanceFakeTime(2_000);
 
     expect(
       await screen.findByText(
@@ -206,7 +207,7 @@ describe("WorkoutScreen", () => {
       ),
     });
 
-    await jest.advanceTimersByTimeAsync(60_000);
+    await advanceFakeTime(60_000);
 
     expect(screen.getByText("Elapsed time: 0:06:00")).toBeOnTheScreen();
   });
@@ -264,7 +265,7 @@ describe("WorkoutScreen", () => {
 
     await screen.findByText("Rest: 120 seconds left.");
 
-    await jest.advanceTimersByTimeAsync(30_000);
+    await advanceFakeTime(30_000);
 
     expect(screen.getByText("Rest: 90 seconds left.")).toBeOnTheScreen();
   });

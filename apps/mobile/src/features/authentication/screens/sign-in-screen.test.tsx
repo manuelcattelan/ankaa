@@ -7,6 +7,7 @@ import { AppleSignIn } from "@/features/authentication/services/apple-sign-in";
 import { GoogleSignIn } from "@/features/authentication/services/google-sign-in";
 import { Accessibility } from "@/shared/services/accessibility";
 import { AuthenticationClient } from "@/shared/services/authentication-client";
+import { advanceFakeTime } from "@/shared/testing/advance-fake-time";
 import { createSignInTestResponses } from "@/shared/testing/create-sign-in-test-responses";
 import { emptyHomeScreenTrpcClientLayer } from "@/shared/testing/empty-home-screen-trpc-client-layer";
 import { renderScreen } from "@/shared/testing/render-screen";
@@ -56,7 +57,7 @@ describe("SignInScreen", () => {
   it("doesn't show Apple sign-in when the device doesn't offer it", async () => {
     renderScreen({ initialUrl: "/sign-in" });
 
-    await jest.advanceTimersByTimeAsync(1_000);
+    await advanceFakeTime(1_000);
 
     expect(screen.queryByTestId("apple-sign-in-button")).not.toBeOnTheScreen();
   });
@@ -96,7 +97,7 @@ describe("SignInScreen", () => {
 
     fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
 
-    await jest.advanceTimersByTimeAsync(1_000);
+    await advanceFakeTime(1_000);
 
     expect(announcedMessages).toEqual([]);
   });
