@@ -78,7 +78,10 @@ export class TrpcClient extends Context.Service<TrpcClient>()(
     Layer.provide(AuthenticationClient.layer),
   );
 
-  static readonly layerTest = (trpcTestResponses: TrpcTestResponses) =>
+  static readonly layerTest = (
+    trpcTestResponses: TrpcTestResponses,
+    receivedTrpcPaths: string[] = [],
+  ) =>
     Layer.effect(
       this,
       Effect.gen(function* () {
@@ -90,12 +93,19 @@ export class TrpcClient extends Context.Service<TrpcClient>()(
           createTRPCClient<AppRouter>({
             links: [
               httpBatchLink({
-                fetch: (url, options) =>
-                  fetchRequestHandler({
+                fetch: (url, options) => {
+                  const trpcTestRequest = new Request(url, options);
+
+                  receivedTrpcPaths.push(
+                    ...getTrpcTestRequestPaths(trpcTestRequest),
+                  );
+
+                  return fetchRequestHandler({
                     endpoint: "/trpc",
-                    req: new Request(url, options),
+                    req: trpcTestRequest,
                     router: trpcTestRouter,
-                  }),
+                  });
+                },
                 url: `${authenticationClient.apiUrl}/trpc`,
               }),
             ],
@@ -157,4 +167,8 @@ function createTrpcTestRouter(trpcTestResponses: TrpcTestResponses) {
         .mutation(createTrpcTestResolver(trpcTestResponses.workout?.save)),
     }),
   });
+}
+
+function getTrpcTestRequestPaths(trpcTestRequest: Request) {
+  return new URL(trpcTestRequest.url).pathname.replace("/trpc/", "").split(",");
 }

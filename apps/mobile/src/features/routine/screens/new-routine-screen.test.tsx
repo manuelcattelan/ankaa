@@ -10,6 +10,11 @@ import { benchPressExercise } from "@/shared/testing/bench-press-exercise";
 import { renderScreen } from "@/shared/testing/render-screen";
 import { signedInAuthenticationClientLayer } from "@/shared/testing/signed-in-authentication-client-layer";
 
+type OpenNewRoutineScreenOptions = {
+  receivedTrpcPaths?: string[];
+  trpcTestResponses: TrpcTestResponses;
+};
+
 const PUSH_DAY_ROUTINE: Routine = {
   days: [],
   exercises: [],
@@ -20,8 +25,10 @@ const PUSH_DAY_ROUTINE: Routine = {
 describe("NewRoutineScreen", () => {
   it("shows that the name is empty when the person Saves a Routine without a name", async () => {
     const user = await openNewRoutineScreen({
-      exercise: { list: () => [benchPressExercise] },
-      routine: { list: () => [] },
+      trpcTestResponses: {
+        exercise: { list: () => [benchPressExercise] },
+        routine: { list: () => [] },
+      },
     });
 
     await user.press(screen.getByRole("button", { name: "Save routine" }));
@@ -31,14 +38,33 @@ describe("NewRoutineScreen", () => {
     ).toBeOnTheScreen();
   });
 
+  it("doesn't Save a Routine without a name", async () => {
+    const receivedTrpcPaths: string[] = [];
+    const user = await openNewRoutineScreen({
+      receivedTrpcPaths,
+      trpcTestResponses: {
+        exercise: { list: () => [benchPressExercise] },
+        routine: { list: () => [], save: () => undefined },
+      },
+    });
+
+    await user.press(screen.getByRole("button", { name: "Save routine" }));
+
+    await screen.findByText("This routine has no name: enter a name.");
+
+    expect(receivedTrpcPaths).not.toContain("routine.save");
+  });
+
   it("Saves the Routine that the person builds", async () => {
     const savedRoutineSaveInputs: RoutineSaveInput[] = [];
     const user = await openNewRoutineScreen({
-      exercise: { list: () => [benchPressExercise] },
-      routine: {
-        list: () => [],
-        save: (routineSaveInput) => {
-          savedRoutineSaveInputs.push(routineSaveInput);
+      trpcTestResponses: {
+        exercise: { list: () => [benchPressExercise] },
+        routine: {
+          list: () => [],
+          save: (routineSaveInput) => {
+            savedRoutineSaveInputs.push(routineSaveInput);
+          },
         },
       },
     });
@@ -62,11 +88,13 @@ describe("NewRoutineScreen", () => {
   it("takes the person back to the home screen, which lists the Routine they Saved", async () => {
     const savedRoutines: Routine[] = [];
     const user = await openNewRoutineScreen({
-      exercise: { list: () => [benchPressExercise] },
-      routine: {
-        list: () => savedRoutines,
-        save: () => {
-          savedRoutines.push(PUSH_DAY_ROUTINE);
+      trpcTestResponses: {
+        exercise: { list: () => [benchPressExercise] },
+        routine: {
+          list: () => savedRoutines,
+          save: () => {
+            savedRoutines.push(PUSH_DAY_ROUTINE);
+          },
         },
       },
     });
@@ -81,14 +109,20 @@ describe("NewRoutineScreen", () => {
   });
 });
 
-async function openNewRoutineScreen(trpcTestResponses: TrpcTestResponses) {
+async function openNewRoutineScreen({
+  receivedTrpcPaths = [],
+  trpcTestResponses,
+}: OpenNewRoutineScreenOptions) {
   const user = userEvent.setup();
 
   renderScreen({
     initialUrl: "/",
     testRuntimeLayers: {
       authenticationClientLayer: signedInAuthenticationClientLayer,
-      trpcClientLayer: TrpcClient.layerTest(trpcTestResponses),
+      trpcClientLayer: TrpcClient.layerTest(
+        trpcTestResponses,
+        receivedTrpcPaths,
+      ),
     },
   });
 
