@@ -41,7 +41,11 @@ type TrpcTestRequest<TInput, TOutput> = {
 
 type TrpcTestResponse<TInput, TOutput> = (
   input: TInput,
-) => Promise<TOutput> | TOutput;
+) => Promise<TrpcTestResponseOutput<TOutput>> | TrpcTestResponseOutput<TOutput>;
+
+type TrpcTestResponseOutput<TOutput> = [TOutput] extends [never]
+  ? void
+  : TOutput;
 
 export class TrpcClient extends Context.Service<TrpcClient>()(
   "@ankaa/mobile/shared/services/TrpcClient",
