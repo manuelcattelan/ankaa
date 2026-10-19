@@ -37,6 +37,10 @@
     "lint:fix": {
       "cache": false
     },
+    "test": {
+      "dependsOn": ["topo"],
+      "passThroughEnv": ["AI_AGENT", "CLAUDE_CODE", "CLAUDECODE"]
+    },
     "topo": {
       "dependsOn": ["^topo"]
     }

@@ -5,6 +5,7 @@ packages:
 catalog:
   "@better-auth/drizzle-adapter": ^1.7.5
   "@better-auth/expo": ^1.7.5
+  "@effect/vitest": ^4.0.5
   "@trpc/client": 11.19.0
   "@trpc/server": 11.19.0
   "@types/node": ^26.4.1
@@ -17,6 +18,8 @@ catalog:
   prettier: 3.9.6
   tsx: ^4.23.13
   typescript: ~6.0.3
+  vite: ^8.3.4
+  vitest: ^5.0.5
 allowBuilds:
   esbuild: true
   unrs-resolver: true

@@ -3,6 +3,7 @@ import type { Linter } from "eslint";
 import js from "@eslint/js";
 import json from "@eslint/json";
 import eslintPlugin from "@stylistic/eslint-plugin";
+import eslintPluginVitest from "@vitest/eslint-plugin";
 import eslintConfigPrettierFlat from "eslint-config-prettier/flat";
 import eslintPluginImportX from "eslint-plugin-import-x";
 import eslintPluginPerfectionist from "eslint-plugin-perfectionist";
@@ -33,6 +34,8 @@ const MISSING_VALUE_RESTRICTED_SYNTAX = {
 };
 
 export const JAVASCRIPT_FILES = ["**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"];
+
+const TEST_FILES = ["**/*.test.{ts,tsx}"];
 
 export const RESTRICTED_SYNTAX = [
   {
@@ -375,6 +378,21 @@ export const rulesConfiguration = defineConfig([
     rules: { "import-x/no-default-export": "off" },
   },
   {
+    files: TEST_FILES,
+    rules: {
+      "@ankaa/no-duplicate-string": "off",
+      "@ankaa/no-single-use-string": "off",
+      "@typescript-eslint/no-magic-numbers": "off",
+      "no-restricted-syntax": [
+        "error",
+        ...RESTRICTED_SYNTAX.filter(
+          (restrictedSyntax) =>
+            restrictedSyntax !== MISSING_VALUE_RESTRICTED_SYNTAX,
+        ),
+      ],
+    },
+  },
+  {
     files: ["tooling/eslint/base.ts"],
     rules: {
       "no-restricted-syntax": [
@@ -427,6 +445,16 @@ export const baseConfiguration = defineConfig([
     rules: { "@ankaa/no-comments": "error" },
   },
 ]);
+
+export const vitestConfiguration = defineConfig({
+  extends: [eslintPluginVitest.configs.recommended],
+  files: TEST_FILES,
+  rules: {
+    "vitest/no-conditional-in-test": "error",
+    "vitest/no-disabled-tests": "error",
+  },
+  settings: { vitest: { vitestImports: ["@effect/vitest"] } },
+});
 
 export function createFeatureIsolationZone({
   allowedFeaturePaths = [],

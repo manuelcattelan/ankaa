@@ -1,0 +1,9 @@
+{
+  "exports": "./index.ts",
+  "name": "@ankaa/vitest",
+  "peerDependencies": {
+    "vitest": ">=5.0.0"
+  },
+  "private": true,
+  "type": "module"
+}
