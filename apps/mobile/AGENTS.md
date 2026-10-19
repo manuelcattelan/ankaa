@@ -26,7 +26,7 @@ The mobile app follows the architecture in the root `AGENTS.md`: its Core decide
 - The root layout, `src/app/_layout.tsx`, is the Composition root of the mobile app, and the one route file that wires the app, because Expo documents the root layout as the place for "initialization code" and "adding context providers":
   - It creates the Runtime from `applicationLayer`, the QueryClient and the persister once, each with a `useState` initializer, so nothing runs at import time.
   - It provides the Runtime through React context, read with `useRuntime()`, so every hook, screen and mutation default can receive a Runtime built from other Layers, such as in a test.
-  - It registers the mutation defaults of each Feature.
+  - It registers the mutation defaults of each Feature, with `registerMutationDefaults` from `src/defaults.ts`, which the screen tests call too, so a test registers the same defaults as the app.
   - It keeps the authentication guard, the `Stack.Protected` navigator, as Expo's authentication guide does.
   - Code that must run at startup, such as configuring Google sign-in, setting the notification handler or keeping the splash screen visible, runs in a Layer or in an effect of the root layout, never at import time.
 - `src/layer.ts` defines `applicationLayer`, the application Layer of the mobile app. It installs `ConfigProvider.fromUnknown`, with one static `process.env.EXPO_PUBLIC_*` reference per variable, as the root `AGENTS.md` describes. It also exports the type of the mobile Runtime as `ApplicationRuntime`, which every factory of Query options and mutation options takes, so the Runtime has one type next to the Layer it's built from.

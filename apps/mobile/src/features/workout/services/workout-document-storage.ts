@@ -59,6 +59,35 @@ export class WorkoutDocumentStorage extends Context.Service<WorkoutDocumentStora
   },
 ) {
   static readonly layer = Layer.effect(this, this.make);
+
+  static readonly layerTest = (
+    storedWorkoutDocumentJsons: Map<string, string>,
+  ) =>
+    Layer.succeed(
+      this,
+      this.of({
+        readStoredWorkoutDocumentJsons: () =>
+          Effect.sync(() =>
+            [...storedWorkoutDocumentJsons].map(
+              ([workoutId, workoutDocumentJson]) => ({
+                workoutDocumentJson,
+                workoutId,
+              }),
+            ),
+          ),
+        removeWorkoutDocumentJson: (workoutId: string) =>
+          Effect.sync(() => {
+            storedWorkoutDocumentJsons.delete(workoutId);
+          }),
+        writeWorkoutDocumentJson: ({
+          workoutDocumentJson,
+          workoutId,
+        }: WrittenWorkoutDocumentJson) =>
+          Effect.sync(() => {
+            storedWorkoutDocumentJsons.set(workoutId, workoutDocumentJson);
+          }),
+      }),
+    );
 }
 
 function getWorkoutDocumentStorageKey(workoutId: string) {
