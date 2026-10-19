@@ -35,7 +35,7 @@ const MISSING_VALUE_RESTRICTED_SYNTAX = {
 
 export const JAVASCRIPT_FILES = ["**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"];
 
-const TEST_FILES = ["**/*.test.{ts,tsx}"];
+export const TEST_FILES = ["**/*.test.{ts,tsx}"];
 
 export const RESTRICTED_SYNTAX = [
   {
@@ -94,6 +94,10 @@ export const RESTRICTED_SYNTAX = [
   },
   MISSING_VALUE_RESTRICTED_SYNTAX,
 ];
+
+export const nullAllowingRestrictedSyntax = RESTRICTED_SYNTAX.filter(
+  (restrictedSyntax) => restrictedSyntax !== MISSING_VALUE_RESTRICTED_SYNTAX,
+);
 
 const HOOK_STATEMENT_SELECTOR =
   ":matches(VariableDeclaration[declarations.0.init.callee.name=/^use[A-Z]/], VariableDeclaration[declarations.0.init.callee.property.name=/^use[A-Z]/], ExpressionStatement[expression.callee.name=/^use[A-Z]/], ExpressionStatement[expression.callee.property.name=/^use[A-Z]/])";
@@ -383,25 +387,13 @@ export const rulesConfiguration = defineConfig([
       "@ankaa/no-duplicate-string": "off",
       "@ankaa/no-single-use-string": "off",
       "@typescript-eslint/no-magic-numbers": "off",
-      "no-restricted-syntax": [
-        "error",
-        ...RESTRICTED_SYNTAX.filter(
-          (restrictedSyntax) =>
-            restrictedSyntax !== MISSING_VALUE_RESTRICTED_SYNTAX,
-        ),
-      ],
+      "no-restricted-syntax": ["error", ...nullAllowingRestrictedSyntax],
     },
   },
   {
     files: ["tooling/eslint/base.ts"],
     rules: {
-      "no-restricted-syntax": [
-        "error",
-        ...RESTRICTED_SYNTAX.filter(
-          (restrictedSyntax) =>
-            restrictedSyntax !== MISSING_VALUE_RESTRICTED_SYNTAX,
-        ),
-      ],
+      "no-restricted-syntax": ["error", ...nullAllowingRestrictedSyntax],
     },
   },
 ]);
