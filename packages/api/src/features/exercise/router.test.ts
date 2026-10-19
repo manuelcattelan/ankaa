@@ -9,11 +9,11 @@ import {
   exerciseMuscleGroup,
 } from "@ankaa/database/schema/exercise";
 import { createTestDatabase } from "@ankaa/vitest/create-test-database";
+import { createTestRuntime } from "@ankaa/vitest/create-test-runtime";
 import { createTestUser } from "@ankaa/vitest/create-test-user";
 import { dropTestDatabase } from "@ankaa/vitest/drop-test-database";
 import { afterAll, beforeAll, describe, expect, it } from "@effect/vitest";
 
-import { createTestRuntime } from "../../shared/testing/create-test-runtime.ts";
 import { createInnerContext } from "../../trpc/context.ts";
 import { createCallerFactory } from "../../trpc/procedures.ts";
 import { appRouter } from "../../trpc/router.ts";
