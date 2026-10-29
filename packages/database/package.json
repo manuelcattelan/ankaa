@@ -15,7 +15,6 @@
     "eslint": "catalog:",
     "jiti": "catalog:",
     "prettier": "catalog:",
-    "tsx": "catalog:",
     "typescript": "catalog:"
   },
   "exports": {
@@ -33,11 +32,11 @@
     "check-types": "tsc --noEmit",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
-    "generate": "drizzle-kit generate --name",
+    "generate": "DOTENV_CONFIG_PATH=../../.env drizzle-kit generate --name",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "migrate": "drizzle-kit migrate",
-    "seed": "tsx --env-file-if-exists=.env src/seed.ts"
+    "migrate": "DOTENV_CONFIG_PATH=../../.env drizzle-kit migrate",
+    "seed": "node --env-file-if-exists=../../.env src/seed.ts"
   },
   "type": "module"
 }

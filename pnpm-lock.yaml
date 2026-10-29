@@ -152,9 +152,6 @@ catalogs:
     prettier:
       specifier: 3.9.6
       version: 3.9.6
-    tsx:
-      specifier: ^4.23.13
-      version: 4.23.13
     typescript:
       specifier: ~6.0.3
       version: 6.0.3
@@ -456,9 +453,6 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.9.6
-      tsx:
-        specifier: 'catalog:'
-        version: 4.23.13
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -661,9 +655,6 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.9.6
-      tsx:
-        specifier: 'catalog:'
-        version: 4.23.13
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -12132,6 +12123,7 @@ snapshots:
       '@esbuild/win32-arm64': 0.28.2
       '@esbuild/win32-ia32': 0.28.2
       '@esbuild/win32-x64': 0.28.2
+    optional: true
 
   escalade@3.2.0: {}
 
@@ -16044,6 +16036,7 @@ snapshots:
       esbuild: 0.28.2
     optionalDependencies:
       fsevents: 2.3.3
+    optional: true
 
   turbo@2.10.12:
     optionalDependencies:
