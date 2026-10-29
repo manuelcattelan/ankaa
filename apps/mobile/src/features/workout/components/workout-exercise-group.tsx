@@ -29,6 +29,7 @@ export function WorkoutExerciseGroup({
   exerciseGroup,
   exerciseNames,
   onEndCountdown,
+  onSkipCountdown,
   onStartCountdown,
   recordedSetDraftEntries,
   workoutExerciseDrafts,
@@ -39,6 +40,7 @@ export function WorkoutExerciseGroup({
   exerciseGroup: Workout["sections"][keyof Workout["sections"]][number];
   exerciseNames: Map<string, string>;
   onEndCountdown: () => void;
+  onSkipCountdown: () => void;
   onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
   recordedSetDraftEntries: readonly RecordedSetDraftEntry[];
   workoutExerciseDrafts: WorkoutExerciseDrafts;
@@ -60,6 +62,7 @@ export function WorkoutExerciseGroup({
                   exerciseNames={exerciseNames}
                   key={warmUpWorkoutExercise.id}
                   onEndCountdown={onEndCountdown}
+                  onSkipCountdown={onSkipCountdown}
                   onStartCountdown={onStartCountdown}
                   recordedSetDraftEntries={recordedSetDraftEntries}
                   warmUpForExerciseName={
@@ -77,6 +80,7 @@ export function WorkoutExerciseGroup({
             dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
             exerciseNames={exerciseNames}
             onEndCountdown={onEndCountdown}
+            onSkipCountdown={onSkipCountdown}
             onStartCountdown={onStartCountdown}
             recordedSetDraftEntries={recordedSetDraftEntries}
             workoutExercise={workoutExercise}

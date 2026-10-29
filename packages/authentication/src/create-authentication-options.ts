@@ -29,7 +29,7 @@ const signInSocialBodySchema = Schema.Struct({
 });
 
 export function createAuthenticationOptions({
-  appleBundleId,
+  appleAppBundleId,
   baseUrl,
   database,
   googleIosClientId,
@@ -41,7 +41,7 @@ export function createAuthenticationOptions({
   sendAccountDeletionLink,
   sendVerificationOtpCode,
 }: {
-  appleBundleId: string;
+  appleAppBundleId: string;
   baseUrl: string;
   database: DB;
   googleIosClientId: string;
@@ -157,7 +157,7 @@ export function createAuthenticationOptions({
     rateLimit: { enabled: true },
     secret,
     socialProviders: {
-      apple: { clientId: appleBundleId },
+      apple: { clientId: appleAppBundleId },
       google: { clientId: [googleWebClientId, googleIosClientId] },
     },
     trustedOrigins: [

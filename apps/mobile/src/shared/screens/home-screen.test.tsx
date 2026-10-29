@@ -64,6 +64,7 @@ const PUSH_DAY_WORKOUT: Workout = {
     ],
     warmUp: [],
   },
+  startedAt: "2026-10-29T09:00:00.000Z",
 };
 
 describe("HomeScreen", () => {

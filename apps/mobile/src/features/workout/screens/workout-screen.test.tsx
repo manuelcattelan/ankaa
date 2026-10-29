@@ -191,6 +191,7 @@ const PUSH_DAY_WORKOUT: Workout = {
     ],
     warmUp: [],
   },
+  startedAt: "2026-10-29T09:00:00.000Z",
 };
 
 const BENCH_PRESS_WORKOUT_EXERCISE_ID = "01900000-0000-7000-8000-000000000202";
@@ -249,6 +250,7 @@ function buildBenchPressWorkout({
       ],
       warmUp: [],
     },
+    startedAt: "2026-10-29T09:00:00.000Z",
   } satisfies Workout;
 }
 
@@ -319,6 +321,54 @@ describe("WorkoutScreen", () => {
       screen.getByText("Rest-pause set: 3 segments, with pauses of 15 seconds"),
     ).toBeOnTheScreen();
     expect(screen.getByText("60 seconds")).toBeOnTheScreen();
+  });
+
+  it("counts the time elapsed since the Workout started up as time passes", async () => {
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    jest.setSystemTime(new Date("2026-10-29T09:05:00.000Z"));
+    await screen.findByText("Bench Press (Barbell)");
+
+    await advanceFakeTime(60_000);
+
+    expect(screen.getByText("Elapsed time: 0:06:00")).toBeOnTheScreen();
+  });
+
+  it("tells the User how to enter the weight of a Workout exercise, by its Weight type", async () => {
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+
+    expect(
+      await screen.findByText("Enter everything you lift."),
+    ).toBeOnTheScreen();
   });
 
   it("stops the User's Workout in progress and takes them to the home screen, which offers to start a Workout again", async () => {
@@ -1050,6 +1100,7 @@ describe("WorkoutScreen", () => {
                 ],
                 warmUp: [],
               },
+              startedAt: "2026-10-29T09:00:00.000Z",
             }),
           },
         }),
@@ -1163,6 +1214,39 @@ describe("WorkoutScreen", () => {
         },
       ]);
     });
+  });
+
+  it("ends the Rest and cancels its notification when the User skips it", async () => {
+    const scheduledNotifications: ScheduledNotification[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({ scheduledNotifications }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start rest" }));
+    await waitFor(() => {
+      expect(scheduledNotifications).toHaveLength(1);
+    });
+
+    await user.press(screen.getByRole("button", { name: "Skip rest" }));
+
+    await waitFor(() => {
+      expect(scheduledNotifications).toStrictEqual([]);
+    });
+    expect(screen.queryByText("Rest: 120 seconds left")).toBeNull();
   });
 
   it("cancels the notification of the countdown when the User stops the Workout", async () => {

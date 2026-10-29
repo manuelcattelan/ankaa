@@ -1,3 +1,7 @@
 export type IntensityTechnique = (typeof INTENSITY_TECHNIQUES)[number];
 
-export const INTENSITY_TECHNIQUES = ["drop_set", "rest_pause_set"] as const;
+export const DROP_SET = "drop_set";
+
+export const REST_PAUSE_SET = "rest_pause_set";
+
+export const INTENSITY_TECHNIQUES = [DROP_SET, REST_PAUSE_SET] as const;

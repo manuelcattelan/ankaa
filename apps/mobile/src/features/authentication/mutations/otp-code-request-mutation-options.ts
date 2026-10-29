@@ -15,8 +15,11 @@ const program = Effect.fn("otpCodeRequestMutation")(function* (variables: {
 });
 
 export function otpCodeRequestMutationOptions(runtime: ApplicationRuntime) {
-  return mutationOptions({
-    mutationFn: (variables: { email: string }) =>
-      runtime.runPromise(program(variables)),
+  return mutationOptions<
+    Effect.Success<ReturnType<typeof program>>,
+    Effect.Error<ReturnType<typeof program>>,
+    Parameters<typeof program>[0]
+  >({
+    mutationFn: (variables) => runtime.runPromise(program(variables)),
   });
 }

@@ -9,19 +9,57 @@ import {
   routineExerciseSet,
 } from "@ankaa/database/schema/routine";
 import { eq } from "drizzle-orm";
+import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
+import * as Fiber from "effect/Fiber";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { TestRuntime } from "#/shared/testing/create-test-runtime.ts";
 
 import { createSignedInCaller } from "#/shared/testing/create-signed-in-caller.ts";
 import { createTestRuntime } from "#/shared/testing/create-test-runtime.ts";
+import { waitForLockWait } from "#/shared/testing/wait-for-lock-wait.ts";
 
 const BENCH_PRESS_EXERCISE_ID = "019a0000-0000-7000-8000-000000000001";
 
 const PUSH_UP_EXERCISE_ID = "019a0000-0000-7000-8000-000000000002";
 
 const BAND_PULL_APART_EXERCISE_ID = "019a0000-0000-7000-8000-000000000003";
+
+/**
+ * Inserts the Routine of another User in a transaction that stays open until
+ * the returned function runs, so a test can Save a Routine with the same id
+ * while that Routine isn't committed yet.
+ */
+async function beginRoutineInsert({
+  routineRow,
+  runtime,
+}: {
+  routineRow: typeof routine.$inferInsert;
+  runtime: TestRuntime;
+}) {
+  const routineInserted = await runtime.runPromise(Deferred.make<boolean>());
+  const commitRequested = await runtime.runPromise(Deferred.make<boolean>());
+  const fiber = runtime.runFork(
+    Effect.gen(function* () {
+      const database = yield* Database;
+
+      yield* database.transaction(() =>
+        Effect.gen(function* () {
+          yield* database.insert(routine).values(routineRow);
+          yield* Deferred.succeed(routineInserted, true);
+          yield* Deferred.await(commitRequested);
+        }),
+      );
+    }),
+  );
+  await runtime.runPromise(Deferred.await(routineInserted));
+
+  return async () => {
+    await runtime.runPromise(Deferred.succeed(commitRequested, true));
+    await runtime.runPromise(Fiber.join(fiber));
+  };
+}
 
 function buildRoutineSaveInput({
   exerciseGroupId,
@@ -888,6 +926,46 @@ describe("routine.save", () => {
         sections: {
           main: [{ id: "019a0000-0000-7000-8000-000000000262" }],
         },
+      },
+    ]);
+  });
+
+  it("fails with NOT_FOUND and RoutineNotFoundError when another User's Routine with the same id commits while the Save runs, and leaves that Routine unchanged", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const otherTestUser = await createTestUser(runtime);
+    const otherCaller = await createSignedInCaller({
+      runtime,
+      testUser: otherTestUser,
+    });
+    const commitRoutineInsert = await beginRoutineInsert({
+      routineRow: {
+        id: "019a0000-0000-7000-8000-000000000165",
+        name: "Legs",
+        userId: otherTestUser.user.id,
+      },
+      runtime,
+    });
+
+    const routineSave = caller.routine.save(
+      buildRoutineSaveInput({
+        exerciseGroupId: "019a0000-0000-7000-8000-000000000265",
+        id: "019a0000-0000-7000-8000-000000000165",
+        name: "Push day",
+        routineExerciseId: "019a0000-0000-7000-8000-000000000365",
+      }),
+    );
+    await waitForLockWait(runtime);
+    await commitRoutineInsert();
+
+    await expect(routineSave).rejects.toMatchObject({
+      cause: { _tag: "RoutineNotFoundError" },
+      code: "NOT_FOUND",
+    });
+    await expect(otherCaller.routine.list()).resolves.toMatchObject([
+      {
+        id: "019a0000-0000-7000-8000-000000000165",
+        name: "Legs",
+        sections: { main: [] },
       },
     ]);
   });

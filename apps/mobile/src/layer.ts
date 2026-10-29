@@ -47,6 +47,11 @@ export const applicationLayer = Layer.mergeAll(
   ),
 );
 
+/**
+ * Builds the Runtime from `layer` at once, and gives it with the Context of
+ * the Services it built, so the Composition root reads a Service's value,
+ * such as the better-auth client, without running Effect during render.
+ */
 export function createRuntime<TServices, TError>(
   layer: Layer.Layer<TServices, TError>,
 ) {
@@ -58,5 +63,5 @@ export function createRuntime<TServices, TError>(
     throw new Error(Cause.pretty(runtimeContextExit.cause));
   }
 
-  return runtime;
+  return { context: runtimeContextExit.value, runtime };
 }

@@ -6,6 +6,7 @@ import {
   QueryClientProvider,
   useQueryClient,
 } from "@tanstack/react-query";
+import * as Context from "effect/Context";
 import {
   DarkTheme,
   DefaultTheme,
@@ -23,7 +24,9 @@ import { RootNavigator } from "#/root-navigator.tsx";
 import { Text } from "#/shared/components/text.tsx";
 import { useAuthenticationSession } from "#/shared/hooks/use-authentication-session.ts";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
+import { AuthClientContext } from "#/shared/providers/auth-client-context.ts";
 import { RuntimeContext } from "#/shared/providers/runtime-context.ts";
+import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 
 export function ErrorBoundary() {
   const colorScheme = useColorScheme();
@@ -40,7 +43,7 @@ export function ErrorBoundary() {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
-  const [runtime] = useState(createApplicationRuntime);
+  const [application] = useState(createApplicationRuntime);
   const [queryClient] = useState(createQueryClient);
 
   useEffect(() => {
@@ -61,17 +64,23 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <RuntimeContext value={runtime}>
-      <KeyboardProvider>
-        <QueryClientProvider client={queryClient}>
-          <QueryCacheController />
-          <ThemeProvider value={getNavigationTheme(colorScheme)}>
-            <SplashScreenController />
-            <RootNavigator />
-            <StatusBar style="auto" />
-          </ThemeProvider>
-        </QueryClientProvider>
-      </KeyboardProvider>
+    <RuntimeContext value={application.runtime}>
+      <AuthClientContext
+        value={
+          Context.get(application.context, AuthenticationClient).authClient
+        }
+      >
+        <KeyboardProvider>
+          <QueryClientProvider client={queryClient}>
+            <QueryCacheController />
+            <ThemeProvider value={getNavigationTheme(colorScheme)}>
+              <SplashScreenController />
+              <RootNavigator />
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </QueryClientProvider>
+        </KeyboardProvider>
+      </AuthClientContext>
     </RuntimeContext>
   );
 }

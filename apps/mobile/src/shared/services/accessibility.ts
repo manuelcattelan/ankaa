@@ -1,7 +1,7 @@
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import { AccessibilityInfo, Platform } from "react-native";
+import { AccessibilityInfo } from "react-native";
 
 import { shouldAnnounceMessage } from "#/shared/core/should-announce-message.ts";
 
@@ -14,7 +14,7 @@ export class Accessibility extends Context.Service<
     Effect.sync(() => {
       function announceMessage(message: string) {
         return Effect.sync(() => {
-          if (!shouldAnnounceMessage({ message, platform: Platform.OS })) {
+          if (!shouldAnnounceMessage({ message })) {
             return;
           }
 

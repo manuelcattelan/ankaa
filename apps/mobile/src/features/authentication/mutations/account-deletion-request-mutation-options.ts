@@ -15,7 +15,10 @@ const program = Effect.fn("accountDeletionRequestMutation")(function* () {
 export function accountDeletionRequestMutationOptions(
   runtime: ApplicationRuntime,
 ) {
-  return mutationOptions({
+  return mutationOptions<
+    Effect.Success<ReturnType<typeof program>>,
+    Effect.Error<ReturnType<typeof program>>
+  >({
     mutationFn: () => runtime.runPromise(program()),
   });
 }

@@ -7,8 +7,8 @@ import { workoutStartMutationOptions } from "#/features/workout/mutations/workou
 import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/workout-find-in-progress-query-options.ts";
 import { Button } from "#/shared/components/button.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
+import { useCreateId } from "#/shared/hooks/use-create-id.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
-import { createId } from "#/shared/interactors/create-id.ts";
 
 /**
  * Starts a Workout from one Routine, and shows its button only while the
@@ -27,6 +27,8 @@ export function WorkoutStartButton({
   const queryClient = useQueryClient();
 
   const runtime = useRuntime();
+
+  const createId = useCreateId();
 
   const workoutInProgress = useQuery(
     workoutFindInProgressQueryOptions(runtime),
@@ -58,7 +60,7 @@ export function WorkoutStartButton({
       return;
     }
 
-    startWorkout.mutate({ id: runtime.runSync(createId()), routineId });
+    startWorkout.mutate({ id: createId(), routineId });
   }
 
   return (

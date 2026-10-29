@@ -1,7 +1,15 @@
-import { useAuthenticationClient } from "#/shared/hooks/use-authentication-client.ts";
+import { use } from "react";
+
+import { AuthClientContext } from "#/shared/providers/auth-client-context.ts";
 
 export function useAuthenticationSession() {
-  const authenticationClient = useAuthenticationClient();
+  const authClient = use(AuthClientContext);
 
-  return authenticationClient.authClient.useSession();
+  if (authClient === null) {
+    throw new Error(
+      "useAuthenticationSession must be called inside AuthClientContext",
+    );
+  }
+
+  return authClient.useSession();
 }

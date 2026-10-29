@@ -4,6 +4,7 @@ import type { Section } from "@ankaa/core/shared/constants/sections";
 
 import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/days-of-week";
 import { RoutineNameConflictError } from "@ankaa/core/features/routine/errors/routine-name-conflict-error";
+import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 import { Database } from "@ankaa/database/database";
 import {
   routine,
@@ -32,7 +33,7 @@ type RoutineExerciseSetRow = Omit<
   "position" | "routineExerciseId"
 >;
 
-const ROUTINE_NAME_INDEX = "routine_user_id_name_idx";
+const ROUTINE_NAME_INDEX = "routine_live_name_idx";
 
 const INTENSITY_TECHNIQUE_COLUMN_VALUES = {
   DropSet: "drop_set",
@@ -74,7 +75,7 @@ export class RoutineRepository extends Context.Service<
     readonly save: (options: {
       input: RoutineSaveInput;
       userId: string;
-    }) => Effect.Effect<void, RoutineNameConflictError>;
+    }) => Effect.Effect<void, RoutineNameConflictError | RoutineNotFoundError>;
   }
 >()("@ankaa/api/features/routine/RoutineRepository") {
   static readonly layerNoDeps = Layer.effect(
@@ -161,13 +162,18 @@ export class RoutineRepository extends Context.Service<
       }) {
         const rows = buildRoutineRows(input);
 
-        yield* database
+        const savedRoutines = yield* database
           .insert(routine)
           .values({ id: input.id, name: input.name, userId })
           .onConflictDoUpdate({
             set: { name: input.name },
+            // The Core decided on no Routine when none had this id yet, so
+            // this WHERE keeps a Routine of another User that took the id
+            // since from being overwritten: the upsert then returns no row.
+            setWhere: eq(routine.userId, userId),
             target: routine.id,
           })
+          .returning({ id: routine.id })
           .pipe(
             Effect.catch((error) =>
               isUniqueIndexViolation({ error, index: ROUTINE_NAME_INDEX })
@@ -175,6 +181,10 @@ export class RoutineRepository extends Context.Service<
                 : Effect.die(error),
             ),
           );
+
+        if (savedRoutines.length === 0) {
+          return yield* Effect.fail(new RoutineNotFoundError());
+        }
 
         yield* database
           .delete(routineDay)

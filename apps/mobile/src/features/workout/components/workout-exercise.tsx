@@ -34,6 +34,7 @@ export function WorkoutExercise({
   dispatchWorkoutExerciseDrafts,
   exerciseNames,
   onEndCountdown,
+  onSkipCountdown,
   onStartCountdown,
   recordedSetDraftEntries,
   warmUpForExerciseName,
@@ -46,6 +47,7 @@ export function WorkoutExercise({
   dispatchWorkoutExerciseDrafts: (action: WorkoutExerciseDraftsAction) => void;
   exerciseNames: Map<string, string>;
   onEndCountdown: () => void;
+  onSkipCountdown: () => void;
   onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
   recordedSetDraftEntries: readonly RecordedSetDraftEntry[];
   warmUpForExerciseName?: string;
@@ -80,6 +82,11 @@ export function WorkoutExercise({
           {WORKOUT_MESSAGES.plannedNoteLabel(workoutExercise.plannedNote)}
         </Text>
       )}
+      {workoutExercise.weightType === "none" ? null : (
+        <Text>
+          {WORKOUT_MESSAGES.weightTypeDescriptions[workoutExercise.weightType]}
+        </Text>
+      )}
       <Text>{WORKOUT_MESSAGES.workingSetCounterStatus(workingSetCounts)}</Text>
       {workoutExercise.weightType === "none" ? null : (
         <PickerField
@@ -107,6 +114,7 @@ export function WorkoutExercise({
           isRecordable={position <= workoutExercise.recordedSets.length}
           key={position}
           onEndCountdown={onEndCountdown}
+          onSkipCountdown={onSkipCountdown}
           onStartCountdown={onStartCountdown}
           plannedSet={{
             ...getMatchingPlannedSet({

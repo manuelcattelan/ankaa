@@ -23,7 +23,7 @@ export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
     const email = yield* Email;
 
     const authenticationConfiguration = yield* Config.all({
-      appleBundleId: Config.NonEmptyString("APPLE_APP_BUNDLE_IDENTIFIER"),
+      appleAppBundleId: Config.NonEmptyString("APPLE_APP_BUNDLE_ID"),
       baseUrl: Config.schema(urlSchema, "BETTER_AUTH_URL"),
       googleIosClientId: Config.NonEmptyString("GOOGLE_IOS_CLIENT_ID"),
       googleWebClientId: Config.NonEmptyString("GOOGLE_WEB_CLIENT_ID"),
@@ -39,12 +39,12 @@ export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
     });
 
     const socialProviderConfiguration = yield* Config.all({
-      appleKeyIdentifier: Config.NonEmptyString("APPLE_KEY_IDENTIFIER"),
+      appleKeyId: Config.NonEmptyString("APPLE_KEY_ID"),
       applePrivateKey: Config.schema(
         Schema.Redacted(Schema.NonEmptyString),
         "APPLE_PRIVATE_KEY",
       ),
-      appleTeamIdentifier: Config.NonEmptyString("APPLE_TEAM_IDENTIFIER"),
+      appleTeamId: Config.NonEmptyString("APPLE_TEAM_ID"),
       googleClientSecret: Config.schema(
         Schema.Redacted(Schema.NonEmptyString),
         "GOOGLE_CLIENT_SECRET",
@@ -63,14 +63,14 @@ export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
     const db = drizzle({ client: pool, relations });
 
     const socialProviderClient = yield* makeSocialProviderClient({
-      appleBundleId: authenticationConfiguration.appleBundleId,
-      appleKeyIdentifier: socialProviderConfiguration.appleKeyIdentifier,
+      appleAppBundleId: authenticationConfiguration.appleAppBundleId,
+      appleKeyId: socialProviderConfiguration.appleKeyId,
       applePrivateKey: yield* Effect.try(() =>
         createPrivateKey(
           Redacted.value(socialProviderConfiguration.applePrivateKey),
         ),
       ),
-      appleTeamIdentifier: socialProviderConfiguration.appleTeamIdentifier,
+      appleTeamId: socialProviderConfiguration.appleTeamId,
       googleClientSecret: socialProviderConfiguration.googleClientSecret,
       googleWebClientId: authenticationConfiguration.googleWebClientId,
     });

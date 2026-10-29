@@ -1,13 +1,7 @@
 /**
  * Whether the Accessibility Service announces a message: only a non-empty
- * one, and only on iOS.
+ * one, on iOS and Android alike.
  */
-export function shouldAnnounceMessage({
-  message,
-  platform,
-}: {
-  message: string;
-  platform: string;
-}) {
-  return message !== "" && platform === "ios";
+export function shouldAnnounceMessage({ message }: { message: string }) {
+  return message !== "";
 }

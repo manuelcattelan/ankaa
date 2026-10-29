@@ -1,5 +1,5 @@
 import type { NodeEnvironment } from "@ankaa/core/shared/constants/node-environments";
-import type { FastifyServerOptions } from "fastify";
+import type { FastifyRequest, FastifyServerOptions } from "fastify";
 
 import { NODE_ENVIRONMENTS } from "@ankaa/core/shared/constants/node-environments";
 import closeWithGrace from "close-with-grace";
@@ -11,15 +11,29 @@ import fastify from "fastify";
 
 import { applicationPlugin } from "#/application-plugin.ts";
 import { createApplicationLayer } from "#/create-application-layer.ts";
+import { getUrlPath } from "#/get-url-path.ts";
+
+// Fastify's own request serializer logs the whole URL with its query string
+// (https://fastify.dev/docs/latest/Reference/Logging/#log-serializers), which
+// can carry the token of an Account deletion link.
+const LOGGER_SERIALIZERS = {
+  req: (request: FastifyRequest) => ({
+    host: request.host,
+    method: request.method,
+    remoteAddress: request.ip,
+    url: getUrlPath(request.url),
+  }),
+};
 
 const LOGGER_CONFIGURATIONS = {
   development: {
+    serializers: LOGGER_SERIALIZERS,
     transport: {
       options: { ignore: "pid,hostname", translateTime: "HH:MM:ss Z" },
       target: "pino-pretty",
     },
   },
-  production: true,
+  production: { serializers: LOGGER_SERIALIZERS },
   test: false,
 } satisfies Record<NodeEnvironment, FastifyServerOptions["logger"]>;
 
@@ -36,10 +50,8 @@ const serverConfiguration = await Effect.runPromise(
       Schema.NonEmptyString,
       "ANDROID_APP_SHA256_CERTIFICATE_FINGERPRINTS",
     ),
-    appleAppBundleIdentifier: Config.NonEmptyString(
-      "APPLE_APP_BUNDLE_IDENTIFIER",
-    ),
-    appleTeamIdentifier: Config.NonEmptyString("APPLE_TEAM_IDENTIFIER"),
+    appleAppBundleId: Config.NonEmptyString("APPLE_APP_BUNDLE_ID"),
+    appleTeamId: Config.NonEmptyString("APPLE_TEAM_ID"),
     closeGraceDelayMilliseconds: Config.schema(
       positiveIntegerSchema,
       "CLOSE_GRACE_DELAY_MILLISECONDS",
@@ -75,8 +87,8 @@ await server.register(applicationPlugin, {
   androidAppPackageName: serverConfiguration.androidAppPackageName,
   androidAppSha256CertificateFingerprints:
     serverConfiguration.androidAppSha256CertificateFingerprints,
-  appleAppBundleIdentifier: serverConfiguration.appleAppBundleIdentifier,
-  appleTeamIdentifier: serverConfiguration.appleTeamIdentifier,
+  appleAppBundleId: serverConfiguration.appleAppBundleId,
+  appleTeamId: serverConfiguration.appleTeamId,
   runtime,
 });
 

@@ -10,8 +10,7 @@ import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.t
 import { Button } from "#/shared/components/button.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
 import { Text } from "#/shared/components/text.tsx";
-import { useRuntime } from "#/shared/hooks/use-runtime.ts";
-import { createId } from "#/shared/interactors/create-id.ts";
+import { useCreateId } from "#/shared/hooks/use-create-id.ts";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 /**
@@ -33,12 +32,12 @@ export function RoutineEditorExercise({
   routineExercise: RoutineExerciseDraft;
   warmUpForExerciseName?: string;
 }) {
-  const runtime = useRuntime();
+  const createId = useCreateId();
 
   function handleAddSet() {
     dispatch({
       routineExerciseId: routineExercise.id,
-      setId: runtime.runSync(createId()),
+      setId: createId(),
       type: "addedSet",
     });
   }

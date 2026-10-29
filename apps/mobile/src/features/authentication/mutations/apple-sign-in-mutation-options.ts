@@ -13,7 +13,10 @@ const program = Effect.fn("appleSignInMutation")(function* () {
 });
 
 export function appleSignInMutationOptions(runtime: ApplicationRuntime) {
-  return mutationOptions({
+  return mutationOptions<
+    Effect.Success<ReturnType<typeof program>>,
+    Effect.Error<ReturnType<typeof program>>
+  >({
     mutationFn: () => runtime.runPromise(program()),
   });
 }

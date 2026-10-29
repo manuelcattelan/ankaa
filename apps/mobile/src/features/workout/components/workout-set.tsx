@@ -25,8 +25,8 @@ import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/wo
 import { Button } from "#/shared/components/button.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
 import { decodeForm } from "#/shared/core/decode-form.ts";
+import { useCreateId } from "#/shared/hooks/use-create-id.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
-import { createId } from "#/shared/interactors/create-id.ts";
 
 type WorkoutExercise =
   Workout["sections"]["coolDown"][number]["exercises"][number];
@@ -47,6 +47,7 @@ export function WorkoutSet({
   exerciseId,
   isRecordable,
   onEndCountdown,
+  onSkipCountdown,
   onStartCountdown,
   plannedSet,
   position,
@@ -63,6 +64,7 @@ export function WorkoutSet({
   exerciseId: string;
   isRecordable: boolean;
   onEndCountdown: () => void;
+  onSkipCountdown: () => void;
   onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
   plannedSet: Omit<WorkoutExercise["plannedSets"][number], "id">;
   position: number;
@@ -74,6 +76,8 @@ export function WorkoutSet({
   const queryClient = useQueryClient();
 
   const runtime = useRuntime();
+
+  const createId = useCreateId();
 
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
@@ -179,10 +183,7 @@ export function WorkoutSet({
 
     const savedDraft = {
       ...recordedSetDraft,
-      id:
-        recordedSetDraft.id === ""
-          ? runtime.runSync(createId())
-          : recordedSetDraft.id,
+      id: recordedSetDraft.id === "" ? createId() : recordedSetDraft.id,
     };
 
     handleChangeDraft(savedDraft);
@@ -299,11 +300,19 @@ export function WorkoutSet({
         />
       )}
       {setCountdown === null ? null : (
-        <WorkoutCountdown
-          countdown={setCountdown}
-          key={setCountdown.startTime}
-          onEnd={onEndCountdown}
-        />
+        <>
+          <WorkoutCountdown
+            countdown={setCountdown}
+            key={setCountdown.startTime}
+            onEnd={onEndCountdown}
+          />
+          {setCountdown.kind === "rest" ? (
+            <Button
+              onPress={onSkipCountdown}
+              title={WORKOUT_MESSAGES.skipRestButton}
+            />
+          ) : null}
+        </>
       )}
     </>
   );

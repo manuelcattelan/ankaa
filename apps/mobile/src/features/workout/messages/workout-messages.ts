@@ -1,6 +1,7 @@
 import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reasons";
 import type { WeightUnit } from "@ankaa/core/features/workout/constants/weight";
 import type { AmountUnit } from "@ankaa/core/shared/constants/amount";
+import type { WeightType } from "@ankaa/core/shared/constants/weight-types";
 
 import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
 import type { ScheduledNotification } from "#/shared/services/notifications.ts";
@@ -36,6 +37,7 @@ export const WORKOUT_MESSAGES = {
     weightPercentage === null
       ? "Drop set"
       : `Drop set: take off ${String(weightPercentage)}% at each drop`,
+  elapsedTimeStatus: (elapsedTime: string) => `Elapsed time: ${elapsedTime}`,
   noteLabel: "Note for this workout",
   notSkippedLabel: "Not skipped",
   plannedAmountLabels: {
@@ -83,6 +85,7 @@ export const WORKOUT_MESSAGES = {
     other: "Other",
     pain: "Pain",
   } satisfies Record<SkipReason, string>,
+  skipRestButton: "Skip rest",
   startPauseButton: "Start pause",
   startRestButton: "Start rest",
   startWorkoutButton: (routineName: string) => `Start ${routineName}`,
@@ -113,6 +116,13 @@ export const WORKOUT_MESSAGES = {
     kilogram: "Weight, in kilograms",
     pound: "Weight, in pounds",
   } satisfies Record<WeightUnit, string>,
+  weightTypeDescriptions: {
+    assisted: "Enter the weight taken off your body weight.",
+    bodyweight:
+      "Enter the weight added to your body weight, or leave it empty for your body weight only.",
+    single: "Enter the weight of one dumbbell or one side.",
+    total: "Enter everything you lift.",
+  } satisfies Record<Exclude<WeightType, "none">, string>,
   weightUnitLabel: "Weight unit",
   weightUnitLabels: {
     kilogram: "Kilograms",

@@ -15,7 +15,7 @@ Follow the [PostgreSQL docs](https://www.postgresql.org/docs/current/) and the w
 - Use `ON DELETE CASCADE` for a row that an aggregate owns and for every `user_id`, and `ON DELETE RESTRICT` for a reference to another aggregate, as the PostgreSQL docs' [orders and products example](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-FK) does.
 - Make every foreign key column the first column of a non-partial index, because PostgreSQL creates no index for a foreign key.
 - Declare every relation in `src/relations.ts`, in its one `defineRelations(schema, (r) => …)`, in both directions and across Features, because Drizzle merges several relation parts with a shallow spread, so a second part that declares the same table silently replaces the first.
-- Hold better-auth's tables to these conventions too, since its adapter maps fields by property name. When a better-auth upgrade or plugin needs new fields, generate the schema with the CLI through `better-auth.config.ts` and merge the fields by hand, never overwrite the file.
+- Hold better-auth's tables to these conventions too, since its adapter maps fields by property name. When a better-auth upgrade or plugin needs new fields, generate the schema with `pnpm --filter @ankaa/authentication generate`, which writes it to `packages/authentication/node_modules/.cache/better-auth/authentication.ts`, outside every check, and merge the fields into `src/schema/authentication.ts` by hand, never overwrite the file.
 
 ## Migrations
 

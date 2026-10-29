@@ -9,9 +9,7 @@ export function fakeAccessibilityLayer(announcedMessages: string[]) {
     Accessibility.of({
       announceMessage: (message: string) =>
         Effect.sync(() => {
-          if (message !== "") {
-            announcedMessages.push(message);
-          }
+          announcedMessages.push(message);
         }),
     }),
   );

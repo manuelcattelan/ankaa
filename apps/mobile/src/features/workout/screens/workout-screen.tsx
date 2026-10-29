@@ -7,11 +7,13 @@ import type { Countdown } from "#/features/workout/core/get-countdown-remaining-
 import type { RecordedSetDraftEntry } from "#/features/workout/core/recorded-set-drafts-reducer.ts";
 import type { WorkoutExerciseDrafts } from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
 
+import { WorkoutElapsedTime } from "#/features/workout/components/workout-elapsed-time.tsx";
 import { WorkoutSection } from "#/features/workout/components/workout-section.tsx";
 import { WorkoutStopButton } from "#/features/workout/components/workout-stop-button.tsx";
 import { recordedSetDraftsReducer } from "#/features/workout/core/recorded-set-drafts-reducer.ts";
 import { workoutExerciseDraftsReducer } from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
+import { countdownNotificationCancelMutationOptions } from "#/features/workout/mutations/countdown-notification-cancel-mutation-options.ts";
 import { countdownNotificationScheduleMutationOptions } from "#/features/workout/mutations/countdown-notification-schedule-mutation-options.ts";
 import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/workout-find-in-progress-query-options.ts";
 import { ScrollView } from "#/shared/components/scroll-view.tsx";
@@ -53,6 +55,9 @@ export function WorkoutScreen() {
   const scheduleCountdownNotification = useMutation(
     countdownNotificationScheduleMutationOptions(runtime),
   );
+  const cancelCountdownNotification = useMutation(
+    countdownNotificationCancelMutationOptions(runtime),
+  );
 
   const workout = workoutInProgress.data ?? null;
   const exerciseNames = new Map(
@@ -92,6 +97,11 @@ export function WorkoutScreen() {
     setCountdown(null);
   }
 
+  function handleSkipCountdown() {
+    setCountdown(null);
+    cancelCountdownNotification.mutate();
+  }
+
   function handleStartCountdown(
     startedCountdown: Omit<Countdown, "startTime">,
   ) {
@@ -110,6 +120,7 @@ export function WorkoutScreen() {
         <StatusMessage message={statusMessage} />
         {workout === null ? null : (
           <>
+            <WorkoutElapsedTime startedAt={workout.startedAt} />
             <WorkoutSection
               countdown={countdown}
               dispatch={dispatch}
@@ -117,6 +128,7 @@ export function WorkoutScreen() {
               exerciseGroups={workout.sections.warmUp}
               exerciseNames={exerciseNames}
               onEndCountdown={handleEndCountdown}
+              onSkipCountdown={handleSkipCountdown}
               onStartCountdown={handleStartCountdown}
               recordedSetDraftEntries={recordedSetDraftEntries}
               section="warm_up"
@@ -129,6 +141,7 @@ export function WorkoutScreen() {
               exerciseGroups={workout.sections.main}
               exerciseNames={exerciseNames}
               onEndCountdown={handleEndCountdown}
+              onSkipCountdown={handleSkipCountdown}
               onStartCountdown={handleStartCountdown}
               recordedSetDraftEntries={recordedSetDraftEntries}
               section="main"
@@ -141,6 +154,7 @@ export function WorkoutScreen() {
               exerciseGroups={workout.sections.coolDown}
               exerciseNames={exerciseNames}
               onEndCountdown={handleEndCountdown}
+              onSkipCountdown={handleSkipCountdown}
               onStartCountdown={handleStartCountdown}
               recordedSetDraftEntries={recordedSetDraftEntries}
               section="cool_down"

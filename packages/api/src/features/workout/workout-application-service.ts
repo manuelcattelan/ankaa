@@ -52,7 +52,9 @@ export class WorkoutApplicationService extends Context.Service<
       userId: string;
     }) => Effect.Effect<
       void,
-      RoutineNotFoundError | WorkoutInProgressConflictError
+      | RoutineNotFoundError
+      | WorkoutInProgressConflictError
+      | WorkoutNotFoundError
     >;
     readonly stop: (options: {
       id: string;
@@ -220,7 +222,6 @@ export class WorkoutApplicationService extends Context.Service<
               });
               const workout = yield* workoutRepository.find({
                 id: input.id,
-                userId,
               });
 
               yield* Match.valueTags(
@@ -228,6 +229,7 @@ export class WorkoutApplicationService extends Context.Service<
                 {
                   RoutineNotFoundError: (error) => Effect.fail(error),
                   WorkoutAlreadyStarted: () => Effect.void,
+                  WorkoutNotFoundError: (error) => Effect.fail(error),
                   WorkoutStartAllowed: (outcome) =>
                     workoutRepository.start({
                       id: input.id,

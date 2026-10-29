@@ -14,8 +14,7 @@ import { RoutineEditorExercise } from "#/features/routine/components/routine-edi
 import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
 import { Button } from "#/shared/components/button.tsx";
 import { Text } from "#/shared/components/text.tsx";
-import { useRuntime } from "#/shared/hooks/use-runtime.ts";
-import { createId } from "#/shared/interactors/create-id.ts";
+import { useCreateId } from "#/shared/hooks/use-create-id.ts";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 const MINIMUM_SUPERSET_EXERCISE_COUNT = 2;
@@ -39,7 +38,7 @@ export function RoutineEditorExerciseGroup({
   onOpenExercisePicker: (exercisePickerTarget: ExercisePickerTarget) => void;
   section: Section;
 }) {
-  const runtime = useRuntime();
+  const createId = useCreateId();
 
   const isSuperset =
     exerciseGroup.exercises.length >= MINIMUM_SUPERSET_EXERCISE_COUNT;
@@ -57,7 +56,7 @@ export function RoutineEditorExerciseGroup({
 
   function handleLeaveSuperset(routineExerciseId: string) {
     dispatch({
-      exerciseGroupId: runtime.runSync(createId()),
+      exerciseGroupId: createId(),
       routineExerciseId,
       section,
       type: "leftSuperset",

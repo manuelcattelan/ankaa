@@ -15,7 +15,11 @@ import {
   AMOUNT_UNITS,
   MINIMUM_AMOUNT,
 } from "@ankaa/core/shared/constants/amount";
-import { INTENSITY_TECHNIQUES } from "@ankaa/core/shared/constants/intensity-techniques";
+import {
+  DROP_SET,
+  INTENSITY_TECHNIQUES,
+  REST_PAUSE_SET,
+} from "@ankaa/core/shared/constants/intensity-techniques";
 import { MINIMUM_POSITION } from "@ankaa/core/shared/constants/minimum-position";
 import { SECTIONS } from "@ankaa/core/shared/constants/sections";
 import { SET_TYPES } from "@ankaa/core/shared/constants/set-types";
@@ -51,7 +55,7 @@ export const workout = snakeCase.table(
   {
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     endedAt: timestamp({ withTimezone: true }),
-    id: uuid().primaryKey(),
+    id: uuid().notNull(),
     routineId: uuid()
       .notNull()
       .references(() => routine.id, {
@@ -71,6 +75,7 @@ export const workout = snakeCase.table(
       }),
   },
   (table) => [
+    primaryKey({ columns: [table.id], name: "workout_pkey" }),
     uniqueIndex("workout_in_progress_idx")
       .on(table.userId)
       .where(isNull(table.endedAt)),
@@ -83,7 +88,7 @@ export const workoutExerciseGroup = snakeCase.table(
   "workout_exercise_group",
   {
     id: uuid()
-      .primaryKey()
+      .notNull()
       .default(sql`uuidv7()`),
     position: integer().notNull(),
     section: text({ enum: SECTIONS }).notNull(),
@@ -95,6 +100,7 @@ export const workoutExerciseGroup = snakeCase.table(
       }),
   },
   (table) => [
+    primaryKey({ columns: [table.id], name: "workout_exercise_group_pkey" }),
     unique("workout_exercise_group_workout_id_section_position_key").on(
       table.workoutId,
       table.section,
@@ -123,7 +129,7 @@ export const workoutExercise = snakeCase.table(
         onDelete: "restrict",
       }),
     id: uuid()
-      .primaryKey()
+      .notNull()
       .default(sql`uuidv7()`),
     note: text(),
     plannedNote: text(),
@@ -143,6 +149,7 @@ export const workoutExercise = snakeCase.table(
     }),
   },
   (table) => [
+    primaryKey({ columns: [table.id], name: "workout_exercise_pkey" }),
     foreignKey({
       columns: [table.warmUpForWorkoutExerciseId],
       foreignColumns: [table.id],
@@ -193,7 +200,7 @@ export const workoutExercisePlannedSet = snakeCase.table(
   {
     amount: integer(),
     id: uuid()
-      .primaryKey()
+      .notNull()
       .default(sql`uuidv7()`),
     intensityTechnique: text({ enum: INTENSITY_TECHNIQUES }),
     isToFailure: boolean().notNull(),
@@ -212,6 +219,10 @@ export const workoutExercisePlannedSet = snakeCase.table(
       }),
   },
   (table) => [
+    primaryKey({
+      columns: [table.id],
+      name: "workout_exercise_planned_set_pkey",
+    }),
     unique("workout_exercise_planned_set_workout_exercise_id_position_key").on(
       table.workoutExerciseId,
       table.position,
@@ -262,11 +273,11 @@ export const workoutExercisePlannedSet = snakeCase.table(
     ),
     check(
       "workout_exercise_planned_set_drop_set_check",
-      sql`${table.intensityTechnique} <> 'drop_set' or (${table.segmentCount} is not null and ${table.pauseSeconds} is null)`,
+      sql`${table.intensityTechnique} <> ${DROP_SET} or (${table.segmentCount} is not null and ${table.pauseSeconds} is null)`,
     ),
     check(
       "workout_exercise_planned_set_rest_pause_set_check",
-      sql`${table.intensityTechnique} <> 'rest_pause_set' or (${table.segmentCount} is not null and ${table.pauseSeconds} is not null and ${table.weightPercentage} is null)`,
+      sql`${table.intensityTechnique} <> ${REST_PAUSE_SET} or (${table.segmentCount} is not null and ${table.pauseSeconds} is not null and ${table.weightPercentage} is null)`,
     ),
   ],
 );
@@ -275,7 +286,7 @@ export const workoutExerciseRecordedSet = snakeCase.table(
   "workout_exercise_recorded_set",
   {
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
-    id: uuid().primaryKey(),
+    id: uuid().notNull(),
     position: integer().notNull(),
     updatedAt: timestamp({ withTimezone: true })
       .notNull()
@@ -289,6 +300,10 @@ export const workoutExerciseRecordedSet = snakeCase.table(
       }),
   },
   (table) => [
+    primaryKey({
+      columns: [table.id],
+      name: "workout_exercise_recorded_set_pkey",
+    }),
     unique("workout_exercise_recorded_set_workout_exercise_id_position_key").on(
       table.workoutExerciseId,
       table.position,

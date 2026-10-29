@@ -7,7 +7,11 @@ import { MINIMUM_PAUSE_SECONDS } from "@ankaa/core/features/routine/constants/mi
 import { MINIMUM_REST_SECONDS } from "@ankaa/core/features/routine/constants/minimum-rest-seconds";
 import { MINIMUM_SEGMENT_COUNT } from "@ankaa/core/features/routine/constants/minimum-segment-count";
 import { MINIMUM_AMOUNT } from "@ankaa/core/shared/constants/amount";
-import { INTENSITY_TECHNIQUES } from "@ankaa/core/shared/constants/intensity-techniques";
+import {
+  DROP_SET,
+  INTENSITY_TECHNIQUES,
+  REST_PAUSE_SET,
+} from "@ankaa/core/shared/constants/intensity-techniques";
 import { MINIMUM_POSITION } from "@ankaa/core/shared/constants/minimum-position";
 import { SECTIONS } from "@ankaa/core/shared/constants/sections";
 import { SET_TYPES } from "@ankaa/core/shared/constants/set-types";
@@ -31,12 +35,14 @@ import {
 import { user } from "#/schema/authentication.ts";
 import { exercise } from "#/schema/exercise.ts";
 
+const TRIMMED_TEXT_PATTERN = String.raw`^\S(.*\S)?$`;
+
 export const routine = snakeCase.table(
   "routine",
   {
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp({ withTimezone: true }),
-    id: uuid().primaryKey(),
+    id: uuid().notNull(),
     name: text().notNull(),
     updatedAt: timestamp({ withTimezone: true })
       .notNull()
@@ -50,11 +56,14 @@ export const routine = snakeCase.table(
       }),
   },
   (table) => [
-    uniqueIndex("routine_user_id_name_idx")
+    primaryKey({ columns: [table.id], name: "routine_pkey" }),
+    uniqueIndex("routine_live_name_idx")
       .on(table.userId, sql`lower(${table.name})`)
       .where(isNull(table.deletedAt)),
     index("routine_user_id_idx").on(table.userId),
-    check("routine_name_check", sql`${table.name} <> ''`),
+    // The wire Schema trims a Routine name and requires it non-empty, so the
+    // name starts and ends with a character that isn't whitespace.
+    check("routine_name_check", sql`${table.name} ~ ${TRIMMED_TEXT_PATTERN}`),
   ],
 );
 
@@ -84,7 +93,7 @@ export const routineDay = snakeCase.table(
 export const routineExerciseGroup = snakeCase.table(
   "routine_exercise_group",
   {
-    id: uuid().primaryKey(),
+    id: uuid().notNull(),
     position: integer().notNull(),
     routineId: uuid()
       .notNull()
@@ -95,6 +104,7 @@ export const routineExerciseGroup = snakeCase.table(
     section: text({ enum: SECTIONS }).notNull(),
   },
   (table) => [
+    primaryKey({ columns: [table.id], name: "routine_exercise_group_pkey" }),
     unique("routine_exercise_group_routine_id_section_position_key").on(
       table.routineId,
       table.section,
@@ -120,7 +130,7 @@ export const routineExercise = snakeCase.table(
         name: "routine_exercise_exercise_id_fkey",
         onDelete: "restrict",
       }),
-    id: uuid().primaryKey(),
+    id: uuid().notNull(),
     note: text(),
     position: integer().notNull(),
     routineExerciseGroupId: uuid().references(() => routineExerciseGroup.id, {
@@ -130,6 +140,7 @@ export const routineExercise = snakeCase.table(
     warmUpForRoutineExerciseId: uuid(),
   },
   (table) => [
+    primaryKey({ columns: [table.id], name: "routine_exercise_pkey" }),
     foreignKey({
       columns: [table.warmUpForRoutineExerciseId],
       foreignColumns: [table.id],
@@ -159,7 +170,7 @@ export const routineExerciseSet = snakeCase.table(
   "routine_exercise_set",
   {
     amount: integer(),
-    id: uuid().primaryKey(),
+    id: uuid().notNull(),
     intensityTechnique: text({ enum: INTENSITY_TECHNIQUES }),
     isToFailure: boolean().notNull(),
     pauseSeconds: integer(),
@@ -177,6 +188,7 @@ export const routineExerciseSet = snakeCase.table(
     weightPercentage: integer(),
   },
   (table) => [
+    primaryKey({ columns: [table.id], name: "routine_exercise_set_pkey" }),
     unique("routine_exercise_set_routine_exercise_id_position_key").on(
       table.routineExerciseId,
       table.position,
@@ -224,11 +236,11 @@ export const routineExerciseSet = snakeCase.table(
     ),
     check(
       "routine_exercise_set_drop_set_check",
-      sql`${table.intensityTechnique} <> 'drop_set' or (${table.segmentCount} is not null and ${table.pauseSeconds} is null)`,
+      sql`${table.intensityTechnique} <> ${DROP_SET} or (${table.segmentCount} is not null and ${table.pauseSeconds} is null)`,
     ),
     check(
       "routine_exercise_set_rest_pause_set_check",
-      sql`${table.intensityTechnique} <> 'rest_pause_set' or (${table.segmentCount} is not null and ${table.pauseSeconds} is not null and ${table.weightPercentage} is null)`,
+      sql`${table.intensityTechnique} <> ${REST_PAUSE_SET} or (${table.segmentCount} is not null and ${table.pauseSeconds} is not null and ${table.weightPercentage} is null)`,
     ),
   ],
 );

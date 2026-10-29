@@ -10,17 +10,19 @@ import { eq, sql } from "drizzle-orm";
 import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
 import * as Fiber from "effect/Fiber";
-import * as Schedule from "effect/Schedule";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { TestRuntime } from "#/shared/testing/create-test-runtime.ts";
 
 import { createSignedInCaller } from "#/shared/testing/create-signed-in-caller.ts";
 import { createTestRuntime } from "#/shared/testing/create-test-runtime.ts";
+import { waitForLockWait } from "#/shared/testing/wait-for-lock-wait.ts";
 
-type LockWaitCountRow = { count: number };
+type DatabaseTimeRow = { milliseconds: number };
 
 const generatedId: unknown = expect.any(String);
+
+const serverTime: unknown = expect.any(Date);
 
 const BENCH_PRESS_EXERCISE_ID = "019a0000-0000-7000-8000-000000000001";
 
@@ -131,6 +133,25 @@ function insertExercises(runtime: TestRuntime) {
   );
 }
 
+/**
+ * Reads the current time, in whole milliseconds as a Date holds it, from the
+ * database's clock, which stamps every time a Workout records.
+ */
+function readDatabaseTime(runtime: TestRuntime) {
+  return runtime.runPromise(
+    Effect.gen(function* () {
+      const database = yield* Database;
+
+      const rows = yield* database.execute<DatabaseTimeRow>(
+        sql`select floor(extract(epoch from now()) * 1000)::float8 as milliseconds`,
+        "objects",
+      );
+
+      return rows[0]?.milliseconds ?? 0;
+    }),
+  );
+}
+
 function readSegmentCount({
   recordedSetId,
   runtime,
@@ -228,31 +249,6 @@ async function startBenchPressWorkout({
   const workoutInProgress = await caller.workout.findInProgress();
 
   return workoutInProgress?.sections.main[0]?.exercises[0]?.id ?? "";
-}
-
-/**
- * Waits until a query of the test database waits for a row lock, or gives up
- * after a second, so a test can commit once its write is blocked.
- */
-function waitForLockWait(runtime: TestRuntime) {
-  return runtime.runPromise(
-    Effect.gen(function* () {
-      const database = yield* Database;
-
-      const rows = yield* database.execute<LockWaitCountRow>(
-        sql`select count(*)::int as count from pg_stat_activity where datname = current_database() and wait_event_type = 'Lock'`,
-        "objects",
-      );
-
-      return rows[0]?.count ?? 0;
-    }).pipe(
-      Effect.repeat({
-        schedule: Schedule.spaced("10 millis"),
-        times: 100,
-        until: (count) => count > 0,
-      }),
-    ),
-  );
 }
 
 describe("workout.start", () => {
@@ -522,6 +518,7 @@ describe("workout.start", () => {
           },
         ],
       },
+      startedAt: serverTime,
     });
   });
 
@@ -664,6 +661,44 @@ describe("workout.start", () => {
     ]);
   });
 
+  it("fails with NOT_FOUND and WorkoutNotFoundError for the id of another User's Workout, and leaves it in progress", async () => {
+    const otherCaller = await createSignedInCaller({ runtime });
+    await otherCaller.routine.save(
+      buildRoutineSaveInput({
+        exerciseGroupId: "019a0000-0000-7000-8000-000000000243",
+        id: "019a0000-0000-7000-8000-000000000143",
+        name: "Push day",
+        routineExerciseId: "019a0000-0000-7000-8000-000000000343",
+      }),
+    );
+    await otherCaller.workout.start({
+      id: "019a0000-0000-7000-8000-000000000543",
+      routineId: "019a0000-0000-7000-8000-000000000143",
+    });
+    const caller = await createSignedInCaller({ runtime });
+    await caller.routine.save(
+      buildRoutineSaveInput({
+        exerciseGroupId: "019a0000-0000-7000-8000-000000000244",
+        id: "019a0000-0000-7000-8000-000000000144",
+        name: "Push day",
+        routineExerciseId: "019a0000-0000-7000-8000-000000000344",
+      }),
+    );
+
+    await expect(
+      caller.workout.start({
+        id: "019a0000-0000-7000-8000-000000000543",
+        routineId: "019a0000-0000-7000-8000-000000000144",
+      }),
+    ).rejects.toMatchObject({
+      cause: { _tag: "WorkoutNotFoundError" },
+      code: "NOT_FOUND",
+    });
+    await expect(otherCaller.workout.findInProgress()).resolves.toMatchObject({
+      id: "019a0000-0000-7000-8000-000000000543",
+    });
+  });
+
   it("fails with NOT_FOUND and RoutineNotFoundError for a Routine of another User", async () => {
     const otherCaller = await createSignedInCaller({ runtime });
     await otherCaller.routine.save(
@@ -721,6 +756,33 @@ describe("workout.findInProgress", () => {
 
   afterAll(async () => {
     await runtime.dispose();
+  });
+
+  it("returns the time the Workout started, from the database's clock", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    await caller.routine.save(
+      buildRoutineSaveInput({
+        exerciseGroupId: "019a0000-0000-7000-8000-000000000283",
+        id: "019a0000-0000-7000-8000-000000000183",
+        name: "Push day",
+        routineExerciseId: "019a0000-0000-7000-8000-000000000383",
+      }),
+    );
+    const timeBeforeStart = await readDatabaseTime(runtime);
+    await caller.workout.start({
+      id: "019a0000-0000-7000-8000-000000000583",
+      routineId: "019a0000-0000-7000-8000-000000000183",
+    });
+    const timeAfterStart = await readDatabaseTime(runtime);
+
+    const workoutInProgress = await caller.workout.findInProgress();
+
+    expect(workoutInProgress?.startedAt.getTime()).toBeGreaterThanOrEqual(
+      timeBeforeStart,
+    );
+    expect(workoutInProgress?.startedAt.getTime()).toBeLessThanOrEqual(
+      timeAfterStart,
+    );
   });
 
   it("returns null when the User has no Workout in progress, leaving out their stopped Workouts and the Workouts of other Users", async () => {

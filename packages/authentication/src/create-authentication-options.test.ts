@@ -6,7 +6,7 @@ import { listTableMismatches } from "#/testing/list-table-mismatches.ts";
 
 const models = getAuthTables(
   createAuthenticationOptions({
-    appleBundleId: "apple-bundle-id",
+    appleAppBundleId: "apple-bundle-id",
     baseUrl: "http://localhost:3000",
     database: {},
     googleIosClientId: "google-ios-client-id",

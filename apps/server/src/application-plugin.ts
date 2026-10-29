@@ -8,6 +8,7 @@ import underPressure from "@fastify/under-pressure";
 import fastifyPlugin from "fastify-plugin";
 import { STATUS_CODES } from "node:http";
 
+import { getUrlPath } from "#/get-url-path.ts";
 import { authenticationRoute } from "#/routes/authentication-route.ts";
 import { trpcRoute } from "#/routes/trpc-route.ts";
 import { wellKnownRoute } from "#/routes/well-known-route.ts";
@@ -15,8 +16,8 @@ import { wellKnownRoute } from "#/routes/well-known-route.ts";
 export type ApplicationPluginOptions = {
   androidAppPackageName: string;
   androidAppSha256CertificateFingerprints: readonly string[];
-  appleAppBundleIdentifier: string;
-  appleTeamIdentifier: string;
+  appleAppBundleId: string;
+  appleTeamId: string;
   runtime: ApplicationRuntime;
 };
 
@@ -30,7 +31,7 @@ export const applicationPlugin = fastifyPlugin<ApplicationPluginOptions>(
 
     server.setErrorHandler<FastifyError>(async (error, request, reply) => {
       const statusCode = error.statusCode ?? HTTP_STATUS_INTERNAL_SERVER_ERROR;
-      const message = `Failed to handle request "${request.method} ${request.url}"`;
+      const message = `Failed to handle request "${request.method} ${getUrlPath(request.url)}"`;
 
       if (statusCode < HTTP_STATUS_INTERNAL_SERVER_ERROR) {
         request.log.info(error, message);
@@ -50,7 +51,7 @@ export const applicationPlugin = fastifyPlugin<ApplicationPluginOptions>(
     server.setNotFoundHandler(
       { preHandler: server.rateLimit() },
       async (request, reply) => {
-        const message = `Route "${request.method} ${request.url}" not found`;
+        const message = `Route "${request.method} ${getUrlPath(request.url)}" not found`;
 
         request.log.info(message);
 

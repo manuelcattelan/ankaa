@@ -27,13 +27,17 @@ const authenticationErrorSchema = Schema.Union([
   RateLimitedError,
 ]);
 
+const isAuthenticationError = Schema.is(authenticationErrorSchema);
+
 /**
  * Maps every error that an authentication screen acts on to the message its
- * User sees. A mutation's error can also be a defect, which gets the unknown
- * error message.
+ * User sees. A rejected mutation can also carry a defect, which its error
+ * type doesn't show, and a defect gets the unknown error message.
  */
-export function getAuthenticationErrorMessage(error: unknown) {
-  if (!Schema.is(authenticationErrorSchema)(error)) {
+export function getAuthenticationErrorMessage(
+  error: typeof authenticationErrorSchema.Type,
+) {
+  if (!isAuthenticationError(error)) {
     return SHARED_MESSAGES.unknownError;
   }
 

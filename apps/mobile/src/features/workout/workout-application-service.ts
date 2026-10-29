@@ -36,6 +36,7 @@ export type Workout = NonNullable<
 export class WorkoutApplicationService extends Context.Service<
   WorkoutApplicationService,
   {
+    readonly cancelCountdownNotification: () => Effect.Effect<void>;
     readonly findInProgress: () => Effect.Effect<
       null | Workout,
       TrpcClientError
@@ -65,7 +66,10 @@ export class WorkoutApplicationService extends Context.Service<
       input: WorkoutStartInput,
     ) => Effect.Effect<
       void,
-      RoutineNotFoundError | TrpcClientError | WorkoutInProgressConflictError
+      | RoutineNotFoundError
+      | TrpcClientError
+      | WorkoutInProgressConflictError
+      | WorkoutNotFoundError
     >;
     readonly stop: (
       input: WorkoutStopInput,
@@ -77,6 +81,12 @@ export class WorkoutApplicationService extends Context.Service<
     Effect.gen(function* () {
       const notifications = yield* Notifications;
       const trpcClient = yield* TrpcClient;
+
+      const cancelCountdownNotification = Effect.fn(
+        "WorkoutApplicationService.cancelCountdownNotification",
+      )(function* () {
+        yield* notifications.cancelAllScheduled();
+      });
 
       const findInProgress = Effect.fn(
         "WorkoutApplicationService.findInProgress",
@@ -171,6 +181,7 @@ export class WorkoutApplicationService extends Context.Service<
       });
 
       return WorkoutApplicationService.of({
+        cancelCountdownNotification,
         findInProgress,
         removeSet,
         saveNote,

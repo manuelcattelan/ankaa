@@ -92,13 +92,4 @@ describe("getAuthenticationErrorMessage", () => {
       "Google Play services aren't installed on this device: try another sign-in method.",
     );
   });
-
-  it("returns the unknown error message for a defect", () => {
-    expect(
-      getAuthenticationErrorMessage({
-        code: "FAILED_TO_CREATE_USER",
-        status: 422,
-      }),
-    ).toBe("Something went wrong: try again.");
-  });
 });

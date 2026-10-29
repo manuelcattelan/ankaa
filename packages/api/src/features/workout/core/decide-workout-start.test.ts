@@ -1,3 +1,4 @@
+import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 import { describe, expect, it } from "vitest";
 
@@ -25,9 +26,19 @@ describe("decideWorkoutStart", () => {
           userId: "user-1",
         },
         userId: "user-1",
-        workout: { id: "workout-1" },
+        workout: { userId: "user-1" },
       }),
     ).toStrictEqual({ _tag: "WorkoutAlreadyStarted" });
+  });
+
+  it("fails with WorkoutNotFoundError for the id of another User's Workout", () => {
+    expect(
+      decideWorkoutStart({
+        routine: { deletedAt: null, userId: "user-1" },
+        userId: "user-1",
+        workout: { userId: "user-2" },
+      }),
+    ).toStrictEqual(new WorkoutNotFoundError());
   });
 
   it("fails with RoutineNotFoundError for a Routine that doesn't exist", () => {

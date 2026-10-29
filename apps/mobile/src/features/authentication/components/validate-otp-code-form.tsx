@@ -1,12 +1,11 @@
 import { OTP_CODE_LENGTH } from "@ankaa/core/features/authentication/constants/otp-code-length";
 import { useMutation } from "@tanstack/react-query";
-import * as Schema from "effect/Schema";
 import { useState } from "react";
 import { Platform } from "react-native";
 
 import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
+import { isOtpCodeRejection } from "#/features/authentication/core/is-otp-code-rejection.ts";
 import { otpCodeFormSchema } from "#/features/authentication/core/otp-code-form-schema.ts";
-import { announceAuthenticationError } from "#/features/authentication/interactors/announce-authentication-error.ts";
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 import { otpCodeRequestMutationOptions } from "#/features/authentication/mutations/otp-code-request-mutation-options.ts";
 import { otpCodeSignInMutationOptions } from "#/features/authentication/mutations/otp-code-sign-in-mutation-options.ts";
@@ -14,22 +13,13 @@ import { Button } from "#/shared/components/button.tsx";
 import { ScrollView } from "#/shared/components/scroll-view.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
 import { decodeForm } from "#/shared/core/decode-form.ts";
-import { OtpCodeAttemptsExceededError } from "#/shared/errors/otp-code-attempts-exceeded-error.ts";
-import { OtpCodeExpiredError } from "#/shared/errors/otp-code-expired-error.ts";
-import { OtpCodeInvalidError } from "#/shared/errors/otp-code-invalid-error.ts";
+import { useAnnounceMessage } from "#/shared/hooks/use-announce-message.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
-import { announceMessage } from "#/shared/interactors/announce-message.ts";
-
-const isOtpCodeRejection = Schema.is(
-  Schema.Union([
-    OtpCodeAttemptsExceededError,
-    OtpCodeExpiredError,
-    OtpCodeInvalidError,
-  ]),
-);
 
 export function ValidateOtpCodeForm({ email }: { email: string }) {
   const runtime = useRuntime();
+
+  const announceMessage = useAnnounceMessage();
 
   const [otpCode, setOtpCode] = useState("");
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -37,7 +27,7 @@ export function ValidateOtpCodeForm({ email }: { email: string }) {
   const resendOtpCode = useMutation({
     ...otpCodeRequestMutationOptions(runtime),
     onError: (error) => {
-      runtime.runSync(announceAuthenticationError(error));
+      announceMessage(getAuthenticationErrorMessage(error));
     },
     onSuccess: () => {
       setOtpCode("");
@@ -47,7 +37,7 @@ export function ValidateOtpCodeForm({ email }: { email: string }) {
   const validateOtpCode = useMutation({
     ...otpCodeSignInMutationOptions(runtime),
     onError: (error) => {
-      runtime.runSync(announceAuthenticationError(error));
+      announceMessage(getAuthenticationErrorMessage(error));
 
       if (isOtpCodeRejection(error)) {
         setOtpCode("");
@@ -91,9 +81,7 @@ export function ValidateOtpCodeForm({ email }: { email: string }) {
 
     if (!otpCodeFormDecoding.isValid) {
       if (otpCodeFormDecoding.errorMessages.otpCode !== null) {
-        runtime.runSync(
-          announceMessage(otpCodeFormDecoding.errorMessages.otpCode),
-        );
+        announceMessage(otpCodeFormDecoding.errorMessages.otpCode);
       }
 
       return;

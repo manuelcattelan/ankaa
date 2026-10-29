@@ -11,8 +11,8 @@ export const wellKnownRoute = ((
   {
     androidAppPackageName,
     androidAppSha256CertificateFingerprints,
-    appleAppBundleIdentifier,
-    appleTeamIdentifier,
+    appleAppBundleId,
+    appleTeamId,
   },
   done,
 ) => {
@@ -23,7 +23,7 @@ export const wellKnownRoute = ((
       applinks: {
         details: [
           {
-            appIDs: [`${appleTeamIdentifier}.${appleAppBundleIdentifier}`],
+            appIDs: [`${appleTeamId}.${appleAppBundleId}`],
             components: [{ "/": "/delete-account*" }],
           },
         ],

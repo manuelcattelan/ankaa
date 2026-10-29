@@ -24,8 +24,8 @@ import { ScrollView } from "#/shared/components/scroll-view.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
 import { decodeForm } from "#/shared/core/decode-form.ts";
+import { useCreateId } from "#/shared/hooks/use-create-id.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
-import { createId } from "#/shared/interactors/create-id.ts";
 import { exerciseListQueryOptions } from "#/shared/queries/exercise-list-query-options.ts";
 
 /**
@@ -48,6 +48,8 @@ export function RoutineEditor({
   const queryClient = useQueryClient();
 
   const runtime = useRuntime();
+
+  const createId = useCreateId();
 
   const [routineDraft, dispatch] = useReducer(
     routineDraftReducer,
@@ -110,8 +112,7 @@ export function RoutineEditor({
     setHasSubmitted(true);
     saveRoutine.reset();
 
-    const id =
-      routineDraft.id === "" ? runtime.runSync(createId()) : routineDraft.id;
+    const id = routineDraft.id === "" ? createId() : routineDraft.id;
 
     dispatch({ id, type: "assignedId" });
 
@@ -131,19 +132,19 @@ export function RoutineEditor({
     }
 
     if ("section" in exercisePickerTarget) {
-      const exerciseGroupId = runtime.runSync(createId());
+      const exerciseGroupId = createId();
 
       dispatch({
         exerciseGroupId,
         exerciseId: exercise.id,
-        routineExerciseId: runtime.runSync(createId()),
+        routineExerciseId: createId(),
         section: exercisePickerTarget.section,
         type: "addedExercise",
       });
     } else {
       dispatch({
         exerciseId: exercise.id,
-        routineExerciseId: runtime.runSync(createId()),
+        routineExerciseId: createId(),
         type: "addedWarmUpExercise",
         warmUpForRoutineExerciseId:
           exercisePickerTarget.warmUpForRoutineExerciseId,

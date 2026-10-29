@@ -32,7 +32,7 @@
   "private": true,
   "scripts": {
     "check-types": "tsc --noEmit",
-    "generate": "auth generate --config better-auth.config.ts --output ../database/src/schema/authentication.ts",
+    "generate": "auth generate --config better-auth.config.ts --output node_modules/.cache/better-auth/authentication.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest run"

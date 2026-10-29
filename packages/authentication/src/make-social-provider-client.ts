@@ -40,17 +40,17 @@ const tokenResponseSchema = Schema.Struct({
  */
 export const makeSocialProviderClient = Effect.fn("makeSocialProviderClient")(
   function* ({
-    appleBundleId,
-    appleKeyIdentifier,
+    appleAppBundleId,
+    appleKeyId,
     applePrivateKey,
-    appleTeamIdentifier,
+    appleTeamId,
     googleClientSecret,
     googleWebClientId,
   }: {
-    appleBundleId: string;
-    appleKeyIdentifier: string;
+    appleAppBundleId: string;
+    appleKeyId: string;
     applePrivateKey: KeyObject;
-    appleTeamIdentifier: string;
+    appleTeamId: string;
     googleClientSecret: Redacted.Redacted;
     googleWebClientId: string;
   }) {
@@ -66,10 +66,10 @@ export const makeSocialProviderClient = Effect.fn("makeSocialProviderClient")(
       );
 
       return signAppleClientSecret({
-        appleBundleId,
-        appleKeyIdentifier,
+        appleAppBundleId,
+        appleKeyId,
         applePrivateKey,
-        appleTeamIdentifier,
+        appleTeamId,
         issuedAtSeconds,
       });
     });
@@ -88,7 +88,7 @@ export const makeSocialProviderClient = Effect.fn("makeSocialProviderClient")(
           Effect.map(createAppleClientSecret(), (appleClientSecret) =>
             HttpClientRequest.post(APPLE_TOKEN_URL).pipe(
               HttpClientRequest.bodyUrlParams({
-                ["client_id"]: appleBundleId,
+                ["client_id"]: appleAppBundleId,
                 ["client_secret"]: appleClientSecret,
                 code: authorizationCode,
                 ["grant_type"]: "authorization_code",
@@ -140,7 +140,7 @@ export const makeSocialProviderClient = Effect.fn("makeSocialProviderClient")(
           Effect.map(createAppleClientSecret(), (appleClientSecret) =>
             HttpClientRequest.post(APPLE_REVOCATION_URL).pipe(
               HttpClientRequest.bodyUrlParams({
-                ["client_id"]: appleBundleId,
+                ["client_id"]: appleAppBundleId,
                 ["client_secret"]: appleClientSecret,
                 token: refreshToken,
                 ["token_type_hint"]: "refresh_token",
@@ -175,27 +175,27 @@ function encodeJsonAsBase64Url(json: Record<string, unknown>) {
 // (https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret,
 // https://www.rfc-editor.org/rfc/rfc7518#section-3.4).
 function signAppleClientSecret({
-  appleBundleId,
-  appleKeyIdentifier,
+  appleAppBundleId,
+  appleKeyId,
   applePrivateKey,
-  appleTeamIdentifier,
+  appleTeamId,
   issuedAtSeconds,
 }: {
-  appleBundleId: string;
-  appleKeyIdentifier: string;
+  appleAppBundleId: string;
+  appleKeyId: string;
   applePrivateKey: KeyObject;
-  appleTeamIdentifier: string;
+  appleTeamId: string;
   issuedAtSeconds: number;
 }) {
   const unsignedAppleClientSecret = `${encodeJsonAsBase64Url({
     alg: "ES256",
-    kid: appleKeyIdentifier,
+    kid: appleKeyId,
   })}.${encodeJsonAsBase64Url({
     aud: "https://appleid.apple.com",
     exp: issuedAtSeconds + APPLE_CLIENT_SECRET_LIFETIME_SECONDS,
     iat: issuedAtSeconds,
-    iss: appleTeamIdentifier,
-    sub: appleBundleId,
+    iss: appleTeamId,
+    sub: appleAppBundleId,
   })}`;
 
   const signature = sign("sha256", Buffer.from(unsignedAppleClientSecret), {

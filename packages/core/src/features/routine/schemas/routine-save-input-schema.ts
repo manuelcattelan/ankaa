@@ -2,23 +2,21 @@ import * as Schema from "effect/Schema";
 
 import { DAYS_OF_WEEK } from "#/features/routine/constants/days-of-week.ts";
 import { dropSetWeightPercentageFilter } from "#/features/routine/filters/drop-set-weight-percentage-filter.ts";
+import { exerciseGroupExercisesFilter } from "#/features/routine/filters/exercise-group-exercises-filter.ts";
 import { mainRoutineExerciseFilter } from "#/features/routine/filters/main-routine-exercise-filter.ts";
 import { pauseSecondsFilter } from "#/features/routine/filters/pause-seconds-filter.ts";
 import { restSecondsFilter } from "#/features/routine/filters/rest-seconds-filter.ts";
 import { routineNameFilter } from "#/features/routine/filters/routine-name-filter.ts";
 import { segmentCountFilter } from "#/features/routine/filters/segment-count-filter.ts";
+import { uniqueDaysFilter } from "#/features/routine/filters/unique-days-filter.ts";
 import { uniqueRoutineIdsFilter } from "#/features/routine/filters/unique-routine-ids-filter.ts";
-import { MAXIMUM_INTEGER } from "#/shared/constants/maximum-integer.ts";
 import { SET_TYPES } from "#/shared/constants/set-types.ts";
 import { amountFilter } from "#/shared/filters/amount-filter.ts";
 import { tempoFilter } from "#/shared/filters/tempo-filter.ts";
 import { idSchema } from "#/shared/schemas/id-schema.ts";
+import { integerSchema } from "#/shared/schemas/integer-schema.ts";
 
 export type RoutineSaveInput = typeof routineSaveInputSchema.Type;
-
-const integerSchema = Schema.Int.check(
-  Schema.isLessThanOrEqualTo(MAXIMUM_INTEGER),
-);
 
 const dropSetSchema = Schema.TaggedStruct("DropSet", {
   segmentCount: integerSchema.check(segmentCountFilter),
@@ -57,13 +55,15 @@ const mainRoutineExerciseSchema = Schema.Struct({
 });
 
 const exerciseGroupSchema = Schema.Struct({
-  exercises: Schema.Array(routineExerciseSchema).check(Schema.isMinLength(1)),
+  exercises: Schema.Array(routineExerciseSchema).check(
+    exerciseGroupExercisesFilter,
+  ),
   id: idSchema,
 });
 
 const mainExerciseGroupSchema = Schema.Struct({
   exercises: Schema.Array(mainRoutineExerciseSchema).check(
-    Schema.isMinLength(1),
+    exerciseGroupExercisesFilter,
   ),
   id: idSchema,
 });
@@ -73,7 +73,7 @@ const mainExerciseGroupSchema = Schema.Struct({
  * holds within one Routine.
  */
 export const routineSaveInputSchema = Schema.Struct({
-  days: Schema.Array(Schema.Literals(DAYS_OF_WEEK)).check(Schema.isUnique()),
+  days: Schema.Array(Schema.Literals(DAYS_OF_WEEK)).check(uniqueDaysFilter),
   id: idSchema,
   name: Schema.Trim.check(routineNameFilter),
   sections: Schema.Struct({

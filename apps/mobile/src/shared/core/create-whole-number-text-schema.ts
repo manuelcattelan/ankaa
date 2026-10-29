@@ -1,4 +1,4 @@
-import { MAXIMUM_INTEGER } from "@ankaa/core/shared/constants/maximum-integer";
+import { maximumIntegerFilter } from "@ankaa/core/shared/filters/maximum-integer-filter";
 import * as Schema from "effect/Schema";
 import * as SchemaTransformation from "effect/SchemaTransformation";
 
@@ -6,7 +6,7 @@ const WHOLE_NUMBER_PATTERN = /^[0-9]+$/;
 
 /**
  * Builds the Schema of a text field that holds a whole number, which decodes
- * to a number no larger than `MAXIMUM_INTEGER` that passes `filter`, and fails
+ * to a number that passes `maximumIntegerFilter` and `filter`, and fails
  * every check with `message`.
  */
 export function createWholeNumberTextSchema({
@@ -21,7 +21,7 @@ export function createWholeNumberTextSchema({
   ).pipe(
     Schema.decodeTo(
       Schema.Number.check(
-        Schema.isLessThanOrEqualTo(MAXIMUM_INTEGER, { message }),
+        maximumIntegerFilter.annotate({ message }),
         filter.annotate({ message }),
       ),
       SchemaTransformation.numberFromString,

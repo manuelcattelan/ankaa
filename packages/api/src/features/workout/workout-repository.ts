@@ -16,7 +16,7 @@ import {
   workoutExerciseRecordedSet,
   workoutExerciseRecordedSetSegment,
 } from "@ankaa/database/schema/workout";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
@@ -143,8 +143,7 @@ export class WorkoutRepository extends Context.Service<
   {
     readonly find: (options: {
       id: string;
-      userId: string;
-    }) => Effect.Effect<null | { id: string }>;
+    }) => Effect.Effect<null | Pick<typeof workout.$inferSelect, "userId">>;
     readonly findForUpdate: (options: {
       id: string;
     }) => Effect.Effect<null | WorkoutOwnerRow>;
@@ -205,15 +204,13 @@ export class WorkoutRepository extends Context.Service<
 
       const find = Effect.fn("WorkoutRepository.find")(function* ({
         id,
-        userId,
       }: {
         id: string;
-        userId: string;
       }) {
         const workouts = yield* database
-          .select({ id: workout.id })
+          .select({ userId: workout.userId })
           .from(workout)
-          .where(and(eq(workout.id, id), eq(workout.userId, userId)))
+          .where(eq(workout.id, id))
           .pipe(Effect.orDie);
 
         return workouts[0] ?? null;
@@ -236,7 +233,7 @@ export class WorkoutRepository extends Context.Service<
         function* ({ userId }: { userId: string }) {
           const workoutRow = yield* database.query.workout
             .findFirst({
-              columns: { id: true },
+              columns: { id: true, startedAt: true },
               where: { endedAt: { isNull: true }, userId },
               with: {
                 exerciseGroups: {
@@ -772,6 +769,7 @@ function buildWorkout(workoutRow: {
     section: Section;
   }[];
   id: string;
+  startedAt: Date;
 }) {
   function getSectionExerciseGroups(section: Section) {
     return workoutRow.exerciseGroups.filter(
@@ -799,6 +797,7 @@ function buildWorkout(workoutRow: {
         id: exerciseGroup.id,
       })),
     },
+    startedAt: workoutRow.startedAt,
   };
 }
 

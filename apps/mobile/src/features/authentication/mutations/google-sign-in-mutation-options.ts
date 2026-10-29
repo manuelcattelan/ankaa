@@ -13,7 +13,10 @@ const program = Effect.fn("googleSignInMutation")(function* () {
 });
 
 export function googleSignInMutationOptions(runtime: ApplicationRuntime) {
-  return mutationOptions({
+  return mutationOptions<
+    Effect.Success<ReturnType<typeof program>>,
+    Effect.Error<ReturnType<typeof program>>
+  >({
     mutationFn: () => runtime.runPromise(program()),
   });
 }

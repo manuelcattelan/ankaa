@@ -87,8 +87,8 @@ const WELL_KNOWN_FILE_SETTINGS = {
   androidAppSha256CertificateFingerprints: [
     "14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5",
   ],
-  appleAppBundleIdentifier: "app.ankaa.test",
-  appleTeamIdentifier: "ABCDE12345",
+  appleAppBundleId: "app.ankaa.test",
+  appleTeamId: "ABCDE12345",
 };
 
 const session = {
@@ -1504,6 +1504,19 @@ describe("applicationPlugin", () => {
     expect(response.json()).toStrictEqual({
       error: "Not Found",
       message: 'Route "GET /unknown-route" not found',
+      statusCode: 404,
+    });
+  });
+
+  it("leaves the query string out of the 404 of an unknown route, such as the token of a deletion link opened outside the app", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/delete-account?token=deletion-token",
+    });
+
+    expect(response.json()).toStrictEqual({
+      error: "Not Found",
+      message: 'Route "GET /delete-account" not found',
       statusCode: 404,
     });
   });

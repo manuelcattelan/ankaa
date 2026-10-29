@@ -20,10 +20,10 @@ import { pinoBridge } from "#/shared/pino-bridge.ts";
 export type TestRuntime = ReturnType<typeof createTestRuntime>;
 
 const TEST_SETTINGS = {
-  APPLE_APP_BUNDLE_IDENTIFIER: "test.apple.app.bundle.identifier",
-  APPLE_KEY_IDENTIFIER: "TESTKEY123",
+  APPLE_APP_BUNDLE_ID: "test.apple.app.bundle.identifier",
+  APPLE_KEY_ID: "TESTKEY123",
   APPLE_PRIVATE_KEY: TEST_APPLE_PRIVATE_KEY,
-  APPLE_TEAM_IDENTIFIER: "TESTTEAM12",
+  APPLE_TEAM_ID: "TESTTEAM12",
   BETTER_AUTH_SECRET: "test-better-auth-secret-32-chars",
   BETTER_AUTH_URL: "http://localhost:3000",
   GOOGLE_CLIENT_SECRET: "test-google-client-secret",

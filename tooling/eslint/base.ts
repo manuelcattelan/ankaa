@@ -248,7 +248,16 @@ export const rulesConfiguration = defineConfig([
     },
     rules: {
       "@ankaa/filename-match-export": "error",
-      "@ankaa/naming-convention": [
+      "@typescript-eslint/consistent-type-assertions": [
+        "error",
+        { assertionStyle: "never" },
+      ],
+      "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        { fixStyle: "separate-type-imports", prefer: "type-imports" },
+      ],
+      "@typescript-eslint/naming-convention": [
         "error",
         {
           custom: TYPE_WORD_SUFFIX,
@@ -308,15 +317,6 @@ export const rulesConfiguration = defineConfig([
           selector: "typeProperty",
         },
       ],
-      "@typescript-eslint/consistent-type-assertions": [
-        "error",
-        { assertionStyle: "never" },
-      ],
-      "@typescript-eslint/consistent-type-definitions": ["error", "type"],
-      "@typescript-eslint/consistent-type-imports": [
-        "error",
-        { fixStyle: "separate-type-imports", prefer: "type-imports" },
-      ],
       // Off so a call can pass constUndefined() for a left-out input (https://github.com/manuelcattelan/ankaa/issues/86#issuecomment-6497392376).
       "@typescript-eslint/no-confusing-void-expression": "off",
       "@typescript-eslint/no-floating-promises": [
@@ -372,6 +372,13 @@ export const rulesConfiguration = defineConfig([
       "no-restricted-syntax": ["error", ...RESTRICTED_SYNTAX],
       "no-shadow": "off",
       "object-shorthand": ["error", "properties"],
+      // sort-imports separates its groups with blank lines of its own, so
+      // blank lines don't split its sorting
+      // (https://perfectionist.dev/rules/sort-imports#partitionbynewline).
+      "perfectionist/sort-imports": [
+        "error",
+        { order: "asc", partitionByNewLine: false, type: "natural" },
+      ],
       "prefer-template": "error",
       "unicorn/catch-error-name": "error",
       "unicorn/consistent-boolean-name": "error",
@@ -440,6 +447,10 @@ export const baseConfiguration = defineConfig([
         projectService: true,
       },
     },
+    // Blank lines group statements into paragraphs by meaning, so sorting
+    // stays inside each paragraph
+    // (https://perfectionist.dev/guide/getting-started#settings).
+    settings: { perfectionist: { partitionByNewLine: true } },
   },
   rulesConfiguration,
   {
