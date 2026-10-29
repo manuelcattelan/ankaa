@@ -27,7 +27,7 @@ const typescriptNamingConvention =
 export const namingConvention = createRule({
   create: (context) =>
     typescriptNamingConvention.create(createTaggedEnumKeyContext(context)),
-  defaultOptions: typescriptNamingConvention.defaultOptions,
+  defaultOptions: typescriptNamingConvention.defaultOptions ?? [],
   meta: {
     ...typescriptNamingConvention.meta,
     docs: {

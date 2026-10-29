@@ -20,7 +20,7 @@ const authenticationTables: Record<string, unknown> =
 export function listTableMismatches(model: BetterAuthDBSchema[string]) {
   const table = getAuthenticationTable(model.modelName);
 
-  if (table === undefined) {
+  if (table === null) {
     return [`${model.modelName}: no table`];
   }
 
@@ -113,7 +113,7 @@ export function listTableMismatches(model: BetterAuthDBSchema[string]) {
     if (
       foreignKey === undefined ||
       foreignKeyReference === undefined ||
-      referencedTable === undefined ||
+      referencedTable === null ||
       foreignKeyReference.foreignTable !== referencedTable ||
       foreignKeyReference.foreignColumns[0] !==
         getColumns(referencedTable)[field.references.field] ||
@@ -131,5 +131,5 @@ export function listTableMismatches(model: BetterAuthDBSchema[string]) {
 function getAuthenticationTable(modelName: string) {
   const table = authenticationTables[modelName];
 
-  return is(table, PgTable) ? table : undefined;
+  return is(table, PgTable) ? table : null;
 }

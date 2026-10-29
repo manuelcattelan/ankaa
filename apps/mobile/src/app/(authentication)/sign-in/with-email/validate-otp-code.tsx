@@ -10,5 +10,5 @@ export default function ValidateOtpCodeRoute() {
   const searchParameters =
     useLocalSearchParams<ValidateOtpCodeSearchParameters>();
 
-  return <ValidateOtpCodeScreen email={searchParameters.email} />;
+  return <ValidateOtpCodeScreen email={searchParameters.email ?? null} />;
 }

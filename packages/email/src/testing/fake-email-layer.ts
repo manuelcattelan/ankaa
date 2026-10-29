@@ -10,8 +10,6 @@ export function fakeEmailLayer(sentEmails: SendEmailOptions[]) {
     send: (sendEmailOptions: SendEmailOptions) =>
       Effect.sync(() => {
         sentEmails.push(sendEmailOptions);
-
-        return undefined;
       }),
   });
 }

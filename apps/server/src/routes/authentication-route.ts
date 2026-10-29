@@ -31,7 +31,11 @@ export const authenticationRoute = ((server, { runtime }, done) => {
         void reply.header(headerName, headerValue);
       }
 
-      return reply.send(response.body ? await response.text() : undefined);
+      if (!response.body) {
+        return reply.send();
+      }
+
+      return reply.send(await response.text());
     },
     method: ["GET", "POST"],
     url: "/*",

@@ -56,7 +56,7 @@ function getAuthenticationFailureMessage(error: AuthenticationClientError) {
 
   const errorCodeMessage = error.code
     ? AUTHENTICATION_ERROR_CODE_MESSAGES[error.code]
-    : undefined;
+    : null;
 
   return errorCodeMessage ?? ERROR_MESSAGES.unknown;
 }

@@ -2,9 +2,7 @@ import { getEmailValidationErrorMessage } from "#/features/authentication/core/g
 
 describe("getEmailValidationErrorMessage", () => {
   it("returns no message for a valid email address", () => {
-    expect(getEmailValidationErrorMessage({ _tag: "EmailValid" })).toBe(
-      undefined,
-    );
+    expect(getEmailValidationErrorMessage({ _tag: "EmailValid" })).toBe(null);
   });
 
   it("returns the invalid email address message for an invalid email address", () => {

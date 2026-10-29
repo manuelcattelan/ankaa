@@ -25,7 +25,10 @@ export const signInWithApple = Effect.fn("signInWithApple")(function* () {
 
   if (!credential.identityToken) {
     return yield* new AuthenticationClientError({
+      code: null,
       message: "Failed to receive an identity token from Apple",
+      retryAfterSeconds: null,
+      status: null,
     });
   }
 
@@ -48,13 +51,21 @@ function buildAppleIdToken({
   identityToken,
   nonce,
 }: BuildAppleIdTokenOptions) {
-  const firstName = credential.fullName?.givenName ?? undefined;
-  const lastName = credential.fullName?.familyName ?? undefined;
+  const firstName = credential.fullName?.givenName ?? null;
+  const lastName = credential.fullName?.familyName ?? null;
+  const appleIdToken = { nonce, token: identityToken };
+
+  if (!(firstName ?? lastName)) {
+    return appleIdToken;
+  }
 
   return {
-    nonce,
-    token: identityToken,
-    user:
-      (firstName ?? lastName) ? { name: { firstName, lastName } } : undefined,
+    ...appleIdToken,
+    user: {
+      name: {
+        ...(firstName === null ? {} : { firstName }),
+        ...(lastName === null ? {} : { lastName }),
+      },
+    },
   };
 }

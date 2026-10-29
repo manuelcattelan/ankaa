@@ -8,13 +8,13 @@ export function getHookCall(statement: TSESTree.Node) {
   const expression = getStatementExpression(statement);
 
   if (expression?.type !== AST_NODE_TYPES.CallExpression) {
-    return undefined;
+    return null;
   }
 
   const name = getCalleeName(expression.callee);
 
   if (!name || !HOOK_NAME_PATTERN.test(name)) {
-    return undefined;
+    return null;
   }
 
   return { key: getCalleeKey(expression.callee), name };
@@ -43,7 +43,7 @@ function getCalleeName(callee: TSESTree.Expression) {
     return callee.property.name;
   }
 
-  return undefined;
+  return null;
 }
 
 function getStatementExpression(statement: TSESTree.Node) {
@@ -55,8 +55,8 @@ function getStatementExpression(statement: TSESTree.Node) {
     statement.type !== AST_NODE_TYPES.VariableDeclaration ||
     statement.declarations.length !== 1
   ) {
-    return undefined;
+    return null;
   }
 
-  return statement.declarations.at(0)?.init ?? undefined;
+  return statement.declarations.at(0)?.init ?? null;
 }

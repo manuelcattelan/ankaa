@@ -6,7 +6,7 @@ import { Text } from "#/shared/components/text.tsx";
 import { TEXT_FIELD_MESSAGES } from "#/shared/messages/text-field-messages.ts";
 
 type TextFieldProps = TextInputProps & {
-  errorMessage?: string;
+  errorMessage: null | string;
   label: string;
 };
 

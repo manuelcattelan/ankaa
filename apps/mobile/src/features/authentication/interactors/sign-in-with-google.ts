@@ -21,7 +21,10 @@ export const signInWithGoogle = Effect.fn("signInWithGoogle")(function* () {
 
   if (!idToken) {
     return yield* new AuthenticationClientError({
+      code: null,
       message: "Failed to receive an identity token from Google",
+      retryAfterSeconds: null,
+      status: null,
     });
   }
 

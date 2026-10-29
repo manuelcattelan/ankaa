@@ -4,12 +4,13 @@ import { AuthenticationClientError } from "#/shared/errors/authentication-client
 describe("getOtpCodeErrorMessage", () => {
   it("returns no message without an error", () => {
     expect(
-      getOtpCodeErrorMessage({ cooldownRemainingSeconds: 0, error: undefined }),
-    ).toBe(undefined);
+      getOtpCodeErrorMessage({ cooldownRemainingSeconds: 0, error: null }),
+    ).toBe(null);
   });
 
   it("returns the rate limit message with the remaining seconds of the cooldown for a rate-limited error", () => {
     const authenticationClientError = new AuthenticationClientError({
+      code: null,
       retryAfterSeconds: 60,
       status: 429,
     });
@@ -24,6 +25,7 @@ describe("getOtpCodeErrorMessage", () => {
 
   it("returns no message for a rate-limited error once the cooldown has ended", () => {
     const authenticationClientError = new AuthenticationClientError({
+      code: null,
       retryAfterSeconds: 60,
       status: 429,
     });
@@ -33,12 +35,13 @@ describe("getOtpCodeErrorMessage", () => {
         cooldownRemainingSeconds: 0,
         error: authenticationClientError,
       }),
-    ).toBe(undefined);
+    ).toBe(null);
   });
 
   it("returns the message of the authentication error for an error that isn't rate-limited", () => {
     const authenticationClientError = new AuthenticationClientError({
       code: "OTP_EXPIRED",
+      retryAfterSeconds: null,
       status: 400,
     });
 

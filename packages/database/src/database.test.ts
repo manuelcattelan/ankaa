@@ -102,7 +102,7 @@ describe("Database", () => {
               weightType: "bodyweight",
             });
 
-            yield* Deferred.succeed(exerciseInserted, undefined);
+            yield* Deferred.done(exerciseInserted, Exit.void);
 
             return yield* Effect.never;
           }),

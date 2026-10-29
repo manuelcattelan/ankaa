@@ -6,7 +6,7 @@ describe("getOtpCodeCompletenessValidationErrorMessage", () => {
       getOtpCodeCompletenessValidationErrorMessage({
         _tag: "OtpCodeCompletenessValid",
       }),
-    ).toBe(undefined);
+    ).toBe(null);
   });
 
   it("returns the incomplete verification code message with the number of digits for an incomplete OTP code", () => {

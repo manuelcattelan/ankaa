@@ -50,7 +50,7 @@ export function ExercisePicker({ onSelectExercise }: ExercisePickerProps) {
 
   const exerciseLibraryErrorMessage = exerciseLibrary.error
     ? getTrpcErrorMessage(exerciseLibrary.error)
-    : undefined;
+    : null;
 
   useEffect(() => {
     if (exerciseLibraryErrorMessage) {
@@ -104,6 +104,7 @@ function ExercisePickerContent({
         autoCapitalize="none"
         autoCorrect={false}
         enterKeyHint="search"
+        errorMessage={null}
         inputMode="search"
         label={EXERCISE_PICKER_MESSAGES.exerciseNameLabel}
         onChangeText={setExerciseNameSearchText}
@@ -127,7 +128,7 @@ function ExercisePickerContent({
         message={
           matchingExercises.length === 0
             ? EXERCISE_PICKER_MESSAGES.exerciseListEmptyStatus
-            : undefined
+            : null
         }
       />
       {matchingExercises.map((exercise) => (

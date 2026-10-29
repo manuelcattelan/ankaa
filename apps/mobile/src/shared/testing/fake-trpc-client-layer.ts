@@ -97,7 +97,10 @@ export function fakeTrpcClientLayer({
             links: [
               httpBatchLink({
                 fetch: (url, options) => {
-                  const fakeTrpcRequest = new Request(url, options);
+                  const fakeTrpcRequest = new Request(url, {
+                    ...options,
+                    signal: options?.signal ?? null,
+                  });
 
                   receivedPaths.push(
                     ...getFakeTrpcRequestPaths(fakeTrpcRequest),

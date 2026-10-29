@@ -14,7 +14,7 @@ type CreateSignedInCallerOptions = {
 
 export async function createSignedInCaller({
   runtime,
-  signal,
+  ...callerOptions
 }: CreateSignedInCallerOptions) {
   const testUser = await createTestUser(runtime);
   const session = await runtime.runPromise(
@@ -25,5 +25,5 @@ export async function createSignedInCaller({
     }),
   );
 
-  return createCaller(createInnerContext({ runtime, session }), { signal });
+  return createCaller(createInnerContext({ runtime, session }), callerOptions);
 }

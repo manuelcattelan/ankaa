@@ -16,14 +16,14 @@ const AUTHENTICATION_SESSION: AuthenticationSession = {
 
 describe("getSessionErrorMessage", () => {
   it("returns no message for a session without an error", () => {
-    expect(getSessionErrorMessage(AUTHENTICATION_SESSION)).toBe(undefined);
+    expect(getSessionErrorMessage(AUTHENTICATION_SESSION)).toBe(null);
   });
 
   it("returns no message for a session error that comes with an HTTP status", () => {
     const authenticationSession = {
       ...AUTHENTICATION_SESSION,
       error: {
-        error: undefined,
+        error: null,
         message: "Unauthorized",
         name: "BetterFetchError",
         status: 401,
@@ -31,6 +31,6 @@ describe("getSessionErrorMessage", () => {
       },
     };
 
-    expect(getSessionErrorMessage(authenticationSession)).toBe(undefined);
+    expect(getSessionErrorMessage(authenticationSession)).toBe(null);
   });
 });

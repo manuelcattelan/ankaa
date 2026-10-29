@@ -14,7 +14,7 @@ export function getSessionErrorMessage(
     authenticationSession.data ||
     typeof authenticationSession.error.status === "number"
   ) {
-    return undefined;
+    return null;
   }
 
   return getAuthenticationErrorMessage(authenticationSession.error);

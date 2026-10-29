@@ -9,6 +9,6 @@ export function getEmailValidationErrorMessage(
 ) {
   return Match.valueTags(emailValidationOutcome, {
     EmailInvalid: () => AUTHENTICATION_ERROR_MESSAGES.emailInvalid,
-    EmailValid: () => undefined,
+    EmailValid: () => null,
   });
 }

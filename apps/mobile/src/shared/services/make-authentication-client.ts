@@ -26,8 +26,8 @@ type AuthenticationResponse<TData> =
   AuthenticationResponseFailure | AuthenticationResponseSuccess<TData>;
 
 type AuthenticationResponseError = {
-  code?: string;
-  message?: string;
+  code?: string | undefined;
+  message?: string | undefined;
   status: number;
   statusText: string;
 };
@@ -69,9 +69,15 @@ export function makeAuthenticationClient({
 
   function request<TData>(sendRequest: SendAuthenticationRequest<TData>) {
     return Effect.tryPromise({
-      catch: (cause) => new AuthenticationClientError({ cause }),
+      catch: (cause) =>
+        new AuthenticationClientError({
+          cause,
+          code: null,
+          retryAfterSeconds: null,
+          status: null,
+        }),
       try: async () => {
-        let retryAfterSeconds: number | undefined;
+        let retryAfterSeconds: null | number = null;
 
         const response = await sendRequest(authClient, {
           onError: (context) => {
@@ -91,7 +97,7 @@ export function makeAuthenticationClient({
         authenticationRequest.response.error
           ? Effect.fail(
               new AuthenticationClientError({
-                code: authenticationRequest.response.error.code,
+                code: authenticationRequest.response.error.code ?? null,
                 message:
                   authenticationRequest.response.error.message ??
                   authenticationRequest.response.error.statusText,

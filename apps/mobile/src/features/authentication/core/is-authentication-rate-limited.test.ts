@@ -5,7 +5,11 @@ describe("isAuthenticationRateLimited", () => {
   it("returns true for an AuthenticationClientError with the status 429", () => {
     expect(
       isAuthenticationRateLimited(
-        new AuthenticationClientError({ status: 429 }),
+        new AuthenticationClientError({
+          code: null,
+          retryAfterSeconds: null,
+          status: 429,
+        }),
       ),
     ).toBe(true);
   });
@@ -13,7 +17,11 @@ describe("isAuthenticationRateLimited", () => {
   it("returns false for an AuthenticationClientError with another status", () => {
     expect(
       isAuthenticationRateLimited(
-        new AuthenticationClientError({ status: 401 }),
+        new AuthenticationClientError({
+          code: null,
+          retryAfterSeconds: null,
+          status: 401,
+        }),
       ),
     ).toBe(false);
   });

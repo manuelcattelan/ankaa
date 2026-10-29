@@ -3,6 +3,7 @@ import type { inferRouterOutputs } from "@trpc/server";
 
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import { constUndefined } from "effect/Function";
 import * as Layer from "effect/Layer";
 
 import type { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
@@ -28,7 +29,7 @@ export class ExerciseApplicationService extends Context.Service<
       const list = Effect.fn("ExerciseApplicationService.list")(function* () {
         return yield* trpcClient.request({
           call: ({ signal, trpc }) =>
-            trpc.exercise.list.query(undefined, { signal }),
+            trpc.exercise.list.query(constUndefined(), { signal }),
           errors: [],
         });
       });

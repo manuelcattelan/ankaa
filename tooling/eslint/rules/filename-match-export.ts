@@ -135,7 +135,7 @@ function getExportedNames({ context, statement }: GetExportedNamesOptions) {
 }
 
 function getOnlyExportedName(exportedNames: ExportedName[]) {
-  return exportedNames.length === 1 ? exportedNames.at(0) : undefined;
+  return exportedNames.length === 1 ? (exportedNames.at(0) ?? null) : null;
 }
 
 function getSpecifierExportedName({

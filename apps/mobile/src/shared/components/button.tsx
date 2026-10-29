@@ -30,7 +30,7 @@ export function Button({
       aria-busy={isBusy}
       aria-label={title}
       disabled={disabled}
-      style={[styles.button, disabled ? styles.disabled : undefined, style]}
+      style={[styles.button, disabled ? styles.disabled : null, style]}
     >
       {isBusy ? (
         <ReactNative.ActivityIndicator />

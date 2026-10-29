@@ -12,7 +12,7 @@ export function getOtpCodeErrorMessage({
   error,
 }: GetOtpCodeErrorMessageOptions) {
   if (!error) {
-    return undefined;
+    return null;
   }
 
   if (isAuthenticationRateLimited(error)) {
@@ -20,7 +20,7 @@ export function getOtpCodeErrorMessage({
       ? AUTHENTICATION_ERROR_MESSAGES.requestsRateLimited(
           cooldownRemainingSeconds,
         )
-      : undefined;
+      : null;
   }
 
   return getAuthenticationErrorMessage(error);

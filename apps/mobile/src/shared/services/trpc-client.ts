@@ -19,7 +19,11 @@ export class TrpcClient extends Context.Service<TrpcClient>()(
           links: [
             httpBatchLink({
               fetch: (url, options) =>
-                fetch(url, { ...options, credentials: "omit" }),
+                fetch(url, {
+                  ...options,
+                  credentials: "omit",
+                  signal: options?.signal ?? null,
+                }),
               headers: async () => {
                 const cookies =
                   await authenticationClient.authClient.getCookie();

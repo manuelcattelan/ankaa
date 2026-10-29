@@ -9,7 +9,7 @@ export function getOtpCodeCompletenessValidationErrorMessage(
   otpCodeCompletenessValidationOutcome: OtpCodeCompletenessValidationOutcome,
 ) {
   return Match.valueTags(otpCodeCompletenessValidationOutcome, {
-    OtpCodeCompletenessValid: () => undefined,
+    OtpCodeCompletenessValid: () => null,
     OtpCodeIncomplete: () =>
       VALIDATE_OTP_CODE_SCREEN_MESSAGES.otpCodeIncompleteError(OTP_CODE_LENGTH),
   });

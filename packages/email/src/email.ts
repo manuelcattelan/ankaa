@@ -44,7 +44,7 @@ export class Email extends Context.Service<Email>()("@ankaa/email/Email", {
           message: sendEmailErrorMessage,
         });
       }
-    });
+    }, Effect.asVoid);
 
     return { send };
   }),

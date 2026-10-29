@@ -27,7 +27,7 @@ type CreateGeneratedFilesConfigurationOptions = {
 
 type CreateRestrictedImportsConfigurationOptions = {
   basePath?: string;
-  files: Linter.Config["files"];
+  files: NonNullable<Linter.Config["files"]>;
   ignores?: string[];
   paths?: RestrictedImportPath[];
   patterns: RestrictedImportPattern[];
@@ -167,6 +167,18 @@ export const RESTRICTED_SYNTAX = [
     message:
       "Import each name from the file that defines it instead of re-exporting it, because Metro doesn't tree-shake and a barrel file loads every module it re-exports.",
     selector: "ExportNamedDeclaration[source]",
+  },
+  {
+    message:
+      "Use null for an empty value, and leave out a parameter, option or prop instead of passing undefined, because null means empty and undefined means missing. Write undefined only to compare with it.",
+    selector:
+      "Identifier[name='undefined']:not(BinaryExpression[operator=/^[!=]==$/] > Identifier)",
+  },
+  {
+    message:
+      "Use Schema.NullOr for a field that can be empty, because empty data is null, and undefined means missing.",
+    selector:
+      "MemberExpression[object.name='Schema'][property.name=/^(?:optional|optionalKey|UndefinedOr)$/]",
   },
 ];
 
@@ -343,6 +355,7 @@ export const rulesConfiguration = defineConfig([
       "unicorn/filename-case": ["error", { case: "kebabCase" }],
       "unicorn/no-exports-in-scripts": "error",
       "unicorn/no-top-level-side-effects": "error",
+      "unicorn/no-useless-undefined": "error",
     },
   },
   createRestrictedImportsConfiguration({

@@ -21,7 +21,9 @@ export function WithEmailScreen() {
   const runtime = useRuntime();
 
   const [email, setEmail] = useState("");
-  const [emailValidationError, setEmailValidationError] = useState<string>();
+  const [emailValidationError, setEmailValidationError] = useState<
+    null | string
+  >(null);
 
   const sendOtpCode = useMutation({
     ...otpCodeRequestMutationOptions(runtime),
@@ -39,7 +41,7 @@ export function WithEmailScreen() {
       return;
     }
 
-    setEmailValidationError(undefined);
+    setEmailValidationError(null);
     sendOtpCode.reset();
 
     const trimmedEmail = email.trim();

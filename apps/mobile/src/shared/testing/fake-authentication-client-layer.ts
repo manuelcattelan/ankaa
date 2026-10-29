@@ -1,6 +1,5 @@
 import * as Layer from "effect/Layer";
 
-import { convertUndefinedToNull } from "#/shared/core/convert-undefined-to-null.ts";
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 import { makeAuthenticationClient } from "#/shared/services/make-authentication-client.ts";
 
@@ -35,18 +34,14 @@ export function fakeAuthenticationClientLayer(
           answerFakeAuthenticationRequest({
             request: new Request(input, options),
             responses: {
-              "/get-session": () =>
-                Response.json(convertUndefinedToNull(undefined)),
+              "/get-session": () => Response.json(null),
               ...fakeAuthenticationResponses,
             },
           }),
         storage: {
-          getItem: (key) =>
-            convertUndefinedToNull(authenticationStorageItems.get(key)),
+          getItem: (key) => authenticationStorageItems.get(key) ?? null,
           getItemAsync: (key) =>
-            Promise.resolve(
-              convertUndefinedToNull(authenticationStorageItems.get(key)),
-            ),
+            Promise.resolve(authenticationStorageItems.get(key) ?? null),
           setItem: (key, item) => {
             authenticationStorageItems.set(key, item);
           },
@@ -70,7 +65,7 @@ function answerFakeAuthenticationRequest({
 
   if (!fakeAuthenticationResponse) {
     return Promise.resolve(
-      new Response(undefined, { status: HTTP_STATUS_NOT_FOUND }),
+      new Response(null, { status: HTTP_STATUS_NOT_FOUND }),
     );
   }
 

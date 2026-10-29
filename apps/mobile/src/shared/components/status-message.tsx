@@ -3,7 +3,7 @@ import * as ReactNative from "react-native";
 import { Text } from "#/shared/components/text.tsx";
 
 type StatusMessageProps = {
-  message?: string;
+  message: null | string;
 };
 
 export function StatusMessage({ message }: StatusMessageProps) {

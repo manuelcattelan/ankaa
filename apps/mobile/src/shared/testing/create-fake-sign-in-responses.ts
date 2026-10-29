@@ -1,13 +1,12 @@
-import { convertUndefinedToNull } from "#/shared/core/convert-undefined-to-null.ts";
 import { signedInSession } from "#/shared/testing/signed-in-session.ts";
 
 const signedInSessionCookie = `better-auth.session_token=${signedInSession.session.token}; Path=/; HttpOnly`;
 
 export function createFakeSignInResponses(signInPath: string) {
-  let currentSession: typeof signedInSession | undefined;
+  let currentSession: null | typeof signedInSession = null;
 
   return {
-    "/get-session": () => Response.json(convertUndefinedToNull(currentSession)),
+    "/get-session": () => Response.json(currentSession),
     [signInPath]: () => {
       currentSession = signedInSession;
 

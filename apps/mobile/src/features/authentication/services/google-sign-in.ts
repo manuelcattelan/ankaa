@@ -51,7 +51,7 @@ function failWithGoogleSignInError(defect: unknown) {
 
 function getGoogleSignInError(defect: unknown) {
   if (!isErrorWithCode(defect)) {
-    return undefined;
+    return null;
   }
 
   if (defect.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
@@ -62,5 +62,5 @@ function getGoogleSignInError(defect: unknown) {
     return new GoogleSignInInProgressError();
   }
 
-  return undefined;
+  return null;
 }

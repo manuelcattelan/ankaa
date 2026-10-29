@@ -39,6 +39,11 @@ const MOBILE_RESTRICTED_SYNTAX = [
     selector:
       "CallExpression[callee.name=/^(useReducer|useRef|useState)$/] > .arguments:not(Identifier, Literal, MemberExpression)",
   },
+  {
+    message:
+      "Give useState an initial value, such as null for an empty one, because a state left without one starts as undefined, which means missing.",
+    selector: "CallExpression[callee.name='useState'][arguments.length=0]",
+  },
 ];
 
 const RESOLVED_FILE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".json"];

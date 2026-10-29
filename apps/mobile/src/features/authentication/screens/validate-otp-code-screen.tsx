@@ -28,7 +28,7 @@ type ValidateOtpCodeContentProps = {
 };
 
 type ValidateOtpCodeScreenProps = {
-  email?: string;
+  email: null | string;
 };
 
 const COOLDOWN_SECONDS = 60;
@@ -68,8 +68,9 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProps) {
   );
 
   const [otpCode, setOtpCode] = useState("");
-  const [otpCodeValidationError, setOtpCodeValidationError] =
-    useState<string>();
+  const [otpCodeValidationError, setOtpCodeValidationError] = useState<
+    null | string
+  >(null);
   const [shouldRequestNewOtpCode, setShouldRequestNewOtpCode] = useState(false);
 
   const resendOtpCode = useMutation({
@@ -134,7 +135,7 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProps) {
       return;
     }
 
-    setOtpCodeValidationError(undefined);
+    setOtpCodeValidationError(null);
     resendOtpCode.reset();
     validateOtpCode.reset();
 
@@ -146,7 +147,7 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProps) {
       return;
     }
 
-    setOtpCodeValidationError(undefined);
+    setOtpCodeValidationError(null);
     validateOtpCode.reset();
     resendOtpCode.reset();
 

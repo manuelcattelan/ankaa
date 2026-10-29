@@ -15,7 +15,7 @@ export const testAuthenticationLayer = Layer.effectContext(
 
     const auth = betterAuth({
       ...authenticationOptions,
-      plugins: [...authenticationOptions.plugins, testUtils()],
+      plugins: [...authenticationOptions.plugins, createTestUtilsPlugin()],
     });
 
     const authentication = yield* makeAuthentication(auth);
@@ -27,3 +27,25 @@ export const testAuthenticationLayer = Layer.effectContext(
     );
   }),
 );
+
+// testUtils' init returns `options: undefined` when it captures no OTP
+// (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/better-auth/src/plugins/test-utils/index.ts#L157),
+// which better-auth's own plugin type rejects under exactOptionalPropertyTypes,
+// so leave the key out instead.
+function createTestUtilsPlugin() {
+  const testUtilsPlugin = testUtils();
+
+  return {
+    ...testUtilsPlugin,
+    init: (ctx: Parameters<typeof testUtilsPlugin.init>[0]) => {
+      const testUtilsInitResult = testUtilsPlugin.init(ctx);
+
+      return testUtilsInitResult.options === undefined
+        ? { context: testUtilsInitResult.context }
+        : {
+            context: testUtilsInitResult.context,
+            options: testUtilsInitResult.options,
+          };
+    },
+  };
+}
