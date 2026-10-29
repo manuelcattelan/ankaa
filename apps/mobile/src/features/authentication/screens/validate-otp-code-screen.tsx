@@ -1,15 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
-import * as Match from "effect/Match";
 import { Redirect } from "expo-router";
 import { useState } from "react";
 import { Platform } from "react-native";
 
 import { OTP_CODE_LENGTH } from "#/features/authentication/constants/otp-code-length.ts";
 import { getCooldownDeadline } from "#/features/authentication/core/get-cooldown-deadline.ts";
-import { getOtpCodeCompletenessValidationErrorMessage } from "#/features/authentication/core/get-otp-code-completeness-validation-error-message.ts";
 import { getOtpCodeErrorMessage } from "#/features/authentication/core/get-otp-code-error-message.ts";
 import { isAuthenticationRateLimited } from "#/features/authentication/core/is-authentication-rate-limited.ts";
-import { validateOtpCodeCompleteness } from "#/features/authentication/core/validate-otp-code-completeness.ts";
+import { otpCodeFormSchema } from "#/features/authentication/core/otp-code-form-schema.ts";
 import { useCooldown } from "#/features/authentication/hooks/use-cooldown.ts";
 import { announceAuthenticationError } from "#/features/authentication/interactors/announce-authentication-error.ts";
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
@@ -19,6 +17,7 @@ import { Button } from "#/shared/components/button.tsx";
 import { ScrollView } from "#/shared/components/scroll-view.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
 import { Text } from "#/shared/components/text.tsx";
+import { decodeForm } from "#/shared/core/decode-form.ts";
 import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { announceMessage } from "#/shared/interactors/announce-message.ts";
@@ -58,9 +57,7 @@ function ValidateOtpCodeContent({ email }: { email: string }) {
   );
 
   const [otpCode, setOtpCode] = useState("");
-  const [otpCodeValidationError, setOtpCodeValidationError] = useState<
-    null | string
-  >(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [shouldRequestNewOtpCode, setShouldRequestNewOtpCode] = useState(false);
 
   const resendOtpCode = useMutation({
@@ -115,17 +112,24 @@ function ValidateOtpCodeContent({ email }: { email: string }) {
     cooldownRemainingSeconds: validateCooldownRemainingSeconds,
     error: validateOtpCode.error,
   });
+  const otpCodeFormDecoding = decodeForm({
+    schema: otpCodeFormSchema,
+    values: { otpCode },
+  });
+  const otpCodeValidationErrorMessage = hasSubmitted
+    ? otpCodeFormDecoding.errorMessages.otpCode
+    : null;
   const otpCodeErrorMessage =
     validateOtpCodeErrorMessage ??
     resendOtpCodeErrorMessage ??
-    otpCodeValidationError;
+    otpCodeValidationErrorMessage;
 
   function handleResendOtpCode() {
     if (resendOtpCode.isPending) {
       return;
     }
 
-    setOtpCodeValidationError(null);
+    setHasSubmitted(false);
     resendOtpCode.reset();
     validateOtpCode.reset();
 
@@ -137,31 +141,21 @@ function ValidateOtpCodeContent({ email }: { email: string }) {
       return;
     }
 
-    setOtpCodeValidationError(null);
+    setHasSubmitted(true);
     validateOtpCode.reset();
     resendOtpCode.reset();
 
-    const otpCodeCompletenessValidationOutcome =
-      validateOtpCodeCompleteness(otpCode);
-    const otpCodeCompletenessValidationErrorMessage =
-      getOtpCodeCompletenessValidationErrorMessage(
-        otpCodeCompletenessValidationOutcome,
-      );
+    if (!otpCodeFormDecoding.isValid) {
+      if (otpCodeFormDecoding.errorMessages.otpCode !== null) {
+        runtime.runSync(
+          announceMessage(otpCodeFormDecoding.errorMessages.otpCode),
+        );
+      }
 
-    Match.valueTags(otpCodeCompletenessValidationOutcome, {
-      OtpCodeCompletenessValid: () => {
-        validateOtpCode.mutate({ email, otpCode });
-      },
-      OtpCodeIncomplete: () => {
-        setOtpCodeValidationError(otpCodeCompletenessValidationErrorMessage);
+      return;
+    }
 
-        if (otpCodeCompletenessValidationErrorMessage !== null) {
-          runtime.runSync(
-            announceMessage(otpCodeCompletenessValidationErrorMessage),
-          );
-        }
-      },
-    });
+    validateOtpCode.mutate({ email, otpCode });
   }
 
   return (

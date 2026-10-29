@@ -1,17 +1,16 @@
 import { useMutation } from "@tanstack/react-query";
-import * as Match from "effect/Match";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 
+import { emailFormSchema } from "#/features/authentication/core/email-form-schema.ts";
 import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
-import { getEmailValidationErrorMessage } from "#/features/authentication/core/get-email-validation-error-message.ts";
-import { validateEmail } from "#/features/authentication/core/validate-email.ts";
 import { announceAuthenticationError } from "#/features/authentication/interactors/announce-authentication-error.ts";
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 import { otpCodeRequestMutationOptions } from "#/features/authentication/mutations/otp-code-request-mutation-options.ts";
 import { Button } from "#/shared/components/button.tsx";
 import { ScrollView } from "#/shared/components/scroll-view.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
+import { decodeForm } from "#/shared/core/decode-form.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { announceMessage } from "#/shared/interactors/announce-message.ts";
 
@@ -21,9 +20,7 @@ export function WithEmailScreen() {
   const runtime = useRuntime();
 
   const [email, setEmail] = useState("");
-  const [emailValidationError, setEmailValidationError] = useState<
-    null | string
-  >(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const sendOtpCode = useMutation({
     ...otpCodeRequestMutationOptions(runtime),
@@ -32,9 +29,18 @@ export function WithEmailScreen() {
     },
   });
 
+  const trimmedEmail = email.trim();
+  const emailFormDecoding = decodeForm({
+    schema: emailFormSchema,
+    values: { email: trimmedEmail },
+  });
+
+  const emailValidationErrorMessage = hasSubmitted
+    ? emailFormDecoding.errorMessages.email
+    : null;
   const emailErrorMessage =
     sendOtpCode.error === null
-      ? emailValidationError
+      ? emailValidationErrorMessage
       : getAuthenticationErrorMessage(sendOtpCode.error);
 
   function handleSendOtpCode() {
@@ -42,37 +48,28 @@ export function WithEmailScreen() {
       return;
     }
 
-    setEmailValidationError(null);
+    setHasSubmitted(true);
     sendOtpCode.reset();
 
-    const trimmedEmail = email.trim();
-    const emailValidationOutcome = validateEmail(trimmedEmail);
-    const emailValidationErrorMessage = getEmailValidationErrorMessage(
-      emailValidationOutcome,
+    if (!emailFormDecoding.isValid) {
+      if (emailFormDecoding.errorMessages.email !== null) {
+        runtime.runSync(announceMessage(emailFormDecoding.errorMessages.email));
+      }
+
+      return;
+    }
+
+    sendOtpCode.mutate(
+      { email: trimmedEmail },
+      {
+        onSuccess: () => {
+          router.push({
+            params: { email: trimmedEmail },
+            pathname: "/sign-in/with-email/validate-otp-code",
+          });
+        },
+      },
     );
-
-    Match.valueTags(emailValidationOutcome, {
-      EmailInvalid: () => {
-        setEmailValidationError(emailValidationErrorMessage);
-
-        if (emailValidationErrorMessage !== null) {
-          runtime.runSync(announceMessage(emailValidationErrorMessage));
-        }
-      },
-      EmailValid: () => {
-        sendOtpCode.mutate(
-          { email: trimmedEmail },
-          {
-            onSuccess: () => {
-              router.push({
-                params: { email: trimmedEmail },
-                pathname: "/sign-in/with-email/validate-otp-code",
-              });
-            },
-          },
-        );
-      },
-    });
   }
 
   return (

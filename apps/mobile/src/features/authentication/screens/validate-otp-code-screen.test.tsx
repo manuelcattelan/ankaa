@@ -25,6 +25,42 @@ describe("ValidateOtpCodeScreen", () => {
     ).toBeOnTheScreen();
   });
 
+  it("shows no validation message before the first submit", async () => {
+    const user = userEvent.setup();
+
+    renderScreen({ initialUrl: VALIDATE_OTP_CODE_URL });
+
+    await user.type(await screen.findByLabelText("Verification code"), "12345");
+
+    expect(
+      screen.queryByText(
+        "This verification code is incomplete: enter all 6 digits.",
+      ),
+    ).not.toBeOnTheScreen();
+  });
+
+  it("clears the validation message as soon as the User completes the verification code", async () => {
+    const user = userEvent.setup();
+
+    renderScreen({ initialUrl: VALIDATE_OTP_CODE_URL });
+
+    await user.type(await screen.findByLabelText("Verification code"), "12345");
+
+    await user.press(screen.getByRole("button", { name: "Sign in" }));
+
+    await screen.findByText(
+      "This verification code is incomplete: enter all 6 digits.",
+    );
+
+    await user.type(screen.getByLabelText(/^Verification code/), "6");
+
+    expect(
+      screen.queryByText(
+        "This verification code is incomplete: enter all 6 digits.",
+      ),
+    ).not.toBeOnTheScreen();
+  });
+
   it("signs the User in and opens the home screen when the server accepts the verification code", async () => {
     const user = userEvent.setup();
 
