@@ -13,13 +13,9 @@ import { TrpcClient } from "#/shared/services/trpc-client.ts";
 export type Exercise =
   inferRouterOutputs<AppRouter>["exercise"]["list"][number];
 
-type ExerciseApplicationServiceShape = {
-  readonly list: () => Effect.Effect<Exercise[], TrpcClientError>;
-};
-
 export class ExerciseApplicationService extends Context.Service<
   ExerciseApplicationService,
-  ExerciseApplicationServiceShape
+  { readonly list: () => Effect.Effect<Exercise[], TrpcClientError> }
 >()("@ankaa/mobile/shared/ExerciseApplicationService") {
   static readonly layerNoDeps = Layer.effect(
     ExerciseApplicationService,

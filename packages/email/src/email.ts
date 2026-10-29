@@ -6,7 +6,9 @@ import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
 import { Resend } from "resend";
 
-import { EmailError } from "#/email-error.ts";
+import type { EmailError } from "#/email-error.ts";
+
+import { buildEmailError } from "#/core/build-email-error.ts";
 
 export type SendEmailOptions = {
   subject: string;
@@ -14,40 +16,45 @@ export type SendEmailOptions = {
   to: string;
 };
 
-export class Email extends Context.Service<Email>()("@ankaa/email/Email", {
-  make: Effect.gen(function* () {
-    const resendApiKey = yield* Config.schema(
-      Schema.Redacted(Schema.NonEmptyString),
-      "RESEND_API_KEY",
-    );
-    const resendEmailFrom = yield* Config.NonEmptyString("RESEND_EMAIL_FROM");
+export class Email extends Context.Service<
+  Email,
+  {
+    readonly send: (
+      options: SendEmailOptions,
+    ) => Effect.Effect<void, EmailError>;
+  }
+>()("@ankaa/email/Email") {
+  static readonly layer = Layer.effect(
+    Email,
+    Effect.gen(function* () {
+      const resendApiKey = yield* Config.schema(
+        Schema.Redacted(Schema.NonEmptyString),
+        "RESEND_API_KEY",
+      );
+      const resendEmailFrom = yield* Config.NonEmptyString("RESEND_EMAIL_FROM");
 
-    const resend = new Resend(Redacted.value(resendApiKey));
+      const resend = new Resend(Redacted.value(resendApiKey));
 
-    const send = Effect.fn("Email.send")(function* ({
-      subject,
-      text,
-      to,
-    }: SendEmailOptions) {
-      const sendEmailErrorMessage = `Failed to send email with subject "${subject}"`;
-
-      const sendEmailResponse = yield* Effect.tryPromise({
-        catch: (cause) =>
-          new EmailError({ cause, message: sendEmailErrorMessage }),
-        try: () =>
-          resend.emails.send({ from: resendEmailFrom, subject, text, to }),
-      });
-
-      if (sendEmailResponse.error) {
-        return yield* new EmailError({
-          cause: sendEmailResponse.error,
-          message: sendEmailErrorMessage,
+      const send = Effect.fn("Email.send")(function* ({
+        subject,
+        text,
+        to,
+      }: SendEmailOptions) {
+        const sendEmailResponse = yield* Effect.tryPromise({
+          catch: (cause) => buildEmailError({ cause, subject }),
+          try: () =>
+            resend.emails.send({ from: resendEmailFrom, subject, text, to }),
         });
-      }
-    }, Effect.asVoid);
 
-    return { send };
-  }),
-}) {
-  static readonly layer = Layer.effect(this, this.make);
+        if (sendEmailResponse.error) {
+          return yield* buildEmailError({
+            cause: sendEmailResponse.error,
+            subject,
+          });
+        }
+      }, Effect.asVoid);
+
+      return Email.of({ send });
+    }),
+  );
 }

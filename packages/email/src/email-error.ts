@@ -1,10 +1,6 @@
-import * as Data from "effect/Data";
+import * as Schema from "effect/Schema";
 
-type EmailErrorFields = {
-  readonly cause: unknown;
-  readonly message: string;
-};
-
-export class EmailError extends Data.TaggedError(
-  "EmailError",
-)<EmailErrorFields> {}
+export class EmailError extends Schema.TaggedError<EmailError>()("EmailError", {
+  cause: Schema.Defect(),
+  message: Schema.String,
+}) {}

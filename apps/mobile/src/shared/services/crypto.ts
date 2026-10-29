@@ -3,10 +3,16 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ExpoCrypto from "expo-crypto";
 
-export class Crypto extends Context.Service<Crypto>()(
-  "@ankaa/mobile/shared/services/Crypto",
+export class Crypto extends Context.Service<
+  Crypto,
   {
-    make: Effect.sync(() => {
+    readonly createRandomUuid: () => Effect.Effect<string>;
+    readonly createSha256Digest: (text: string) => Effect.Effect<string>;
+  }
+>()("@ankaa/mobile/shared/services/Crypto") {
+  static readonly layer = Layer.effect(
+    Crypto,
+    Effect.sync(() => {
       function createRandomUuid() {
         return Effect.sync(() => ExpoCrypto.randomUUID());
       }
@@ -20,9 +26,7 @@ export class Crypto extends Context.Service<Crypto>()(
         );
       }
 
-      return { createRandomUuid, createSha256Digest };
+      return Crypto.of({ createRandomUuid, createSha256Digest });
     }),
-  },
-) {
-  static readonly layer = Layer.effect(this, this.make);
+  );
 }

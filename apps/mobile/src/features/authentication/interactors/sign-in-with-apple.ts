@@ -25,6 +25,7 @@ export const signInWithApple = Effect.fn("signInWithApple")(function* () {
 
   if (!credential.identityToken) {
     return yield* new AuthenticationClientError({
+      cause: null,
       code: null,
       message: "Failed to receive an identity token from Apple",
       retryAfterSeconds: null,

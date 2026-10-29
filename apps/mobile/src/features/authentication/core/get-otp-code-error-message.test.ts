@@ -10,7 +10,9 @@ describe("getOtpCodeErrorMessage", () => {
 
   it("returns the rate limit message with the remaining seconds of the cooldown for a rate-limited error", () => {
     const authenticationClientError = new AuthenticationClientError({
+      cause: null,
       code: null,
+      message: "Authentication failed",
       retryAfterSeconds: 60,
       status: 429,
     });
@@ -25,7 +27,9 @@ describe("getOtpCodeErrorMessage", () => {
 
   it("returns no message for a rate-limited error once the cooldown has ended", () => {
     const authenticationClientError = new AuthenticationClientError({
+      cause: null,
       code: null,
+      message: "Authentication failed",
       retryAfterSeconds: 60,
       status: 429,
     });
@@ -40,7 +44,9 @@ describe("getOtpCodeErrorMessage", () => {
 
   it("returns the message of the authentication error for an error that isn't rate-limited", () => {
     const authenticationClientError = new AuthenticationClientError({
+      cause: null,
       code: "OTP_EXPIRED",
+      message: "Authentication failed",
       retryAfterSeconds: null,
       status: 400,
     });

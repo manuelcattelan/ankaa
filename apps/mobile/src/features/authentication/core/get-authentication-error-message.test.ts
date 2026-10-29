@@ -8,6 +8,7 @@ describe("getAuthenticationErrorMessage", () => {
     const authenticationClientError = new AuthenticationClientError({
       cause: new TypeError("Network request failed"),
       code: null,
+      message: "Failed to send the authentication request",
       retryAfterSeconds: null,
       status: null,
     });
@@ -21,6 +22,7 @@ describe("getAuthenticationErrorMessage", () => {
     const authenticationClientError = new AuthenticationClientError({
       cause: { code: "ERR_UNEXPECTED" },
       code: null,
+      message: "Failed to send the authentication request",
       retryAfterSeconds: null,
       status: null,
     });
@@ -32,7 +34,9 @@ describe("getAuthenticationErrorMessage", () => {
 
   it("returns the rate limit message with the delay for a rate-limited AuthenticationClientError with a delay", () => {
     const authenticationClientError = new AuthenticationClientError({
+      cause: null,
       code: null,
+      message: "Authentication failed",
       retryAfterSeconds: 30,
       status: 429,
     });
@@ -44,7 +48,9 @@ describe("getAuthenticationErrorMessage", () => {
 
   it("returns the rate limit message without a delay for a rate-limited AuthenticationClientError without a delay", () => {
     const authenticationClientError = new AuthenticationClientError({
+      cause: null,
       code: null,
+      message: "Authentication failed",
       retryAfterSeconds: null,
       status: 429,
     });
@@ -56,7 +62,9 @@ describe("getAuthenticationErrorMessage", () => {
 
   it("returns the incorrect verification code message for the code INVALID_OTP", () => {
     const authenticationClientError = new AuthenticationClientError({
+      cause: null,
       code: "INVALID_OTP",
+      message: "Authentication failed",
       retryAfterSeconds: null,
       status: 400,
     });
@@ -68,7 +76,9 @@ describe("getAuthenticationErrorMessage", () => {
 
   it("returns the account not linked message for the code EMAIL_NOT_VERIFIED", () => {
     const authenticationClientError = new AuthenticationClientError({
+      cause: null,
       code: "EMAIL_NOT_VERIFIED",
+      message: "Authentication failed",
       retryAfterSeconds: null,
       status: 403,
     });
@@ -80,7 +90,9 @@ describe("getAuthenticationErrorMessage", () => {
 
   it("returns the unknown error message for a code without a message", () => {
     const authenticationClientError = new AuthenticationClientError({
+      cause: null,
       code: "UNEXPECTED_CODE",
+      message: "Authentication failed",
       retryAfterSeconds: null,
       status: 400,
     });
@@ -92,7 +104,9 @@ describe("getAuthenticationErrorMessage", () => {
 
   it("returns the unknown error message for an AuthenticationClientError without a code", () => {
     const authenticationClientError = new AuthenticationClientError({
+      cause: null,
       code: null,
+      message: "Authentication failed",
       retryAfterSeconds: null,
       status: 500,
     });

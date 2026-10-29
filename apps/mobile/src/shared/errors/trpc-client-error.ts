@@ -1,9 +1,6 @@
-import * as Data from "effect/Data";
+import * as Schema from "effect/Schema";
 
-type TrpcClientErrorFields = {
-  readonly cause: unknown;
-};
-
-export class TrpcClientError extends Data.TaggedError(
+export class TrpcClientError extends Schema.TaggedError<TrpcClientError>()(
   "TrpcClientError",
-)<TrpcClientErrorFields> {}
+  { cause: Schema.Defect() },
+) {}

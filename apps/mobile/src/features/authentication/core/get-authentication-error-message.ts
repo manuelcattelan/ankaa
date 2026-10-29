@@ -42,7 +42,7 @@ export function getAuthenticationErrorMessage(error: unknown) {
 }
 
 function getAuthenticationFailureMessage(error: AuthenticationClientError) {
-  if (error.cause !== undefined) {
+  if (error.cause !== null) {
     return getUnexpectedErrorMessage(error.cause);
   }
 

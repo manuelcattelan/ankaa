@@ -22,8 +22,11 @@ export const testAuthenticationLayer = Layer.effectContext(
 
     const ctx = yield* Effect.promise(() => auth.$context);
 
-    return Context.make(Authentication, authentication).pipe(
-      Context.add(AuthenticationTestHelpers, ctx.test),
+    return Context.make(Authentication, Authentication.of(authentication)).pipe(
+      Context.add(
+        AuthenticationTestHelpers,
+        AuthenticationTestHelpers.of(ctx.test),
+      ),
     );
   }),
 );

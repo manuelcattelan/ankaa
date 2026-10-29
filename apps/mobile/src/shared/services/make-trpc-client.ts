@@ -6,7 +6,7 @@ import * as Effect from "effect/Effect";
 
 import { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
 
-type TrpcRequest<TData> = {
+export type TrpcRequest<TData> = {
   call: (callOptions: {
     signal: AbortSignal;
     trpc: TRPCClient<AppRouter>;
@@ -15,9 +15,9 @@ type TrpcRequest<TData> = {
 };
 
 /**
- * Builds the `TrpcClient` Service over a vanilla tRPC client, so the app and
- * the fake in `#/shared/testing/` run the same `request` and differ only in
- * the client's link.
+ * Builds the implementation of the `TrpcClient` Service over a vanilla tRPC
+ * client, so the Service's Layer and the fake in `#/shared/testing/` run the
+ * same `request` and differ only in the client's link.
  */
 export function makeTrpcClient(trpc: TRPCClient<AppRouter>) {
   function request<TData>({ call }: TrpcRequest<TData>) {

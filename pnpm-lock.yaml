@@ -638,6 +638,9 @@ importers:
       '@ankaa/typescript':
         specifier: workspace:*
         version: link:../../tooling/typescript
+      '@ankaa/vitest':
+        specifier: workspace:*
+        version: link:../../tooling/vitest
       '@types/node':
         specifier: 'catalog:'
         version: 26.4.1
@@ -650,6 +653,9 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0))
 
   tooling/eslint:
     dependencies:

@@ -4,13 +4,9 @@ import * as Layer from "effect/Layer";
 
 import { ExerciseRepository } from "#/features/exercise/exercise-repository.ts";
 
-type ExerciseApplicationServiceShape = {
-  readonly list: ExerciseRepository["Service"]["list"];
-};
-
 export class ExerciseApplicationService extends Context.Service<
   ExerciseApplicationService,
-  ExerciseApplicationServiceShape
+  { readonly list: ExerciseRepository["Service"]["list"] }
 >()("@ankaa/api/features/exercise/ExerciseApplicationService") {
   static readonly layerNoDeps = Layer.effect(
     ExerciseApplicationService,

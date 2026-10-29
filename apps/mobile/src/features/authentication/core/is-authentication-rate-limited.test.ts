@@ -6,7 +6,9 @@ describe("isAuthenticationRateLimited", () => {
     expect(
       isAuthenticationRateLimited(
         new AuthenticationClientError({
+          cause: null,
           code: null,
+          message: "Authentication failed",
           retryAfterSeconds: null,
           status: 429,
         }),
@@ -18,7 +20,9 @@ describe("isAuthenticationRateLimited", () => {
     expect(
       isAuthenticationRateLimited(
         new AuthenticationClientError({
+          cause: null,
           code: null,
+          message: "Authentication failed",
           retryAfterSeconds: null,
           status: 401,
         }),

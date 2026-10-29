@@ -6,10 +6,12 @@
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
     "@ankaa/typescript": "workspace:*",
+    "@ankaa/vitest": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "jiti": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "exports": {
     "./*": "./src/*.ts"
@@ -22,7 +24,8 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run"
   },
   "type": "module"
 }

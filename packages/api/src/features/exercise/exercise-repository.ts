@@ -9,10 +9,6 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-type ExerciseRepositoryShape = {
-  readonly list: () => Effect.Effect<ListedExercise[]>;
-};
-
 type ListedExercise = Pick<
   typeof exercise.$inferSelect,
   "amountUnit" | "id" | "name" | "weightType"
@@ -26,7 +22,7 @@ type ListedExercise = Pick<
 
 export class ExerciseRepository extends Context.Service<
   ExerciseRepository,
-  ExerciseRepositoryShape
+  { readonly list: () => Effect.Effect<ListedExercise[]> }
 >()("@ankaa/api/features/exercise/ExerciseRepository") {
   static readonly layerNoDeps = Layer.effect(
     ExerciseRepository,

@@ -5,9 +5,17 @@ import { emailOTPClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import * as Effect from "effect/Effect";
 
+import type { AuthenticationResponseError } from "#/shared/core/build-authentication-client-error.ts";
+
+import { buildAuthenticationClientError } from "#/shared/core/build-authentication-client-error.ts";
 import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
 
-type AuthClient = ReturnType<typeof buildAuthClient>;
+export type AuthClient = ReturnType<typeof buildAuthClient>;
+
+export type SendAuthenticationRequest<TData> = (
+  authClient: AuthClient,
+  fetchOptions: AuthenticationFetchOptions,
+) => Promise<AuthenticationResponse<TData>>;
 
 type AuthenticationFetch = (
   input: Request | string | URL,
@@ -25,13 +33,6 @@ type AuthenticationFetchOptions = {
 type AuthenticationResponse<TData> =
   AuthenticationResponseFailure | AuthenticationResponseSuccess<TData>;
 
-type AuthenticationResponseError = {
-  code?: string | undefined;
-  message?: string | undefined;
-  status: number;
-  statusText: string;
-};
-
 type AuthenticationResponseFailure = {
   data: null;
   error: AuthenticationResponseError;
@@ -48,17 +49,13 @@ type MakeAuthenticationClientOptions = {
   storage: ExpoClientStorage;
 };
 
-type SendAuthenticationRequest<TData> = (
-  authClient: AuthClient,
-  fetchOptions: AuthenticationFetchOptions,
-) => Promise<AuthenticationResponse<TData>>;
-
 const APPLICATION_SLUG = "ankaa";
 
 /**
- * Builds the `AuthenticationClient` Service over the better-auth client, so
- * the app and the fake in `#/shared/testing/` run the same client and differ
- * only in its fetch and storage.
+ * Builds the implementation of the `AuthenticationClient` Service over the
+ * better-auth client, so the Service's Layer and the fake in
+ * `#/shared/testing/` run the same client and differ only in its fetch and
+ * storage.
  */
 export function makeAuthenticationClient({
   apiUrl,
@@ -73,36 +70,28 @@ export function makeAuthenticationClient({
         new AuthenticationClientError({
           cause,
           code: null,
+          message: "Failed to send the authentication request",
           retryAfterSeconds: null,
           status: null,
         }),
       try: async () => {
-        let retryAfterSeconds: null | number = null;
+        let retryAfterHeader: null | string = null;
 
         const response = await sendRequest(authClient, {
           onError: (context) => {
-            const retryAfterHeader =
-              context.response.headers.get("X-Retry-After");
-
-            if (retryAfterHeader) {
-              retryAfterSeconds = Number(retryAfterHeader);
-            }
+            retryAfterHeader = context.response.headers.get("X-Retry-After");
           },
         });
 
-        return { response, retryAfterSeconds };
+        return { response, retryAfterHeader };
       },
     }).pipe(
       Effect.flatMap((authenticationRequest) =>
         authenticationRequest.response.error
           ? Effect.fail(
-              new AuthenticationClientError({
-                code: authenticationRequest.response.error.code ?? null,
-                message:
-                  authenticationRequest.response.error.message ??
-                  authenticationRequest.response.error.statusText,
-                retryAfterSeconds: authenticationRequest.retryAfterSeconds,
-                status: authenticationRequest.response.error.status,
+              buildAuthenticationClientError({
+                error: authenticationRequest.response.error,
+                retryAfterHeader: authenticationRequest.retryAfterHeader,
               }),
             )
           : Effect.succeed(authenticationRequest.response.data),

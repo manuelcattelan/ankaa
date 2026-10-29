@@ -1,16 +1,27 @@
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Predicate from "effect/Predicate";
 import * as ExpoAppleAuthentication from "expo-apple-authentication";
 
-import { REQUEST_CANCELED_ERROR_CODE } from "#/features/authentication/constants/request-canceled-error-code.ts";
-import { AppleSignInCanceledError } from "#/features/authentication/errors/apple-sign-in-canceled-error.ts";
+import type { AppleSignInCanceledError } from "#/features/authentication/errors/apple-sign-in-canceled-error.ts";
 
-export class AppleSignIn extends Context.Service<AppleSignIn>()(
-  "@ankaa/mobile/features/authentication/services/AppleSignIn",
+import { getAppleSignInError } from "#/features/authentication/core/get-apple-sign-in-error.ts";
+
+export class AppleSignIn extends Context.Service<
+  AppleSignIn,
   {
-    make: Effect.sync(() => {
+    readonly checkAvailability: () => Effect.Effect<boolean>;
+    readonly signIn: (
+      hashedNonce: string,
+    ) => Effect.Effect<
+      ExpoAppleAuthentication.AppleAuthenticationCredential,
+      AppleSignInCanceledError
+    >;
+  }
+>()("@ankaa/mobile/features/authentication/services/AppleSignIn") {
+  static readonly layer = Layer.effect(
+    AppleSignIn,
+    Effect.sync(() => {
       function checkAvailability() {
         return Effect.promise(() => ExpoAppleAuthentication.isAvailableAsync());
       }
@@ -27,20 +38,15 @@ export class AppleSignIn extends Context.Service<AppleSignIn>()(
         ).pipe(Effect.catchDefect(failWithAppleSignInError));
       }
 
-      return { checkAvailability, signIn };
+      return AppleSignIn.of({ checkAvailability, signIn });
     }),
-  },
-) {
-  static readonly layer = Layer.effect(this, this.make);
+  );
 }
 
 function failWithAppleSignInError(defect: unknown) {
-  if (
-    Predicate.hasProperty(defect, "code") &&
-    defect.code === REQUEST_CANCELED_ERROR_CODE
-  ) {
-    return Effect.fail(new AppleSignInCanceledError());
-  }
+  const appleSignInError = getAppleSignInError(defect);
 
-  return Effect.die(defect);
+  return appleSignInError === null
+    ? Effect.die(defect)
+    : Effect.fail(appleSignInError);
 }

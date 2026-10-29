@@ -1,5 +1,6 @@
-import * as Data from "effect/Data";
+import * as Schema from "effect/Schema";
 
-export class GoogleSignInCanceledError extends Data.TaggedError(
+export class GoogleSignInCanceledError extends Schema.TaggedError<GoogleSignInCanceledError>()(
   "GoogleSignInCanceledError",
+  {},
 ) {}

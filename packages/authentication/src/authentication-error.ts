@@ -1,9 +1,6 @@
-import * as Data from "effect/Data";
+import * as Schema from "effect/Schema";
 
-type AuthenticationErrorFields = {
-  readonly cause: unknown;
-};
-
-export class AuthenticationError extends Data.TaggedError(
+export class AuthenticationError extends Schema.TaggedError<AuthenticationError>()(
   "AuthenticationError",
-)<AuthenticationErrorFields> {}
+  { cause: Schema.Defect() },
+) {}

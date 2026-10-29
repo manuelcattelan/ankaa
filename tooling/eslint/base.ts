@@ -124,7 +124,8 @@ export const RESTRICTED_SYNTAX = [
   },
   {
     message: "Move this object type to a named type.",
-    selector: "TSTypeLiteral:not(TSTypeAliasDeclaration TSTypeLiteral)",
+    selector:
+      "TSTypeLiteral:not(TSTypeAliasDeclaration TSTypeLiteral, CallExpression[callee.object.name='Context'][callee.property.name='Service'] TSTypeLiteral)",
   },
   {
     message:
@@ -133,9 +134,22 @@ export const RESTRICTED_SYNTAX = [
       "FunctionExpression:not(CallExpression[callee.object.name='Effect'][callee.property.name=/^(fn|gen)$/] > .arguments[generator=true], CallExpression[callee.callee.object.name='Effect'][callee.callee.property.name='fn'] > .arguments[generator=true])",
   },
   {
-    message: "Use functions and plain objects instead of a class.",
+    message:
+      "Use functions and plain objects instead of a class. Only a Service extends Context.Service and an error extends Schema.TaggedError, the classes that Effect's docs write.",
     selector:
-      "ClassDeclaration:not([superClass.callee.object.name='Data'][superClass.callee.property.name='TaggedError'], [superClass.callee.callee.object.name='Context'][superClass.callee.callee.property.name='Service']), ClassExpression",
+      "ClassDeclaration:not([superClass.callee.callee.object.name='Context'][superClass.callee.callee.property.name='Service'], [superClass.callee.callee.object.name='Schema'][superClass.callee.callee.property.name='TaggedError']), ClassExpression",
+  },
+  {
+    message:
+      "Build a Service in its Layer with Layer.effect and Service.of instead of the make option, as Effect's docs do.",
+    selector:
+      "CallExpression[callee.callee.object.name='Context'][callee.callee.property.name='Service'] > ObjectExpression > Property[key.name='make']",
+  },
+  {
+    message:
+      "Access a Service with yield* instead of use() or useSync(), so every program reads its Services the same way.",
+    selector:
+      "CallExpression > MemberExpression.callee[object.name=/^[A-Z]/][property.name=/^use(?:Sync)?$/]:not([object.name='React'])",
   },
   {
     message: "Use a union of string literals instead of an enum.",

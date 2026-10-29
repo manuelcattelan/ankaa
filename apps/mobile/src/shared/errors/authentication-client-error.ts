@@ -1,13 +1,12 @@
-import * as Data from "effect/Data";
+import * as Schema from "effect/Schema";
 
-type AuthenticationClientErrorFields = {
-  readonly cause?: unknown;
-  readonly code: null | string;
-  readonly message?: string;
-  readonly retryAfterSeconds: null | number;
-  readonly status: null | number;
-};
-
-export class AuthenticationClientError extends Data.TaggedError(
+export class AuthenticationClientError extends Schema.TaggedError<AuthenticationClientError>()(
   "AuthenticationClientError",
-)<AuthenticationClientErrorFields> {}
+  {
+    cause: Schema.NullOr(Schema.Defect()),
+    code: Schema.NullOr(Schema.String),
+    message: Schema.String,
+    retryAfterSeconds: Schema.NullOr(Schema.Number),
+    status: Schema.NullOr(Schema.Number),
+  },
+) {}

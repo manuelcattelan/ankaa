@@ -1,5 +1,6 @@
-import * as Data from "effect/Data";
+import * as Schema from "effect/Schema";
 
-export class AppleSignInCanceledError extends Data.TaggedError(
+export class AppleSignInCanceledError extends Schema.TaggedError<AppleSignInCanceledError>()(
   "AppleSignInCanceledError",
+  {},
 ) {}
