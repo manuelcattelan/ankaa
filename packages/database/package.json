@@ -7,14 +7,12 @@
   },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
-    "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
     "drizzle-kit": "1.0.0-rc.4",
     "eslint": "catalog:",
     "jiti": "catalog:",
-    "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "exports": {
@@ -30,8 +28,6 @@
   "private": true,
   "scripts": {
     "check-types": "tsc --noEmit",
-    "format": "prettier --check .",
-    "format:fix": "prettier --write .",
     "generate": "DOTENV_CONFIG_PATH=../../.env drizzle-kit generate --name",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

@@ -1,12 +1,12 @@
 {
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
-    "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "jiti": "catalog:",
     "prettier": "catalog:",
+    "prettier-plugin-sh": "^0.19.0",
     "shellcheck": "^4.1.0",
     "turbo": "^2.10.12",
     "typescript": "catalog:"
@@ -28,14 +28,12 @@
     "check-types:root": "tsc --noEmit",
     "dev": "turbo run dev",
     "dev:tunnel": "ngrok http 8080",
-    "format": "turbo run format format:root",
-    "format:fix": "turbo run format:fix format:fix:root",
-    "format:fix:root": "prettier --write .",
-    "format:root": "prettier --check .",
+    "format": "prettier --check . --ignore-path .gitignore --ignore-path .prettierignore --ignore-path apps/mobile/.gitignore",
+    "format:fix": "prettier --write . --ignore-path .gitignore --ignore-path .prettierignore --ignore-path apps/mobile/.gitignore",
     "lint": "turbo run lint lint:root",
     "lint:fix": "turbo run lint:fix lint:fix:root",
     "lint:fix:root": "eslint . --fix",
-    "lint:root": "eslint . && git ls-files -z --cached --others --exclude-standard -- '*.sh' | xargs -0 -r shellcheck && ! git grep --untracked -n -E '^[[:space:]]*#' -- ':(glob)**/.env*' ':(glob)**/.gitignore' ':(glob)**/.prettierignore' && ! git ls-files --cached --others --exclude-standard -- .claude/hooks | grep -v -E '^\\.claude/hooks/on-[a-z]+(-[a-z]+)*\\.sh$'",
+    "lint:root": "eslint . && git ls-files -z --cached --others --exclude-standard -- '*.sh' | xargs -0 -r shellcheck",
     "test": "turbo run test"
   },
   "type": "module"

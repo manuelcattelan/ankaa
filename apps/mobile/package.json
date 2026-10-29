@@ -47,17 +47,15 @@
   "devDependencies": {
     "@ankaa/api": "workspace:*",
     "@ankaa/eslint": "workspace:*",
-    "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
     "@react-native/jest-preset": "0.86.3",
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "29.5.14",
     "@types/react": "~19.2.2",
-    "eslint": "^9.39.5",
+    "eslint": "catalog:",
     "jest": "~29.7.0",
     "jest-expo": "~57.0.6",
     "jiti": "catalog:",
-    "prettier": "catalog:",
     "react-test-renderer": "19.2.3",
     "typescript": "catalog:"
   },
@@ -103,8 +101,6 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "dev": "expo start",
-    "format": "prettier --check .",
-    "format:fix": "prettier --write .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "jest"

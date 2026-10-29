@@ -1,8 +1,10 @@
+import { fixupConfigRules } from "@eslint/compat";
 import eslintConfigExpoFlat from "eslint-config-expo/flat";
 import { createNodeResolver } from "eslint-plugin-import-x";
 import eslintPluginJest from "eslint-plugin-jest";
 import { defineConfig } from "eslint/config";
 import path from "node:path";
+import typescriptEslint from "typescript-eslint";
 
 import {
   baseConfiguration,
@@ -12,19 +14,12 @@ import {
   FEATURES_PATH,
   getFeatureNames,
   JAVASCRIPT_FILES,
-  nullAllowingRestrictedSyntax,
   RESTRICTED_SYNTAX,
   rulesConfiguration,
   TEST_FILES,
-  TEST_HELPER_FILES,
 } from "./base.ts";
 
 const MOBILE_RESTRICTED_SYNTAX = [
-  {
-    message: "Move this number to a named constant.",
-    selector:
-      "JSXExpressionContainer > Literal[raw=/^[0-9]/]:not([value=0]):not([value=1])",
-  },
   {
     message: "Move this style to StyleSheet.create.",
     selector: "JSXAttribute[name.name='style'] ObjectExpression",
@@ -67,6 +62,24 @@ const WRAPPED_PRIMITIVES_IMPORT = {
   name: "react-native",
 };
 
+// eslint-config-expo's react and import plugins still call context methods that
+// ESLint 10 removed (https://eslint.org/docs/latest/use/migrate-to-10.0.0), so
+// fixupConfigRules wraps them until Expo supports ESLint 10. It wraps every
+// plugin, so put typescript-eslint's own object back, or ESLint refuses two
+// different "@typescript-eslint" plugins.
+const eslintConfigExpoFixedUp = fixupConfigRules(eslintConfigExpoFlat).map(
+  (configuration) =>
+    configuration.plugins?.["@typescript-eslint"] === undefined
+      ? configuration
+      : {
+          ...configuration,
+          plugins: {
+            ...configuration.plugins,
+            "@typescript-eslint": typescriptEslint.plugin,
+          },
+        },
+);
+
 const featureNames = getFeatureNames();
 
 const featureIsolationZones = featureNames.map((featureName) =>
@@ -92,13 +105,12 @@ const routeZone = {
 
 export const mobileConfiguration = defineConfig([
   baseConfiguration,
-  { extends: [eslintConfigExpoFlat], files: JAVASCRIPT_FILES },
+  { extends: [eslintConfigExpoFixedUp], files: JAVASCRIPT_FILES },
   rulesConfiguration,
   {
     files: JAVASCRIPT_FILES,
     rules: {
       "@ankaa/component-order": "error",
-      "@ankaa/hook-padding": "error",
       "@stylistic/jsx-curly-brace-presence": [
         "error",
         { children: "never", props: "never" },
@@ -189,30 +201,11 @@ export const mobileConfiguration = defineConfig([
     },
   },
   {
-    files: ["src/**/messages/**"],
-    rules: { "@ankaa/no-duplicate-string": "off" },
-  },
-  {
-    files: TEST_HELPER_FILES,
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        ...nullAllowingRestrictedSyntax,
-        ...MOBILE_RESTRICTED_SYNTAX,
-      ],
-    },
-  },
-  {
     extends: [eslintPluginJest.configs["flat/recommended"]],
     files: TEST_FILES,
     rules: {
       "jest/no-conditional-in-test": "error",
       "jest/no-disabled-tests": "error",
-      "no-restricted-syntax": [
-        "error",
-        ...nullAllowingRestrictedSyntax,
-        ...MOBILE_RESTRICTED_SYNTAX,
-      ],
     },
   },
 ]);

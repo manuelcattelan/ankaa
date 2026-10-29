@@ -10,13 +10,11 @@
   },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
-    "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
     "@types/node": "catalog:",
     "auth": "catalog:",
     "eslint": "catalog:",
     "jiti": "catalog:",
-    "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "exports": {
@@ -28,8 +26,6 @@
   "private": true,
   "scripts": {
     "check-types": "tsc --noEmit",
-    "format": "prettier --check .",
-    "format:fix": "prettier --write .",
     "generate": "auth generate --config better-auth.config.ts --output ../database/src/schema/authentication.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"

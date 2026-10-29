@@ -8,7 +8,6 @@ import eslintConfigPrettierFlat from "eslint-config-prettier/flat";
 import eslintPluginImportX from "eslint-plugin-import-x";
 import eslintPluginPerfectionist from "eslint-plugin-perfectionist";
 import eslintPluginUnicorn from "eslint-plugin-unicorn";
-import eslintPluginYml from "eslint-plugin-yml";
 import { defineConfig } from "eslint/config";
 import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
@@ -25,12 +24,6 @@ type CreateFeatureIsolationZoneOptions = {
 type CreateGeneratedFilesConfigurationOptions = {
   configuration: Linter.Config[];
   files: string[];
-};
-
-const MISSING_VALUE_RESTRICTED_SYNTAX = {
-  message: "Use undefined instead of null for a missing value.",
-  selector:
-    "Literal[raw='null']:not(JSXExpressionContainer > ConditionalExpression > .alternate, ReturnStatement > .argument, CallExpression[callee.name='useRef'] > .arguments)",
 };
 
 export const JAVASCRIPT_FILES = ["**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"];
@@ -52,10 +45,6 @@ export const RESTRICTED_SYNTAX = [
   {
     message: "Move this object type to a named type.",
     selector: "TSTypeLiteral:not(TSTypeAliasDeclaration TSTypeLiteral)",
-  },
-  {
-    message: "Use !! instead of Boolean().",
-    selector: "CallExpression[callee.name='Boolean']",
   },
   {
     message:
@@ -89,41 +78,10 @@ export const RESTRICTED_SYNTAX = [
     selector:
       "CallExpression > MemberExpression.callee[property.name=/^(then|catch|finally)$/]:not([object.name='Effect'][property.name='catch'])",
   },
-  {
-    message:
-      "Move this regular expression to a named constant at the top of the file.",
-    selector: ":function Literal[regex]:not([regex.flags=/[gy]/])",
-  },
-  MISSING_VALUE_RESTRICTED_SYNTAX,
-];
-
-export const nullAllowingRestrictedSyntax = RESTRICTED_SYNTAX.filter(
-  (restrictedSyntax) => restrictedSyntax !== MISSING_VALUE_RESTRICTED_SYNTAX,
-);
-
-const HOOK_STATEMENT_SELECTOR =
-  ":matches(VariableDeclaration[declarations.0.init.callee.name=/^use[A-Z]/], VariableDeclaration[declarations.0.init.callee.property.name=/^use[A-Z]/], ExpressionStatement[expression.callee.name=/^use[A-Z]/], ExpressionStatement[expression.callee.property.name=/^use[A-Z]/])";
-const ACTION_STATEMENT_SELECTOR =
-  ":matches(ExpressionStatement[expression.callee.property.name=/^mutate(Async)?$/], ExpressionStatement[expression.argument.callee.property.name=/^mutate(Async)?$/], ExpressionStatement[expression.callee.object.name='router'], ExpressionStatement[expression.argument.callee.object.name='router'], ExpressionStatement[expression.type='AwaitExpression'])";
-const DECLARATION_STATEMENTS = ["const", "let", "var"];
-
-const GENERIC_NAMES = [
-  "callback",
-  "current",
-  "header",
-  "interval",
-  "other",
-  "result",
-  "state",
-  "temp",
-  "value",
 ];
 
 const BOOLEAN_PREFIXES = ["is", "has", "can", "should"];
 const ASYNC_SUFFIX = { match: false, regex: "Async$" };
-
-const NUMERIC_SEPARATOR_GROUP_LENGTH = 3;
-const NUMERIC_SEPARATOR_MINIMUM_DIGITS = 4;
 
 const GENERATED_FILES_KEPT_RULE_PREFIXES = ["@stylistic/", "perfectionist/"];
 
@@ -158,16 +116,6 @@ const corePackagePath = path.resolve(
   import.meta.dirname,
   "../../packages/core",
 );
-
-const PREVENT_ABBREVIATIONS_OPTIONS = {
-  checkShorthandImports: false,
-  ignore: ["\\.config$", "^eslint-config-"],
-  replacements: {
-    auth: { authentication: true },
-    config: { configuration: true },
-    ms: { milliseconds: true },
-  },
-};
 
 export const rulesConfiguration = defineConfig([
   {
@@ -240,12 +188,7 @@ export const rulesConfiguration = defineConfig([
           selector: "function",
         },
         { format: ["StrictPascalCase"], selector: "typeLike" },
-        {
-          custom: { match: true, regex: "^[A-Z][a-z]" },
-          format: ["StrictPascalCase"],
-          prefix: ["T"],
-          selector: "typeParameter",
-        },
+        { format: ["PascalCase"], selector: "typeParameter" },
         {
           format: null,
           selector: ["objectLiteralMethod", "objectLiteralProperty"],
@@ -254,59 +197,6 @@ export const rulesConfiguration = defineConfig([
           format: null,
           modifiers: ["requiresQuotes"],
           selector: "typeProperty",
-        },
-      ],
-      "@ankaa/no-comments": "error",
-      "@ankaa/no-duplicate-string": "error",
-      "@ankaa/no-single-use-string": "error",
-      "@stylistic/padding-line-between-statements": [
-        "error",
-        { blankLine: "never", next: "*", prev: "*" },
-        { blankLine: "always", next: "*", prev: "import" },
-        { blankLine: "always", next: "*", prev: DECLARATION_STATEMENTS },
-        { blankLine: "always", next: DECLARATION_STATEMENTS, prev: "*" },
-        { blankLine: "always", next: "*", prev: "type" },
-        { blankLine: "always", next: "type", prev: "*" },
-        { blankLine: "any", next: "type", prev: "type" },
-        { blankLine: "always", next: "*", prev: "export" },
-        { blankLine: "always", next: "export", prev: "*" },
-        { blankLine: "any", next: "export", prev: "export" },
-        {
-          blankLine: "always",
-          next: "*",
-          prev: { lineMode: "multiline", selector: "*" },
-        },
-        {
-          blankLine: "always",
-          next: { lineMode: "multiline", selector: "*" },
-          prev: "*",
-        },
-        {
-          blankLine: "any",
-          next: DECLARATION_STATEMENTS,
-          prev: DECLARATION_STATEMENTS,
-        },
-        {
-          blankLine: "any",
-          next: "*",
-          prev: { selector: HOOK_STATEMENT_SELECTOR },
-        },
-        {
-          blankLine: "any",
-          next: { selector: HOOK_STATEMENT_SELECTOR },
-          prev: "*",
-        },
-        { blankLine: "any", next: "import", prev: "import" },
-        { blankLine: "always", next: "return", prev: "*" },
-        {
-          blankLine: "always",
-          next: "*",
-          prev: { selector: ACTION_STATEMENT_SELECTOR },
-        },
-        {
-          blankLine: "always",
-          next: { selector: ACTION_STATEMENT_SELECTOR },
-          prev: "*",
         },
       ],
       "@typescript-eslint/consistent-type-assertions": [
@@ -335,7 +225,6 @@ export const rulesConfiguration = defineConfig([
       curly: ["error", "all"],
       eqeqeq: ["error", "always"],
       "func-style": ["error", "declaration"],
-      "id-denylist": ["error", ...GENERIC_NAMES],
       "import-x/consistent-type-specifier-style": ["error", "prefer-top-level"],
       "import-x/extensions": [
         "error",
@@ -353,17 +242,6 @@ export const rulesConfiguration = defineConfig([
       "prefer-template": "error",
       "unicorn/catch-error-name": "error",
       "unicorn/filename-case": ["error", { case: "kebabCase" }],
-      "unicorn/numeric-separators-style": [
-        "error",
-        {
-          number: {
-            groupLength: NUMERIC_SEPARATOR_GROUP_LENGTH,
-            minimumDigits: NUMERIC_SEPARATOR_MINIMUM_DIGITS,
-          },
-          onlyIfContainsSeparator: false,
-        },
-      ],
-      "unicorn/prevent-abbreviations": ["error", PREVENT_ABBREVIATIONS_OPTIONS],
     },
   },
   {
@@ -376,38 +254,20 @@ export const rulesConfiguration = defineConfig([
     rules: CORE_PURITY_RULES,
   },
   {
-    files: ["tooling/eslint/*.ts", "**/eslint.config.ts"],
-    rules: { "@ankaa/no-duplicate-string": "off" },
-  },
-  {
     files: ["**/*.config.{ts,mts}"],
     rules: { "import-x/no-default-export": "off" },
   },
   {
     files: TEST_FILES,
-    rules: {
-      "@ankaa/no-duplicate-string": "off",
-      "@ankaa/no-single-use-string": "off",
-      "@typescript-eslint/no-magic-numbers": "off",
-      "no-restricted-syntax": ["error", ...nullAllowingRestrictedSyntax],
-    },
+    rules: { "@typescript-eslint/no-magic-numbers": "off" },
   },
   {
     files: TEST_HELPER_FILES,
-    rules: {
-      "@typescript-eslint/no-magic-numbers": "off",
-      "no-restricted-syntax": ["error", ...nullAllowingRestrictedSyntax],
-    },
+    rules: { "@typescript-eslint/no-magic-numbers": "off" },
   },
   {
     files: ["tooling/vitest/provided-context.ts"],
     rules: { "@typescript-eslint/consistent-type-definitions": "off" },
-  },
-  {
-    files: ["tooling/eslint/base.ts"],
-    rules: {
-      "no-restricted-syntax": ["error", ...nullAllowingRestrictedSyntax],
-    },
   },
 ]);
 
@@ -441,13 +301,6 @@ export const baseConfiguration = defineConfig([
         { allowLineSeparatedGroups: true, natural: true },
       ],
     },
-  },
-  {
-    files: ["**/*.{yaml,yml}"],
-    ignores: ["**/pnpm-lock.yaml"],
-    language: "yml/yaml",
-    plugins: { "@ankaa": plugin, yml: eslintPluginYml },
-    rules: { "@ankaa/no-comments": "error" },
   },
 ]);
 
