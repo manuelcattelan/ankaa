@@ -56,11 +56,18 @@ export function recordedSetDraftsReducer(
       );
     }
     case "removedRecordedSet": {
-      return entries.filter(
-        (entry) =>
-          entry.workoutExerciseId !== action.workoutExerciseId ||
-          entry.position < action.position,
-      );
+      return entries
+        .filter(
+          (entry) =>
+            entry.workoutExerciseId !== action.workoutExerciseId ||
+            entry.position !== action.position,
+        )
+        .map((entry) =>
+          entry.workoutExerciseId === action.workoutExerciseId &&
+          entry.position > action.position
+            ? { ...entry, position: entry.position - 1 }
+            : entry,
+        );
     }
   }
 }

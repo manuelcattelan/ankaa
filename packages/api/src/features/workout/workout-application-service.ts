@@ -84,16 +84,21 @@ export class WorkoutApplicationService extends Context.Service<
             .transaction(() =>
               Effect.gen(function* () {
                 const workoutExercise =
-                  yield* workoutRepository.findWorkoutExerciseForUpdate({
-                    id: input.workoutExerciseId,
-                  });
+                  yield* workoutRepository.findWorkoutExerciseForRecordedSetRemove(
+                    {
+                      id: input.workoutExerciseId,
+                    },
+                  );
 
                 yield* Match.valueTags(
-                  decideRecordedSetRemove({ userId, workoutExercise }),
+                  decideRecordedSetRemove({ input, userId, workoutExercise }),
                   {
-                    NoRecordedSetToRemove: () => Effect.void,
+                    RecordedSetAlreadyRemoved: () => Effect.void,
                     RecordedSetRemoveAllowed: (outcome) =>
-                      workoutRepository.removeSet({ id: outcome.id }),
+                      workoutRepository.removeSet({
+                        id: outcome.id,
+                        movedRecordedSets: outcome.movedRecordedSets,
+                      }),
                     WorkoutNotFoundError: (error) => Effect.fail(error),
                   },
                 );
@@ -145,9 +150,11 @@ export class WorkoutApplicationService extends Context.Service<
             .transaction(() =>
               Effect.gen(function* () {
                 const workoutExercise =
-                  yield* workoutRepository.findWorkoutExerciseForUpdate({
-                    id: input.workoutExerciseId,
-                  });
+                  yield* workoutRepository.findWorkoutExerciseForRecordedSetSave(
+                    {
+                      id: input.workoutExerciseId,
+                    },
+                  );
 
                 yield* Match.valueTags(
                   decideRecordedSetSave({ input, userId, workoutExercise }),

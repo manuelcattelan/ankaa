@@ -155,6 +155,10 @@ export class WorkoutApplicationService extends Context.Service<
         });
       });
 
+      /**
+       * Stops the Workout, then cancels the notification of its countdown,
+       * which has nothing left to count down for.
+       */
       const stop = Effect.fn("WorkoutApplicationService.stop")(function* (
         input: WorkoutStopInput,
       ) {
@@ -163,6 +167,7 @@ export class WorkoutApplicationService extends Context.Service<
             trpc.workout.stop.mutate(input, { signal }),
           errors: WORKOUT_STOP_WIRE_ERRORS,
         });
+        yield* notifications.cancelAllScheduled();
       });
 
       return WorkoutApplicationService.of({

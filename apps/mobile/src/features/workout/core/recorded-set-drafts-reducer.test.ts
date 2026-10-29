@@ -61,7 +61,7 @@ describe("recordedSetDraftsReducer", () => {
     ).toStrictEqual([SECOND_SET_DRAFT_ENTRY]);
   });
 
-  it("clears the Drafts of a removed Set and of the Sets after it, keeping the Drafts of other Workout exercises", () => {
+  it("clears the Draft of a removed Set and moves the Drafts of the Sets after it up one position, keeping the Drafts of other Workout exercises", () => {
     expect(
       recordedSetDraftsReducer(
         [
@@ -75,6 +75,9 @@ describe("recordedSetDraftsReducer", () => {
           workoutExerciseId: "bench-press-workout-exercise",
         },
       ),
-    ).toStrictEqual([PUSH_UP_SET_DRAFT_ENTRY]);
+    ).toStrictEqual([
+      { ...SECOND_SET_DRAFT_ENTRY, position: 0 },
+      PUSH_UP_SET_DRAFT_ENTRY,
+    ]);
   });
 });

@@ -105,7 +105,6 @@ export function WorkoutExercise({
           }
           exerciseId={workoutExercise.exerciseId}
           isRecordable={position <= workoutExercise.recordedSets.length}
-          isRemovable={position === workoutExercise.recordedSets.length - 1}
           key={position}
           onEndCountdown={onEndCountdown}
           onStartCountdown={onStartCountdown}

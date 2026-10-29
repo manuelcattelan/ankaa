@@ -252,6 +252,16 @@ function buildBenchPressWorkout({
   } satisfies Workout;
 }
 
+function getButton({ index, name }: { index: number; name: string }) {
+  const button = screen.getAllByRole("button", { name }).at(index);
+
+  if (button === undefined) {
+    throw new Error(`No button "${name}" at index ${String(index)}`);
+  }
+
+  return button;
+}
+
 function getField({ index, label }: { index: number; label: string }) {
   const field = screen.getAllByLabelText(label).at(index);
 
@@ -591,14 +601,18 @@ describe("WorkoutScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("removes the last recorded Set through Remove set", async () => {
+  it("removes any recorded Set through its Remove set", async () => {
     const removedInputs: WorkoutRemoveSetInput[] = [];
     let workoutInProgress = buildBenchPressWorkout({
-      plannedSets: [WORKING_PLANNED_SET],
+      plannedSets: [WORKING_PLANNED_SET, WORKING_PLANNED_SET],
       recordedSets: [
         {
           id: "01900000-0000-7000-8000-000000000301",
           segments: [{ amount: 8, weight: 60 }],
+        },
+        {
+          id: "01900000-0000-7000-8000-000000000302",
+          segments: [{ amount: 7, weight: 60 }],
         },
       ],
     });
@@ -614,22 +628,31 @@ describe("WorkoutScreen", () => {
             "workout.removeSet": (input) => {
               removedInputs.push(input);
               workoutInProgress = buildBenchPressWorkout({
-                plannedSets: [WORKING_PLANNED_SET],
-                recordedSets: [],
+                plannedSets: [WORKING_PLANNED_SET, WORKING_PLANNED_SET],
+                recordedSets: [
+                  {
+                    id: "01900000-0000-7000-8000-000000000302",
+                    segments: [{ amount: 7, weight: 60 }],
+                  },
+                ],
               });
             },
           },
         }),
       },
     });
+    await screen.findByText("2 working sets done, 0 left.");
 
-    await user.press(await screen.findByRole("button", { name: "Remove set" }));
+    await user.press(getButton({ index: 0, name: "Remove set" }));
 
     expect(
-      await screen.findByText("0 working sets done, 1 left."),
+      await screen.findByText("1 working set done, 1 left."),
     ).toBeOnTheScreen();
     expect(removedInputs).toStrictEqual([
-      { workoutExerciseId: BENCH_PRESS_WORKOUT_EXERCISE_ID },
+      {
+        id: "01900000-0000-7000-8000-000000000301",
+        workoutExerciseId: BENCH_PRESS_WORKOUT_EXERCISE_ID,
+      },
     ]);
   });
 
@@ -1140,6 +1163,41 @@ describe("WorkoutScreen", () => {
         },
       ]);
     });
+  });
+
+  it("cancels the notification of the countdown when the User stops the Workout", async () => {
+    const scheduledNotifications: ScheduledNotification[] = [];
+    let workoutInProgress: null | Workout = buildBenchPressWorkout({
+      plannedSets: [WORKING_PLANNED_SET],
+      recordedSets: [],
+    });
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({ scheduledNotifications }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "routine.list": () => [pushDayRoutine],
+            "workout.findInProgress": () => workoutInProgress,
+            "workout.stop": () => {
+              workoutInProgress = null;
+            },
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start rest" }));
+    await waitFor(() => {
+      expect(scheduledNotifications).toHaveLength(1);
+    });
+
+    await user.press(screen.getByRole("button", { name: "Stop workout" }));
+    await screen.findByRole("button", { name: "Start Push day" });
+
+    expect(scheduledNotifications).toStrictEqual([]);
   });
 
   it("replaces the countdown and the notification of an earlier countdown when the User starts another, without asking for permission again", async () => {

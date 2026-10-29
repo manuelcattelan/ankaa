@@ -6,14 +6,19 @@ import {
   workout,
   workoutExerciseRecordedSetSegment,
 } from "@ankaa/database/schema/workout";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
+import * as Fiber from "effect/Fiber";
+import * as Schedule from "effect/Schedule";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { TestRuntime } from "#/shared/testing/create-test-runtime.ts";
 
 import { createSignedInCaller } from "#/shared/testing/create-signed-in-caller.ts";
 import { createTestRuntime } from "#/shared/testing/create-test-runtime.ts";
+
+type LockWaitCountRow = { count: number };
 
 const generatedId: unknown = expect.any(String);
 
@@ -22,6 +27,44 @@ const BENCH_PRESS_EXERCISE_ID = "019a0000-0000-7000-8000-000000000001";
 const PLANK_EXERCISE_ID = "019a0000-0000-7000-8000-000000000002";
 
 const BAND_PULL_APART_EXERCISE_ID = "019a0000-0000-7000-8000-000000000003";
+
+/**
+ * Stops the Workout with `id` in a transaction that stays open until the
+ * returned function runs, so a test can send a write while the stop holds
+ * the Workout's row.
+ */
+async function beginWorkoutStop({
+  id,
+  runtime,
+}: {
+  id: string;
+  runtime: TestRuntime;
+}) {
+  const workoutStopped = await runtime.runPromise(Deferred.make<boolean>());
+  const commitRequested = await runtime.runPromise(Deferred.make<boolean>());
+  const fiber = runtime.runFork(
+    Effect.gen(function* () {
+      const database = yield* Database;
+
+      yield* database.transaction(() =>
+        Effect.gen(function* () {
+          yield* database
+            .update(workout)
+            .set({ endedAt: sql`now()` })
+            .where(eq(workout.id, id));
+          yield* Deferred.succeed(workoutStopped, true);
+          yield* Deferred.await(commitRequested);
+        }),
+      );
+    }),
+  );
+  await runtime.runPromise(Deferred.await(workoutStopped));
+
+  return async () => {
+    await runtime.runPromise(Deferred.succeed(commitRequested, true));
+    await runtime.runPromise(Fiber.join(fiber));
+  };
+}
 
 function buildRoutineSaveInput({
   exerciseGroupId,
@@ -185,6 +228,31 @@ async function startBenchPressWorkout({
   const workoutInProgress = await caller.workout.findInProgress();
 
   return workoutInProgress?.sections.main[0]?.exercises[0]?.id ?? "";
+}
+
+/**
+ * Waits until a query of the test database waits for a row lock, or gives up
+ * after a second, so a test can commit once its write is blocked.
+ */
+function waitForLockWait(runtime: TestRuntime) {
+  return runtime.runPromise(
+    Effect.gen(function* () {
+      const database = yield* Database;
+
+      const rows = yield* database.execute<LockWaitCountRow>(
+        sql`select count(*)::int as count from pg_stat_activity where datname = current_database() and wait_event_type = 'Lock'`,
+        "objects",
+      );
+
+      return rows[0]?.count ?? 0;
+    }).pipe(
+      Effect.repeat({
+        schedule: Schedule.spaced("10 millis"),
+        times: 100,
+        until: (count) => count > 0,
+      }),
+    ),
+  );
 }
 
 describe("workout.start", () => {
@@ -1050,6 +1118,33 @@ describe("workout.saveSet", () => {
       code: "NOT_FOUND",
     });
   });
+
+  it("fails with NOT_FOUND and WorkoutNotFoundError for a Set Saved while a stop of its Workout commits", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0609",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+    const commitStop = await beginWorkoutStop({
+      id: "019a0609-0000-7000-8000-000000000004",
+      runtime,
+    });
+
+    const setSave = caller.workout.saveSet({
+      id: "019a0609-0000-7000-8000-000000000101",
+      segments: [{ amount: 8, weight: 60 }],
+      weightUnit: "kilogram",
+      workoutExerciseId,
+    });
+    await waitForLockWait(runtime);
+    await commitStop();
+
+    await expect(setSave).rejects.toMatchObject({
+      cause: { _tag: "WorkoutNotFoundError" },
+      code: "NOT_FOUND",
+    });
+  });
 });
 
 describe("workout.removeSet", () => {
@@ -1063,7 +1158,7 @@ describe("workout.removeSet", () => {
     await runtime.dispose();
   });
 
-  it("deletes the last Set of the Workout exercise together with its Segments", async () => {
+  it("removes a recorded Set together with its Segments, and the recorded Sets after it move up one position", async () => {
     const caller = await createSignedInCaller({ runtime });
     const workoutExerciseId = await startBenchPressWorkout({
       caller,
@@ -1082,8 +1177,23 @@ describe("workout.removeSet", () => {
       weightUnit: "kilogram",
       workoutExerciseId,
     });
+    await caller.workout.saveSet({
+      id: "019a0701-0000-7000-8000-000000000103",
+      segments: [{ amount: 6, weight: 60 }],
+      weightUnit: "kilogram",
+      workoutExerciseId,
+    });
 
-    await caller.workout.removeSet({ workoutExerciseId });
+    await caller.workout.removeSet({
+      id: "019a0701-0000-7000-8000-000000000102",
+      workoutExerciseId,
+    });
+    await caller.workout.saveSet({
+      id: "019a0701-0000-7000-8000-000000000104",
+      segments: [{ amount: 5, weight: 60 }],
+      weightUnit: "kilogram",
+      workoutExerciseId,
+    });
 
     await expect(caller.workout.findInProgress()).resolves.toMatchObject({
       sections: {
@@ -1095,6 +1205,14 @@ describe("workout.removeSet", () => {
                   {
                     id: "019a0701-0000-7000-8000-000000000101",
                     segments: [{ amount: 8, weight: 60 }],
+                  },
+                  {
+                    id: "019a0701-0000-7000-8000-000000000103",
+                    segments: [{ amount: 6, weight: 60 }],
+                  },
+                  {
+                    id: "019a0701-0000-7000-8000-000000000104",
+                    segments: [{ amount: 5, weight: 60 }],
                   },
                 ],
               },
@@ -1111,18 +1229,47 @@ describe("workout.removeSet", () => {
     ).resolves.toBe(0);
   });
 
-  it("succeeds without writing when the Workout exercise has no Set left", async () => {
+  it("succeeds without writing when the User removes a Set they already removed", async () => {
     const caller = await createSignedInCaller({ runtime });
     const workoutExerciseId = await startBenchPressWorkout({
       caller,
       idPrefix: "019a0702",
       plannedSets: [WORKING_PLANNED_SET],
     });
+    await caller.workout.saveSet({
+      id: "019a0702-0000-7000-8000-000000000101",
+      segments: [{ amount: 8, weight: 60 }],
+      weightUnit: "kilogram",
+      workoutExerciseId,
+    });
+    await caller.workout.saveSet({
+      id: "019a0702-0000-7000-8000-000000000102",
+      segments: [{ amount: 7, weight: 60 }],
+      weightUnit: "kilogram",
+      workoutExerciseId,
+    });
+    await caller.workout.removeSet({
+      id: "019a0702-0000-7000-8000-000000000102",
+      workoutExerciseId,
+    });
 
-    await caller.workout.removeSet({ workoutExerciseId });
+    await caller.workout.removeSet({
+      id: "019a0702-0000-7000-8000-000000000102",
+      workoutExerciseId,
+    });
 
     await expect(caller.workout.findInProgress()).resolves.toMatchObject({
-      sections: { main: [{ exercises: [{ recordedSets: [] }] }] },
+      sections: {
+        main: [
+          {
+            exercises: [
+              {
+                recordedSets: [{ id: "019a0702-0000-7000-8000-000000000101" }],
+              },
+            ],
+          },
+        ],
+      },
     });
   });
 
@@ -1142,7 +1289,10 @@ describe("workout.removeSet", () => {
     const caller = await createSignedInCaller({ runtime });
 
     await expect(
-      caller.workout.removeSet({ workoutExerciseId: otherWorkoutExerciseId }),
+      caller.workout.removeSet({
+        id: "019a0703-0000-7000-8000-000000000101",
+        workoutExerciseId: otherWorkoutExerciseId,
+      }),
     ).rejects.toMatchObject({
       cause: { _tag: "WorkoutNotFoundError" },
       code: "NOT_FOUND",
@@ -1159,6 +1309,37 @@ describe("workout.removeSet", () => {
           },
         ],
       },
+    });
+  });
+
+  it("fails with NOT_FOUND and WorkoutNotFoundError for a Set removed while a stop of its Workout commits", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0704",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+    await caller.workout.saveSet({
+      id: "019a0704-0000-7000-8000-000000000101",
+      segments: [{ amount: 8, weight: 60 }],
+      weightUnit: "kilogram",
+      workoutExerciseId,
+    });
+    const commitStop = await beginWorkoutStop({
+      id: "019a0704-0000-7000-8000-000000000004",
+      runtime,
+    });
+
+    const setRemoval = caller.workout.removeSet({
+      id: "019a0704-0000-7000-8000-000000000101",
+      workoutExerciseId,
+    });
+    await waitForLockWait(runtime);
+    await commitStop();
+
+    await expect(setRemoval).rejects.toMatchObject({
+      cause: { _tag: "WorkoutNotFoundError" },
+      code: "NOT_FOUND",
     });
   });
 });

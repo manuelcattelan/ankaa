@@ -34,8 +34,8 @@ type WorkoutExercise =
 /**
  * Shows one Set of a Workout exercise with what the plan says about it, and
  * lets the User fill in its Segments and Save it when it's a recorded Set or
- * the next one to record. Only the last recorded Set can be removed. Under
- * it, the User starts the countdown of its planned Rest, whether or not it's
+ * the next one to record, and remove it when it's a recorded Set. Under it,
+ * the User starts the countdown of its planned Rest, whether or not it's
  * Saved yet, and of a Pause when it's a Rest-pause set.
  */
 export function WorkoutSet({
@@ -46,7 +46,6 @@ export function WorkoutSet({
   draft,
   exerciseId,
   isRecordable,
-  isRemovable,
   onEndCountdown,
   onStartCountdown,
   plannedSet,
@@ -63,7 +62,6 @@ export function WorkoutSet({
   draft: null | RecordedSetDraft;
   exerciseId: string;
   isRecordable: boolean;
-  isRemovable: boolean;
   onEndCountdown: () => void;
   onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
   plannedSet: Omit<WorkoutExercise["plannedSets"][number], "id">;
@@ -163,12 +161,12 @@ export function WorkoutSet({
     onStartCountdown({ kind, position, seconds, workoutExerciseId });
   }
 
-  function handleRemoveSet() {
+  function handleRemoveSet(removedRecordedSet: { id: string }) {
     if (removeSet.isPending) {
       return;
     }
 
-    removeSet.mutate({ workoutExerciseId });
+    removeSet.mutate({ id: removedRecordedSet.id, workoutExerciseId });
   }
 
   function handleSaveSet() {
@@ -269,13 +267,15 @@ export function WorkoutSet({
             onPress={handleSaveSet}
             title={WORKOUT_MESSAGES.saveSetButton}
           />
-          {isRemovable ? (
+          {recordedSet === null ? null : (
             <Button
               isBusy={removeSet.isPending}
-              onPress={handleRemoveSet}
+              onPress={() => {
+                handleRemoveSet(recordedSet);
+              }}
               title={WORKOUT_MESSAGES.removeSetButton}
             />
-          ) : null}
+          )}
           <StatusMessage message={statusMessage} />
         </>
       ) : null}
