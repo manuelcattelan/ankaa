@@ -27,20 +27,22 @@ main() {
   pnpm lint:fix --continue &>/dev/null || true
   pnpm format:fix &>/dev/null || true
 
+  local checks=(
+    "lint --continue --output-logs=errors-only"
+    "check-types --continue --output-logs=errors-only"
+    "format"
+    "test --continue --output-logs=errors-only"
+  )
   local failures=()
+  local check
+  local arguments
   local output
-  if ! output=$(pnpm lint --continue --output-logs=errors-only 2>&1); then
-    failures+=("${output}")
-  fi
-  if ! output=$(pnpm check-types --continue --output-logs=errors-only 2>&1); then
-    failures+=("${output}")
-  fi
-  if ! output=$(pnpm format 2>&1); then
-    failures+=("${output}")
-  fi
-  if ! output=$(pnpm test --continue --output-logs=errors-only 2>&1); then
-    failures+=("${output}")
-  fi
+  for check in "${checks[@]}"; do
+    read -ra arguments <<<"${check}"
+    if ! output=$(pnpm "${arguments[@]}" 2>&1); then
+      failures+=("${output}")
+    fi
+  done
 
   if ((${#failures[@]} == 0)); then
     exit 0

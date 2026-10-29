@@ -11,8 +11,6 @@ import * as Schema from "effect/Schema";
 import { createPrivateKey } from "node:crypto";
 import { Pool } from "pg";
 
-import type { SocialProviderId } from "#/make-social-provider-client.ts";
-
 import { createAuthenticationOptions } from "#/create-authentication-options.ts";
 import { makeSocialProviderClient } from "#/make-social-provider-client.ts";
 
@@ -77,112 +75,88 @@ export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
 
     const run = yield* FiberSet.makeRuntimePromise();
 
-    async function sendEmail(sentEmail: {
-      subject: string;
-      text: string;
-      to: string;
-    }) {
-      try {
-        await run(
-          email
-            .request(({ from, resend }) =>
-              resend.emails.send({ ...sentEmail, from }),
-            )
-            .pipe(
-              Effect.catchCause((cause) =>
-                Effect.logError("Failed to send an email", cause),
-              ),
-            ),
-        );
-      } catch {
-        // The send logs its own failure, so the runner's promise rejects only
-        // when the Layer closes and interrupts a send still in flight
-        // (https://github.com/Effect-TS/effect/blob/7f524e25cfb49a71ac39b0f44278d08d40dda5de/packages/effect/src/FiberSet.ts),
-        // which leaves nothing to report.
-      }
-    }
-
-    // A sign-in never fails because of Apple or Google, so a failed exchange
-    // only leaves the Account without a refresh token to revoke.
-    async function requestRefreshToken(options: {
-      authorizationCode: string;
-      providerId: SocialProviderId;
+    /**
+     * Runs `effect` in the Layer's runner and logs its failure with
+     * `message`, settling with `null` instead, because neither a sign-in nor
+     * an Account deletion may fail because of an email, Apple or Google
+     * (https://github.com/manuelcattelan/ankaa/issues/86).
+     */
+    async function runLoggingFailure<TSuccess>({
+      effect,
+      message,
+    }: {
+      effect: Effect.Effect<TSuccess, unknown>;
+      message: string;
     }) {
       try {
         return await run(
-          socialProviderClient
-            .requestRefreshToken(options)
-            .pipe(
-              Effect.catchCause((cause) =>
-                Effect.as(
-                  Effect.logError(
-                    "Failed to exchange an authorization code for a refresh token",
-                    cause,
-                  ),
-                  null,
-                ),
-              ),
+          effect.pipe(
+            Effect.catchCause((cause) =>
+              Effect.as(Effect.logError(message, cause), null),
             ),
+          ),
         );
       } catch {
-        // The exchange logs its own failure, so the runner's promise rejects
-        // only when the Layer closes and interrupts an exchange in flight.
+        // The effect logs its own failure, so the runner's promise rejects
+        // only when the Layer closes and interrupts an effect still in flight
+        // (https://github.com/Effect-TS/effect/blob/7f524e25cfb49a71ac39b0f44278d08d40dda5de/packages/effect/src/FiberSet.ts),
+        // which leaves nothing to report.
         return null;
-      }
-    }
-
-    async function revokeRefreshToken(options: {
-      providerId: SocialProviderId;
-      refreshToken: string;
-    }) {
-      try {
-        await run(
-          socialProviderClient
-            .revokeRefreshToken(options)
-            .pipe(
-              Effect.catchCause((cause) =>
-                Effect.logError("Failed to revoke a refresh token", cause),
-              ),
-            ),
-        );
-      } catch {
-        // The revocation logs its own failure, so the runner's promise
-        // rejects only when the Layer closes and interrupts a revocation in
-        // flight.
       }
     }
 
     // better-auth awaits each email callback, and awaiting the email would
     // only add the provider's latency to the response
     // (https://www.better-auth.com/docs/plugins/email-otp).
+    function sendEmailWithoutWaiting(sentEmail: {
+      subject: string;
+      text: string;
+      to: string;
+    }) {
+      void runLoggingFailure({
+        effect: email.request(({ from, resend }) =>
+          resend.emails.send({ ...sentEmail, from }),
+        ),
+        message: "Failed to send an email",
+      });
+
+      return Promise.resolve();
+    }
+
     return createAuthenticationOptions({
       ...authenticationConfiguration,
       database: db,
-      requestRefreshToken,
-      revokeRefreshToken,
+      requestRefreshToken: (refreshTokenRequest) =>
+        runLoggingFailure({
+          effect: socialProviderClient.requestRefreshToken(refreshTokenRequest),
+          message:
+            "Failed to exchange an authorization code for a refresh token",
+        }),
+      revokeRefreshToken: async (refreshTokenRevocation) => {
+        await runLoggingFailure({
+          effect: socialProviderClient.revokeRefreshToken(
+            refreshTokenRevocation,
+          ),
+          message: "Failed to revoke a refresh token",
+        });
+      },
       secret: Redacted.value(authenticationConfiguration.secret),
-      sendAccountDeletionLink: ({ email: emailAddress, url }) => {
+      sendAccountDeletionLink: ({ email: emailAddress, url }) =>
         // The link stays plain text, which Resend never rewrites for click
         // tracking (https://resend.com/docs/dashboard/domains/tracking),
         // because only a link to the API host itself opens the app through
         // Universal Links and App Links.
-        void sendEmail({
+        sendEmailWithoutWaiting({
           subject: "Confirm deleting your Ankaa account",
           text: `Open this link to delete your Ankaa account and everything in it: ${url}\n\nIf you didn't ask to delete your account, ignore this email.`,
           to: emailAddress,
-        });
-
-        return Promise.resolve();
-      },
-      sendVerificationOtpCode: ({ email: emailAddress, otpCode }) => {
-        void sendEmail({
+        }),
+      sendVerificationOtpCode: ({ email: emailAddress, otpCode }) =>
+        sendEmailWithoutWaiting({
           subject: "Your sign-in verification code",
           text: otpCode,
           to: emailAddress,
-        });
-
-        return Promise.resolve();
-      },
+        }),
     });
   },
 );

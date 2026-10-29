@@ -9,12 +9,14 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { timestamps } from "#/columns/timestamps.ts";
+
 export const authenticationSchema = snakeCase.schema("authentication");
 
 export const user = authenticationSchema.table(
   "user",
   {
-    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    ...timestamps,
     email: text().notNull().unique("user_email_key"),
     emailVerified: boolean().notNull().default(false),
     id: uuid()
@@ -22,10 +24,6 @@ export const user = authenticationSchema.table(
       .default(sql`uuidv7()`),
     image: text(),
     name: text().notNull(),
-    updatedAt: timestamp({ withTimezone: true })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`now()`),
   },
   (table) => [primaryKey({ columns: [table.id], name: "user_pkey" })],
 );
@@ -33,17 +31,13 @@ export const user = authenticationSchema.table(
 export const session = authenticationSchema.table(
   "session",
   {
-    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    ...timestamps,
     expiresAt: timestamp({ withTimezone: true }).notNull(),
     id: uuid()
       .notNull()
       .default(sql`uuidv7()`),
     ipAddress: text(),
     token: text().notNull().unique("session_token_key"),
-    updatedAt: timestamp({ withTimezone: true })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`now()`),
     userAgent: text(),
     userId: uuid()
       .notNull()
@@ -61,10 +55,10 @@ export const session = authenticationSchema.table(
 export const account = authenticationSchema.table(
   "account",
   {
+    ...timestamps,
     accessToken: text(),
     accessTokenExpiresAt: timestamp({ withTimezone: true }),
     accountId: text().notNull(),
-    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     id: uuid()
       .notNull()
       .default(sql`uuidv7()`),
@@ -74,10 +68,6 @@ export const account = authenticationSchema.table(
     refreshToken: text(),
     refreshTokenExpiresAt: timestamp({ withTimezone: true }),
     scope: text(),
-    updatedAt: timestamp({ withTimezone: true })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`now()`),
     userId: uuid()
       .notNull()
       .references(() => user.id, {
@@ -94,16 +84,12 @@ export const account = authenticationSchema.table(
 export const verification = authenticationSchema.table(
   "verification",
   {
-    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    ...timestamps,
     expiresAt: timestamp({ withTimezone: true }).notNull(),
     id: uuid()
       .notNull()
       .default(sql`uuidv7()`),
     identifier: text().notNull(),
-    updatedAt: timestamp({ withTimezone: true })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`now()`),
     value: text().notNull(),
   },
   (table) => [

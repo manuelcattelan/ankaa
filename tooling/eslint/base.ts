@@ -486,19 +486,13 @@ export const vitestConfiguration = defineConfig({
   },
 });
 
-export function createFeatureIsolationZone({
-  featureName,
-  target,
-}: {
-  featureName: string;
-  target: string | string[];
-}) {
+export function createFeatureIsolationZone(featureName: string) {
   return {
     except: [`./${featureName}`],
     from: FEATURES_PATH,
     message:
       "Import nothing from another Feature, so each Feature stays isolated. Move what several Features use to shared/.",
-    target,
+    target: `${FEATURES_PATH}/${featureName}`,
   };
 }
 

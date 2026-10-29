@@ -1,5 +1,6 @@
 import type { ExpoClientStorage } from "@better-auth/expo/client";
 
+import { APPLICATION_SCHEME } from "@ankaa/core/features/authentication/constants/application-scheme";
 import { expoClient } from "@better-auth/expo/client";
 import { emailOTPClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
@@ -118,7 +119,7 @@ function buildAuthClient({
     fetchOptions: { customFetchImpl: fetch },
     plugins: [
       expoClient({
-        scheme: APPLICATION_SLUG,
+        scheme: APPLICATION_SCHEME,
         storage,
         storagePrefix: APPLICATION_SLUG,
       }),

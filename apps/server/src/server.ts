@@ -1,16 +1,18 @@
 import type { NodeEnvironment } from "@ankaa/core/shared/constants/node-environments";
 import type { FastifyRequest, FastifyServerOptions } from "fastify";
 
+import { applicationLayer } from "@ankaa/api/application-layer";
 import { NODE_ENVIRONMENTS } from "@ankaa/core/shared/constants/node-environments";
 import closeWithGrace from "close-with-grace";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Schema from "effect/Schema";
 import fastify from "fastify";
 
 import { applicationPlugin } from "#/application-plugin.ts";
-import { createApplicationLayer } from "#/create-application-layer.ts";
+import { createLoggerLayer } from "#/create-logger-layer.ts";
 import { getUrlPath } from "#/get-url-path.ts";
 
 // Fastify's own request serializer logs the whole URL with its query string
@@ -67,9 +69,9 @@ const server = fastify({
   routerOptions: { maxParamLength: ROUTER_MAXIMUM_PARAMETER_LENGTH },
 });
 
-const applicationLayer = createApplicationLayer(server.log);
-
-const runtime = ManagedRuntime.make(applicationLayer);
+const runtime = ManagedRuntime.make(
+  applicationLayer.pipe(Layer.provideMerge(createLoggerLayer(server.log))),
+);
 
 async function exitAfterStartFailure(error: unknown) {
   server.log.error(error, "Failed to start server");

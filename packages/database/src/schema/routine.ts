@@ -1,24 +1,10 @@
 import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/days-of-week";
-import {
-  MAXIMUM_DROP_SET_WEIGHT_PERCENTAGE,
-  MINIMUM_DROP_SET_WEIGHT_PERCENTAGE,
-} from "@ankaa/core/features/routine/constants/drop-set";
-import { MINIMUM_PAUSE_SECONDS } from "@ankaa/core/features/routine/constants/minimum-pause-seconds";
-import { MINIMUM_REST_SECONDS } from "@ankaa/core/features/routine/constants/minimum-rest-seconds";
-import { MINIMUM_SEGMENT_COUNT } from "@ankaa/core/features/routine/constants/minimum-segment-count";
-import { MINIMUM_AMOUNT } from "@ankaa/core/shared/constants/amount";
-import {
-  DROP_SET,
-  INTENSITY_TECHNIQUES,
-  REST_PAUSE_SET,
-} from "@ankaa/core/shared/constants/intensity-techniques";
+import {} from "@ankaa/core/features/routine/constants/drop-set";
+import {} from "@ankaa/core/shared/constants/intensity-techniques";
 import { MINIMUM_POSITION } from "@ankaa/core/shared/constants/minimum-position";
 import { SECTIONS } from "@ankaa/core/shared/constants/sections";
-import { SET_TYPES } from "@ankaa/core/shared/constants/set-types";
-import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo-pattern";
-import { between, gte, inArray, isNull, sql } from "drizzle-orm";
+import { gte, inArray, isNull, sql } from "drizzle-orm";
 import {
-  boolean,
   check,
   foreignKey,
   index,
@@ -32,6 +18,9 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { buildPlannedSetChecks } from "#/columns/build-planned-set-checks.ts";
+import { plannedSetColumns } from "#/columns/planned-set-columns.ts";
+import { timestamps } from "#/columns/timestamps.ts";
 import { user } from "#/schema/authentication.ts";
 import { exercise } from "#/schema/exercise.ts";
 
@@ -40,14 +29,10 @@ const TRIMMED_TEXT_PATTERN = String.raw`^\S(.*\S)?$`;
 export const routine = snakeCase.table(
   "routine",
   {
-    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    ...timestamps,
     deletedAt: timestamp({ withTimezone: true }),
     id: uuid().notNull(),
     name: text().notNull(),
-    updatedAt: timestamp({ withTimezone: true })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`now()`),
     userId: uuid()
       .notNull()
       .references(() => user.id, {
@@ -169,23 +154,15 @@ export const routineExercise = snakeCase.table(
 export const routineExerciseSet = snakeCase.table(
   "routine_exercise_set",
   {
-    amount: integer(),
+    ...plannedSetColumns,
     id: uuid().notNull(),
-    intensityTechnique: text({ enum: INTENSITY_TECHNIQUES }),
-    isToFailure: boolean().notNull(),
-    pauseSeconds: integer(),
     position: integer().notNull(),
-    restSeconds: integer(),
     routineExerciseId: uuid()
       .notNull()
       .references(() => routineExercise.id, {
         name: "routine_exercise_set_routine_exercise_id_fkey",
         onDelete: "cascade",
       }),
-    segmentCount: integer(),
-    tempo: text(),
-    type: text({ enum: SET_TYPES }).notNull(),
-    weightPercentage: integer(),
   },
   (table) => [
     primaryKey({ columns: [table.id], name: "routine_exercise_set_pkey" }),
@@ -193,54 +170,10 @@ export const routineExerciseSet = snakeCase.table(
       table.routineExerciseId,
       table.position,
     ),
-    check("routine_exercise_set_type_check", inArray(table.type, SET_TYPES)),
-    check(
-      "routine_exercise_set_intensity_technique_check",
-      inArray(table.intensityTechnique, INTENSITY_TECHNIQUES),
-    ),
-    check(
-      "routine_exercise_set_tempo_check",
-      sql`${table.tempo} ~ ${TEMPO_PATTERN.source}`,
-    ),
     check(
       "routine_exercise_set_position_check",
       gte(table.position, MINIMUM_POSITION),
     ),
-    check(
-      "routine_exercise_set_amount_check",
-      gte(table.amount, MINIMUM_AMOUNT),
-    ),
-    check(
-      "routine_exercise_set_rest_seconds_check",
-      gte(table.restSeconds, MINIMUM_REST_SECONDS),
-    ),
-    check(
-      "routine_exercise_set_segment_count_check",
-      gte(table.segmentCount, MINIMUM_SEGMENT_COUNT),
-    ),
-    check(
-      "routine_exercise_set_weight_percentage_check",
-      between(
-        table.weightPercentage,
-        MINIMUM_DROP_SET_WEIGHT_PERCENTAGE,
-        MAXIMUM_DROP_SET_WEIGHT_PERCENTAGE,
-      ),
-    ),
-    check(
-      "routine_exercise_set_pause_seconds_check",
-      gte(table.pauseSeconds, MINIMUM_PAUSE_SECONDS),
-    ),
-    check(
-      "routine_exercise_set_no_intensity_technique_check",
-      sql`${table.intensityTechnique} is not null or (${table.segmentCount} is null and ${table.weightPercentage} is null and ${table.pauseSeconds} is null)`,
-    ),
-    check(
-      "routine_exercise_set_drop_set_check",
-      sql`${table.intensityTechnique} <> ${DROP_SET} or (${table.segmentCount} is not null and ${table.pauseSeconds} is null)`,
-    ),
-    check(
-      "routine_exercise_set_rest_pause_set_check",
-      sql`${table.intensityTechnique} <> ${REST_PAUSE_SET} or (${table.segmentCount} is not null and ${table.pauseSeconds} is not null and ${table.weightPercentage} is null)`,
-    ),
+    ...buildPlannedSetChecks({ name: "routine_exercise_set", table }),
   ],
 );

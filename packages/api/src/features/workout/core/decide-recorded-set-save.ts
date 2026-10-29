@@ -8,6 +8,8 @@ import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workou
 import { getMatchingPlannedSet } from "@ankaa/core/features/workout/get-matching-planned-set";
 import { getMaximumSegmentCount } from "@ankaa/core/features/workout/get-maximum-segment-count";
 
+import { getWorkoutExerciseInProgress } from "#/features/workout/core/get-workout-exercise-in-progress.ts";
+
 /**
  * Decides whether a Save may write a Set into a Workout exercise, given the
  * Workout exercise with its Workout, or `null` when none has its id. A Set
@@ -34,19 +36,21 @@ export function decideRecordedSetSave({
     workout: { endedAt: Date | null; userId: string };
   };
 }) {
-  if (
-    workoutExercise?.workout.userId !== userId ||
-    workoutExercise.workout.endedAt !== null
-  ) {
+  const workoutExerciseInProgress = getWorkoutExerciseInProgress({
+    userId,
+    workoutExercise,
+  });
+
+  if (workoutExerciseInProgress === null) {
     return new WorkoutNotFoundError();
   }
 
   const position =
-    workoutExercise.recordedSets.find(
+    workoutExerciseInProgress.recordedSets.find(
       (recordedSet) => recordedSet.id === input.id,
-    )?.position ?? workoutExercise.recordedSets.length;
+    )?.position ?? workoutExerciseInProgress.recordedSets.length;
   const plannedSet = getMatchingPlannedSet({
-    plannedSets: workoutExercise.plannedSets,
+    plannedSets: workoutExerciseInProgress.plannedSets,
     position,
   });
   const maximumSegmentCount = getMaximumSegmentCount(plannedSet);
@@ -59,7 +63,7 @@ export function decideRecordedSetSave({
   }
 
   if (
-    workoutExercise.weightType === "none" &&
+    workoutExerciseInProgress.weightType === "none" &&
     input.segments.some((segment) => segment.weight !== null)
   ) {
     return new SegmentWeightNotAllowedError();

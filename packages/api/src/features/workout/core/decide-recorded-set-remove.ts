@@ -2,6 +2,8 @@ import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas
 
 import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 
+import { getWorkoutExerciseInProgress } from "#/features/workout/core/get-workout-exercise-in-progress.ts";
+
 /**
  * Decides how removing a recorded Set writes, given the Workout exercise with
  * its Workout, or `null` when none has its id. Each recorded Set after the
@@ -22,14 +24,16 @@ export function decideRecordedSetRemove({
     workout: { endedAt: Date | null; userId: string };
   };
 }) {
-  if (
-    workoutExercise?.workout.userId !== userId ||
-    workoutExercise.workout.endedAt !== null
-  ) {
+  const workoutExerciseInProgress = getWorkoutExerciseInProgress({
+    userId,
+    workoutExercise,
+  });
+
+  if (workoutExerciseInProgress === null) {
     return new WorkoutNotFoundError();
   }
 
-  const removedRecordedSet = workoutExercise.recordedSets.find(
+  const removedRecordedSet = workoutExerciseInProgress.recordedSets.find(
     (recordedSet) => recordedSet.id === input.id,
   );
 
@@ -40,7 +44,7 @@ export function decideRecordedSetRemove({
   return {
     _tag: "RecordedSetRemoveAllowed" as const,
     id: removedRecordedSet.id,
-    movedRecordedSets: workoutExercise.recordedSets
+    movedRecordedSets: workoutExerciseInProgress.recordedSets
       .filter(
         (recordedSet) => recordedSet.position > removedRecordedSet.position,
       )

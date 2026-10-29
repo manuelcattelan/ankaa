@@ -3,7 +3,6 @@ import type { Section } from "@ankaa/core/shared/constants/sections";
 
 import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/days-of-week";
 import { RoutineNameConflictError } from "@ankaa/core/features/routine/errors/routine-name-conflict-error";
-import { INTENSITY_TECHNIQUE_VALUES } from "@ankaa/core/shared/constants/intensity-techniques";
 import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 import { Database } from "@ankaa/database/database";
 import {
@@ -19,7 +18,9 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { buildIntensityTechnique } from "#/shared/build-intensity-technique.ts";
-import { isUniqueIndexViolation } from "#/shared/is-unique-index-violation.ts";
+import { buildSections } from "#/shared/build-sections.ts";
+import { catchUniqueIndexViolation } from "#/shared/catch-unique-index-violation.ts";
+import { encodeIntensityTechnique } from "#/shared/encode-intensity-technique.ts";
 
 type ListedRoutine = ReturnType<typeof buildRoutine>;
 
@@ -172,11 +173,10 @@ export class RoutineRepository extends Context.Service<
           })
           .returning({ id: routine.id })
           .pipe(
-            Effect.catch((error) =>
-              isUniqueIndexViolation({ error, index: ROUTINE_NAME_INDEX })
-                ? Effect.fail(new RoutineNameConflictError())
-                : Effect.die(error),
-            ),
+            catchUniqueIndexViolation({
+              error: new RoutineNameConflictError(),
+              index: ROUTINE_NAME_INDEX,
+            }),
           );
 
         if (savedRoutines.length === 0) {
@@ -260,36 +260,16 @@ function buildRoutine(routineRow: {
   id: string;
   name: string;
 }) {
-  function getSectionExerciseGroups(section: Section) {
-    return routineRow.exerciseGroups.filter(
-      (exerciseGroup) => exerciseGroup.section === section,
-    );
-  }
-
   return {
     days: DAYS_OF_WEEK.filter((dayOfWeek) =>
       routineRow.days.some((day) => day.dayOfWeek === dayOfWeek),
     ),
     id: routineRow.id,
     name: routineRow.name,
-    sections: {
-      coolDown: getSectionExerciseGroups("cool_down").map((exerciseGroup) => ({
-        exercises: exerciseGroup.exercises.map(buildRoutineExercise),
-        id: exerciseGroup.id,
-      })),
-      main: getSectionExerciseGroups("main").map((exerciseGroup) => ({
-        exercises: exerciseGroup.exercises.map((mainRoutineExercise) => ({
-          ...buildRoutineExercise(mainRoutineExercise),
-          warmUpExercises:
-            mainRoutineExercise.warmUpExercises.map(buildRoutineExercise),
-        })),
-        id: exerciseGroup.id,
-      })),
-      warmUp: getSectionExerciseGroups("warm_up").map((exerciseGroup) => ({
-        exercises: exerciseGroup.exercises.map(buildRoutineExercise),
-        id: exerciseGroup.id,
-      })),
-    },
+    sections: buildSections({
+      buildExercise: buildRoutineExercise,
+      exerciseGroups: routineRow.exerciseGroups,
+    }),
   };
 }
 
@@ -382,25 +362,13 @@ function buildRoutineRows(input: RoutineSaveInput) {
         owningRoutineExercise.sets.map((set, position) => ({
           amount: set.amount,
           id: set.id,
-          intensityTechnique:
-            set.intensityTechnique === null
-              ? null
-              : INTENSITY_TECHNIQUE_VALUES[set.intensityTechnique._tag],
+          ...encodeIntensityTechnique(set.intensityTechnique),
           isToFailure: set.isToFailure,
-          pauseSeconds:
-            set.intensityTechnique?._tag === "RestPauseSet"
-              ? set.intensityTechnique.pauseSeconds
-              : null,
           position,
           restSeconds: set.restSeconds,
           routineExerciseId: owningRoutineExercise.id,
-          segmentCount: set.intensityTechnique?.segmentCount ?? null,
           tempo: set.tempo,
           type: set.type,
-          weightPercentage:
-            set.intensityTechnique?._tag === "DropSet"
-              ? set.intensityTechnique.weightPercentage
-              : null,
         })),
     ),
     warmUpExercises: warmUpExercises.map(

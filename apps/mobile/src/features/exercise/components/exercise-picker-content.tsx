@@ -40,10 +40,6 @@ export function ExercisePickerContent({
     nameSearchText: exerciseNameSearchText,
   });
 
-  function handleSelectExercise(exercise: Exercise) {
-    onSelectExercise(exercise);
-  }
-
   return (
     <ScrollView>
       <TextField
@@ -81,7 +77,7 @@ export function ExercisePickerContent({
         <Button
           key={exercise.id}
           onPress={() => {
-            handleSelectExercise(exercise);
+            onSelectExercise(exercise);
           }}
           title={exercise.name}
         />

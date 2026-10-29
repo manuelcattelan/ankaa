@@ -1,6 +1,7 @@
 import type { ExpoConfig } from "expo/config";
 
-const ACCOUNT_DELETION_PATH = "/delete-account";
+import { ACCOUNT_DELETION_PATH } from "@ankaa/core/features/authentication/constants/account-deletion-path";
+import { APPLICATION_SCHEME } from "@ankaa/core/features/authentication/constants/application-scheme";
 
 const APPLICATION_ID = "app.ankaa";
 const APPLICATION_SLUG = "ankaa";
@@ -81,7 +82,7 @@ const configuration: ExpoConfig = {
     "expo-apple-authentication",
     ["@react-native-google-signin/google-signin", { iosUrlScheme }],
   ],
-  scheme: APPLICATION_SLUG,
+  scheme: APPLICATION_SCHEME,
   slug: APPLICATION_SLUG,
   userInterfaceStyle: "automatic",
   version: "1.0.0",

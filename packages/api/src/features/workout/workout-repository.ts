@@ -23,7 +23,8 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { buildIntensityTechnique } from "#/shared/build-intensity-technique.ts";
-import { isUniqueIndexViolation } from "#/shared/is-unique-index-violation.ts";
+import { buildSections } from "#/shared/build-sections.ts";
+import { catchUniqueIndexViolation } from "#/shared/catch-unique-index-violation.ts";
 
 type PlannedSetRow = Omit<
   typeof workoutExercisePlannedSet.$inferSelect,
@@ -581,14 +582,10 @@ export class WorkoutRepository extends Context.Service<
           .insert(workout)
           .values({ id, routineId: routine.id, userId })
           .pipe(
-            Effect.catch((error) =>
-              isUniqueIndexViolation({
-                error,
-                index: WORKOUT_IN_PROGRESS_INDEX,
-              })
-                ? Effect.fail(new WorkoutInProgressConflictError())
-                : Effect.die(error),
-            ),
+            catchUniqueIndexViolation({
+              error: new WorkoutInProgressConflictError(),
+              index: WORKOUT_IN_PROGRESS_INDEX,
+            }),
           );
 
         const insertedExerciseGroups = yield* database
@@ -772,32 +769,12 @@ function buildWorkout(workoutRow: {
   id: string;
   startedAt: Date;
 }) {
-  function getSectionExerciseGroups(section: Section) {
-    return workoutRow.exerciseGroups.filter(
-      (exerciseGroup) => exerciseGroup.section === section,
-    );
-  }
-
   return {
     id: workoutRow.id,
-    sections: {
-      coolDown: getSectionExerciseGroups("cool_down").map((exerciseGroup) => ({
-        exercises: exerciseGroup.exercises.map(buildWorkoutExercise),
-        id: exerciseGroup.id,
-      })),
-      main: getSectionExerciseGroups("main").map((exerciseGroup) => ({
-        exercises: exerciseGroup.exercises.map((mainWorkoutExercise) => ({
-          ...buildWorkoutExercise(mainWorkoutExercise),
-          warmUpExercises:
-            mainWorkoutExercise.warmUpExercises.map(buildWorkoutExercise),
-        })),
-        id: exerciseGroup.id,
-      })),
-      warmUp: getSectionExerciseGroups("warm_up").map((exerciseGroup) => ({
-        exercises: exerciseGroup.exercises.map(buildWorkoutExercise),
-        id: exerciseGroup.id,
-      })),
-    },
+    sections: buildSections({
+      buildExercise: buildWorkoutExercise,
+      exerciseGroups: workoutRow.exerciseGroups,
+    }),
     startedAt: workoutRow.startedAt,
   };
 }

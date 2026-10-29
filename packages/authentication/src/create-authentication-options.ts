@@ -2,6 +2,8 @@ import type { NodeEnvironment } from "@ankaa/core/shared/constants/node-environm
 import type { DB } from "@better-auth/drizzle-adapter/relations-v2";
 import type { BetterAuthOptions } from "better-auth";
 
+import { ACCOUNT_DELETION_PATH } from "@ankaa/core/features/authentication/constants/account-deletion-path";
+import { APPLICATION_SCHEME } from "@ankaa/core/features/authentication/constants/application-scheme";
 import { AUTHORIZATION_CODE_HEADER_NAME } from "@ankaa/core/features/authentication/constants/authorization-code-header-name";
 import { OTP_CODE_LENGTH } from "@ankaa/core/features/authentication/constants/otp-code-length";
 import * as AuthenticationDatabaseSchema from "@ankaa/database/schema/authentication";
@@ -12,11 +14,12 @@ import { emailOTP } from "better-auth/plugins";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import type { SocialProviderId } from "#/make-social-provider-client.ts";
+import type {
+  RefreshTokenRequest,
+  RefreshTokenRevocation,
+} from "#/make-social-provider-client.ts";
 
 import { socialProviderIdSchema } from "#/make-social-provider-client.ts";
-
-const ACCOUNT_DELETION_PATH = "/delete-account";
 
 const DEVELOPMENT_TRUSTED_ORIGINS = [
   "exp://",
@@ -47,14 +50,12 @@ export function createAuthenticationOptions({
   googleIosClientId: string;
   googleWebClientId: string;
   nodeEnvironment: NodeEnvironment;
-  requestRefreshToken: (options: {
-    authorizationCode: string;
-    providerId: SocialProviderId;
-  }) => Promise<null | string>;
-  revokeRefreshToken: (options: {
-    providerId: SocialProviderId;
-    refreshToken: string;
-  }) => Promise<void>;
+  requestRefreshToken: (
+    refreshTokenRequest: RefreshTokenRequest,
+  ) => Promise<null | string>;
+  revokeRefreshToken: (
+    refreshTokenRevocation: RefreshTokenRevocation,
+  ) => Promise<void>;
   secret: string;
   sendAccountDeletionLink: (options: {
     email: string;
@@ -161,7 +162,7 @@ export function createAuthenticationOptions({
       google: { clientId: [googleWebClientId, googleIosClientId] },
     },
     trustedOrigins: [
-      "ankaa://",
+      `${APPLICATION_SCHEME}://`,
       ...(nodeEnvironment === "development" ? DEVELOPMENT_TRUSTED_ORIGINS : []),
     ],
     user: {

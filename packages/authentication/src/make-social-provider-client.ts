@@ -10,13 +10,32 @@ import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
 import { sign } from "node:crypto";
 
-export type SocialProviderId = typeof socialProviderIdSchema.Type;
+/**
+ * The exchange of the authorization code of an Apple or Google sign-in for
+ * the provider's refresh token.
+ */
+export type RefreshTokenRequest = {
+  authorizationCode: string;
+  providerId: SocialProviderId;
+};
+
+/**
+ * The revocation of a refresh token that Apple or Google issued.
+ */
+export type RefreshTokenRevocation = {
+  providerId: SocialProviderId;
+  refreshToken: string;
+};
+
+type SocialProviderId = typeof socialProviderIdSchema.Type;
 
 const APPLE_CLIENT_SECRET_LIFETIME_SECONDS = 300;
 
 const APPLE_REVOCATION_URL = "https://appleid.apple.com/auth/revoke";
 
 const APPLE_TOKEN_URL = "https://appleid.apple.com/auth/token";
+
+const AUTHORIZATION_CODE_GRANT_TYPE = "authorization_code";
 
 const GOOGLE_REVOCATION_URL = "https://oauth2.googleapis.com/revoke";
 
@@ -76,13 +95,7 @@ export const makeSocialProviderClient = Effect.fn("makeSocialProviderClient")(
 
     const requestRefreshToken = Effect.fn(
       "SocialProviderClient.requestRefreshToken",
-    )(function* ({
-      authorizationCode,
-      providerId,
-    }: {
-      authorizationCode: string;
-      providerId: SocialProviderId;
-    }) {
+    )(function* ({ authorizationCode, providerId }: RefreshTokenRequest) {
       const tokenRequest = yield* Match.value(providerId).pipe(
         Match.when("apple", () =>
           Effect.map(createAppleClientSecret(), (appleClientSecret) =>
@@ -91,7 +104,7 @@ export const makeSocialProviderClient = Effect.fn("makeSocialProviderClient")(
                 ["client_id"]: appleAppBundleId,
                 ["client_secret"]: appleClientSecret,
                 code: authorizationCode,
-                ["grant_type"]: "authorization_code",
+                ["grant_type"]: AUTHORIZATION_CODE_GRANT_TYPE,
               }),
             ),
           ),
@@ -103,7 +116,7 @@ export const makeSocialProviderClient = Effect.fn("makeSocialProviderClient")(
                 ["client_id"]: googleWebClientId,
                 ["client_secret"]: Redacted.value(googleClientSecret),
                 code: authorizationCode,
-                ["grant_type"]: "authorization_code",
+                ["grant_type"]: AUTHORIZATION_CODE_GRANT_TYPE,
                 // The mobile app's code was issued for the web client, which
                 // has no redirect URI here, so Google takes an empty one
                 // (https://developers.google.com/identity/sign-in/ios/offline-access).
@@ -128,13 +141,7 @@ export const makeSocialProviderClient = Effect.fn("makeSocialProviderClient")(
 
     const revokeRefreshToken = Effect.fn(
       "SocialProviderClient.revokeRefreshToken",
-    )(function* ({
-      providerId,
-      refreshToken,
-    }: {
-      providerId: SocialProviderId;
-      refreshToken: string;
-    }) {
+    )(function* ({ providerId, refreshToken }: RefreshTokenRevocation) {
       const revocationRequest = yield* Match.value(providerId).pipe(
         Match.when("apple", () =>
           Effect.map(createAppleClientSecret(), (appleClientSecret) =>

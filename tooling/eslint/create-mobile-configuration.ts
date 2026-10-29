@@ -12,7 +12,6 @@ import {
   CORE_RESTRICTED_IMPORT_PATTERNS,
   createFeatureIsolationZone,
   createRestrictedImportsConfiguration,
-  FEATURES_PATH,
   getFeatureNames,
   JAVASCRIPT_FILES,
   RESTRICTED_IMPORT_PATTERNS,
@@ -111,10 +110,7 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
   const featureNames = getFeatureNames(basePath);
 
   const featureIsolationZones = featureNames.map((featureName) =>
-    createFeatureIsolationZone({
-      featureName,
-      target: `${FEATURES_PATH}/${featureName}`,
-    }),
+    createFeatureIsolationZone(featureName),
   );
 
   const routeZone = {

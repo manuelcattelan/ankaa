@@ -20,8 +20,8 @@
   "exports": {
     "./create-mobile-configuration": "./create-mobile-configuration.ts",
     "./create-package-configuration": "./create-package-configuration.ts",
-    "./server-configuration": "./server-configuration.ts",
-    "./tooling-configuration": "./tooling-configuration.ts"
+    "./create-server-configuration": "./create-server-configuration.ts",
+    "./create-tooling-configuration": "./create-tooling-configuration.ts"
   },
   "imports": {
     "#/*": "./*"

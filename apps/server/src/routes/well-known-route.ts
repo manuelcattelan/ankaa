@@ -1,5 +1,7 @@
 import type { FastifyPluginCallback } from "fastify";
 
+import { ACCOUNT_DELETION_PATH } from "@ankaa/core/features/authentication/constants/account-deletion-path";
+
 import type { ApplicationPluginOptions } from "#/application-plugin.ts";
 
 /**
@@ -24,7 +26,7 @@ export const wellKnownRoute = ((
         details: [
           {
             appIDs: [`${appleTeamId}.${appleAppBundleId}`],
-            components: [{ "/": "/delete-account*" }],
+            components: [{ "/": `${ACCOUNT_DELETION_PATH}*` }],
           },
         ],
       },

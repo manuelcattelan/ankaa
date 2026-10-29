@@ -3,7 +3,6 @@ import type { TSESLint, TSESTree } from "@typescript-eslint/utils";
 import { AST_NODE_TYPES } from "@typescript-eslint/utils";
 
 import { createRule } from "#/utilities/create-rule.ts";
-import { getHookCall } from "#/utilities/get-hook-call.ts";
 
 type ComponentOrderContext = Readonly<
   TSESLint.RuleContext<ComponentOrderMessageId, []>
@@ -32,6 +31,8 @@ type StatementDescriptor = {
   slot: Slot;
   statement: TSESTree.Statement;
 };
+
+const HOOK_NAME_PATTERN = /^use[A-Z]/;
 
 const SLOTS: Slot[] = [
   "context",
@@ -232,4 +233,50 @@ function sortDescriptors(descriptors: StatementDescriptor[]) {
   }
 
   return sortedDescriptors;
+}
+
+function getHookCall(statement: TSESTree.Node) {
+  const expression = getStatementExpression(statement);
+
+  if (expression?.type !== AST_NODE_TYPES.CallExpression) {
+    return null;
+  }
+
+  const name = getCalleeName(expression.callee);
+
+  if (name === null || !HOOK_NAME_PATTERN.test(name)) {
+    return null;
+  }
+
+  return { name };
+}
+
+function getCalleeName(callee: TSESTree.Expression) {
+  if (callee.type === AST_NODE_TYPES.Identifier) {
+    return callee.name;
+  }
+
+  if (
+    callee.type === AST_NODE_TYPES.MemberExpression &&
+    callee.property.type === AST_NODE_TYPES.Identifier
+  ) {
+    return callee.property.name;
+  }
+
+  return null;
+}
+
+function getStatementExpression(statement: TSESTree.Node) {
+  if (statement.type === AST_NODE_TYPES.ExpressionStatement) {
+    return statement.expression;
+  }
+
+  if (
+    statement.type !== AST_NODE_TYPES.VariableDeclaration ||
+    statement.declarations.length !== 1
+  ) {
+    return null;
+  }
+
+  return statement.declarations.at(0)?.init ?? null;
 }

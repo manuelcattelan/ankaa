@@ -18,7 +18,7 @@ export function createPackageConfiguration({ basePath }: { basePath: string }) {
     const featurePath = `${FEATURES_PATH}/${featureName}`;
 
     return [
-      createFeatureIsolationZone({ featureName, target: featurePath }),
+      createFeatureIsolationZone(featureName),
       {
         from: `${featurePath}/${featureName}-repository.ts`,
         message: REPOSITORY_MESSAGE,
@@ -32,7 +32,10 @@ export function createPackageConfiguration({ basePath }: { basePath: string }) {
     vitestConfiguration,
     {
       files: JAVASCRIPT_FILES,
-      languageOptions: { globals: globals.node },
+      languageOptions: {
+        globals: globals.node,
+        parserOptions: { tsconfigRootDir: basePath },
+      },
       rules:
         featureZones.length > 0
           ? {

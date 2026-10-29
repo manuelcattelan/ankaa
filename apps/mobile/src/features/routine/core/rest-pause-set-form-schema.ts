@@ -1,9 +1,8 @@
 import { MINIMUM_PAUSE_SECONDS } from "@ankaa/core/features/routine/constants/minimum-pause-seconds";
-import { MINIMUM_SEGMENT_COUNT } from "@ankaa/core/features/routine/constants/minimum-segment-count";
 import { pauseSecondsFilter } from "@ankaa/core/features/routine/filters/pause-seconds-filter";
-import { segmentCountFilter } from "@ankaa/core/features/routine/filters/segment-count-filter";
 import * as Schema from "effect/Schema";
 
+import { segmentCountFormSchema } from "#/features/routine/core/segment-count-form-schema.ts";
 import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
 import { createWholeNumberTextSchema } from "#/shared/core/create-whole-number-text-schema.ts";
 
@@ -16,10 +15,5 @@ export const restPauseSetFormSchema = Schema.TaggedStruct("RestPauseSet", {
       MINIMUM_PAUSE_SECONDS,
     ),
   }),
-  segmentCount: createWholeNumberTextSchema({
-    filter: segmentCountFilter,
-    message: ROUTINE_MESSAGES.wholeNumberBelowMinimumError(
-      MINIMUM_SEGMENT_COUNT,
-    ),
-  }),
+  segmentCount: segmentCountFormSchema,
 });

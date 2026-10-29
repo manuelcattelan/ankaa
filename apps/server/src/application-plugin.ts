@@ -9,6 +9,7 @@ import fastifyPlugin from "fastify-plugin";
 import { STATUS_CODES } from "node:http";
 
 import { getUrlPath } from "#/get-url-path.ts";
+import { logRequestFailure } from "#/log-request-failure.ts";
 import { authenticationRoute } from "#/routes/authentication-route.ts";
 import { trpcRoute } from "#/routes/trpc-route.ts";
 import { wellKnownRoute } from "#/routes/well-known-route.ts";
@@ -33,13 +34,11 @@ export const applicationPlugin = fastifyPlugin<ApplicationPluginOptions>(
       const statusCode = error.statusCode ?? HTTP_STATUS_INTERNAL_SERVER_ERROR;
       const message = `Failed to handle request "${request.method} ${getUrlPath(request.url)}"`;
 
-      if (statusCode < HTTP_STATUS_INTERNAL_SERVER_ERROR) {
-        request.log.info(error, message);
+      logRequestFailure({ error, log: request.log, message, statusCode });
 
+      if (statusCode < HTTP_STATUS_INTERNAL_SERVER_ERROR) {
         return reply.send(error);
       }
-
-      request.log.error(error, message);
 
       return reply.status(statusCode).send({
         error: STATUS_CODES[statusCode],

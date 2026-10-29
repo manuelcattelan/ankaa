@@ -6,28 +6,19 @@ import {
 import { AMOUNT_UNITS } from "@ankaa/core/shared/constants/amount";
 import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-types";
 import { inArray, sql } from "drizzle-orm";
-import {
-  check,
-  primaryKey,
-  snakeCase,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { check, primaryKey, snakeCase, text, uuid } from "drizzle-orm/pg-core";
+
+import { timestamps } from "#/columns/timestamps.ts";
 
 export const exercise = snakeCase.table(
   "exercise",
   {
+    ...timestamps,
     amountUnit: text({ enum: AMOUNT_UNITS }).notNull(),
-    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     id: uuid()
       .notNull()
       .default(sql`uuidv7()`),
     name: text().notNull().unique("exercise_name_key"),
-    updatedAt: timestamp({ withTimezone: true })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`now()`),
     weightType: text({ enum: WEIGHT_TYPES }).notNull(),
   },
   (table) => [
