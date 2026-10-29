@@ -1,5 +1,3 @@
-import type { SendEmailOptions } from "@ankaa/email/email";
-
 import { NODE_ENVIRONMENTS } from "@ankaa/core/shared/constants/node-environments";
 import { urlSchema } from "@ankaa/core/shared/schemas/url-schema";
 import { relations } from "@ankaa/database/relations";
@@ -79,11 +77,17 @@ export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
 
     const run = yield* FiberSet.makeRuntimePromise();
 
-    async function sendEmail(sendEmailOptions: SendEmailOptions) {
+    async function sendEmail(sentEmail: {
+      subject: string;
+      text: string;
+      to: string;
+    }) {
       try {
         await run(
           email
-            .send(sendEmailOptions)
+            .request(({ from, resend }) =>
+              resend.emails.send({ ...sentEmail, from }),
+            )
             .pipe(
               Effect.catchCause((cause) =>
                 Effect.logError("Failed to send an email", cause),

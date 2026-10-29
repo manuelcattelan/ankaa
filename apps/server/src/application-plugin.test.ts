@@ -4,7 +4,7 @@ import type {
   FakeSocialProviderResponses,
   SocialProviderRequest,
 } from "@ankaa/authentication/testing/fake-social-provider-http-client-layer";
-import type { SendEmailOptions } from "@ankaa/email/email";
+import type { SentEmail } from "@ankaa/email/testing/fake-email-layer";
 import type { FastifyInstance } from "fastify";
 
 import { ExerciseApplicationService } from "@ankaa/api/features/exercise/exercise-application-service";
@@ -151,7 +151,7 @@ async function createSocialProviderServer({
   sentEmails,
 }: {
   responses: FakeSocialProviderResponses;
-  sentEmails: SendEmailOptions[];
+  sentEmails: SentEmail[];
 }) {
   const runtime = createTestRuntime({
     emailLayer: fakeEmailLayer(sentEmails),
@@ -213,7 +213,7 @@ async function deleteAccount({
   server,
 }: {
   cookies: Record<string, string>;
-  sentEmails: SendEmailOptions[];
+  sentEmails: SentEmail[];
   server: FastifyInstance;
 }) {
   await server.inject({
@@ -356,7 +356,7 @@ function sendRequestsUpToRateLimit({
 }
 
 describe("applicationPlugin", () => {
-  const sentEmails: SendEmailOptions[] = [];
+  const sentEmails: SentEmail[] = [];
   const socialProviderRequests: SocialProviderRequest[] = [];
   const runtime = createTestRuntime({
     emailLayer: fakeEmailLayer(sentEmails),
@@ -489,7 +489,7 @@ describe("applicationPlugin", () => {
   });
 
   it("answers a verification code request without waiting for the email to be sent", async () => {
-    const stalledSentEmails: SendEmailOptions[] = [];
+    const stalledSentEmails: SentEmail[] = [];
     const stalledEmailRuntime = createTestRuntime({
       emailLayer: fakeStalledEmailLayer(stalledSentEmails),
     });
@@ -919,7 +919,7 @@ describe("applicationPlugin", () => {
   });
 
   it("deletes the Account when Apple's revocation endpoint rejects its refresh token", async () => {
-    const socialProviderSentEmails: SendEmailOptions[] = [];
+    const socialProviderSentEmails: SentEmail[] = [];
     const socialProviderServer = await createSocialProviderServer({
       responses: {
         "https://appleid.apple.com/auth/revoke": () =>

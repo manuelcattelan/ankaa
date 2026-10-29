@@ -412,11 +412,10 @@ export const rulesConfiguration = defineConfig([
     rules: { "@ankaa/filename-match-export": "off" },
   },
   {
-    files: TEST_FILES,
-    rules: { "@typescript-eslint/no-magic-numbers": "off" },
-  },
-  {
-    files: TESTING_FILES,
+    files: [...TEST_FILES, ...TESTING_FILES],
+    // A test and its setup write literal values, and a testing/ file holds
+    // the fixtures and fakes that tests share
+    // (https://github.com/manuelcattelan/ankaa/issues/86#issuecomment-6504562591).
     rules: { "@typescript-eslint/no-magic-numbers": "off" },
   },
   {

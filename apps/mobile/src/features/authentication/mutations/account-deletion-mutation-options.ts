@@ -16,10 +16,6 @@ const program = Effect.fn("accountDeletionMutation")(function* (variables: {
 
 export function accountDeletionMutationOptions(runtime: ApplicationRuntime) {
   return mutationOptions({
-    // The mutation cache keeps a mutation's variables for `gcTime` after its
-    // screen unmounts (https://tanstack.com/query/v5/docs/framework/react/reference/useMutation),
-    // and the deletion token must not outlive its screen.
-    gcTime: 0,
     mutationFn: (variables: { token: string }) =>
       runtime.runPromise(program(variables)),
   });
