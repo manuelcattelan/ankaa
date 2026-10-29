@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Stack } from "expo-router";
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 import { ActivityIndicator } from "react-native";
 
+import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
 import type { RecordedSetDraftEntry } from "#/features/workout/core/recorded-set-drafts-reducer.ts";
 import type { WorkoutExerciseDrafts } from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
 
@@ -11,6 +12,7 @@ import { WorkoutStopButton } from "#/features/workout/components/workout-stop-bu
 import { recordedSetDraftsReducer } from "#/features/workout/core/recorded-set-drafts-reducer.ts";
 import { workoutExerciseDraftsReducer } from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
+import { countdownNotificationScheduleMutationOptions } from "#/features/workout/mutations/countdown-notification-schedule-mutation-options.ts";
 import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/workout-find-in-progress-query-options.ts";
 import { ScrollView } from "#/shared/components/scroll-view.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
@@ -28,7 +30,8 @@ const NO_WORKOUT_EXERCISE_DRAFTS: WorkoutExerciseDrafts = {
 /**
  * Shows the User's Workout in progress, and keeps the Draft of every Set,
  * note and skip that has something to Save, so stopping can be refused while
- * one has.
+ * one has, and the one countdown of Rest or a Pause, which starting another
+ * replaces.
  */
 export function WorkoutScreen() {
   const runtime = useRuntime();
@@ -41,11 +44,15 @@ export function WorkoutScreen() {
     workoutExerciseDraftsReducer,
     NO_WORKOUT_EXERCISE_DRAFTS,
   );
+  const [countdown, setCountdown] = useState<Countdown | null>(null);
 
   const workoutInProgress = useQuery(
     workoutFindInProgressQueryOptions(runtime),
   );
   const exerciseLibrary = useQuery(exerciseListQueryOptions(runtime));
+  const scheduleCountdownNotification = useMutation(
+    countdownNotificationScheduleMutationOptions(runtime),
+  );
 
   const workout = workoutInProgress.data ?? null;
   const exerciseNames = new Map(
@@ -81,6 +88,20 @@ export function WorkoutScreen() {
       : null;
   }
 
+  function handleEndCountdown() {
+    setCountdown(null);
+  }
+
+  function handleStartCountdown(
+    startedCountdown: Omit<Countdown, "startTime">,
+  ) {
+    setCountdown({ ...startedCountdown, startTime: Date.now() });
+    scheduleCountdownNotification.mutate({
+      ...WORKOUT_MESSAGES.countdownEndNotifications[startedCountdown.kind],
+      seconds: startedCountdown.seconds,
+    });
+  }
+
   return (
     <>
       <Stack.Screen options={{ title: WORKOUT_MESSAGES.workoutScreenTitle }} />
@@ -90,28 +111,37 @@ export function WorkoutScreen() {
         {workout === null ? null : (
           <>
             <WorkoutSection
+              countdown={countdown}
               dispatch={dispatch}
               dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
               exerciseGroups={workout.sections.warmUp}
               exerciseNames={exerciseNames}
+              onEndCountdown={handleEndCountdown}
+              onStartCountdown={handleStartCountdown}
               recordedSetDraftEntries={recordedSetDraftEntries}
               section="warm_up"
               workoutExerciseDrafts={workoutExerciseDrafts}
             />
             <WorkoutSection
+              countdown={countdown}
               dispatch={dispatch}
               dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
               exerciseGroups={workout.sections.main}
               exerciseNames={exerciseNames}
+              onEndCountdown={handleEndCountdown}
+              onStartCountdown={handleStartCountdown}
               recordedSetDraftEntries={recordedSetDraftEntries}
               section="main"
               workoutExerciseDrafts={workoutExerciseDrafts}
             />
             <WorkoutSection
+              countdown={countdown}
               dispatch={dispatch}
               dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
               exerciseGroups={workout.sections.coolDown}
               exerciseNames={exerciseNames}
+              onEndCountdown={handleEndCountdown}
+              onStartCountdown={handleStartCountdown}
               recordedSetDraftEntries={recordedSetDraftEntries}
               section="cool_down"
               workoutExerciseDrafts={workoutExerciseDrafts}

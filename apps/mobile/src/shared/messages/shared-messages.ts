@@ -5,6 +5,7 @@ export const SHARED_MESSAGES = {
   homeScreenTitle: "Ankaa",
   notFoundScreenBody: "This screen doesn't exist.",
   notFoundScreenTitle: "Screen not found",
+  notificationChannelName: "Rest and pauses",
   sectionLabels: {
     cool_down: "Cool-down",
     main: "Main",

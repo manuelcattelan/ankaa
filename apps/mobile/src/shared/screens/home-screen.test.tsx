@@ -1,14 +1,17 @@
 import type { WorkoutStartInput } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
+import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 
 import { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
 import { screen, userEvent } from "@testing-library/react-native";
 
 import type { Workout } from "#/features/workout/workout-application-service.ts";
 import type { Exercise } from "#/shared/exercise-application-service.ts";
+import type { ScheduledNotification } from "#/shared/services/notifications.ts";
 
 import { fakeGoogleSignInLayer } from "#/features/authentication/testing/fake-google-sign-in-layer.ts";
 import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";
 import { fakeCryptoLayer } from "#/shared/testing/fake-crypto-layer.ts";
+import { fakeNotificationsLayer } from "#/shared/testing/fake-notifications-layer.ts";
 import { fakeSignedInAuthenticationClientLayer } from "#/shared/testing/fake-signed-in-authentication-client-layer.ts";
 import { fakeTrpcClientLayer } from "#/shared/testing/fake-trpc-client-layer.ts";
 import { pushDayRoutine } from "#/shared/testing/push-day-routine.ts";
@@ -308,5 +311,51 @@ describe("HomeScreen", () => {
     await screen.findByRole("link", { name: "Continue with email address" });
 
     expect(googleSignInCalls).toStrictEqual(["signOut"]);
+  });
+
+  it("cancels the scheduled notification of a countdown when the User signs out, and leaves their Workout in progress", async () => {
+    const scheduledNotifications: ScheduledNotification[] = [
+      {
+        body: "Start your next set.",
+        seconds: 120,
+        title: "Your rest is over",
+      },
+    ];
+    const stoppedInputs: WorkoutStopInput[] = [];
+    const user = userEvent.setup();
+    let currentSession: null | typeof signedInSession = signedInSession;
+    renderScreen({
+      initialUrl: "/",
+      testRuntimeLayers: {
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/get-session": () => Response.json(currentSession),
+          "/sign-out": () => {
+            currentSession = null;
+
+            return Response.json({ success: true });
+          },
+        }),
+        googleSignIn: fakeGoogleSignInLayer({}),
+        notifications: fakeNotificationsLayer({ scheduledNotifications }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "routine.list": () => [pushDayRoutine],
+            "workout.findInProgress": () => PUSH_DAY_WORKOUT,
+            "workout.stop": (input) => {
+              stoppedInputs.push(input);
+            },
+          },
+        }),
+      },
+    });
+    await screen.findByRole("link", { name: "Resume workout" });
+
+    await user.press(screen.getByRole("button", { name: "Sign out" }));
+
+    expect(
+      await screen.findByRole("link", { name: "Continue with email address" }),
+    ).toBeOnTheScreen();
+    expect(scheduledNotifications).toStrictEqual([]);
+    expect(stoppedInputs).toStrictEqual([]);
   });
 });

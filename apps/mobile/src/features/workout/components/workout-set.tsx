@@ -5,10 +5,12 @@ import type { WeightType } from "@ankaa/core/shared/constants/weight-types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
 import type { RecordedSetDraftsAction } from "#/features/workout/core/recorded-set-drafts-reducer.ts";
 import type { RecordedSetDraft } from "#/features/workout/core/recorded-set-form-schema.ts";
 import type { Workout } from "#/features/workout/workout-application-service.ts";
 
+import { WorkoutCountdown } from "#/features/workout/components/workout-countdown.tsx";
 import { WorkoutPlannedSet } from "#/features/workout/components/workout-planned-set.tsx";
 import { WorkoutSegment } from "#/features/workout/components/workout-segment.tsx";
 import { createRecordedSetDraft } from "#/features/workout/core/create-recorded-set-draft.ts";
@@ -32,15 +34,21 @@ type WorkoutExercise =
 /**
  * Shows one Set of a Workout exercise with what the plan says about it, and
  * lets the User fill in its Segments and Save it when it's a recorded Set or
- * the next one to record. Only the last recorded Set can be removed.
+ * the next one to record. Only the last recorded Set can be removed. Under
+ * it, the User starts the countdown of its planned Rest, whether or not it's
+ * Saved yet, and of a Pause when it's a Rest-pause set.
  */
 export function WorkoutSet({
   amountUnit,
+  canStartRest,
+  countdown,
   dispatch,
   draft,
   exerciseId,
   isRecordable,
   isRemovable,
+  onEndCountdown,
+  onStartCountdown,
   plannedSet,
   position,
   recordedSet,
@@ -49,11 +57,15 @@ export function WorkoutSet({
   workoutExerciseId,
 }: {
   amountUnit: AmountUnit;
+  canStartRest: boolean;
+  countdown: Countdown | null;
   dispatch: (action: RecordedSetDraftsAction) => void;
   draft: null | RecordedSetDraft;
   exerciseId: string;
   isRecordable: boolean;
   isRemovable: boolean;
+  onEndCountdown: () => void;
+  onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
   plannedSet: Omit<WorkoutExercise["plannedSets"][number], "id">;
   position: number;
   recordedSet: null | WorkoutExercise["recordedSets"][number];
@@ -99,6 +111,16 @@ export function WorkoutSet({
     values: recordedSetDraft,
   });
   const maximumSegmentCount = plannedSet.intensityTechnique?.segmentCount ?? 1;
+  const restSeconds = canStartRest ? plannedSet.restSeconds : null;
+  const pauseSeconds =
+    plannedSet.intensityTechnique?._tag === "RestPauseSet"
+      ? plannedSet.intensityTechnique.pauseSeconds
+      : null;
+  const setCountdown =
+    countdown?.workoutExerciseId === workoutExerciseId &&
+    countdown.position === position
+      ? countdown
+      : null;
   const statusMessage = getStatusMessage();
 
   function getStatusMessage() {
@@ -129,6 +151,16 @@ export function WorkoutSet({
             type: "changedRecordedSetDraft",
           },
     );
+  }
+
+  function handleStartCountdown({
+    kind,
+    seconds,
+  }: {
+    kind: Countdown["kind"];
+    seconds: number;
+  }) {
+    onStartCountdown({ kind, position, seconds, workoutExerciseId });
   }
 
   function handleRemoveSet() {
@@ -247,6 +279,32 @@ export function WorkoutSet({
           <StatusMessage message={statusMessage} />
         </>
       ) : null}
+      {pauseSeconds === null ? null : (
+        <Button
+          onPress={() => {
+            handleStartCountdown({ kind: "pause", seconds: pauseSeconds });
+          }}
+          title={WORKOUT_MESSAGES.startPauseButton}
+        />
+      )}
+      {restSeconds === null ? null : (
+        <Button
+          onPress={() => {
+            handleStartCountdown({
+              kind: "rest",
+              seconds: restSeconds,
+            });
+          }}
+          title={WORKOUT_MESSAGES.startRestButton}
+        />
+      )}
+      {setCountdown === null ? null : (
+        <WorkoutCountdown
+          countdown={setCountdown}
+          key={setCountdown.startTime}
+          onEnd={onEndCountdown}
+        />
+      )}
     </>
   );
 }

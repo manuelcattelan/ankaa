@@ -2,6 +2,9 @@ import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-rea
 import type { WeightUnit } from "@ankaa/core/features/workout/constants/weight";
 import type { AmountUnit } from "@ankaa/core/shared/constants/amount";
 
+import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
+import type { ScheduledNotification } from "#/shared/services/notifications.ts";
+
 import { formatCount } from "#/shared/core/format-count.ts";
 
 const SECONDS_UNIT = { plural: "seconds", singular: "second" };
@@ -14,6 +17,19 @@ export const WORKOUT_MESSAGES = {
     repetition: "Repetitions",
     second: "Seconds",
   } satisfies Record<AmountUnit, string>,
+  countdownEndNotifications: {
+    pause: {
+      body: "Start the next segment of your set.",
+      title: "Your pause is over",
+    },
+    rest: { body: "Start your next set.", title: "Your rest is over" },
+  } satisfies Record<Countdown["kind"], Omit<ScheduledNotification, "seconds">>,
+  countdownStatusLabels: {
+    pause: (remainingSeconds: number) =>
+      `Pause: ${formatCount({ count: remainingSeconds, ...SECONDS_UNIT })} left`,
+    rest: (remainingSeconds: number) =>
+      `Rest: ${formatCount({ count: remainingSeconds, ...SECONDS_UNIT })} left`,
+  } satisfies Record<Countdown["kind"], (remainingSeconds: number) => string>,
   draftsUnsavedError: (draftLabels: string[]) =>
     `You haven't saved these: ${draftLabels.join("; ")}. Save them before you stop the workout.`,
   dropSetLabel: (weightPercentage: null | number) =>
@@ -67,6 +83,8 @@ export const WORKOUT_MESSAGES = {
     other: "Other",
     pain: "Pain",
   } satisfies Record<SkipReason, string>,
+  startPauseButton: "Start pause",
+  startRestButton: "Start rest",
   startWorkoutButton: (routineName: string) => `Start ${routineName}`,
   stopWorkoutButton: "Stop workout",
   tempoDescription:

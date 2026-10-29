@@ -13,6 +13,7 @@ import { ExerciseApplicationService } from "#/shared/exercise-application-servic
 import { Accessibility } from "#/shared/services/accessibility.ts";
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 import { Crypto } from "#/shared/services/crypto.ts";
+import { Notifications } from "#/shared/services/notifications.ts";
 import { TrpcClient } from "#/shared/services/trpc-client.ts";
 
 export type ApplicationRuntime = ManagedRuntime.ManagedRuntime<
@@ -28,6 +29,7 @@ export const applicationLayer = Layer.mergeAll(
   Crypto.layer,
   ExerciseApplicationService.layer,
   GoogleSignIn.layer,
+  Notifications.layer,
   RoutineApplicationService.layer,
   TrpcClient.layer,
   WorkoutApplicationService.layer,

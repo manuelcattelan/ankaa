@@ -14,8 +14,14 @@ import {
 
 import type { Workout } from "#/features/workout/workout-application-service.ts";
 import type { Exercise } from "#/shared/exercise-application-service.ts";
+import type {
+  NotificationPermissionStatus,
+  ScheduledNotification,
+} from "#/shared/services/notifications.ts";
 
+import { advanceFakeTime } from "#/shared/testing/advance-fake-time.ts";
 import { fakeCryptoLayer } from "#/shared/testing/fake-crypto-layer.ts";
+import { fakeNotificationsLayer } from "#/shared/testing/fake-notifications-layer.ts";
 import { fakeSignedInAuthenticationClientLayer } from "#/shared/testing/fake-signed-in-authentication-client-layer.ts";
 import { fakeTrpcClientLayer } from "#/shared/testing/fake-trpc-client-layer.ts";
 import { pushDayRoutine } from "#/shared/testing/push-day-routine.ts";
@@ -938,5 +944,284 @@ describe("WorkoutScreen", () => {
     expect(screen.getByLabelText("Note for this workout")).toHaveDisplayValue(
       "Felt strong today",
     );
+  });
+
+  it("counts down the planned Rest of a Set when the User starts it under that Set, and adds no Set", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start rest" }));
+
+    await advanceFakeTime(30_000);
+
+    expect(screen.getByText("Rest: 90 seconds left")).toBeOnTheScreen();
+    expect(screen.getByText("0 working sets done, 1 left.")).toBeOnTheScreen();
+    expect(screen.getAllByRole("button", { name: "Save set" })).toHaveLength(1);
+  });
+
+  it("offers Start rest only under the Sets of a Superset's last exercise", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () => ({
+              id: "01900000-0000-7000-8000-000000000301",
+              sections: {
+                coolDown: [],
+                main: [
+                  {
+                    exercises: [
+                      {
+                        amountUnit: "repetition",
+                        exerciseId: BENCH_PRESS_EXERCISE_ID,
+                        id: "01900000-0000-7000-8000-000000000302",
+                        note: null,
+                        plannedNote: null,
+                        plannedSets: [
+                          { ...WORKING_PLANNED_SET, restSeconds: 90 },
+                        ],
+                        recordedSets: [],
+                        skipReason: null,
+                        skipReasonNote: null,
+                        warmUpExercises: [],
+                        weightType: "total",
+                        weightUnit: "kilogram",
+                      },
+                      {
+                        amountUnit: "repetition",
+                        exerciseId: PUSH_UP_EXERCISE_ID,
+                        id: "01900000-0000-7000-8000-000000000303",
+                        note: null,
+                        plannedNote: null,
+                        plannedSets: [
+                          { ...WORKING_PLANNED_SET, restSeconds: 60 },
+                        ],
+                        recordedSets: [],
+                        skipReason: null,
+                        skipReasonNote: null,
+                        warmUpExercises: [],
+                        weightType: "bodyweight",
+                        weightUnit: "kilogram",
+                      },
+                    ],
+                    id: "01900000-0000-7000-8000-000000000304",
+                  },
+                ],
+                warmUp: [],
+              },
+            }),
+          },
+        }),
+      },
+    });
+    await screen.findByText("Push-Up");
+
+    await user.press(screen.getByRole("button", { name: "Start rest" }));
+
+    expect(screen.getByText("Rest: 60 seconds left")).toBeOnTheScreen();
+  });
+
+  it("counts down a Pause of a Rest-pause set under its own label when the User starts it", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [
+                  {
+                    ...WORKING_PLANNED_SET,
+                    intensityTechnique: {
+                      _tag: "RestPauseSet",
+                      pauseSeconds: 15,
+                      segmentCount: 3,
+                    },
+                  },
+                ],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(
+      await screen.findByRole("button", { name: "Start pause" }),
+    );
+
+    await advanceFakeTime(5000);
+
+    expect(screen.getByText("Pause: 10 seconds left")).toBeOnTheScreen();
+  });
+
+  it("asks for notification permission when the User starts a countdown for the first time, not when the app opens", async () => {
+    const permissionRequests: NotificationPermissionStatus[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({ permissionRequests }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    const startRestButton = await screen.findByRole("button", {
+      name: "Start rest",
+    });
+
+    expect(permissionRequests).toStrictEqual([]);
+
+    await user.press(startRestButton);
+
+    await waitFor(() => {
+      expect(permissionRequests).toStrictEqual(["granted"]);
+    });
+  });
+
+  it("schedules a notification for the end of the Rest that the User starts", async () => {
+    const scheduledNotifications: ScheduledNotification[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({ scheduledNotifications }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+
+    await user.press(await screen.findByRole("button", { name: "Start rest" }));
+
+    await waitFor(() => {
+      expect(scheduledNotifications).toStrictEqual([
+        {
+          body: "Start your next set.",
+          seconds: 120,
+          title: "Your rest is over",
+        },
+      ]);
+    });
+  });
+
+  it("replaces the countdown and the notification of an earlier countdown when the User starts another, without asking for permission again", async () => {
+    const permissionRequests: NotificationPermissionStatus[] = [];
+    const scheduledNotifications: ScheduledNotification[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({
+          permissionRequests,
+          scheduledNotifications,
+        }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [
+                  {
+                    ...WORKING_PLANNED_SET,
+                    intensityTechnique: {
+                      _tag: "RestPauseSet",
+                      pauseSeconds: 15,
+                      segmentCount: 3,
+                    },
+                  },
+                ],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start rest" }));
+    await waitFor(() => {
+      expect(scheduledNotifications).toHaveLength(1);
+    });
+
+    await user.press(screen.getByRole("button", { name: "Start pause" }));
+
+    await waitFor(() => {
+      expect(scheduledNotifications).toStrictEqual([
+        {
+          body: "Start the next segment of your set.",
+          seconds: 15,
+          title: "Your pause is over",
+        },
+      ]);
+    });
+    expect(screen.getByText("Pause: 15 seconds left")).toBeOnTheScreen();
+    expect(screen.queryByText("Rest: 120 seconds left")).toBeNull();
+    expect(permissionRequests).toStrictEqual(["granted"]);
+  });
+
+  it("ends the countdown when its time is up, and offers to start it again", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start rest" }));
+
+    await advanceFakeTime(120_000);
+
+    expect(screen.queryByText("Rest: 0 seconds left")).toBeNull();
+    expect(screen.queryByText("Rest: 1 second left")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Start rest" }),
+    ).toBeOnTheScreen();
   });
 });

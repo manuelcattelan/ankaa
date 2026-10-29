@@ -2,6 +2,7 @@ import { WEIGHT_UNITS } from "@ankaa/core/features/workout/constants/weight";
 import { getMatchingPlannedSet } from "@ankaa/core/features/workout/get-matching-planned-set";
 import { useState } from "react";
 
+import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
 import type {
   RecordedSetDraftEntry,
   RecordedSetDraftsAction,
@@ -27,17 +28,25 @@ import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
  * unit that the User picks for the Workout exercise.
  */
 export function WorkoutExercise({
+  canStartRest,
+  countdown,
   dispatch,
   dispatchWorkoutExerciseDrafts,
   exerciseNames,
+  onEndCountdown,
+  onStartCountdown,
   recordedSetDraftEntries,
   warmUpForExerciseName,
   workoutExercise,
   workoutExerciseDrafts,
 }: {
+  canStartRest: boolean;
+  countdown: Countdown | null;
   dispatch: (action: RecordedSetDraftsAction) => void;
   dispatchWorkoutExerciseDrafts: (action: WorkoutExerciseDraftsAction) => void;
   exerciseNames: Map<string, string>;
+  onEndCountdown: () => void;
+  onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
   recordedSetDraftEntries: readonly RecordedSetDraftEntry[];
   warmUpForExerciseName?: string;
   workoutExercise: Workout["sections"]["coolDown"][number]["exercises"][number];
@@ -84,6 +93,8 @@ export function WorkoutExercise({
       {positions.map((position) => (
         <WorkoutSet
           amountUnit={workoutExercise.amountUnit}
+          canStartRest={canStartRest}
+          countdown={countdown}
           dispatch={dispatch}
           draft={
             recordedSetDraftEntries.find(
@@ -96,6 +107,8 @@ export function WorkoutExercise({
           isRecordable={position <= workoutExercise.recordedSets.length}
           isRemovable={position === workoutExercise.recordedSets.length - 1}
           key={position}
+          onEndCountdown={onEndCountdown}
+          onStartCountdown={onStartCountdown}
           plannedSet={{
             ...getMatchingPlannedSet({
               plannedSets: workoutExercise.plannedSets,

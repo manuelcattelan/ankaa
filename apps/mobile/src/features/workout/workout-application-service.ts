@@ -24,7 +24,9 @@ import { constUndefined } from "effect/Function";
 import * as Layer from "effect/Layer";
 
 import type { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
+import type { ScheduledNotification } from "#/shared/services/notifications.ts";
 
+import { Notifications } from "#/shared/services/notifications.ts";
 import { TrpcClient } from "#/shared/services/trpc-client.ts";
 
 export type Workout = NonNullable<
@@ -53,6 +55,9 @@ export class WorkoutApplicationService extends Context.Service<
       | TrpcClientError
       | WorkoutNotFoundError
     >;
+    readonly scheduleCountdownNotification: (
+      notification: ScheduledNotification,
+    ) => Effect.Effect<void>;
     readonly skipExercise: (
       input: WorkoutSkipExerciseInput,
     ) => Effect.Effect<void, TrpcClientError | WorkoutNotFoundError>;
@@ -70,6 +75,7 @@ export class WorkoutApplicationService extends Context.Service<
   static readonly layerNoDeps = Layer.effect(
     WorkoutApplicationService,
     Effect.gen(function* () {
+      const notifications = yield* Notifications;
       const trpcClient = yield* TrpcClient;
 
       const findInProgress = Effect.fn(
@@ -121,6 +127,23 @@ export class WorkoutApplicationService extends Context.Service<
           });
         },
       );
+      /**
+       * Asks for notification permission the first time a countdown starts,
+       * and replaces the notification of an earlier countdown with
+       * `notification`, so only one countdown ever notifies.
+       */
+      const scheduleCountdownNotification = Effect.fn(
+        "WorkoutApplicationService.scheduleCountdownNotification",
+      )(function* (notification: ScheduledNotification) {
+        const permissionStatus = yield* notifications.getPermissionStatus();
+
+        if (permissionStatus === "undetermined") {
+          yield* notifications.requestPermission();
+        }
+
+        yield* notifications.cancelAllScheduled();
+        yield* notifications.schedule(notification);
+      });
 
       const start = Effect.fn("WorkoutApplicationService.start")(function* (
         input: WorkoutStartInput,
@@ -147,6 +170,7 @@ export class WorkoutApplicationService extends Context.Service<
         removeSet,
         saveNote,
         saveSet,
+        scheduleCountdownNotification,
         skipExercise,
         start,
         stop,
@@ -155,6 +179,6 @@ export class WorkoutApplicationService extends Context.Service<
   );
 
   static readonly layer = WorkoutApplicationService.layerNoDeps.pipe(
-    Layer.provide(TrpcClient.layer),
+    Layer.provide(Layer.mergeAll(Notifications.layer, TrpcClient.layer)),
   );
 }

@@ -20,6 +20,7 @@ import { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts
 import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 import { Crypto } from "#/shared/services/crypto.ts";
+import { Notifications } from "#/shared/services/notifications.ts";
 
 export class AuthenticationApplicationService extends Context.Service<
   AuthenticationApplicationService,
@@ -78,6 +79,7 @@ export class AuthenticationApplicationService extends Context.Service<
       const authenticationClient = yield* AuthenticationClient;
       const crypto = yield* Crypto;
       const googleSignIn = yield* GoogleSignIn;
+      const notifications = yield* Notifications;
 
       const requestAccountDeletion = Effect.fn(
         "AuthenticationApplicationService.requestAccountDeletion",
@@ -241,6 +243,9 @@ export class AuthenticationApplicationService extends Context.Service<
           );
 
           yield* googleSignIn.signOut();
+          // A countdown lives only in the device's memory and ends with the
+          // session, while the Workout stays in progress on the server.
+          yield* notifications.cancelAllScheduled();
         },
         Effect.catchTag(
           [
@@ -306,6 +311,7 @@ export class AuthenticationApplicationService extends Context.Service<
         AuthenticationClient.layer,
         Crypto.layer,
         GoogleSignIn.layer,
+        Notifications.layer,
       ),
     ),
   );

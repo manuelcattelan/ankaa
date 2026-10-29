@@ -2,6 +2,7 @@ import * as Layer from "effect/Layer";
 
 import type { Accessibility } from "#/shared/services/accessibility.ts";
 import type { AuthenticationClient } from "#/shared/services/authentication-client.ts";
+import type { Notifications } from "#/shared/services/notifications.ts";
 import type { TrpcClient } from "#/shared/services/trpc-client.ts";
 
 import { AuthenticationApplicationService } from "#/features/authentication/authentication-application-service.ts";
@@ -14,6 +15,7 @@ import { ExerciseApplicationService } from "#/shared/exercise-application-servic
 import { Crypto } from "#/shared/services/crypto.ts";
 import { fakeAccessibilityLayer } from "#/shared/testing/fake-accessibility-layer.ts";
 import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";
+import { fakeNotificationsLayer } from "#/shared/testing/fake-notifications-layer.ts";
 import { fakeTrpcClientLayer } from "#/shared/testing/fake-trpc-client-layer.ts";
 
 export type TestRuntimeLayers = {
@@ -22,6 +24,7 @@ export type TestRuntimeLayers = {
   authenticationClient?: Layer.Layer<AuthenticationClient>;
   crypto?: Layer.Layer<Crypto>;
   googleSignIn?: Layer.Layer<GoogleSignIn>;
+  notifications?: Layer.Layer<Notifications>;
   trpcClient?: Layer.Layer<TrpcClient, never, AuthenticationClient>;
 };
 
@@ -50,7 +53,10 @@ export function createTestRuntime(layers: TestRuntimeLayers) {
       ).pipe(Layer.provideMerge(layers.trpcClient ?? fakeTrpcClientLayer({}))),
     ).pipe(
       Layer.provideMerge(
-        layers.authenticationClient ?? fakeAuthenticationClientLayer({}),
+        Layer.mergeAll(
+          layers.authenticationClient ?? fakeAuthenticationClientLayer({}),
+          layers.notifications ?? fakeNotificationsLayer({}),
+        ),
       ),
     ),
   );

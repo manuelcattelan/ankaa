@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 
+import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
 import type {
   RecordedSetDraftEntry,
   RecordedSetDraftsAction,
@@ -16,18 +17,29 @@ import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 const MINIMUM_SUPERSET_EXERCISE_COUNT = 2;
 
+/**
+ * Shows the exercises of an Exercise group, each after its Warm-up exercises.
+ * A Superset rests only after one Set of each exercise, so only its last
+ * exercise offers to start Rest.
+ */
 export function WorkoutExerciseGroup({
+  countdown,
   dispatch,
   dispatchWorkoutExerciseDrafts,
   exerciseGroup,
   exerciseNames,
+  onEndCountdown,
+  onStartCountdown,
   recordedSetDraftEntries,
   workoutExerciseDrafts,
 }: {
+  countdown: Countdown | null;
   dispatch: (action: RecordedSetDraftsAction) => void;
   dispatchWorkoutExerciseDrafts: (action: WorkoutExerciseDraftsAction) => void;
   exerciseGroup: Workout["sections"][keyof Workout["sections"]][number];
   exerciseNames: Map<string, string>;
+  onEndCountdown: () => void;
+  onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
   recordedSetDraftEntries: readonly RecordedSetDraftEntry[];
   workoutExerciseDrafts: WorkoutExerciseDrafts;
 }) {
@@ -36,15 +48,19 @@ export function WorkoutExerciseGroup({
       {exerciseGroup.exercises.length >= MINIMUM_SUPERSET_EXERCISE_COUNT ? (
         <Text>{SHARED_MESSAGES.supersetLabel}</Text>
       ) : null}
-      {exerciseGroup.exercises.map((workoutExercise) => (
+      {exerciseGroup.exercises.map((workoutExercise, index) => (
         <Fragment key={workoutExercise.id}>
           {"warmUpExercises" in workoutExercise
             ? workoutExercise.warmUpExercises.map((warmUpWorkoutExercise) => (
                 <WorkoutExercise
+                  canStartRest
+                  countdown={countdown}
                   dispatch={dispatch}
                   dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
                   exerciseNames={exerciseNames}
                   key={warmUpWorkoutExercise.id}
+                  onEndCountdown={onEndCountdown}
+                  onStartCountdown={onStartCountdown}
                   recordedSetDraftEntries={recordedSetDraftEntries}
                   warmUpForExerciseName={
                     exerciseNames.get(workoutExercise.exerciseId) ?? ""
@@ -55,9 +71,13 @@ export function WorkoutExerciseGroup({
               ))
             : null}
           <WorkoutExercise
+            canStartRest={index === exerciseGroup.exercises.length - 1}
+            countdown={countdown}
             dispatch={dispatch}
             dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
             exerciseNames={exerciseNames}
+            onEndCountdown={onEndCountdown}
+            onStartCountdown={onStartCountdown}
             recordedSetDraftEntries={recordedSetDraftEntries}
             workoutExercise={workoutExercise}
             workoutExerciseDrafts={workoutExerciseDrafts}
