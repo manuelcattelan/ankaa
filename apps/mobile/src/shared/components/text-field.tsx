@@ -1,9 +1,8 @@
 import type { TextInputProps } from "react-native";
 
-import { StatusMessage } from "#/shared/components/status-message.tsx";
 import { TextInput } from "#/shared/components/text-input.tsx";
 import { Text } from "#/shared/components/text.tsx";
-import { TEXT_FIELD_MESSAGES } from "#/shared/messages/text-field-messages.ts";
+import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 export function TextField({
   errorMessage,
@@ -13,16 +12,16 @@ export function TextField({
   errorMessage: null | string;
   label: string;
 }) {
-  const accessibilityLabel =
-    errorMessage === null || errorMessage === ""
-      ? label
-      : TEXT_FIELD_MESSAGES.errorLabel({ errorMessage, label });
+  const hasErrorMessage = errorMessage !== null && errorMessage !== "";
+  const accessibilityLabel = hasErrorMessage
+    ? SHARED_MESSAGES.textFieldErrorLabel({ errorMessage, label })
+    : label;
 
   return (
     <>
       <Text aria-hidden>{label}</Text>
       <TextInput {...rest} aria-label={accessibilityLabel} />
-      <StatusMessage message={errorMessage} />
+      {hasErrorMessage ? <Text>{errorMessage}</Text> : null}
     </>
   );
 }

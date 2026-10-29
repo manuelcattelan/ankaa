@@ -22,7 +22,7 @@ import { applicationLayer, createRuntime } from "#/layer.ts";
 import { RootNavigator } from "#/root-navigator.tsx";
 import { Text } from "#/shared/components/text.tsx";
 import { useAuthenticationSession } from "#/shared/hooks/use-authentication-session.ts";
-import { ERROR_MESSAGES } from "#/shared/messages/error-messages.ts";
+import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 import { RuntimeContext } from "#/shared/providers/runtime-context.ts";
 
 export function ErrorBoundary() {
@@ -31,7 +31,7 @@ export function ErrorBoundary() {
   return (
     <ThemeProvider value={getNavigationTheme(colorScheme)}>
       <SafeAreaView>
-        <Text selectable>{ERROR_MESSAGES.unknown}</Text>
+        <Text selectable>{SHARED_MESSAGES.unknownError}</Text>
       </SafeAreaView>
     </ThemeProvider>
   );

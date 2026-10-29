@@ -24,7 +24,22 @@ import {
   TEST_RESTRICTED_SYNTAX,
 } from "#/base.ts";
 
+const ACCESSIBILITY_PROPS_WITH_ARIA_ALIAS = [
+  "accessibilityElementsHidden",
+  "accessibilityLabel",
+  "accessibilityLabelledBy",
+  "accessibilityLiveRegion",
+  "accessibilityState",
+  "accessibilityValue",
+  "accessibilityViewIsModal",
+];
+
 const MOBILE_RESTRICTED_SYNTAX = [
+  {
+    message:
+      "Use the aria-* prop instead of this accessibility* prop, because React Native documents the aria-* props as its web-standard aliases (https://reactnative.dev/docs/accessibility).",
+    selector: `JSXAttribute[name.name=/^(?:${ACCESSIBILITY_PROPS_WITH_ARIA_ALIAS.join("|")})$/]`,
+  },
   {
     message: "Move this style to StyleSheet.create.",
     selector: "JSXAttribute[name.name='style'] ObjectExpression",
@@ -59,6 +74,13 @@ const ROUTE_PACKAGE_IMPORT_PATTERN = {
   message:
     "Import only screens and components in a route file, and expo-router for its params and navigators. The root layout wires the rest of the app.",
   regex: "^(?!#/|expo-router$|react$)",
+};
+
+const MEMOIZATION_IMPORT = {
+  importNames: ["memo", "useCallback", "useMemo"],
+  message:
+    "Let React Compiler memoize instead, because it memoizes every component and hook it compiles (https://react.dev/learn/react-compiler/introduction).",
+  name: "react",
 };
 
 const WRAPPED_PRIMITIVES_IMPORT = {
@@ -121,7 +143,6 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
           "error",
           { children: "never", props: "never" },
         ],
-        "@stylistic/jsx-newline": ["error", { prevent: true }],
         "@stylistic/jsx-self-closing-comp": "error",
         "@typescript-eslint/no-redeclare": "off",
         "import-x/extensions": "off",
@@ -134,6 +155,7 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
           ...RESTRICTED_SYNTAX,
           ...MOBILE_RESTRICTED_SYNTAX,
         ],
+        "react-hooks/todo": "error",
         "react/jsx-boolean-value": ["error", "never"],
         "react/jsx-fragments": ["error", "syntax"],
         "react/jsx-no-leaked-render": [
@@ -157,7 +179,7 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
     },
     createRestrictedImportsConfiguration({
       files: JAVASCRIPT_FILES,
-      paths: [WRAPPED_PRIMITIVES_IMPORT],
+      paths: [MEMOIZATION_IMPORT, WRAPPED_PRIMITIVES_IMPORT],
       patterns: RESTRICTED_IMPORT_PATTERNS,
     }),
     {
@@ -174,11 +196,12 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
     createRestrictedImportsConfiguration({
       files: ["src/app/**"],
       ignores: ["src/app/_layout.tsx"],
-      paths: [WRAPPED_PRIMITIVES_IMPORT],
+      paths: [MEMOIZATION_IMPORT, WRAPPED_PRIMITIVES_IMPORT],
       patterns: [...RESTRICTED_IMPORT_PATTERNS, ROUTE_PACKAGE_IMPORT_PATTERN],
     }),
     createRestrictedImportsConfiguration({
       files: ["src/shared/components/**"],
+      paths: [MEMOIZATION_IMPORT],
       patterns: RESTRICTED_IMPORT_PATTERNS,
     }),
     {

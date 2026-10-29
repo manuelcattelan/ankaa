@@ -12,7 +12,7 @@ import { isAuthenticationRateLimited } from "#/features/authentication/core/is-a
 import { validateOtpCodeCompleteness } from "#/features/authentication/core/validate-otp-code-completeness.ts";
 import { useCooldown } from "#/features/authentication/hooks/use-cooldown.ts";
 import { announceAuthenticationError } from "#/features/authentication/interactors/announce-authentication-error.ts";
-import { VALIDATE_OTP_CODE_SCREEN_MESSAGES } from "#/features/authentication/messages/validate-otp-code-screen-messages.ts";
+import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 import { otpCodeRequestMutationOptions } from "#/features/authentication/mutations/otp-code-request-mutation-options.ts";
 import { otpCodeSignInMutationOptions } from "#/features/authentication/mutations/otp-code-sign-in-mutation-options.ts";
 import { Button } from "#/shared/components/button.tsx";
@@ -48,14 +48,12 @@ function ValidateOtpCodeContent({ email }: { email: string }) {
     startResendCooldown,
     stopResendCooldown,
   ] = useCooldown({
-    endMessage:
-      VALIDATE_OTP_CODE_SCREEN_MESSAGES.resendOtpCodeReadyAnnouncement,
+    endMessage: AUTHENTICATION_MESSAGES.resendOtpCodeReadyAnnouncement,
     getInitialDeadline: getResendCooldownInitialDeadline,
   });
   const [validateCooldownRemainingSeconds, startValidateCooldown] = useCooldown(
     {
-      endMessage:
-        VALIDATE_OTP_CODE_SCREEN_MESSAGES.validateOtpCodeReadyAnnouncement,
+      endMessage: AUTHENTICATION_MESSAGES.validateOtpCodeReadyAnnouncement,
     },
   );
 
@@ -178,7 +176,7 @@ function ValidateOtpCodeContent({ email }: { email: string }) {
         enterKeyHint="done"
         errorMessage={otpCodeErrorMessage}
         inputMode="numeric"
-        label={VALIDATE_OTP_CODE_SCREEN_MESSAGES.otpCodeLabel}
+        label={AUTHENTICATION_MESSAGES.otpCodeLabel}
         maxLength={OTP_CODE_LENGTH}
         onChangeText={setOtpCode}
         onSubmitEditing={handleValidateOtpCode}
@@ -188,18 +186,18 @@ function ValidateOtpCodeContent({ email }: { email: string }) {
         disabled={!canValidateOtpCode}
         isBusy={validateOtpCode.isPending}
         onPress={handleValidateOtpCode}
-        title={VALIDATE_OTP_CODE_SCREEN_MESSAGES.validateOtpCodeButton}
+        title={AUTHENTICATION_MESSAGES.validateOtpCodeButton}
       />
       <Button
-        accessibilityHint={VALIDATE_OTP_CODE_SCREEN_MESSAGES.resendOtpCodeHint}
+        accessibilityHint={AUTHENTICATION_MESSAGES.resendOtpCodeHint}
         disabled={resendCooldownRemainingSeconds > 0}
         isBusy={resendOtpCode.isPending}
         onPress={handleResendOtpCode}
-        title={VALIDATE_OTP_CODE_SCREEN_MESSAGES.resendOtpCodeButton}
+        title={AUTHENTICATION_MESSAGES.resendOtpCodeButton}
       />
       {resendCooldownRemainingSeconds > 0 ? (
         <Text>
-          {VALIDATE_OTP_CODE_SCREEN_MESSAGES.resendOtpCodeCooldownStatus(
+          {AUTHENTICATION_MESSAGES.resendOtpCodeCooldownStatus(
             resendCooldownRemainingSeconds,
           )}
         </Text>

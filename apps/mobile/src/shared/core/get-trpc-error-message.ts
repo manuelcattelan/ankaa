@@ -2,7 +2,7 @@ import { isTRPCClientError } from "@trpc/client";
 import * as Predicate from "effect/Predicate";
 
 import { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
-import { ERROR_MESSAGES } from "#/shared/messages/error-messages.ts";
+import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 export function getTrpcErrorMessage(error: unknown) {
   const trpcClientError =
@@ -12,8 +12,8 @@ export function getTrpcErrorMessage(error: unknown) {
     isTRPCClientError(trpcClientError) &&
     Predicate.isNotNullish(trpcClientError.data)
   ) {
-    return ERROR_MESSAGES.unknown;
+    return SHARED_MESSAGES.unknownError;
   }
 
-  return ERROR_MESSAGES.serverUnreachable;
+  return SHARED_MESSAGES.serverUnreachableError;
 }

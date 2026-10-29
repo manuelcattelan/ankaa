@@ -7,7 +7,7 @@ import { getAuthenticationErrorMessage } from "#/features/authentication/core/ge
 import { getEmailValidationErrorMessage } from "#/features/authentication/core/get-email-validation-error-message.ts";
 import { validateEmail } from "#/features/authentication/core/validate-email.ts";
 import { announceAuthenticationError } from "#/features/authentication/interactors/announce-authentication-error.ts";
-import { WITH_EMAIL_SCREEN_MESSAGES } from "#/features/authentication/messages/with-email-screen-messages.ts";
+import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 import { otpCodeRequestMutationOptions } from "#/features/authentication/mutations/otp-code-request-mutation-options.ts";
 import { Button } from "#/shared/components/button.tsx";
 import { ScrollView } from "#/shared/components/scroll-view.tsx";
@@ -85,7 +85,7 @@ export function WithEmailScreen() {
         enterKeyHint="send"
         errorMessage={emailErrorMessage}
         inputMode="email"
-        label={WITH_EMAIL_SCREEN_MESSAGES.emailLabel}
+        label={AUTHENTICATION_MESSAGES.emailLabel}
         onChangeText={setEmail}
         onSubmitEditing={handleSendOtpCode}
         value={email}
@@ -93,7 +93,7 @@ export function WithEmailScreen() {
       <Button
         isBusy={sendOtpCode.isPending}
         onPress={handleSendOtpCode}
-        title={WITH_EMAIL_SCREEN_MESSAGES.sendOtpCodeButton}
+        title={AUTHENTICATION_MESSAGES.sendOtpCodeButton}
       />
     </ScrollView>
   );

@@ -5,9 +5,9 @@ import type { AuthenticationClient } from "#/shared/services/authentication-clie
 import { isAuthenticationRateLimited } from "#/features/authentication/core/is-authentication-rate-limited.ts";
 import { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
 import { GoogleSignInInProgressError } from "#/features/authentication/errors/google-sign-in-in-progress-error.ts";
-import { AUTHENTICATION_ERROR_MESSAGES } from "#/features/authentication/messages/authentication-error-messages.ts";
+import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
-import { ERROR_MESSAGES } from "#/shared/messages/error-messages.ts";
+import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 type AuthenticationErrorCode =
   | "EMAIL_NOT_VERIFIED"
@@ -16,13 +16,13 @@ type AuthenticationErrorCode =
   | keyof AuthenticationClient["Service"]["authClient"]["$ERROR_CODES"];
 
 const AUTHENTICATION_ERROR_CODE_MESSAGES: Record<string, string | undefined> = {
-  EMAIL_NOT_VERIFIED: AUTHENTICATION_ERROR_MESSAGES.accountNotConnected,
-  INVALID_EMAIL: AUTHENTICATION_ERROR_MESSAGES.emailInvalid,
-  INVALID_OTP: AUTHENTICATION_ERROR_MESSAGES.otpCodeInvalid,
-  OAUTH_LINK_ERROR: AUTHENTICATION_ERROR_MESSAGES.accountNotConnected,
-  OTP_EXPIRED: AUTHENTICATION_ERROR_MESSAGES.otpCodeExpired,
-  TOO_MANY_ATTEMPTS: AUTHENTICATION_ERROR_MESSAGES.otpCodeAttemptsExceeded,
-  USER_EMAIL_NOT_FOUND: AUTHENTICATION_ERROR_MESSAGES.emailNotShared,
+  EMAIL_NOT_VERIFIED: AUTHENTICATION_MESSAGES.accountNotConnectedError,
+  INVALID_EMAIL: AUTHENTICATION_MESSAGES.emailInvalidError,
+  INVALID_OTP: AUTHENTICATION_MESSAGES.otpCodeInvalidError,
+  OAUTH_LINK_ERROR: AUTHENTICATION_MESSAGES.accountNotConnectedError,
+  OTP_EXPIRED: AUTHENTICATION_MESSAGES.otpCodeExpiredError,
+  TOO_MANY_ATTEMPTS: AUTHENTICATION_MESSAGES.otpCodeAttemptsExceededError,
+  USER_EMAIL_NOT_FOUND: AUTHENTICATION_MESSAGES.emailNotSharedError,
 } satisfies Partial<Record<AuthenticationErrorCode, string>>;
 
 export function getAuthenticationErrorMessage(error: unknown) {
@@ -31,7 +31,7 @@ export function getAuthenticationErrorMessage(error: unknown) {
   }
 
   if (error instanceof GooglePlayServicesMissingError) {
-    return AUTHENTICATION_ERROR_MESSAGES.playServicesMissing;
+    return AUTHENTICATION_MESSAGES.playServicesMissingError;
   }
 
   if (error instanceof GoogleSignInInProgressError) {
@@ -48,20 +48,20 @@ function getAuthenticationFailureMessage(error: AuthenticationClientError) {
 
   if (isAuthenticationRateLimited(error)) {
     return error.retryAfterSeconds !== null && error.retryAfterSeconds > 0
-      ? AUTHENTICATION_ERROR_MESSAGES.requestsRateLimited(
+      ? AUTHENTICATION_MESSAGES.requestsRateLimitedError(
           error.retryAfterSeconds,
         )
-      : AUTHENTICATION_ERROR_MESSAGES.requestsRateLimitedWithoutDelay;
+      : AUTHENTICATION_MESSAGES.requestsRateLimitedWithoutDelayError;
   }
 
   const errorCodeMessage =
     error.code === null ? null : AUTHENTICATION_ERROR_CODE_MESSAGES[error.code];
 
-  return errorCodeMessage ?? ERROR_MESSAGES.unknown;
+  return errorCodeMessage ?? SHARED_MESSAGES.unknownError;
 }
 
 function getUnexpectedErrorMessage(error: unknown) {
   return Predicate.hasProperty(error, "code")
-    ? ERROR_MESSAGES.unknown
-    : ERROR_MESSAGES.serverUnreachable;
+    ? SHARED_MESSAGES.unknownError
+    : SHARED_MESSAGES.serverUnreachableError;
 }

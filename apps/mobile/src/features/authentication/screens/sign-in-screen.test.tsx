@@ -152,6 +152,39 @@ describe("SignInScreen", () => {
     ).toBeOnTheScreen();
   });
 
+  it("announces the error message once when the server rejects the Google sign-in", async () => {
+    const announcedMessages: string[] = [];
+    const user = userEvent.setup();
+
+    renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        accessibility: fakeAccessibilityLayer(announcedMessages),
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/sign-in/social": () =>
+            Response.json(
+              {
+                code: "USER_EMAIL_NOT_FOUND",
+                message: "User email not found",
+              },
+              { status: 400 },
+            ),
+        }),
+        googleSignIn: fakeGoogleSignInLayer(GOOGLE_SIGN_IN_RESPONSE),
+      },
+    });
+
+    await user.press(await screen.findByTestId("google-sign-in-button"));
+
+    await screen.findByText(
+      "The selected provider didn't share your email address: try another sign-in method.",
+    );
+
+    expect(announcedMessages).toEqual([
+      "The selected provider didn't share your email address: try another sign-in method.",
+    ]);
+  });
+
   it("opens the email screen when the User continues with an email address", async () => {
     const user = userEvent.setup();
 
