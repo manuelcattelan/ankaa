@@ -88,7 +88,7 @@ describe("Database", () => {
   });
 
   it("rolls back the writes of a transaction that is interrupted", async () => {
-    const exerciseInserted = await runtime.runPromise(Deferred.make<void>());
+    const exerciseInserted = await runtime.runPromise(Deferred.make<boolean>());
     const fiber = runtime.runFork(
       Effect.gen(function* () {
         const database = yield* Database;
@@ -102,7 +102,7 @@ describe("Database", () => {
               weightType: "bodyweight",
             });
 
-            yield* Deferred.done(exerciseInserted, Exit.void);
+            yield* Deferred.succeed(exerciseInserted, true);
 
             return yield* Effect.never;
           }),

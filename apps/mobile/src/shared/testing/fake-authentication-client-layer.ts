@@ -7,11 +7,6 @@ export type FakeAuthenticationResponses = Partial<
   Record<string, (request: Request) => Promise<Response> | Response>
 >;
 
-type AnswerFakeAuthenticationRequestOptions = {
-  request: Request;
-  responses: FakeAuthenticationResponses;
-};
-
 const FAKE_API_URL = "https://api.ankaa.test";
 
 const HTTP_STATUS_NOT_FOUND = 404;
@@ -59,11 +54,14 @@ export function fakeAuthenticationClientLayer(
 function answerFakeAuthenticationRequest({
   request,
   responses,
-}: AnswerFakeAuthenticationRequestOptions) {
+}: {
+  request: Request;
+  responses: FakeAuthenticationResponses;
+}) {
   const fakeAuthenticationResponse =
     responses[new URL(request.url).pathname.replace("/api/auth", "")];
 
-  if (!fakeAuthenticationResponse) {
+  if (fakeAuthenticationResponse === undefined) {
     return Promise.resolve(
       new Response(null, { status: HTTP_STATUS_NOT_FOUND }),
     );

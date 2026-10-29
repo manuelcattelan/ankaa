@@ -10,16 +10,10 @@ import {
   vitestConfiguration,
 } from "#/base.ts";
 
-type CreatePackageConfigurationOptions = {
-  basePath: string;
-};
-
 const REPOSITORY_MESSAGE =
   "Import a Repository only in its own Feature's Application Service, so every read and write of the Feature goes through its business operations.";
 
-export function createPackageConfiguration({
-  basePath,
-}: CreatePackageConfigurationOptions) {
+export function createPackageConfiguration({ basePath }: { basePath: string }) {
   const featureZones = getFeatureNames(basePath).flatMap((featureName) => {
     const featurePath = `${FEATURES_PATH}/${featureName}`;
 

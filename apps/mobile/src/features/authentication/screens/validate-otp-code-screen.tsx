@@ -23,18 +23,10 @@ import { AuthenticationClientError } from "#/shared/errors/authentication-client
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { announceMessage } from "#/shared/interactors/announce-message.ts";
 
-type ValidateOtpCodeContentProps = {
-  email: string;
-};
-
-type ValidateOtpCodeScreenProps = {
-  email: null | string;
-};
-
 const COOLDOWN_SECONDS = 60;
 
-export function ValidateOtpCodeScreen({ email }: ValidateOtpCodeScreenProps) {
-  if (!email) {
+export function ValidateOtpCodeScreen({ email }: { email: null | string }) {
+  if (email === null || email === "") {
     return <Redirect href="/sign-in" />;
   }
 
@@ -48,7 +40,7 @@ function getResendCooldownInitialDeadline() {
   });
 }
 
-function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProps) {
+function ValidateOtpCodeContent({ email }: { email: string }) {
   const runtime = useRuntime();
 
   const [
@@ -165,7 +157,7 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProps) {
       OtpCodeIncomplete: () => {
         setOtpCodeValidationError(otpCodeCompletenessValidationErrorMessage);
 
-        if (otpCodeCompletenessValidationErrorMessage) {
+        if (otpCodeCompletenessValidationErrorMessage !== null) {
           runtime.runSync(
             announceMessage(otpCodeCompletenessValidationErrorMessage),
           );

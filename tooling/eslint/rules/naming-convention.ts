@@ -13,21 +13,14 @@ type NamingConventionReportDescriptor = Parameters<
   NamingConventionContext["report"]
 >[0];
 
-type ReportUnlessTaggedEnumKeyOptions = {
-  context: NamingConventionContext;
-  descriptor: NamingConventionReportDescriptor;
-};
-
 const NAMING_CONVENTION_RULE_NAME = "naming-convention";
 const STRICT_PASCAL_CASE_PATTERN = /^(?:[A-Z][\da-z]+)+$/;
 
-const typescriptNamingConvention =
-  typescriptEslintPlugin.rules[NAMING_CONVENTION_RULE_NAME];
+const typescriptNamingConvention = getTypescriptNamingConvention();
 
 export const namingConvention = createRule({
   create: (context) =>
     typescriptNamingConvention.create(createTaggedEnumKeyContext(context)),
-  defaultOptions: typescriptNamingConvention.defaultOptions ?? [],
   meta: {
     ...typescriptNamingConvention.meta,
     docs: {
@@ -54,6 +47,18 @@ function createTaggedEnumKeyContext(context: NamingConventionContext) {
       },
     },
   );
+}
+
+function getTypescriptNamingConvention() {
+  const rule = typescriptEslintPlugin.rules[NAMING_CONVENTION_RULE_NAME];
+
+  if (rule === undefined) {
+    throw new Error(
+      `@typescript-eslint/eslint-plugin has no ${NAMING_CONVENTION_RULE_NAME} rule.`,
+    );
+  }
+
+  return rule;
 }
 
 function isDataTaggedEnum(node: TSESTree.Node | undefined) {
@@ -93,7 +98,10 @@ function isPascalCaseTaggedEnumKey(
 function reportUnlessTaggedEnumKey({
   context,
   descriptor,
-}: ReportUnlessTaggedEnumKeyOptions) {
+}: {
+  context: NamingConventionContext;
+  descriptor: NamingConventionReportDescriptor;
+}) {
   if (!isPascalCaseTaggedEnumKey(descriptor)) {
     context.report(descriptor);
   }

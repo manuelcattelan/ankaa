@@ -12,36 +12,27 @@ import { AuthenticationClientError } from "#/shared/errors/authentication-client
 
 export type AuthClient = ReturnType<typeof buildAuthClient>;
 
-export type SendAuthenticationRequest<TData> = (
-  authClient: AuthClient,
-  fetchOptions: AuthenticationFetchOptions,
-) => Promise<AuthenticationResponse<TData>>;
+export type SendAuthenticationRequest<TData> = (requestOptions: {
+  authClient: AuthClient;
+  fetchOptions: {
+    onError: (context: { response: Response }) => void;
+  };
+}) => Promise<AuthenticationResponse<TData>>;
 
 type AuthenticationFetch = (
   input: Request | string | URL,
   options?: RequestInit,
 ) => Promise<Response>;
 
-type AuthenticationFetchErrorContext = {
-  response: Response;
-};
-
-type AuthenticationFetchOptions = {
-  onError: (context: AuthenticationFetchErrorContext) => void;
-};
-
 type AuthenticationResponse<TData> =
-  AuthenticationResponseFailure | AuthenticationResponseSuccess<TData>;
-
-type AuthenticationResponseFailure = {
-  data: null;
-  error: AuthenticationResponseError;
-};
-
-type AuthenticationResponseSuccess<TData> = {
-  data: TData;
-  error: null;
-};
+  | {
+      data: null;
+      error: AuthenticationResponseError;
+    }
+  | {
+      data: TData;
+      error: null;
+    };
 
 type MakeAuthenticationClientOptions = {
   apiUrl: string;
@@ -77,9 +68,12 @@ export function makeAuthenticationClient({
       try: async () => {
         let retryAfterHeader: null | string = null;
 
-        const response = await sendRequest(authClient, {
-          onError: (context) => {
-            retryAfterHeader = context.response.headers.get("X-Retry-After");
+        const response = await sendRequest({
+          authClient,
+          fetchOptions: {
+            onError: (context) => {
+              retryAfterHeader = context.response.headers.get("X-Retry-After");
+            },
           },
         });
 
@@ -87,7 +81,7 @@ export function makeAuthenticationClient({
       },
     }).pipe(
       Effect.flatMap((authenticationRequest) =>
-        authenticationRequest.response.error
+        authenticationRequest.response.error !== null
           ? Effect.fail(
               buildAuthenticationClientError({
                 error: authenticationRequest.response.error,

@@ -7,11 +7,6 @@ export type AuthenticationResponseError = {
   statusText: string;
 };
 
-type BuildAuthenticationClientErrorOptions = {
-  error: AuthenticationResponseError;
-  retryAfterHeader: null | string;
-};
-
 /**
  * Maps the error that better-auth's client returns for a failed response to
  * an `AuthenticationClientError`.
@@ -19,12 +14,18 @@ type BuildAuthenticationClientErrorOptions = {
 export function buildAuthenticationClientError({
   error,
   retryAfterHeader,
-}: BuildAuthenticationClientErrorOptions) {
+}: {
+  error: AuthenticationResponseError;
+  retryAfterHeader: null | string;
+}) {
   return new AuthenticationClientError({
     cause: null,
     code: error.code ?? null,
     message: error.message ?? error.statusText,
-    retryAfterSeconds: retryAfterHeader ? Number(retryAfterHeader) : null,
+    retryAfterSeconds:
+      retryAfterHeader === null || retryAfterHeader === ""
+        ? null
+        : Number(retryAfterHeader),
     status: error.status,
   });
 }

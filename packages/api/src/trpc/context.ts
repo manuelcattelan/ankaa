@@ -17,20 +17,13 @@ export type ApplicationRuntime = ManagedRuntime.ManagedRuntime<
 
 export type Context = ReturnType<typeof createInnerContext>;
 
-type CreateContextOptions = CreateFastifyContextOptions & {
-  runtime: ApplicationRuntime;
-};
-
-type CreateInnerContextOptions = {
-  runtime: ApplicationRuntime;
-  session: Effect.Success<ReturnType<Authentication["Service"]["getSession"]>>;
-};
-
 export async function createContext({
   req,
   res,
   runtime,
-}: CreateContextOptions) {
+}: CreateFastifyContextOptions & {
+  runtime: ApplicationRuntime;
+}) {
   const session = await runtime.runPromise(
     Effect.gen(function* () {
       const authentication = yield* Authentication;
@@ -45,6 +38,9 @@ export async function createContext({
 export function createInnerContext({
   runtime,
   session,
-}: CreateInnerContextOptions) {
+}: {
+  runtime: ApplicationRuntime;
+  session: Effect.Success<ReturnType<Authentication["Service"]["getSession"]>>;
+}) {
   return { runtime, session };
 }

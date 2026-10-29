@@ -17,17 +17,6 @@ type FilenameMatchExportContext = Readonly<
 
 type FilenameMatchExportMessageId = "unexpectedFilename";
 
-type GetExportedNamesOptions = {
-  context: FilenameMatchExportContext;
-  statement: TSESTree.ProgramStatement;
-};
-
-type GetSpecifierExportedNameOptions = {
-  context: FilenameMatchExportContext;
-  isType: boolean;
-  specifier: TSESTree.ExportSpecifier;
-};
-
 const typeDeclarationTypes = new Set<string>([
   AST_NODE_TYPES.TSInterfaceDeclaration,
   AST_NODE_TYPES.TSTypeAliasDeclaration,
@@ -50,7 +39,7 @@ export const filenameMatchExport = createRule({
           ? getOnlyExportedName(valueExportedNames)
           : getOnlyExportedName(typeExportedNames);
 
-      if (!namingExportedName) {
+      if (namingExportedName === null) {
         return;
       }
 
@@ -113,23 +102,30 @@ function getDeclarationExportedNames(
   return [];
 }
 
-function getExportedNames({ context, statement }: GetExportedNamesOptions) {
+function getExportedNames({
+  context,
+  statement,
+}: {
+  context: FilenameMatchExportContext;
+  statement: TSESTree.ProgramStatement;
+}) {
   if (statement.type !== AST_NODE_TYPES.ExportNamedDeclaration) {
     return [];
   }
 
   const isType = statement.exportKind === "type";
 
-  const exportedNames: ExportedName[] = statement.declaration
-    ? getDeclarationExportedNames(statement.declaration).map(
-        (exportedName) => ({
-          ...exportedName,
-          isType: isType || exportedName.isType,
-        }),
-      )
-    : statement.specifiers.map((specifier) =>
-        getSpecifierExportedName({ context, isType, specifier }),
-      );
+  const exportedNames: ExportedName[] =
+    statement.declaration !== null
+      ? getDeclarationExportedNames(statement.declaration).map(
+          (exportedName) => ({
+            ...exportedName,
+            isType: isType || exportedName.isType,
+          }),
+        )
+      : statement.specifiers.map((specifier) =>
+          getSpecifierExportedName({ context, isType, specifier }),
+        );
 
   return exportedNames;
 }
@@ -142,7 +138,11 @@ function getSpecifierExportedName({
   context,
   isType,
   specifier,
-}: GetSpecifierExportedNameOptions) {
+}: {
+  context: FilenameMatchExportContext;
+  isType: boolean;
+  specifier: TSESTree.ExportSpecifier;
+}) {
   const name =
     specifier.exported.type === AST_NODE_TYPES.Identifier
       ? specifier.exported.name

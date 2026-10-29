@@ -18,12 +18,6 @@ import { getDatabaseUrl } from "#/testing/get-database-url.ts";
 import { queryDatabase } from "#/testing/query-database.ts";
 import "#/testing/provided-context.ts";
 
-type BuildTemplateDatabaseOptions = {
-  maintenanceClient: Client;
-  maintenanceDatabaseUrl: string;
-  name: string;
-};
-
 const MIGRATIONS_HASH_LENGTH = 16;
 
 const POSTGRES_CONTAINER_IMAGE = "postgres:18.6";
@@ -32,7 +26,7 @@ const POSTGRES_CONTAINER_LABELS = { "ankaa.test-database": "true" };
 
 const TEMPLATE_DATABASE_LOCK_KEY = 54_046;
 
-const POSTGRES_CONTAINER_LOCK_RETRY_MAXIMUM_TIMEOUT_MILLISECONDS = 3_000;
+const POSTGRES_CONTAINER_LOCK_RETRY_MAXIMUM_TIMEOUT_MILLISECONDS = 3000;
 
 const POSTGRES_CONTAINER_LOCK_RETRY_MINIMUM_TIMEOUT_MILLISECONDS = 500;
 
@@ -70,7 +64,11 @@ async function buildTemplateDatabase({
   maintenanceClient,
   maintenanceDatabaseUrl,
   name,
-}: BuildTemplateDatabaseOptions) {
+}: {
+  maintenanceClient: Client;
+  maintenanceDatabaseUrl: string;
+  name: string;
+}) {
   const buildingDatabaseName = `${name}_building`;
 
   await dropDatabase({

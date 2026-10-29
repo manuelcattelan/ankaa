@@ -7,24 +7,6 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { expo } from "@better-auth/expo";
 import { emailOTP } from "better-auth/plugins";
 
-type CreateAuthenticationOptionsOptions = {
-  appleBundleId: string;
-  baseUrl: string;
-  database: DB;
-  googleIosClientId: string;
-  googleWebClientId: string;
-  nodeEnvironment: NodeEnvironment;
-  secret: string;
-  sendVerificationOtpCode: (
-    options: SendVerificationOtpCodeOptions,
-  ) => Promise<void>;
-};
-
-type SendVerificationOtpCodeOptions = {
-  email: string;
-  otpCode: string;
-};
-
 const DEVELOPMENT_TRUSTED_ORIGINS = [
   "exp://",
   "exp://**",
@@ -40,7 +22,19 @@ export function createAuthenticationOptions({
   nodeEnvironment,
   secret,
   sendVerificationOtpCode,
-}: CreateAuthenticationOptionsOptions) {
+}: {
+  appleBundleId: string;
+  baseUrl: string;
+  database: DB;
+  googleIosClientId: string;
+  googleWebClientId: string;
+  nodeEnvironment: NodeEnvironment;
+  secret: string;
+  sendVerificationOtpCode: (options: {
+    email: string;
+    otpCode: string;
+  }) => Promise<void>;
+}) {
   return {
     advanced: { database: { generateId: "uuid" } },
     baseURL: baseUrl,

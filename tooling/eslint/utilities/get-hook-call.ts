@@ -13,7 +13,7 @@ export function getHookCall(statement: TSESTree.Node) {
 
   const name = getCalleeName(expression.callee);
 
-  if (!name || !HOOK_NAME_PATTERN.test(name)) {
+  if (name === null || !HOOK_NAME_PATTERN.test(name)) {
     return null;
   }
 

@@ -15,30 +15,6 @@ import typescriptEslint from "typescript-eslint";
 
 import { plugin } from "#/plugin.ts";
 
-type CreateFeatureIsolationZoneOptions = {
-  featureName: string;
-  target: string | string[];
-};
-
-type CreateGeneratedFilesConfigurationOptions = {
-  configuration: Linter.Config[];
-  files: string[];
-};
-
-type CreateRestrictedImportsConfigurationOptions = {
-  basePath?: string;
-  files: NonNullable<Linter.Config["files"]>;
-  ignores?: string[];
-  paths?: RestrictedImportPath[];
-  patterns: RestrictedImportPattern[];
-};
-
-type RestrictedImportPath = {
-  importNames?: string[];
-  message: string;
-  name: string;
-};
-
 type RestrictedImportPattern = (typeof RESTRICTED_IMPORT_PATTERNS)[number];
 
 export const JAVASCRIPT_FILES = ["**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"];
@@ -119,13 +95,26 @@ export const RESTRICTED_SYNTAX = [
       ":function > TSTypeAnnotation.returnType:not([typeAnnotation.type='TSTypePredicate'])",
   },
   {
-    message: "Take one parameter. Use an object parameter for more values.",
-    selector: "FunctionDeclaration[params.length>1]:not([id.name=/Reducer$/])",
+    message:
+      "Take one parameter, so every call names its arguments. Use an object parameter for more values.",
+    selector:
+      "CallExpression[callee.object.name='Effect'][callee.property.name='fn'] > FunctionExpression.arguments[generator=true][params.length>1], CallExpression[callee.callee.object.name='Effect'][callee.callee.property.name='fn'] > FunctionExpression.arguments[generator=true][params.length>1]",
   },
   {
-    message: "Move this object type to a named type.",
+    message:
+      "Write an object type inline only in a parameter or in Context.Service's type argument, and name it otherwise.",
     selector:
-      "TSTypeLiteral:not(TSTypeAliasDeclaration TSTypeLiteral, CallExpression[callee.object.name='Context'][callee.property.name='Service'] TSTypeLiteral)",
+      "TSTypeLiteral:not(TSTypeAliasDeclaration TSTypeLiteral, CallExpression[callee.object.name='Context'][callee.property.name='Service'] TSTypeLiteral, :function > .params TSTypeLiteral)",
+  },
+  {
+    message:
+      "Compare explicitly instead of converting to a boolean with !!, so the condition says what it checks.",
+    selector: "UnaryExpression[operator='!'] > UnaryExpression[operator='!']",
+  },
+  {
+    message:
+      "Compare explicitly instead of converting to a boolean with Boolean(), so the condition says what it checks.",
+    selector: "CallExpression[callee.name='Boolean']",
   },
   {
     message:
@@ -222,6 +211,8 @@ const TYPE_WORD_SUFFIX = {
 };
 
 const GENERATED_FILES_KEPT_RULE_PREFIXES = ["@stylistic/", "perfectionist/"];
+
+const MINIMUM_NAME_LENGTH = 2;
 
 export const FEATURES_PATH = "./src/features";
 
@@ -328,6 +319,8 @@ export const rulesConfiguration = defineConfig([
         "error",
         { fixStyle: "separate-type-imports", prefer: "type-imports" },
       ],
+      // Off so a call can pass constUndefined() for a left-out input (https://github.com/manuelcattelan/ankaa/issues/86#issuecomment-6497392376).
+      "@typescript-eslint/no-confusing-void-expression": "off",
       "@typescript-eslint/no-floating-promises": [
         "error",
         { checkThenables: true },
@@ -346,19 +339,37 @@ export const rulesConfiguration = defineConfig([
       ],
       "@typescript-eslint/no-non-null-assertion": "error",
       "@typescript-eslint/no-shadow": "error",
+      "@typescript-eslint/strict-boolean-expressions": [
+        "error",
+        { allowNullableObject: false, allowNumber: false, allowString: false },
+      ],
       curly: ["error", "all"],
       eqeqeq: ["error", "always"],
       "func-style": ["error", "declaration"],
+      // tRPC's docs always name its initialized instance t
+      // (https://trpc.io/docs/server/routers), and Drizzle's docs always name
+      // the helpers that defineRelations passes r
+      // (https://orm.drizzle.team/docs/relations-v2), so both keep their names.
+      "id-length": [
+        "error",
+        {
+          exceptions: ["r", "t"],
+          min: MINIMUM_NAME_LENGTH,
+          properties: "never",
+        },
+      ],
       "import-x/consistent-type-specifier-style": ["error", "prefer-top-level"],
       "import-x/extensions": [
         "error",
         "always",
         { checkTypeImports: true, ignorePackages: true },
       ],
+      "import-x/newline-after-import": "error",
       "import-x/no-default-export": "error",
       "import-x/no-relative-packages": "error",
-      "no-else-return": ["error", { allowElseIf: false }],
       "no-magic-numbers": "off",
+      // Core's rule, because unicorn's no-nested-ternary allows one level of
+      // nesting in parentheses (https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/docs/rules/no-nested-ternary.md).
       "no-nested-ternary": "error",
       "no-restricted-syntax": ["error", ...RESTRICTED_SYNTAX],
       "no-shadow": "off",
@@ -366,10 +377,13 @@ export const rulesConfiguration = defineConfig([
       "prefer-template": "error",
       "unicorn/catch-error-name": "error",
       "unicorn/consistent-boolean-name": "error",
+      "unicorn/explicit-length-check": "error",
       "unicorn/filename-case": ["error", { case: "kebabCase" }],
       "unicorn/no-exports-in-scripts": "error",
       "unicorn/no-top-level-side-effects": "error",
+      "unicorn/no-useless-else": "error",
       "unicorn/no-useless-undefined": "error",
+      "unicorn/numeric-separators-style": "error",
     },
   },
   createRestrictedImportsConfiguration({
@@ -418,7 +432,7 @@ export const baseConfiguration = defineConfig([
   {
     extends: [
       js.configs.recommended,
-      typescriptEslint.configs.recommendedTypeChecked,
+      typescriptEslint.configs.strictTypeChecked,
       typescriptEslint.configs.stylisticTypeChecked,
       eslintPluginPerfectionist.configs["recommended-natural"],
       eslintConfigPrettierFlat,
@@ -467,7 +481,10 @@ export const vitestConfiguration = defineConfig({
 export function createFeatureIsolationZone({
   featureName,
   target,
-}: CreateFeatureIsolationZoneOptions) {
+}: {
+  featureName: string;
+  target: string | string[];
+}) {
   return {
     except: [`./${featureName}`],
     from: FEATURES_PATH,
@@ -480,7 +497,10 @@ export function createFeatureIsolationZone({
 export function createGeneratedFilesConfiguration({
   configuration,
   files,
-}: CreateGeneratedFilesConfigurationOptions) {
+}: {
+  configuration: Linter.Config[];
+  files: string[];
+}) {
   const ruleNames = configuration.flatMap((configurationObject) =>
     Object.keys(configurationObject.rules ?? {}),
   );
@@ -512,7 +532,17 @@ export function createRestrictedImportsConfiguration({
   ignores = [],
   paths = [],
   patterns,
-}: CreateRestrictedImportsConfigurationOptions) {
+}: {
+  basePath?: string;
+  files: NonNullable<Linter.Config["files"]>;
+  ignores?: string[];
+  paths?: {
+    importNames?: string[];
+    message: string;
+    name: string;
+  }[];
+  patterns: RestrictedImportPattern[];
+}) {
   const configuration = basePath === undefined ? {} : { basePath };
 
   return defineConfig([

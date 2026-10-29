@@ -2,16 +2,14 @@ import { getAuthenticationErrorMessage } from "#/features/authentication/core/ge
 import { isAuthenticationRateLimited } from "#/features/authentication/core/is-authentication-rate-limited.ts";
 import { AUTHENTICATION_ERROR_MESSAGES } from "#/features/authentication/messages/authentication-error-messages.ts";
 
-type GetOtpCodeErrorMessageOptions = {
-  cooldownRemainingSeconds: number;
-  error: unknown;
-};
-
 export function getOtpCodeErrorMessage({
   cooldownRemainingSeconds,
   error,
-}: GetOtpCodeErrorMessageOptions) {
-  if (!error) {
+}: {
+  cooldownRemainingSeconds: number;
+  error: unknown;
+}) {
+  if (error === null || error === undefined) {
     return null;
   }
 

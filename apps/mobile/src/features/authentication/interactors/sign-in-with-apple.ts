@@ -7,12 +7,6 @@ import { AuthenticationClientError } from "#/shared/errors/authentication-client
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 import { Crypto } from "#/shared/services/crypto.ts";
 
-type BuildAppleIdTokenOptions = {
-  credential: ExpoAppleAuthentication.AppleAuthenticationCredential;
-  identityToken: string;
-  nonce: string;
-};
-
 export const signInWithApple = Effect.fn("signInWithApple")(function* () {
   const appleSignIn = yield* AppleSignIn;
   const authenticationClient = yield* AuthenticationClient;
@@ -23,7 +17,7 @@ export const signInWithApple = Effect.fn("signInWithApple")(function* () {
 
   const credential = yield* appleSignIn.signIn(hashedNonce);
 
-  if (!credential.identityToken) {
+  if (credential.identityToken === null || credential.identityToken === "") {
     return yield* new AuthenticationClientError({
       cause: null,
       code: null,
@@ -39,7 +33,7 @@ export const signInWithApple = Effect.fn("signInWithApple")(function* () {
     nonce,
   });
 
-  return yield* authenticationClient.request((authClient, fetchOptions) =>
+  return yield* authenticationClient.request(({ authClient, fetchOptions }) =>
     authClient.signIn.social(
       { idToken: appleIdToken, provider: "apple" },
       fetchOptions,
@@ -51,12 +45,16 @@ function buildAppleIdToken({
   credential,
   identityToken,
   nonce,
-}: BuildAppleIdTokenOptions) {
+}: {
+  credential: ExpoAppleAuthentication.AppleAuthenticationCredential;
+  identityToken: string;
+  nonce: string;
+}) {
   const firstName = credential.fullName?.givenName ?? null;
   const lastName = credential.fullName?.familyName ?? null;
   const appleIdToken = { nonce, token: identityToken };
 
-  if (!(firstName ?? lastName)) {
+  if ((firstName ?? lastName ?? "") === "") {
     return appleIdToken;
   }
 

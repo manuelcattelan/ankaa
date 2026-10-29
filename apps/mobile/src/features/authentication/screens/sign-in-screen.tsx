@@ -49,12 +49,13 @@ export function SignInScreen() {
   const isSignInPending = signInApple.isPending || signInGoogle.isPending;
   const sessionErrorMessage = getSessionErrorMessage(session);
   const signInError = signInApple.error ?? signInGoogle.error;
-  const signInErrorMessage = signInError
-    ? getAuthenticationErrorMessage(signInError)
-    : sessionErrorMessage;
+  const signInErrorMessage =
+    signInError === null
+      ? sessionErrorMessage
+      : getAuthenticationErrorMessage(signInError);
 
   useEffect(() => {
-    if (sessionErrorMessage) {
+    if (sessionErrorMessage !== null) {
       runtime.runSync(announceMessage(sessionErrorMessage));
     }
   }, [runtime, sessionErrorMessage]);
@@ -82,7 +83,7 @@ export function SignInScreen() {
   return (
     <ScrollView>
       <StatusMessage message={signInErrorMessage} />
-      {appleSignInAvailability.data ? (
+      {appleSignInAvailability.data === true ? (
         <ExpoAppleAuthentication.AppleAuthenticationButton
           buttonStyle={
             colorScheme === "dark"

@@ -32,9 +32,10 @@ export function WithEmailScreen() {
     },
   });
 
-  const emailErrorMessage = sendOtpCode.error
-    ? getAuthenticationErrorMessage(sendOtpCode.error)
-    : emailValidationError;
+  const emailErrorMessage =
+    sendOtpCode.error === null
+      ? emailValidationError
+      : getAuthenticationErrorMessage(sendOtpCode.error);
 
   function handleSendOtpCode() {
     if (sendOtpCode.isPending) {
@@ -54,7 +55,7 @@ export function WithEmailScreen() {
       EmailInvalid: () => {
         setEmailValidationError(emailValidationErrorMessage);
 
-        if (emailValidationErrorMessage) {
+        if (emailValidationErrorMessage !== null) {
           runtime.runSync(announceMessage(emailValidationErrorMessage));
         }
       },

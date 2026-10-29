@@ -57,7 +57,7 @@ describe("SignInScreen", () => {
   it("doesn't show Apple sign-in when the device doesn't offer it", async () => {
     renderScreen({ initialUrl: "/sign-in" });
 
-    await advanceFakeTime(1_000);
+    await advanceFakeTime(1000);
 
     expect(screen.queryByTestId("apple-sign-in-button")).not.toBeOnTheScreen();
   });
@@ -98,7 +98,7 @@ describe("SignInScreen", () => {
 
     fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
 
-    await advanceFakeTime(1_000);
+    await advanceFakeTime(1000);
 
     expect(announcedMessages).toEqual([]);
   });

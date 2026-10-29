@@ -5,16 +5,6 @@ import { AST_NODE_TYPES } from "@typescript-eslint/utils";
 import { createRule } from "#/utilities/create-rule.ts";
 import { getHookCall } from "#/utilities/get-hook-call.ts";
 
-type CheckComponentOrderOptions = {
-  context: ComponentOrderContext;
-  node: FunctionNode;
-};
-
-type CompareDescriptorsOptions = {
-  first: StatementDescriptor;
-  second: StatementDescriptor;
-};
-
 type ComponentOrderContext = Readonly<
   TSESLint.RuleContext<ComponentOrderMessageId, []>
 >;
@@ -25,12 +15,6 @@ type FunctionNode =
   | TSESTree.ArrowFunctionExpression
   | TSESTree.FunctionDeclaration
   | TSESTree.FunctionExpression;
-
-type GetDependenciesOptions = {
-  context: ComponentOrderContext;
-  node: FunctionNode;
-  statements: TSESTree.Statement[];
-};
 
 type Slot =
   | "context"
@@ -110,14 +94,20 @@ export const componentOrder = createRule({
   name: "component-order",
 });
 
-function checkComponentOrder({ context, node }: CheckComponentOrderOptions) {
+function checkComponentOrder({
+  context,
+  node,
+}: {
+  context: ComponentOrderContext;
+  node: FunctionNode;
+}) {
   if (node.body.type !== AST_NODE_TYPES.BlockStatement) {
     return;
   }
 
   const statements = node.body.body;
 
-  if (!statements.some((statement) => getHookCall(statement))) {
+  if (!statements.some((statement) => getHookCall(statement) !== null)) {
     return;
   }
 
@@ -134,7 +124,7 @@ function checkComponentOrder({ context, node }: CheckComponentOrderOptions) {
   for (const [index, descriptor] of descriptors.entries()) {
     const sortedDescriptor = sortedDescriptors.at(index);
 
-    if (sortedDescriptor && sortedDescriptor !== descriptor) {
+    if (sortedDescriptor !== undefined && sortedDescriptor !== descriptor) {
       context.report({
         data: { line: descriptor.statement.loc.start.line },
         messageId: "unexpectedOrder",
@@ -146,18 +136,27 @@ function checkComponentOrder({ context, node }: CheckComponentOrderOptions) {
   }
 }
 
-function compareDescriptors({ first, second }: CompareDescriptorsOptions) {
-  return (
-    SLOTS.indexOf(first.slot) - SLOTS.indexOf(second.slot) ||
-    first.index - second.index
-  );
+function compareDescriptors({
+  first,
+  second,
+}: {
+  first: StatementDescriptor;
+  second: StatementDescriptor;
+}) {
+  const slotDifference = SLOTS.indexOf(first.slot) - SLOTS.indexOf(second.slot);
+
+  return slotDifference === 0 ? first.index - second.index : slotDifference;
 }
 
 function getDependencies({
   context,
   node,
   statements,
-}: GetDependenciesOptions) {
+}: {
+  context: ComponentOrderContext;
+  node: FunctionNode;
+  statements: TSESTree.Statement[];
+}) {
   const functionScope = context.sourceCode.getScope(node);
   const dependencies: number[][] = statements.map(() => []);
 
@@ -183,7 +182,7 @@ function getDependencies({
         reference.from.variableScope === functionScope.variableScope;
 
       if (isImmediate && dependentIndex > declaringIndex) {
-        dependencies[dependentIndex].push(declaringIndex);
+        dependencies[dependentIndex]?.push(declaringIndex);
       }
     }
   }
@@ -194,7 +193,7 @@ function getDependencies({
 function getSlot(statement: TSESTree.Statement) {
   const hookCall = getHookCall(statement);
 
-  if (hookCall) {
+  if (hookCall !== null) {
     return HOOK_SLOTS_BY_NAME[hookCall.name] ?? "context";
   }
 
@@ -220,7 +219,7 @@ function sortDescriptors(descriptors: StatementDescriptor[]) {
         .toSorted((first, second) => compareDescriptors({ first, second }))
         .at(0) ?? remainingDescriptors.at(0);
 
-    if (!nextDescriptor) {
+    if (nextDescriptor === undefined) {
       return sortedDescriptors;
     }
 

@@ -33,20 +33,6 @@ export type FakeTrpcResponses = {
   [Path in keyof TrpcProcedures]?: FakeTrpcResponse<TrpcProcedures[Path]>;
 };
 
-type CreateFakeTrpcResolverOptions<TProcedure extends AnyProcedure> = {
-  response: FakeTrpcResponse<TProcedure> | undefined;
-};
-
-type FakeTrpcClientLayerOptions = {
-  receivedPaths?: string[];
-  responses?: FakeTrpcResponses;
-};
-
-type FakeTrpcResolverOptions<TProcedure extends AnyProcedure> = {
-  input: inferProcedureInput<TProcedure>;
-  path: string;
-};
-
 type FakeTrpcResponse<TProcedure extends AnyProcedure> = (
   input: inferProcedureInput<TProcedure>,
 ) =>
@@ -56,7 +42,7 @@ type FakeTrpcResponse<TProcedure extends AnyProcedure> = (
 type FakeTrpcResponseOutput<TProcedure extends AnyProcedure> = [
   inferTransformedProcedureOutput<AppRouter, TProcedure>,
 ] extends [never]
-  ? void
+  ? undefined
   : inferTransformedProcedureOutput<AppRouter, TProcedure>;
 
 type TrpcProcedureEntry<TRouterRecord, TPathPrefix extends string> = {
@@ -83,7 +69,10 @@ type TrpcProcedures = {
 export function fakeTrpcClientLayer({
   receivedPaths = [],
   responses = {},
-}: FakeTrpcClientLayerOptions) {
+}: {
+  receivedPaths?: string[];
+  responses?: FakeTrpcResponses;
+}) {
   return Layer.effect(
     TrpcClient,
     Effect.gen(function* () {
@@ -124,9 +113,17 @@ export function fakeTrpcClientLayer({
 
 function createFakeTrpcResolver<TProcedure extends AnyProcedure>({
   response,
-}: CreateFakeTrpcResolverOptions<TProcedure>) {
-  return async ({ input, path }: FakeTrpcResolverOptions<TProcedure>) => {
-    if (!response) {
+}: {
+  response: FakeTrpcResponse<TProcedure> | undefined;
+}) {
+  return async ({
+    input,
+    path,
+  }: {
+    input: inferProcedureInput<TProcedure>;
+    path: string;
+  }) => {
+    if (response === undefined) {
       throw new TRPCError({
         code: "NOT_FOUND",
         message: `No fake response for "${path}"`,

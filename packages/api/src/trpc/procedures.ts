@@ -1,9 +1,8 @@
+import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "@ankaa/core/shared/constants/http-status-internal-server-error";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { STATUS_CODES } from "node:http";
 
 import type { Context } from "#/trpc/context.ts";
-
-const HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
 
 const t = initTRPC.context<Context>().create({
   errorFormatter: ({ shape }) => {
@@ -19,7 +18,7 @@ const t = initTRPC.context<Context>().create({
 });
 
 const requireSession = t.middleware(({ ctx, next }) => {
-  if (!ctx.session) {
+  if (ctx.session === null) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 

@@ -41,8 +41,9 @@ export class AuthenticationClient extends Context.Service<
               ExpoSecureStore.getItem(key, SECURE_STORE_OPTIONS),
             getItemAsync: (key) =>
               ExpoSecureStore.getItemAsync(key, SECURE_STORE_OPTIONS),
-            setItem: (key, item) =>
-              ExpoSecureStore.setItem(key, item, SECURE_STORE_OPTIONS),
+            setItem: (key, item) => {
+              ExpoSecureStore.setItem(key, item, SECURE_STORE_OPTIONS);
+            },
             setItemAsync: (key, item) =>
               ExpoSecureStore.setItemAsync(key, item, SECURE_STORE_OPTIONS),
           },

@@ -10,11 +10,16 @@ import type { ApplicationPluginOptions } from "#/application-plugin.ts";
 export const authenticationRoute = ((server, { runtime }, done) => {
   server.route({
     handler: async (request, reply) => {
-      const url = new URL(request.url, `http://${request.headers.host}`);
+      const url = new URL(
+        request.url,
+        `http://${String(request.headers.host)}`,
+      );
       const webRequest = new Request(url.toString(), {
         headers: fromNodeHeaders(request.headers),
         method: request.method,
-        ...(request.body ? { body: JSON.stringify(request.body) } : {}),
+        ...(request.body === undefined || request.body === null
+          ? {}
+          : { body: JSON.stringify(request.body) }),
       });
 
       const response = await runtime.runPromise(
@@ -31,7 +36,7 @@ export const authenticationRoute = ((server, { runtime }, done) => {
         void reply.header(headerName, headerValue);
       }
 
-      if (!response.body) {
+      if (response.body === null) {
         return reply.send();
       }
 

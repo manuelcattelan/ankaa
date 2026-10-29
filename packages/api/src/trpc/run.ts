@@ -16,7 +16,11 @@ import { PinoLogger } from "#/shared/pino-logger.ts";
 import { getWireErrorCode } from "#/trpc/get-wire-error-code.ts";
 import { wireErrorSchema } from "#/trpc/wire-error-schema.ts";
 
-type RunOptions<TSuccess, TWireError extends WireError> = {
+export async function run<TSuccess, TWireError extends WireError>({
+  context,
+  effect,
+  signal,
+}: {
   context: {
     // Only a procedure called over HTTP has a request, because a caller
     // takes the inner context (https://trpc.io/docs/server/context#inner-and-outer-context).
@@ -30,13 +34,7 @@ type RunOptions<TSuccess, TWireError extends WireError> = {
   >;
   errors: readonly Schema.Schema<TWireError>[];
   signal: AbortSignal | undefined;
-};
-
-export async function run<TSuccess, TWireError extends WireError>({
-  context,
-  effect,
-  signal,
-}: RunOptions<TSuccess, TWireError>) {
+}) {
   const exit = await context.runtime.runPromiseExit(
     context.req === undefined
       ? effect

@@ -46,7 +46,7 @@ export class Email extends Context.Service<
             resend.emails.send({ from: resendEmailFrom, subject, text, to }),
         });
 
-        if (sendEmailResponse.error) {
+        if (sendEmailResponse.error !== null) {
           return yield* buildEmailError({
             cause: sendEmailResponse.error,
             subject,

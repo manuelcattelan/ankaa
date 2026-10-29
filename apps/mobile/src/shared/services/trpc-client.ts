@@ -41,7 +41,7 @@ export class TrpcClient extends Context.Service<
                   const cookies =
                     await authenticationClient.authClient.getCookie();
 
-                  return cookies ? { cookie: cookies } : {};
+                  return cookies === "" ? {} : { cookie: cookies };
                 },
                 url: `${authenticationClient.apiUrl}/trpc`,
               }),

@@ -24,10 +24,6 @@ import {
   TEST_RESTRICTED_SYNTAX,
 } from "#/base.ts";
 
-type CreateMobileConfigurationOptions = {
-  basePath: string;
-};
-
 const MOBILE_RESTRICTED_SYNTAX = [
   {
     message: "Move this style to StyleSheet.create.",
@@ -89,9 +85,7 @@ const eslintConfigExpoFixedUp = fixupConfigRules(eslintConfigExpoFlat).map(
         },
 );
 
-export function createMobileConfiguration({
-  basePath,
-}: CreateMobileConfigurationOptions) {
+export function createMobileConfiguration({ basePath }: { basePath: string }) {
   const featureNames = getFeatureNames(basePath);
 
   const featureIsolationZones = featureNames.map((featureName) =>

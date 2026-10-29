@@ -20,10 +20,6 @@ import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { announceMessage } from "#/shared/interactors/announce-message.ts";
 import { exerciseListQueryOptions } from "#/shared/queries/exercise-list-query-options.ts";
 
-type ExercisePickerContentProps = ExercisePickerProps & {
-  exercises: Exercise[];
-};
-
 type ExercisePickerProps = {
   onSelectExercise: (exercise: Exercise) => void;
 };
@@ -48,12 +44,13 @@ export function ExercisePicker({ onSelectExercise }: ExercisePickerProps) {
 
   const exerciseLibrary = useQuery(exerciseListQueryOptions(runtime));
 
-  const exerciseLibraryErrorMessage = exerciseLibrary.error
-    ? getTrpcErrorMessage(exerciseLibrary.error)
-    : null;
+  const exerciseLibraryErrorMessage =
+    exerciseLibrary.error === null
+      ? null
+      : getTrpcErrorMessage(exerciseLibrary.error);
 
   useEffect(() => {
-    if (exerciseLibraryErrorMessage) {
+    if (exerciseLibraryErrorMessage !== null) {
       runtime.runSync(announceMessage(exerciseLibraryErrorMessage));
     }
   }, [exerciseLibraryErrorMessage, runtime]);
@@ -77,7 +74,9 @@ export function ExercisePicker({ onSelectExercise }: ExercisePickerProps) {
 function ExercisePickerContent({
   exercises,
   onSelectExercise,
-}: ExercisePickerContentProps) {
+}: ExercisePickerProps & {
+  exercises: Exercise[];
+}) {
   const [equipmentSelection, setEquipmentSelection] = useState(
     EQUIPMENT_SELECTION_INITIAL_VALUE,
   );

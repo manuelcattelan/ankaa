@@ -23,7 +23,7 @@ const LOGGER_CONFIGURATIONS = {
   test: false,
 } satisfies Record<NodeEnvironment, FastifyServerOptions["logger"]>;
 
-const ROUTER_MAXIMUM_PARAMETER_LENGTH = 5_000;
+const ROUTER_MAXIMUM_PARAMETER_LENGTH = 5000;
 
 const positiveIntegerSchema = Schema.Trim.pipe(
   Schema.decodeTo(Schema.FiniteFromString),
@@ -74,7 +74,7 @@ closeWithGrace(
     logger: server.log,
   },
   async ({ err }) => {
-    if (err) {
+    if (err !== undefined) {
       server.log.error(err, "Closing server after an uncaught error");
     }
 

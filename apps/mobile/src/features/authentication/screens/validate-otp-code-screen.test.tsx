@@ -86,7 +86,7 @@ describe("ValidateOtpCodeScreen", () => {
       "You can resend the verification code in 60 seconds.",
     );
 
-    await advanceFakeTime(1_000);
+    await advanceFakeTime(1000);
 
     expect(
       screen.getByText("You can resend the verification code in 59 seconds."),

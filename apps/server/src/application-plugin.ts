@@ -1,6 +1,7 @@
 import type { ApplicationRuntime } from "@ankaa/api/trpc/context";
 import type { FastifyError } from "fastify";
 
+import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "@ankaa/core/shared/constants/http-status-internal-server-error";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import underPressure from "@fastify/under-pressure";
@@ -15,7 +16,6 @@ export type ApplicationPluginOptions = {
 };
 
 const HTTP_STATUS_NOT_FOUND = 404;
-const HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
 
 export const applicationPlugin = fastifyPlugin<ApplicationPluginOptions>(
   async (server, { runtime }) => {

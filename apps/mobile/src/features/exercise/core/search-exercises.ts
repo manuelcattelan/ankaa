@@ -3,13 +3,6 @@ import type { MuscleGroup } from "@ankaa/core/features/exercise/constants/muscle
 
 import type { Exercise } from "#/shared/exercise-application-service.ts";
 
-type SearchExercisesOptions = {
-  equipmentSelection: Equipment[];
-  exercises: Exercise[];
-  muscleGroupSelection: MuscleGroup[];
-  nameSearchText: string;
-};
-
 const EXERCISE_NAME_SEARCH_WORD_SEPARATOR = /\s+/;
 
 export function searchExercises({
@@ -17,7 +10,12 @@ export function searchExercises({
   exercises,
   muscleGroupSelection,
   nameSearchText,
-}: SearchExercisesOptions) {
+}: {
+  equipmentSelection: Equipment[];
+  exercises: Exercise[];
+  muscleGroupSelection: MuscleGroup[];
+  nameSearchText: string;
+}) {
   const exerciseNameSearchWords = nameSearchText
     .trim()
     .toLowerCase()

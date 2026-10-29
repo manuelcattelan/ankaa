@@ -5,7 +5,7 @@ import { useAuthenticationSession } from "#/shared/hooks/use-authentication-sess
 export function RootNavigator() {
   const session = useAuthenticationSession();
 
-  const hasSession = !!session.data;
+  const hasSession = session.data !== null;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

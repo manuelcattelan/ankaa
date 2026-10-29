@@ -5,15 +5,18 @@ import { TextInput } from "#/shared/components/text-input.tsx";
 import { Text } from "#/shared/components/text.tsx";
 import { TEXT_FIELD_MESSAGES } from "#/shared/messages/text-field-messages.ts";
 
-type TextFieldProps = TextInputProps & {
+export function TextField({
+  errorMessage,
+  label,
+  ...rest
+}: TextInputProps & {
   errorMessage: null | string;
   label: string;
-};
-
-export function TextField({ errorMessage, label, ...rest }: TextFieldProps) {
-  const accessibilityLabel = errorMessage
-    ? TEXT_FIELD_MESSAGES.errorLabel({ errorMessage, label })
-    : label;
+}) {
+  const accessibilityLabel =
+    errorMessage === null || errorMessage === ""
+      ? label
+      : TEXT_FIELD_MESSAGES.errorLabel({ errorMessage, label });
 
   return (
     <>

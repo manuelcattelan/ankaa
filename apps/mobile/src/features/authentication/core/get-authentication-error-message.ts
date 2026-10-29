@@ -47,16 +47,15 @@ function getAuthenticationFailureMessage(error: AuthenticationClientError) {
   }
 
   if (isAuthenticationRateLimited(error)) {
-    return error.retryAfterSeconds
+    return error.retryAfterSeconds !== null && error.retryAfterSeconds > 0
       ? AUTHENTICATION_ERROR_MESSAGES.requestsRateLimited(
           error.retryAfterSeconds,
         )
       : AUTHENTICATION_ERROR_MESSAGES.requestsRateLimitedWithoutDelay;
   }
 
-  const errorCodeMessage = error.code
-    ? AUTHENTICATION_ERROR_CODE_MESSAGES[error.code]
-    : null;
+  const errorCodeMessage =
+    error.code === null ? null : AUTHENTICATION_ERROR_CODE_MESSAGES[error.code];
 
   return errorCodeMessage ?? ERROR_MESSAGES.unknown;
 }

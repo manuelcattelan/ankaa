@@ -19,7 +19,7 @@ export const signInWithGoogle = Effect.fn("signInWithGoogle")(function* () {
 
   const idToken = signInResponse.data.idToken;
 
-  if (!idToken) {
+  if (idToken === null || idToken === "") {
     return yield* new AuthenticationClientError({
       cause: null,
       code: null,
@@ -29,7 +29,7 @@ export const signInWithGoogle = Effect.fn("signInWithGoogle")(function* () {
     });
   }
 
-  return yield* authenticationClient.request((authClient, fetchOptions) =>
+  return yield* authenticationClient.request(({ authClient, fetchOptions }) =>
     authClient.signIn.social(
       { idToken: { token: idToken }, provider: "google" },
       fetchOptions,

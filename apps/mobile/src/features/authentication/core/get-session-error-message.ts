@@ -10,8 +10,8 @@ export function getSessionErrorMessage(
   authenticationSession: AuthenticationSession,
 ) {
   if (
-    !authenticationSession.error ||
-    authenticationSession.data ||
+    authenticationSession.error === null ||
+    authenticationSession.data !== null ||
     typeof authenticationSession.error.status === "number"
   ) {
     return null;

@@ -1,8 +1,3 @@
-type ShouldAnnounceMessageOptions = {
-  message: string;
-  platform: string;
-};
-
 /**
  * Whether the Accessibility Service announces a message: only a non-empty
  * one, and only on iOS.
@@ -10,6 +5,9 @@ type ShouldAnnounceMessageOptions = {
 export function shouldAnnounceMessage({
   message,
   platform,
-}: ShouldAnnounceMessageOptions) {
+}: {
+  message: string;
+  platform: string;
+}) {
   return message !== "" && platform === "ios";
 }

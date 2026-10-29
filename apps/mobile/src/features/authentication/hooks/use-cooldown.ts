@@ -5,17 +5,15 @@ import { getRemainingSeconds } from "#/shared/core/get-remaining-seconds.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { announceMessage } from "#/shared/interactors/announce-message.ts";
 
-type UseCooldownOptions = {
-  endMessage: string;
-  getInitialDeadline?: () => number;
-};
-
-const COOLDOWN_INTERVAL_MILLISECONDS = 1_000;
+const COOLDOWN_INTERVAL_MILLISECONDS = 1000;
 
 export function useCooldown({
   endMessage,
   getInitialDeadline = Date.now,
-}: UseCooldownOptions) {
+}: {
+  endMessage: string;
+  getInitialDeadline?: () => number;
+}) {
   const runtime = useRuntime();
 
   const [cooldownDeadline, setCooldownDeadline] = useState(getInitialDeadline);

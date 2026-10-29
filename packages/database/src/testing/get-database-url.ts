@@ -1,12 +1,10 @@
-type GetDatabaseUrlOptions = {
-  name: string;
-  postgresServerUrl: string;
-};
-
 export function getDatabaseUrl({
   name,
   postgresServerUrl,
-}: GetDatabaseUrlOptions) {
+}: {
+  name: string;
+  postgresServerUrl: string;
+}) {
   const databaseUrl = new URL(postgresServerUrl);
 
   databaseUrl.pathname = `/${name}`;

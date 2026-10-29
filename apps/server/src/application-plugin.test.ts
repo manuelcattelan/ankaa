@@ -16,24 +16,13 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { applicationPlugin } from "#/application-plugin.ts";
 import { createLoggerLayer } from "#/create-logger-layer.ts";
 
-type CreateLoggingServerOptions = {
-  layer: Layer.Layer<Layer.Success<typeof applicationLayer>>;
-  level: string;
-  logLines: unknown[];
-};
-
-type SendRequestsUpToRateLimitOptions = {
-  remoteAddress: string;
-  server: FastifyInstance;
-};
-
 type SignInResponseBody = {
   user: { id: string };
 };
 
 const OTP_CODE_PATTERN = /^\d{6}$/;
 
-const RATE_LIMIT_MAXIMUM_REQUEST_COUNT = 1_000;
+const RATE_LIMIT_MAXIMUM_REQUEST_COUNT = 1000;
 
 const REQUEST_ID = "request-1";
 
@@ -63,7 +52,11 @@ async function createLoggingServer({
   layer,
   level,
   logLines,
-}: CreateLoggingServerOptions) {
+}: {
+  layer: Layer.Layer<Layer.Success<typeof applicationLayer>>;
+  level: string;
+  logLines: unknown[];
+}) {
   const server = fastify({
     genReqId: () => REQUEST_ID,
     logger: {
@@ -91,7 +84,10 @@ async function createLoggingServer({
 function sendRequestsUpToRateLimit({
   remoteAddress,
   server,
-}: SendRequestsUpToRateLimitOptions) {
+}: {
+  remoteAddress: string;
+  server: FastifyInstance;
+}) {
   return Promise.all(
     Array.from({ length: RATE_LIMIT_MAXIMUM_REQUEST_COUNT }, () =>
       server.inject({ method: "GET", remoteAddress, url: "/health" }),

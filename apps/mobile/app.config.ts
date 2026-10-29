@@ -7,17 +7,17 @@ const GOOGLE_IOS_CLIENT_ID_PATTERN = /^(.+)\.apps\.googleusercontent\.com$/;
 
 const SPLASH_IMAGE_WIDTH = 76;
 
-const googleIosClientIdMatch = GOOGLE_IOS_CLIENT_ID_PATTERN.exec(
+const googleIosClientId = GOOGLE_IOS_CLIENT_ID_PATTERN.exec(
   process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? "",
-);
+)?.[1];
 
-if (!googleIosClientIdMatch) {
+if (googleIosClientId === undefined) {
   throw new Error(
     'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID must match "<id>.apps.googleusercontent.com"',
   );
 }
 
-const iosUrlScheme = `com.googleusercontent.apps.${googleIosClientIdMatch[1]}`;
+const iosUrlScheme = `com.googleusercontent.apps.${googleIosClientId}`;
 
 const configuration: ExpoConfig = {
   android: {

@@ -7,15 +7,13 @@ import type { TestRuntime } from "#/shared/testing/create-test-runtime.ts";
 import { createCaller } from "#/shared/testing/create-caller.ts";
 import { createInnerContext } from "#/trpc/context.ts";
 
-type CreateSignedInCallerOptions = {
-  runtime: TestRuntime;
-  signal?: AbortSignal;
-};
-
 export async function createSignedInCaller({
   runtime,
   ...callerOptions
-}: CreateSignedInCallerOptions) {
+}: {
+  runtime: TestRuntime;
+  signal?: AbortSignal;
+}) {
   const testUser = await createTestUser(runtime);
   const session = await runtime.runPromise(
     Effect.gen(function* () {

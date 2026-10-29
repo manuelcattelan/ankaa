@@ -8,20 +8,13 @@ import { RootNavigator } from "#/root-navigator.tsx";
 import { RuntimeContext } from "#/shared/providers/runtime-context.ts";
 import { createTestRuntime } from "#/testing/create-test-runtime.ts";
 
-type CreateTestRootLayoutOptions = {
-  queryClient: QueryClient;
-  runtime: ApplicationRuntime;
-};
-
-type RenderScreenOptions = {
-  initialUrl: string;
-  testRuntimeLayers?: TestRuntimeLayers;
-};
-
 export function renderScreen({
   initialUrl,
   testRuntimeLayers = {},
-}: RenderScreenOptions) {
+}: {
+  initialUrl: string;
+  testRuntimeLayers?: TestRuntimeLayers;
+}) {
   const runtime = createTestRuntime(testRuntimeLayers);
 
   const queryClient = new QueryClient({
@@ -42,7 +35,10 @@ export function renderScreen({
 function createTestRootLayout({
   queryClient,
   runtime,
-}: CreateTestRootLayoutOptions) {
+}: {
+  queryClient: QueryClient;
+  runtime: ApplicationRuntime;
+}) {
   function TestRootLayout() {
     return (
       <RuntimeContext value={runtime}>

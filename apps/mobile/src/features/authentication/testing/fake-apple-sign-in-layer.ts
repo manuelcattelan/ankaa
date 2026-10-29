@@ -6,11 +6,6 @@ import * as Layer from "effect/Layer";
 import { AppleSignInCanceledError } from "#/features/authentication/errors/apple-sign-in-canceled-error.ts";
 import { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts";
 
-type FakeAppleSignInLayerOptions = {
-  appleAuthenticationCredential?: ExpoAppleAuthentication.AppleAuthenticationCredential;
-  isAvailable: boolean;
-};
-
 /**
  * Signs in with `appleAuthenticationCredential`, or fails as a User who
  * cancels Apple sign-in when there's none.
@@ -18,15 +13,18 @@ type FakeAppleSignInLayerOptions = {
 export function fakeAppleSignInLayer({
   appleAuthenticationCredential,
   isAvailable,
-}: FakeAppleSignInLayerOptions) {
+}: {
+  appleAuthenticationCredential?: ExpoAppleAuthentication.AppleAuthenticationCredential;
+  isAvailable: boolean;
+}) {
   return Layer.succeed(
     AppleSignIn,
     AppleSignIn.of({
       checkAvailability: () => Effect.succeed(isAvailable),
       signIn: () =>
-        appleAuthenticationCredential
-          ? Effect.succeed(appleAuthenticationCredential)
-          : Effect.fail(new AppleSignInCanceledError()),
+        appleAuthenticationCredential === undefined
+          ? Effect.fail(new AppleSignInCanceledError())
+          : Effect.succeed(appleAuthenticationCredential),
     }),
   );
 }
