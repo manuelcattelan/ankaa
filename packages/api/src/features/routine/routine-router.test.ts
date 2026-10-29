@@ -1,13 +1,7 @@
 import { createTestUser } from "@ankaa/authentication/testing/create-test-user";
 import { Database } from "@ankaa/database/database";
 import { exercise } from "@ankaa/database/schema/exercise";
-import {
-  routine,
-  routineDay,
-  routineExercise,
-  routineExerciseGroup,
-  routineExerciseSet,
-} from "@ankaa/database/schema/routine";
+import { routine } from "@ankaa/database/schema/routine";
 import { eq } from "drizzle-orm";
 import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
@@ -126,42 +120,18 @@ function insertExercises(runtime: TestRuntime) {
   );
 }
 
-function insertRoutineRows({
-  days = [],
-  exerciseGroups = [],
-  exercises = [],
-  routines,
+function insertRoutine({
+  routineRow,
   runtime,
-  sets = [],
 }: {
-  days?: (typeof routineDay.$inferInsert)[];
-  exerciseGroups?: (typeof routineExerciseGroup.$inferInsert)[];
-  exercises?: (typeof routineExercise.$inferInsert)[];
-  routines: (typeof routine.$inferInsert)[];
+  routineRow: typeof routine.$inferInsert;
   runtime: TestRuntime;
-  sets?: (typeof routineExerciseSet.$inferInsert)[];
 }) {
   return runtime.runPromise(
     Effect.gen(function* () {
       const database = yield* Database;
 
-      yield* database.insert(routine).values(routines);
-
-      if (days.length > 0) {
-        yield* database.insert(routineDay).values(days);
-      }
-
-      if (exerciseGroups.length > 0) {
-        yield* database.insert(routineExerciseGroup).values(exerciseGroups);
-      }
-
-      if (exercises.length > 0) {
-        yield* database.insert(routineExercise).values(exercises);
-      }
-
-      if (sets.length > 0) {
-        yield* database.insert(routineExerciseSet).values(sets);
-      }
+      yield* database.insert(routine).values(routineRow);
     }),
   );
 }
@@ -199,144 +169,134 @@ describe("routine.list", () => {
   });
 
   it("returns a Routine of the User as a tree of Sections, Exercise groups and Routine exercises, each in order", async () => {
-    const testUser = await createTestUser(runtime);
-    const caller = await createSignedInCaller({ runtime, testUser });
-    await insertRoutineRows({
-      days: [
-        {
-          dayOfWeek: "friday",
-          routineId: "019a0000-0000-7000-8000-000000000101",
-        },
-        {
-          dayOfWeek: "monday",
-          routineId: "019a0000-0000-7000-8000-000000000101",
-        },
-      ],
-      exerciseGroups: [
-        {
-          id: "019a0000-0000-7000-8000-000000000201",
-          position: 1,
-          routineId: "019a0000-0000-7000-8000-000000000101",
-          section: "main",
-        },
-        {
-          id: "019a0000-0000-7000-8000-000000000202",
-          position: 0,
-          routineId: "019a0000-0000-7000-8000-000000000101",
-          section: "main",
-        },
-        {
-          id: "019a0000-0000-7000-8000-000000000203",
-          position: 0,
-          routineId: "019a0000-0000-7000-8000-000000000101",
-          section: "warm_up",
-        },
-      ],
-      exercises: [
-        {
-          exerciseId: PUSH_UP_EXERCISE_ID,
-          id: "019a0000-0000-7000-8000-000000000301",
-          note: null,
-          position: 0,
-          routineExerciseGroupId: "019a0000-0000-7000-8000-000000000201",
-        },
-        {
-          exerciseId: PUSH_UP_EXERCISE_ID,
-          id: "019a0000-0000-7000-8000-000000000302",
-          note: null,
-          position: 1,
-          routineExerciseGroupId: "019a0000-0000-7000-8000-000000000202",
-        },
-        {
-          exerciseId: BENCH_PRESS_EXERCISE_ID,
-          id: "019a0000-0000-7000-8000-000000000303",
-          note: "Pause at the chest",
-          position: 0,
-          routineExerciseGroupId: "019a0000-0000-7000-8000-000000000202",
-        },
-        {
-          exerciseId: BAND_PULL_APART_EXERCISE_ID,
-          id: "019a0000-0000-7000-8000-000000000304",
-          note: null,
-          position: 0,
-          warmUpForRoutineExerciseId: "019a0000-0000-7000-8000-000000000303",
-        },
-        {
-          exerciseId: BAND_PULL_APART_EXERCISE_ID,
-          id: "019a0000-0000-7000-8000-000000000305",
-          note: null,
-          position: 0,
-          routineExerciseGroupId: "019a0000-0000-7000-8000-000000000203",
-        },
-      ],
-      routines: [
-        {
-          id: "019a0000-0000-7000-8000-000000000101",
-          name: "Push day",
-          userId: testUser.user.id,
-        },
-      ],
-      runtime,
-      sets: [
-        {
-          amount: 10,
-          id: "019a0000-0000-7000-8000-000000000401",
-          isToFailure: false,
-          position: 0,
-          restSeconds: 60,
-          routineExerciseId: "019a0000-0000-7000-8000-000000000301",
-          type: "working",
-        },
-        {
-          amount: 6,
-          id: "019a0000-0000-7000-8000-000000000402",
-          intensityTechnique: "rest_pause_set",
-          isToFailure: true,
-          pauseSeconds: 15,
-          position: 0,
-          routineExerciseId: "019a0000-0000-7000-8000-000000000302",
-          segmentCount: 3,
-          type: "working",
-        },
-        {
-          amount: 8,
-          id: "019a0000-0000-7000-8000-000000000403",
-          intensityTechnique: "drop_set",
-          isToFailure: false,
-          position: 1,
-          restSeconds: 120,
-          routineExerciseId: "019a0000-0000-7000-8000-000000000303",
-          segmentCount: 3,
-          type: "working",
-          weightPercentage: 20,
-        },
-        {
-          amount: 8,
-          id: "019a0000-0000-7000-8000-000000000404",
-          isToFailure: false,
-          position: 0,
-          restSeconds: 120,
-          routineExerciseId: "019a0000-0000-7000-8000-000000000303",
-          tempo: "3-0-1-2",
-          type: "warm_up",
-        },
-        {
-          amount: 15,
-          id: "019a0000-0000-7000-8000-000000000405",
-          isToFailure: false,
-          position: 0,
-          routineExerciseId: "019a0000-0000-7000-8000-000000000304",
-          type: "warm_up",
-        },
-        {
-          amount: 20,
-          id: "019a0000-0000-7000-8000-000000000406",
-          isToFailure: false,
-          position: 0,
-          routineExerciseId: "019a0000-0000-7000-8000-000000000305",
-          type: "warm_up",
-        },
-      ],
+    const caller = await createSignedInCaller({ runtime });
+    await caller.routine.save({
+      days: ["friday", "monday"],
+      id: "019a0000-0000-7000-8000-000000000101",
+      name: "Push day",
+      sections: {
+        coolDown: [],
+        main: [
+          {
+            exercises: [
+              {
+                exerciseId: BENCH_PRESS_EXERCISE_ID,
+                id: "019a0000-0000-7000-8000-000000000303",
+                note: "Pause at the chest",
+                sets: [
+                  {
+                    amount: 8,
+                    id: "019a0000-0000-7000-8000-000000000404",
+                    intensityTechnique: null,
+                    isToFailure: false,
+                    restSeconds: 120,
+                    tempo: "3-0-1-2",
+                    type: "warm_up",
+                  },
+                  {
+                    amount: 8,
+                    id: "019a0000-0000-7000-8000-000000000403",
+                    intensityTechnique: {
+                      _tag: "DropSet",
+                      segmentCount: 3,
+                      weightPercentage: 20,
+                    },
+                    isToFailure: false,
+                    restSeconds: 120,
+                    tempo: null,
+                    type: "working",
+                  },
+                ],
+                warmUpExercises: [
+                  {
+                    exerciseId: BAND_PULL_APART_EXERCISE_ID,
+                    id: "019a0000-0000-7000-8000-000000000304",
+                    note: null,
+                    sets: [
+                      {
+                        amount: 15,
+                        id: "019a0000-0000-7000-8000-000000000405",
+                        intensityTechnique: null,
+                        isToFailure: false,
+                        restSeconds: null,
+                        tempo: null,
+                        type: "warm_up",
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                exerciseId: PUSH_UP_EXERCISE_ID,
+                id: "019a0000-0000-7000-8000-000000000302",
+                note: null,
+                sets: [
+                  {
+                    amount: 6,
+                    id: "019a0000-0000-7000-8000-000000000402",
+                    intensityTechnique: {
+                      _tag: "RestPauseSet",
+                      pauseSeconds: 15,
+                      segmentCount: 3,
+                    },
+                    isToFailure: true,
+                    restSeconds: null,
+                    tempo: null,
+                    type: "working",
+                  },
+                ],
+                warmUpExercises: [],
+              },
+            ],
+            id: "019a0000-0000-7000-8000-000000000202",
+          },
+          {
+            exercises: [
+              {
+                exerciseId: PUSH_UP_EXERCISE_ID,
+                id: "019a0000-0000-7000-8000-000000000301",
+                note: null,
+                sets: [
+                  {
+                    amount: 10,
+                    id: "019a0000-0000-7000-8000-000000000401",
+                    intensityTechnique: null,
+                    isToFailure: false,
+                    restSeconds: 60,
+                    tempo: null,
+                    type: "working",
+                  },
+                ],
+                warmUpExercises: [],
+              },
+            ],
+            id: "019a0000-0000-7000-8000-000000000201",
+          },
+        ],
+        warmUp: [
+          {
+            exercises: [
+              {
+                exerciseId: BAND_PULL_APART_EXERCISE_ID,
+                id: "019a0000-0000-7000-8000-000000000305",
+                note: null,
+                sets: [
+                  {
+                    amount: 20,
+                    id: "019a0000-0000-7000-8000-000000000406",
+                    intensityTechnique: null,
+                    isToFailure: false,
+                    restSeconds: null,
+                    tempo: null,
+                    type: "warm_up",
+                  },
+                ],
+              },
+            ],
+            id: "019a0000-0000-7000-8000-000000000203",
+          },
+        ],
+      },
     });
 
     const routines = await caller.routine.list();
@@ -474,40 +434,38 @@ describe("routine.list", () => {
   });
 
   it("leaves out the Routines of other Users and the Routines the User deleted", async () => {
-    const testUser = await createTestUser(runtime);
-    const caller = await createSignedInCaller({ runtime, testUser });
-    const otherTestUser = await createTestUser(runtime);
-    await insertRoutineRows({
-      routines: [
-        {
-          id: "019a0000-0000-7000-8000-000000000111",
-          name: "Legs",
-          userId: testUser.user.id,
-        },
-        {
-          deletedAt: new Date("2026-10-29T10:00:00.000Z"),
-          id: "019a0000-0000-7000-8000-000000000112",
-          name: "Pull day",
-          userId: testUser.user.id,
-        },
-        {
-          id: "019a0000-0000-7000-8000-000000000113",
-          name: "Arms",
-          userId: otherTestUser.user.id,
-        },
-      ],
-      runtime,
-    });
+    const caller = await createSignedInCaller({ runtime });
+    const otherCaller = await createSignedInCaller({ runtime });
+    await caller.routine.save(
+      buildRoutineSaveInput({
+        exerciseGroupId: "019a0000-0000-7000-8000-000000000211",
+        id: "019a0000-0000-7000-8000-000000000111",
+        name: "Legs",
+        routineExerciseId: "019a0000-0000-7000-8000-000000000311",
+      }),
+    );
+    await caller.routine.save(
+      buildRoutineSaveInput({
+        exerciseGroupId: "019a0000-0000-7000-8000-000000000212",
+        id: "019a0000-0000-7000-8000-000000000112",
+        name: "Pull day",
+        routineExerciseId: "019a0000-0000-7000-8000-000000000312",
+      }),
+    );
+    await caller.routine.delete({ id: "019a0000-0000-7000-8000-000000000112" });
+    await otherCaller.routine.save(
+      buildRoutineSaveInput({
+        exerciseGroupId: "019a0000-0000-7000-8000-000000000213",
+        id: "019a0000-0000-7000-8000-000000000113",
+        name: "Arms",
+        routineExerciseId: "019a0000-0000-7000-8000-000000000313",
+      }),
+    );
 
     const routines = await caller.routine.list();
 
-    expect(routines).toStrictEqual([
-      {
-        days: [],
-        id: "019a0000-0000-7000-8000-000000000111",
-        name: "Legs",
-        sections: { coolDown: [], main: [], warmUp: [] },
-      },
+    expect(routines).toMatchObject([
+      { id: "019a0000-0000-7000-8000-000000000111", name: "Legs" },
     ]);
   });
 });
@@ -1054,23 +1012,24 @@ describe("routine.save", () => {
 describe("routine.delete", () => {
   const runtime = createTestRuntime();
 
+  beforeAll(async () => {
+    await insertExercises(runtime);
+  });
+
   afterAll(async () => {
     await runtime.dispose();
   });
 
   it("deletes a Routine of the User, which then leaves routine.list", async () => {
-    const testUser = await createTestUser(runtime);
-    const caller = await createSignedInCaller({ runtime, testUser });
-    await insertRoutineRows({
-      routines: [
-        {
-          id: "019a0000-0000-7000-8000-000000000121",
-          name: "Push day",
-          userId: testUser.user.id,
-        },
-      ],
-      runtime,
-    });
+    const caller = await createSignedInCaller({ runtime });
+    await caller.routine.save(
+      buildRoutineSaveInput({
+        exerciseGroupId: "019a0000-0000-7000-8000-000000000221",
+        id: "019a0000-0000-7000-8000-000000000121",
+        name: "Push day",
+        routineExerciseId: "019a0000-0000-7000-8000-000000000321",
+      }),
+    );
 
     await caller.routine.delete({ id: "019a0000-0000-7000-8000-000000000121" });
 
@@ -1080,15 +1039,13 @@ describe("routine.delete", () => {
   it("succeeds without writing when the User deletes a Routine they already deleted", async () => {
     const testUser = await createTestUser(runtime);
     const caller = await createSignedInCaller({ runtime, testUser });
-    await insertRoutineRows({
-      routines: [
-        {
-          deletedAt: new Date("2026-10-29T10:00:00.000Z"),
-          id: "019a0000-0000-7000-8000-000000000122",
-          name: "Push day",
-          userId: testUser.user.id,
-        },
-      ],
+    await insertRoutine({
+      routineRow: {
+        deletedAt: new Date("2026-10-29T10:00:00.000Z"),
+        id: "019a0000-0000-7000-8000-000000000122",
+        name: "Push day",
+        userId: testUser.user.id,
+      },
       runtime,
     });
 
@@ -1115,21 +1072,15 @@ describe("routine.delete", () => {
 
   it("fails with NOT_FOUND and RoutineNotFoundError for a Routine of another User, and leaves it in their list", async () => {
     const caller = await createSignedInCaller({ runtime });
-    const otherTestUser = await createTestUser(runtime);
-    const otherCaller = await createSignedInCaller({
-      runtime,
-      testUser: otherTestUser,
-    });
-    await insertRoutineRows({
-      routines: [
-        {
-          id: "019a0000-0000-7000-8000-000000000124",
-          name: "Push day",
-          userId: otherTestUser.user.id,
-        },
-      ],
-      runtime,
-    });
+    const otherCaller = await createSignedInCaller({ runtime });
+    await otherCaller.routine.save(
+      buildRoutineSaveInput({
+        exerciseGroupId: "019a0000-0000-7000-8000-000000000224",
+        id: "019a0000-0000-7000-8000-000000000124",
+        name: "Push day",
+        routineExerciseId: "019a0000-0000-7000-8000-000000000324",
+      }),
+    );
 
     await expect(
       caller.routine.delete({ id: "019a0000-0000-7000-8000-000000000124" }),

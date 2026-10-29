@@ -9,20 +9,20 @@ import type { Routine } from "#/shared/routine.ts";
 import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";
 import { fakeSignedInAuthenticationClientLayer } from "#/shared/testing/fake-signed-in-authentication-client-layer.ts";
 import { fakeTrpcClientLayer } from "#/shared/testing/fake-trpc-client-layer.ts";
-import { pushDayRoutine } from "#/shared/testing/push-day-routine.ts";
+import { PUSH_DAY_ROUTINE } from "#/shared/testing/push-day-routine.ts";
 import { signedInSession } from "#/shared/testing/signed-in-session.ts";
 import { renderScreen } from "#/testing/render-screen.tsx";
 
 describe("RoutineScreen", () => {
   it("opens the Routine of a link to it for a signed-in User, not the home screen", async () => {
     renderScreen({
-      initialUrl: `/routines/${pushDayRoutine.id}`,
+      initialUrl: `/routines/${PUSH_DAY_ROUTINE.id}`,
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
         trpcClient: fakeTrpcClientLayer({
           responses: {
             "exercise.list": () => [],
-            "routine.list": () => [pushDayRoutine],
+            "routine.list": () => [PUSH_DAY_ROUTINE],
           },
         }),
       },
@@ -43,7 +43,7 @@ describe("RoutineScreen", () => {
         trpcClient: fakeTrpcClientLayer({
           responses: {
             "exercise.list": () => [],
-            "routine.list": () => [pushDayRoutine],
+            "routine.list": () => [PUSH_DAY_ROUTINE],
             "routine.save": (input) => {
               savedInputs.push(input);
             },
@@ -100,7 +100,7 @@ describe("RoutineScreen", () => {
 
   it("takes the User back to their Routines, without the Routine, once they delete it", async () => {
     const user = userEvent.setup();
-    let routines: Routine[] = [pushDayRoutine];
+    let routines: Routine[] = [PUSH_DAY_ROUTINE];
     renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
@@ -140,7 +140,7 @@ describe("RoutineScreen", () => {
             "routine.delete": () => {
               throw new RoutineNotFoundError();
             },
-            "routine.list": () => [pushDayRoutine],
+            "routine.list": () => [PUSH_DAY_ROUTINE],
           },
         }),
       },
@@ -174,7 +174,7 @@ describe("RoutineScreen", () => {
 
               throw new TRPCError({ code: "UNAUTHORIZED" });
             },
-            "routine.list": () => [pushDayRoutine],
+            "routine.list": () => [PUSH_DAY_ROUTINE],
           },
         }),
       },

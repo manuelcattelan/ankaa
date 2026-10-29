@@ -1,5 +1,5 @@
 import { createRoutineDraft } from "#/features/routine/core/create-routine-draft.ts";
-import { pushDayRoutine } from "#/shared/testing/push-day-routine.ts";
+import { PUSH_DAY_ROUTINE } from "#/shared/testing/push-day-routine.ts";
 
 describe("createRoutineDraft", () => {
   it("creates an empty Draft, with no id yet, for a new Routine", () => {
@@ -12,7 +12,7 @@ describe("createRoutineDraft", () => {
   });
 
   it("creates the Draft of an existing Routine by encoding it", () => {
-    expect(createRoutineDraft(pushDayRoutine)).toStrictEqual({
+    expect(createRoutineDraft(PUSH_DAY_ROUTINE)).toStrictEqual({
       days: ["monday"],
       id: "01900000-0000-7000-8000-000000000004",
       name: "Push day",

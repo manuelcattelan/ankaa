@@ -31,6 +31,31 @@ describe("segmentFormSchema", () => {
     });
   });
 
+  it("rejects an Amount of 0 with its message", () => {
+    expect(
+      decodeForm({
+        schema: segmentFormSchema,
+        values: { ...SEGMENT_DRAFT, amount: "0" },
+      }).errorMessages,
+    ).toStrictEqual({
+      amount: "This number isn't valid: enter a whole number of at least 1.",
+      weight: null,
+    });
+  });
+
+  it("rejects a weight above the largest one with its message", () => {
+    expect(
+      decodeForm({
+        schema: segmentFormSchema,
+        values: { ...SEGMENT_DRAFT, weight: "10000" },
+      }).errorMessages,
+    ).toStrictEqual({
+      amount: null,
+      weight:
+        "This weight isn't valid: enter a number from 0.01 to 9999.99, with at most two decimal places.",
+    });
+  });
+
   it("rejects a weight with three decimal places with its message", () => {
     expect(
       decodeForm({

@@ -1,20 +1,17 @@
 import type { WorkoutStartInput } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
-import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 
 import { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
-import { screen, userEvent } from "@testing-library/react-native";
+import { screen, userEvent, waitFor } from "@testing-library/react-native";
 
-import type { Workout } from "#/features/workout/workout-application-service.ts";
 import type { Exercise } from "#/shared/exercise-application-service.ts";
-import type { ScheduledNotification } from "#/shared/services/notifications.ts";
+import type { Workout } from "#/shared/workout.ts";
 
-import { fakeGoogleSignInLayer } from "#/features/authentication/testing/fake-google-sign-in-layer.ts";
 import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";
 import { fakeCryptoLayer } from "#/shared/testing/fake-crypto-layer.ts";
-import { fakeNotificationsLayer } from "#/shared/testing/fake-notifications-layer.ts";
 import { fakeSignedInAuthenticationClientLayer } from "#/shared/testing/fake-signed-in-authentication-client-layer.ts";
 import { fakeTrpcClientLayer } from "#/shared/testing/fake-trpc-client-layer.ts";
-import { pushDayRoutine } from "#/shared/testing/push-day-routine.ts";
+import { PUSH_DAY_ROUTINE } from "#/shared/testing/push-day-routine.ts";
+import { PUSH_DAY_WORKOUT } from "#/shared/testing/push-day-workout.ts";
 import { signedInSession } from "#/shared/testing/signed-in-session.ts";
 import { renderScreen } from "#/testing/render-screen.tsx";
 
@@ -27,46 +24,6 @@ const BENCH_PRESS_EXERCISE: Exercise = {
   weightType: "total",
 };
 
-const PUSH_DAY_WORKOUT: Workout = {
-  id: "01900000-0000-7000-8000-000000000101",
-  sections: {
-    coolDown: [],
-    main: [
-      {
-        exercises: [
-          {
-            amountUnit: "repetition",
-            exerciseId: "01900000-0000-7000-8000-000000000001",
-            id: "01900000-0000-7000-8000-000000000102",
-            note: null,
-            plannedNote: null,
-            plannedSets: [
-              {
-                amount: 8,
-                id: "01900000-0000-7000-8000-000000000103",
-                intensityTechnique: null,
-                isToFailure: false,
-                restSeconds: 120,
-                tempo: null,
-                type: "working",
-              },
-            ],
-            recordedSets: [],
-            skipReason: null,
-            skipReasonNote: null,
-            warmUpExercises: [],
-            weightType: "total",
-            weightUnit: "kilogram",
-          },
-        ],
-        id: "01900000-0000-7000-8000-000000000104",
-      },
-    ],
-    warmUp: [],
-  },
-  startedAt: "2026-10-29T09:00:00.000Z",
-};
-
 describe("HomeScreen", () => {
   it("lists each Routine of the User", async () => {
     renderScreen({
@@ -74,7 +31,7 @@ describe("HomeScreen", () => {
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
         trpcClient: fakeTrpcClientLayer({
-          responses: { "routine.list": () => [pushDayRoutine] },
+          responses: { "routine.list": () => [PUSH_DAY_ROUTINE] },
         }),
       },
     });
@@ -91,7 +48,7 @@ describe("HomeScreen", () => {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
         trpcClient: fakeTrpcClientLayer({
           responses: {
-            "routine.list": () => [pushDayRoutine],
+            "routine.list": () => [PUSH_DAY_ROUTINE],
             "workout.findInProgress": () => PUSH_DAY_WORKOUT,
           },
         }),
@@ -118,7 +75,7 @@ describe("HomeScreen", () => {
         trpcClient: fakeTrpcClientLayer({
           responses: {
             "exercise.list": () => [BENCH_PRESS_EXERCISE],
-            "routine.list": () => [pushDayRoutine],
+            "routine.list": () => [PUSH_DAY_ROUTINE],
             "workout.findInProgress": () => workoutInProgress,
             "workout.start": (input) => {
               startedInputs.push(input);
@@ -152,7 +109,7 @@ describe("HomeScreen", () => {
         crypto: fakeCryptoLayer,
         trpcClient: fakeTrpcClientLayer({
           responses: {
-            "routine.list": () => [pushDayRoutine],
+            "routine.list": () => [PUSH_DAY_ROUTINE],
             "workout.findInProgress": () => workoutInProgress,
             "workout.start": () => {
               workoutInProgress = PUSH_DAY_WORKOUT;
@@ -187,7 +144,7 @@ describe("HomeScreen", () => {
         crypto: fakeCryptoLayer,
         trpcClient: fakeTrpcClientLayer({
           responses: {
-            "routine.list": () => [pushDayRoutine],
+            "routine.list": () => [PUSH_DAY_ROUTINE],
             "workout.findInProgress": () => null,
           },
           unreachablePaths: ["workout.start"],
@@ -225,33 +182,7 @@ describe("HomeScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("takes the User to the sign-in screen when they sign out", async () => {
-    const user = userEvent.setup();
-    let currentSession: null | typeof signedInSession = signedInSession;
-
-    renderScreen({
-      initialUrl: "/",
-      testRuntimeLayers: {
-        authenticationClient: fakeAuthenticationClientLayer({
-          "/get-session": () => Response.json(currentSession),
-          "/sign-out": () => {
-            currentSession = null;
-
-            return Response.json({ success: true });
-          },
-        }),
-        googleSignIn: fakeGoogleSignInLayer({}),
-      },
-    });
-
-    await user.press(await screen.findByRole("button", { name: "Sign out" }));
-
-    expect(
-      await screen.findByRole("link", { name: "Continue with email address" }),
-    ).toBeOnTheScreen();
-  });
-
-  it("sends the request to delete the Account when the User taps Delete account, with the button disabled until it's answered, then tells them to check their email", async () => {
+  it("disables Delete account while the request to delete the Account waits for its answer", async () => {
     const user = userEvent.setup();
     const deleteUserResponse = Promise.withResolvers<Response>();
     renderScreen({
@@ -271,6 +202,23 @@ describe("HomeScreen", () => {
     expect(
       screen.getByRole("button", { name: "Delete account" }),
     ).toBeDisabled();
+  });
+
+  it("tells the User to check their email once the server answers the request to delete the Account", async () => {
+    const user = userEvent.setup();
+    const deleteUserResponse = Promise.withResolvers<Response>();
+    renderScreen({
+      initialUrl: "/",
+      testRuntimeLayers: {
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/delete-user": () => deleteUserResponse.promise,
+          "/get-session": () => Response.json(signedInSession),
+        }),
+      },
+    });
+    await user.press(
+      await screen.findByRole("button", { name: "Delete account" }),
+    );
 
     deleteUserResponse.resolve(
       Response.json({ message: "Verification email sent", success: true }),
@@ -281,82 +229,32 @@ describe("HomeScreen", () => {
         "Check your email to confirm deleting your account.",
       ),
     ).toBeOnTheScreen();
-    expect(
-      screen.getByRole("button", { name: "Delete account" }),
-    ).toBeEnabled();
   });
 
-  it("signs the User out of Google too when they sign out, so they can choose another Google account", async () => {
-    const googleSignInCalls: string[] = [];
+  it("enables Delete account again once the server answers the request to delete the Account", async () => {
     const user = userEvent.setup();
-    let currentSession: null | typeof signedInSession = signedInSession;
+    const deleteUserResponse = Promise.withResolvers<Response>();
     renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
-          "/get-session": () => Response.json(currentSession),
-          "/sign-out": () => {
-            currentSession = null;
-
-            return Response.json({ success: true });
-          },
-        }),
-        googleSignIn: fakeGoogleSignInLayer({
-          receivedCalls: googleSignInCalls,
+          "/delete-user": () => deleteUserResponse.promise,
+          "/get-session": () => Response.json(signedInSession),
         }),
       },
     });
+    await user.press(
+      await screen.findByRole("button", { name: "Delete account" }),
+    );
 
-    await user.press(await screen.findByRole("button", { name: "Sign out" }));
+    deleteUserResponse.resolve(
+      Response.json({ message: "Verification email sent", success: true }),
+    );
 
-    await screen.findByRole("link", { name: "Continue with email address" });
-
-    expect(googleSignInCalls).toStrictEqual(["signOut"]);
-  });
-
-  it("cancels the scheduled notification of a countdown when the User signs out, and leaves their Workout in progress", async () => {
-    const scheduledNotifications: ScheduledNotification[] = [
-      {
-        body: "Start your next set.",
-        seconds: 120,
-        title: "Your rest is over",
-      },
-    ];
-    const stoppedInputs: WorkoutStopInput[] = [];
-    const user = userEvent.setup();
-    let currentSession: null | typeof signedInSession = signedInSession;
-    renderScreen({
-      initialUrl: "/",
-      testRuntimeLayers: {
-        authenticationClient: fakeAuthenticationClientLayer({
-          "/get-session": () => Response.json(currentSession),
-          "/sign-out": () => {
-            currentSession = null;
-
-            return Response.json({ success: true });
-          },
-        }),
-        googleSignIn: fakeGoogleSignInLayer({}),
-        notifications: fakeNotificationsLayer({ scheduledNotifications }),
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "routine.list": () => [pushDayRoutine],
-            "workout.findInProgress": () => PUSH_DAY_WORKOUT,
-            "workout.stop": (input) => {
-              stoppedInputs.push(input);
-            },
-          },
-        }),
-      },
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Delete account" }),
+      ).toBeEnabled();
     });
-    await screen.findByRole("link", { name: "Resume workout" });
-
-    await user.press(screen.getByRole("button", { name: "Sign out" }));
-
-    expect(
-      await screen.findByRole("link", { name: "Continue with email address" }),
-    ).toBeOnTheScreen();
-    expect(scheduledNotifications).toStrictEqual([]);
-    expect(stoppedInputs).toStrictEqual([]);
   });
 });

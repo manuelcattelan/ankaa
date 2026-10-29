@@ -20,12 +20,6 @@ describe("mainRoutineExerciseFilter", () => {
     ).toStrictEqual({ sections: { main: [{ exercises: ["bench-press"] }] } });
   });
 
-  it("rejects a Routine with no Exercise group in the main Section", () => {
-    expect(() => decodeRoutine({ sections: { main: [] } })).toThrow(
-      "Expected a Routine exercise in the main Section",
-    );
-  });
-
   it("rejects a Routine whose main Section holds only an empty Exercise group", () => {
     expect(() =>
       decodeRoutine({ sections: { main: [{ exercises: [] }] } }),

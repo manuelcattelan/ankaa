@@ -73,11 +73,13 @@ function buildRoutineSaveInput({
   id,
   name,
   routineExerciseId,
+  sets = [],
 }: {
   exerciseGroupId: string;
   id: string;
   name: string;
   routineExerciseId: string;
+  sets?: RoutineSaveInput["sections"]["main"][number]["exercises"][number]["sets"];
 }) {
   return {
     days: [],
@@ -92,7 +94,7 @@ function buildRoutineSaveInput({
               exerciseId: BENCH_PRESS_EXERCISE_ID,
               id: routineExerciseId,
               note: null,
-              sets: [],
+              sets,
               warmUpExercises: [],
             },
           ],
@@ -200,6 +202,31 @@ function readWorkoutEndedAt({
 }
 
 /**
+ * Stops the Workout with `id` at `endedAt`, a time the database's clock
+ * never gives, so a test can tell that a later stop left it as it was.
+ */
+function stopWorkoutAt({
+  endedAt,
+  id,
+  runtime,
+}: {
+  endedAt: Date;
+  id: string;
+  runtime: TestRuntime;
+}) {
+  return runtime.runPromise(
+    Effect.gen(function* () {
+      const database = yield* Database;
+
+      yield* database
+        .update(workout)
+        .set({ endedAt })
+        .where(eq(workout.id, id));
+    }),
+  );
+}
+
+/**
  * Starts a Workout from a new Routine of one Bench Press (Barbell) with
  * `plannedSets`, whose ids all start with `idPrefix`, and returns the id of
  * its Workout exercise.
@@ -216,32 +243,18 @@ async function startBenchPressWorkout({
     "id"
   >[];
 }) {
-  await caller.routine.save({
-    days: [],
-    id: `${idPrefix}-0000-7000-8000-000000000001`,
-    name: "Push day",
-    sections: {
-      coolDown: [],
-      main: [
-        {
-          exercises: [
-            {
-              exerciseId: BENCH_PRESS_EXERCISE_ID,
-              id: `${idPrefix}-0000-7000-8000-000000000003`,
-              note: null,
-              sets: plannedSets.map((plannedSet, position) => ({
-                ...plannedSet,
-                id: `${idPrefix}-0000-7000-8000-00000000001${String(position)}`,
-              })),
-              warmUpExercises: [],
-            },
-          ],
-          id: `${idPrefix}-0000-7000-8000-000000000002`,
-        },
-      ],
-      warmUp: [],
-    },
-  });
+  await caller.routine.save(
+    buildRoutineSaveInput({
+      exerciseGroupId: `${idPrefix}-0000-7000-8000-000000000002`,
+      id: `${idPrefix}-0000-7000-8000-000000000001`,
+      name: "Push day",
+      routineExerciseId: `${idPrefix}-0000-7000-8000-000000000003`,
+      sets: plannedSets.map((plannedSet, position) => ({
+        ...plannedSet,
+        id: `${idPrefix}-0000-7000-8000-00000000001${String(position)}`,
+      })),
+    }),
+  );
   await caller.workout.start({
     id: `${idPrefix}-0000-7000-8000-000000000004`,
     routineId: `${idPrefix}-0000-7000-8000-000000000001`,
@@ -865,8 +878,8 @@ describe("workout.stop", () => {
       id: "019a0000-0000-7000-8000-000000000592",
       routineId: "019a0000-0000-7000-8000-000000000192",
     });
-    await caller.workout.stop({ id: "019a0000-0000-7000-8000-000000000592" });
-    const endedAt = await readWorkoutEndedAt({
+    await stopWorkoutAt({
+      endedAt: new Date("2026-10-29T10:00:00.000Z"),
       id: "019a0000-0000-7000-8000-000000000592",
       runtime,
     });
@@ -878,7 +891,7 @@ describe("workout.stop", () => {
         id: "019a0000-0000-7000-8000-000000000592",
         runtime,
       }),
-    ).resolves.toStrictEqual(endedAt);
+    ).resolves.toStrictEqual(new Date("2026-10-29T10:00:00.000Z"));
   });
 
   it("fails with NOT_FOUND and WorkoutNotFoundError for a Workout that doesn't exist", async () => {
@@ -1146,10 +1159,13 @@ describe("workout.saveSet", () => {
       plannedSets: [WORKING_PLANNED_SET],
     });
 
+    const segmentWithoutAmount = { amount: 8, weight: 60 };
+    Reflect.deleteProperty(segmentWithoutAmount, "amount");
+
     await expect(
       caller.workout.saveSet({
         id: "019a0607-0000-7000-8000-000000000101",
-        segments: [{ amount: 0, weight: 60 }],
+        segments: [segmentWithoutAmount],
         weightUnit: "kilogram",
         workoutExerciseId,
       }),

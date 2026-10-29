@@ -1,54 +1,107 @@
-import { fireEvent, screen } from "@testing-library/react-native";
-import * as ExpoAppleAuthentication from "expo-apple-authentication";
+import { fireEvent, screen, waitFor } from "@testing-library/react-native";
 
+import { APPLE_AUTHENTICATION_CREDENTIAL } from "#/features/authentication/testing/apple-authentication-credential.ts";
 import { fakeAppleSignInLayer } from "#/features/authentication/testing/fake-apple-sign-in-layer.ts";
 import { fakeGoogleSignInLayer } from "#/features/authentication/testing/fake-google-sign-in-layer.ts";
 import { advanceFakeTime } from "#/shared/testing/advance-fake-time.ts";
+import { createFakeSignInResponses } from "#/shared/testing/create-fake-sign-in-responses.ts";
 import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";
 import { fakeCryptoLayer } from "#/shared/testing/fake-crypto-layer.ts";
 import { signedInSession } from "#/shared/testing/signed-in-session.ts";
 import { renderScreen } from "#/testing/render-screen.tsx";
 
-const APPLE_AUTHENTICATION_CREDENTIAL: ExpoAppleAuthentication.AppleAuthenticationCredential =
-  {
-    authorizationCode: null,
-    email: null,
-    fullName: null,
-    identityToken: "apple-identity-token",
-    realUserStatus:
-      ExpoAppleAuthentication.AppleAuthenticationUserDetectionStatus
-        .LIKELY_REAL,
-    ["state"]: null,
-    user: "apple-user-1",
-  };
+/**
+ * Renders the deletion link's screen for a User who is signed in until they
+ * sign out, recording the path, and the body of a deletion, of each request
+ * into `authenticationRequests`.
+ */
+function renderSignedInDeletion(authenticationRequests: unknown[]) {
+  let currentSession: null | typeof signedInSession = signedInSession;
+
+  renderScreen({
+    initialUrl: "/delete-account?token=deletion-token-1",
+    testRuntimeLayers: {
+      authenticationClient: fakeAuthenticationClientLayer({
+        "/delete-user": async (request) => {
+          authenticationRequests.push({
+            body: await request.text(),
+            path: "/delete-user",
+          });
+
+          return Response.json({ message: "User deleted", success: true });
+        },
+        "/get-session": () => Response.json(currentSession),
+        "/sign-out": () => {
+          authenticationRequests.push({ path: "/sign-out" });
+          currentSession = null;
+
+          return Response.json({ success: true });
+        },
+      }),
+      googleSignIn: fakeGoogleSignInLayer({}),
+    },
+  });
+}
+
+/**
+ * Renders the deletion link's screen for a signed-out User, who can sign in
+ * with Apple, recording each sign-in into `receivedSignInRequests`, and the
+ * path, and the body of a deletion, of each later request into
+ * `authenticationRequests`.
+ */
+function renderSignedOutDeletion({
+  authenticationRequests,
+  receivedSignInRequests,
+}: {
+  authenticationRequests: unknown[];
+  receivedSignInRequests: Request[];
+}) {
+  renderScreen({
+    initialUrl: "/delete-account?token=deletion-token-2",
+    testRuntimeLayers: {
+      appleSignIn: fakeAppleSignInLayer({
+        appleAuthenticationCredential: APPLE_AUTHENTICATION_CREDENTIAL,
+      }),
+      authenticationClient: fakeAuthenticationClientLayer({
+        ...createFakeSignInResponses({
+          receivedSignInRequests,
+          signInPath: "/sign-in/social",
+        }),
+        "/delete-user": async (request) => {
+          authenticationRequests.push({
+            body: await request.text(),
+            path: "/delete-user",
+          });
+
+          return Response.json({ message: "User deleted", success: true });
+        },
+        "/sign-out": () => {
+          authenticationRequests.push({ path: "/sign-out" });
+
+          return Response.json({ success: true });
+        },
+      }),
+      crypto: fakeCryptoLayer,
+      googleSignIn: fakeGoogleSignInLayer({}),
+    },
+  });
+}
 
 describe("DeleteAccountScreen", () => {
-  it("deletes the Account of the link's token, signs the User out, and tells them on the sign-in screen that their account has been deleted", async () => {
+  it("deletes the Account of the link's token, then signs the User out", async () => {
     const authenticationRequests: unknown[] = [];
-    let currentSession: null | typeof signedInSession = signedInSession;
-    renderScreen({
-      initialUrl: "/delete-account?token=deletion-token-1",
-      testRuntimeLayers: {
-        authenticationClient: fakeAuthenticationClientLayer({
-          "/delete-user": async (request) => {
-            authenticationRequests.push({
-              body: await request.text(),
-              path: "/delete-user",
-            });
-            currentSession = null;
+    renderSignedInDeletion(authenticationRequests);
 
-            return Response.json({ message: "User deleted", success: true });
-          },
-          "/get-session": () => Response.json(currentSession),
-          "/sign-out": () => {
-            authenticationRequests.push({ path: "/sign-out" });
-
-            return Response.json({ success: true });
-          },
-        }),
-        googleSignIn: fakeGoogleSignInLayer({}),
-      },
+    await waitFor(() => {
+      expect(authenticationRequests).toStrictEqual([
+        { body: `{"token":"deletion-token-1"}`, path: "/delete-user" },
+        { path: "/sign-out" },
+      ]);
     });
+  });
+
+  it("tells the User on the sign-in screen that their account has been deleted", async () => {
+    renderSignedInDeletion([]);
 
     expect(
       await screen.findByText("Your account has been deleted."),
@@ -56,10 +109,6 @@ describe("DeleteAccountScreen", () => {
     expect(
       screen.getByRole("link", { name: "Continue with email address" }),
     ).toBeOnTheScreen();
-    expect(authenticationRequests).toStrictEqual([
-      { body: `{"token":"deletion-token-1"}`, path: "/delete-user" },
-      { path: "/sign-out" },
-    ]);
   });
 
   it("tells the User how to get a new link when the server rejects the link's token as expired, used or another User's", async () => {
@@ -85,13 +134,13 @@ describe("DeleteAccountScreen", () => {
   });
 
   it("tells the User how to get a new link, and sends no deletion request that would email another one, when the link has no token", async () => {
-    const deleteUserRequestCount = { value: 0 };
+    const deleteUserRequests: Request[] = [];
     renderScreen({
       initialUrl: "/delete-account",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
-          "/delete-user": () => {
-            deleteUserRequestCount.value += 1;
+          "/delete-user": (request) => {
+            deleteUserRequests.push(request);
 
             return Response.json({
               message: "Verification email sent",
@@ -108,7 +157,7 @@ describe("DeleteAccountScreen", () => {
         "This link has expired or was already used. Tap Delete account to get a new one.",
       ),
     ).toBeOnTheScreen();
-    expect(deleteUserRequestCount.value).toBe(0);
+    expect(deleteUserRequests).toStrictEqual([]);
   });
 
   it("tells the User that Ankaa can't connect when the server can't be reached", async () => {
@@ -131,66 +180,33 @@ describe("DeleteAccountScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("sends a signed-out User to sign in first, and deletes the Account of the link's token only once they've signed in", async () => {
+  it("sends a signed-out User to sign in first, deleting nothing yet", async () => {
     const authenticationRequests: unknown[] = [];
-    let currentSession: null | typeof signedInSession = null;
-    renderScreen({
-      initialUrl: "/delete-account?token=deletion-token-2",
-      testRuntimeLayers: {
-        appleSignIn: fakeAppleSignInLayer({
-          appleAuthenticationCredential: APPLE_AUTHENTICATION_CREDENTIAL,
-        }),
-        authenticationClient: fakeAuthenticationClientLayer({
-          "/delete-user": async (request) => {
-            authenticationRequests.push({
-              body: await request.text(),
-              path: "/delete-user",
-            });
-            currentSession = null;
-
-            return Response.json({ message: "User deleted", success: true });
-          },
-          "/get-session": () => Response.json(currentSession),
-          "/sign-in/social": () => {
-            authenticationRequests.push({ path: "/sign-in/social" });
-            currentSession = signedInSession;
-
-            return Response.json(
-              {
-                token: signedInSession.session.token,
-                user: signedInSession.user,
-              },
-              {
-                headers: {
-                  "Set-Cookie": `better-auth.session_token=${signedInSession.session.token}; Path=/; HttpOnly`,
-                },
-              },
-            );
-          },
-          "/sign-out": () => {
-            authenticationRequests.push({ path: "/sign-out" });
-
-            return Response.json({ success: true });
-          },
-        }),
-        crypto: fakeCryptoLayer,
-        googleSignIn: fakeGoogleSignInLayer({}),
-      },
+    renderSignedOutDeletion({
+      authenticationRequests,
+      receivedSignInRequests: [],
     });
-    const appleSignInButton = await screen.findByTestId("apple-sign-in-button");
+
+    await screen.findByTestId("apple-sign-in-button");
     await advanceFakeTime(1000);
-    const authenticationRequestsBeforeSignIn = [...authenticationRequests];
+
+    expect(authenticationRequests).toStrictEqual([]);
+  });
+
+  it("deletes the Account of the link's token once the signed-out User signs in", async () => {
+    const authenticationRequests: unknown[] = [];
+    const receivedSignInRequests: Request[] = [];
+    renderSignedOutDeletion({ authenticationRequests, receivedSignInRequests });
+    const appleSignInButton = await screen.findByTestId("apple-sign-in-button");
 
     fireEvent.press(appleSignInButton);
 
-    expect(
-      await screen.findByText("Your account has been deleted."),
-    ).toBeOnTheScreen();
-    expect(authenticationRequestsBeforeSignIn).toStrictEqual([]);
-    expect(authenticationRequests).toStrictEqual([
-      { path: "/sign-in/social" },
-      { body: `{"token":"deletion-token-2"}`, path: "/delete-user" },
-      { path: "/sign-out" },
-    ]);
+    await waitFor(() => {
+      expect(authenticationRequests).toStrictEqual([
+        { body: `{"token":"deletion-token-2"}`, path: "/delete-user" },
+        { path: "/sign-out" },
+      ]);
+    });
+    expect(receivedSignInRequests).toHaveLength(1);
   });
 });

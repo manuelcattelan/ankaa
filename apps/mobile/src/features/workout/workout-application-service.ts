@@ -1,4 +1,3 @@
-import type { AppRouter } from "@ankaa/api/trpc/app-router";
 import type { SegmentCountInvalidError } from "@ankaa/core/features/workout/errors/segment-count-invalid-error";
 import type { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
 import type { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
@@ -10,7 +9,6 @@ import type { WorkoutSkipExerciseInput } from "@ankaa/core/features/workout/sche
 import type { WorkoutStartInput } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
 import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 import type { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
-import type { inferRouterOutputs } from "@trpc/server";
 
 import { WORKOUT_REMOVE_SET_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-remove-set-wire-errors";
 import { WORKOUT_SAVE_NOTE_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-save-note-wire-errors";
@@ -25,13 +23,10 @@ import * as Layer from "effect/Layer";
 
 import type { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
 import type { ScheduledNotification } from "#/shared/services/notifications.ts";
+import type { Workout } from "#/shared/workout.ts";
 
 import { Notifications } from "#/shared/services/notifications.ts";
 import { TrpcClient } from "#/shared/services/trpc-client.ts";
-
-export type Workout = NonNullable<
-  inferRouterOutputs<AppRouter>["workout"]["findInProgress"]
->;
 
 export class WorkoutApplicationService extends Context.Service<
   WorkoutApplicationService,

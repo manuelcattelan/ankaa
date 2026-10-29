@@ -6,7 +6,7 @@ import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authenticat
 import { renderScreen } from "#/testing/render-screen.tsx";
 
 const VALIDATE_OTP_CODE_URL =
-  "/sign-in/with-email/validate-otp-code?email=athlete%40example.com";
+  "/sign-in/with-email/validate-otp-code?email=anna%40example.com";
 
 describe("ValidateOtpCodeScreen", () => {
   it("shows a validation message when the verification code is incomplete", async () => {
@@ -228,7 +228,7 @@ describe("ValidateOtpCodeScreen", () => {
 
     await waitFor(() => {
       expect(otpCodeRequestBodies).toEqual([
-        { email: "athlete@example.com", type: "sign-in" },
+        { email: "anna@example.com", type: "sign-in" },
       ]);
     });
   });

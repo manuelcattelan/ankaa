@@ -12,19 +12,19 @@ import {
   waitFor,
 } from "@testing-library/react-native";
 
-import type { Workout } from "#/features/workout/workout-application-service.ts";
 import type { Exercise } from "#/shared/exercise-application-service.ts";
 import type {
   NotificationPermissionStatus,
   ScheduledNotification,
 } from "#/shared/services/notifications.ts";
+import type { Workout } from "#/shared/workout.ts";
 
 import { advanceFakeTime } from "#/shared/testing/advance-fake-time.ts";
 import { fakeCryptoLayer } from "#/shared/testing/fake-crypto-layer.ts";
 import { fakeNotificationsLayer } from "#/shared/testing/fake-notifications-layer.ts";
 import { fakeSignedInAuthenticationClientLayer } from "#/shared/testing/fake-signed-in-authentication-client-layer.ts";
 import { fakeTrpcClientLayer } from "#/shared/testing/fake-trpc-client-layer.ts";
-import { pushDayRoutine } from "#/shared/testing/push-day-routine.ts";
+import { PUSH_DAY_ROUTINE } from "#/shared/testing/push-day-routine.ts";
 import { renderScreen } from "#/testing/render-screen.tsx";
 
 const BAND_PULL_APART_EXERCISE_ID = "01900000-0000-7000-8000-000000000001";
@@ -382,7 +382,7 @@ describe("WorkoutScreen", () => {
         trpcClient: fakeTrpcClientLayer({
           responses: {
             "exercise.list": () => EXERCISES,
-            "routine.list": () => [pushDayRoutine],
+            "routine.list": () => [PUSH_DAY_ROUTINE],
             "workout.findInProgress": () => workoutInProgress,
             "workout.stop": (input) => {
               stoppedInputs.push(input);
@@ -1149,7 +1149,32 @@ describe("WorkoutScreen", () => {
     expect(screen.getByText("Pause: 10 seconds left")).toBeOnTheScreen();
   });
 
-  it("asks for notification permission when the User starts a countdown for the first time, not when the app opens", async () => {
+  it("doesn't ask for notification permission when the Workout screen opens", async () => {
+    const permissionRequests: NotificationPermissionStatus[] = [];
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({ permissionRequests }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+
+    await screen.findByRole("button", { name: "Start rest" });
+
+    expect(permissionRequests).toStrictEqual([]);
+  });
+
+  it("asks for notification permission when the User starts a countdown for the first time", async () => {
     const permissionRequests: NotificationPermissionStatus[] = [];
     const user = userEvent.setup();
     renderScreen({
@@ -1169,13 +1194,8 @@ describe("WorkoutScreen", () => {
         }),
       },
     });
-    const startRestButton = await screen.findByRole("button", {
-      name: "Start rest",
-    });
 
-    expect(permissionRequests).toStrictEqual([]);
-
-    await user.press(startRestButton);
+    await user.press(await screen.findByRole("button", { name: "Start rest" }));
 
     await waitFor(() => {
       expect(permissionRequests).toStrictEqual(["granted"]);
@@ -1264,7 +1284,7 @@ describe("WorkoutScreen", () => {
         trpcClient: fakeTrpcClientLayer({
           responses: {
             "exercise.list": () => EXERCISES,
-            "routine.list": () => [pushDayRoutine],
+            "routine.list": () => [PUSH_DAY_ROUTINE],
             "workout.findInProgress": () => workoutInProgress,
             "workout.stop": () => {
               workoutInProgress = null;
@@ -1284,7 +1304,51 @@ describe("WorkoutScreen", () => {
     expect(scheduledNotifications).toStrictEqual([]);
   });
 
-  it("replaces the countdown and the notification of an earlier countdown when the User starts another, without asking for permission again", async () => {
+  it("replaces the countdown of an earlier countdown when the User starts another", async () => {
+    const permissionRequests: NotificationPermissionStatus[] = [];
+    const scheduledNotifications: ScheduledNotification[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({
+          permissionRequests,
+          scheduledNotifications,
+        }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [
+                  {
+                    ...WORKING_PLANNED_SET,
+                    intensityTechnique: {
+                      _tag: "RestPauseSet",
+                      pauseSeconds: 15,
+                      segmentCount: 3,
+                    },
+                  },
+                ],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start rest" }));
+    await waitFor(() => {
+      expect(scheduledNotifications).toHaveLength(1);
+    });
+
+    await user.press(screen.getByRole("button", { name: "Start pause" }));
+
+    expect(await screen.findByText("Pause: 15 seconds left")).toBeOnTheScreen();
+    expect(screen.queryByText("Rest: 120 seconds left")).toBeNull();
+  });
+
+  it("replaces the notification of an earlier countdown when the User starts another", async () => {
     const permissionRequests: NotificationPermissionStatus[] = [];
     const scheduledNotifications: ScheduledNotification[] = [];
     const user = userEvent.setup();
@@ -1333,8 +1397,51 @@ describe("WorkoutScreen", () => {
         },
       ]);
     });
-    expect(screen.getByText("Pause: 15 seconds left")).toBeOnTheScreen();
-    expect(screen.queryByText("Rest: 120 seconds left")).toBeNull();
+  });
+
+  it("asks for notification permission only once when the User starts a second countdown", async () => {
+    const permissionRequests: NotificationPermissionStatus[] = [];
+    const scheduledNotifications: ScheduledNotification[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({
+          permissionRequests,
+          scheduledNotifications,
+        }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [
+                  {
+                    ...WORKING_PLANNED_SET,
+                    intensityTechnique: {
+                      _tag: "RestPauseSet",
+                      pauseSeconds: 15,
+                      segmentCount: 3,
+                    },
+                  },
+                ],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start rest" }));
+    await waitFor(() => {
+      expect(scheduledNotifications).toHaveLength(1);
+    });
+
+    await user.press(screen.getByRole("button", { name: "Start pause" }));
+
+    await waitFor(() => {
+      expect(scheduledNotifications).toMatchObject([{ seconds: 15 }]);
+    });
     expect(permissionRequests).toStrictEqual(["granted"]);
   });
 

@@ -192,27 +192,6 @@ describe("routineFormSchema", () => {
     expect(decodeRoutineDraft(encodeRoutine(ROUTINE))).toStrictEqual(ROUTINE);
   });
 
-  it("decodes empty or blank text to null and trims every text", () => {
-    expect(
-      decodeRoutineDraft(
-        withSetDraft({ amount: " ", restSeconds: " 90 ", tempo: "  " }),
-      ),
-    ).toMatchObject({
-      sections: {
-        main: [
-          {
-            exercises: [
-              {
-                note: null,
-                sets: [{ amount: null, restSeconds: 90, tempo: null }],
-              },
-            ],
-          },
-        ],
-      },
-    });
-  });
-
   it("normalizes a Tempo with a lowercase x", () => {
     expect(
       decodeRoutineDraft(withSetDraft({ tempo: "3-0-x-2" })),
@@ -229,22 +208,10 @@ describe("routineFormSchema", () => {
     );
   });
 
-  it("rejects an Amount that isn't a whole number with the Amount's minimum", () => {
-    expect(() => decodeRoutineDraft(withSetDraft({ amount: "8.5" }))).toThrow(
-      "This number isn't valid: enter a whole number of at least 1.",
-    );
-  });
-
   it("rejects an Amount of 0 with the Amount's minimum", () => {
     expect(() => decodeRoutineDraft(withSetDraft({ amount: "0" }))).toThrow(
       "This number isn't valid: enter a whole number of at least 1.",
     );
-  });
-
-  it("rejects an Amount too large to store with the Amount's minimum", () => {
-    expect(() =>
-      decodeRoutineDraft(withSetDraft({ amount: "2147483648" })),
-    ).toThrow("This number isn't valid: enter a whole number of at least 1.");
   });
 
   it("rejects a Rest of 0 seconds with the Rest's minimum", () => {

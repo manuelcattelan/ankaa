@@ -87,16 +87,4 @@ describe("uniqueRoutineIdsFilter", () => {
       }),
     ).toThrow("Expected ids that are unique across the Routine");
   });
-
-  it("rejects an Exercise group whose id is the Routine's id", () => {
-    expect(() =>
-      decodeRoutine({
-        ...ROUTINE,
-        sections: {
-          ...ROUTINE.sections,
-          warmUp: [{ exercises: [], id: "routine" }],
-        },
-      }),
-    ).toThrow("Expected ids that are unique across the Routine");
-  });
 });

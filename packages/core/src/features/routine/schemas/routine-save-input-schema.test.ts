@@ -185,23 +185,7 @@ describe("routineSaveInputSchema", () => {
     expect(() =>
       decodeRoutineSaveInput({
         ...ROUTINE_SAVE_INPUT,
-        sections: {
-          coolDown: [],
-          main: [],
-          warmUp: [
-            {
-              exercises: [
-                {
-                  exerciseId: "019a0000-0000-7000-8000-000000000001",
-                  id: "019a0000-0000-7000-8000-000000000301",
-                  note: null,
-                  sets: [SET],
-                },
-              ],
-              id: "019a0000-0000-7000-8000-000000000201",
-            },
-          ],
-        },
+        sections: { ...ROUTINE_SAVE_INPUT.sections, main: [] },
       }),
     ).toThrow("Expected a Routine exercise in the main Section");
   });

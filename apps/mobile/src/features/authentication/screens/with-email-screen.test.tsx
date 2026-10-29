@@ -12,7 +12,7 @@ describe("WithEmailScreen", () => {
 
     await user.type(
       await screen.findByLabelText("Email address"),
-      "athlete@example",
+      "anna@example",
     );
 
     await user.press(
@@ -33,7 +33,7 @@ describe("WithEmailScreen", () => {
 
     await user.type(
       await screen.findByLabelText("Email address"),
-      "athlete@example",
+      "anna@example",
     );
 
     expect(
@@ -50,7 +50,7 @@ describe("WithEmailScreen", () => {
 
     await user.type(
       await screen.findByLabelText("Email address"),
-      "athlete@example",
+      "anna@example",
     );
 
     await user.press(
@@ -83,7 +83,7 @@ describe("WithEmailScreen", () => {
 
     await user.type(
       await screen.findByLabelText("Email address"),
-      "athlete@example",
+      "anna@example",
     );
 
     await user.press(
@@ -114,7 +114,7 @@ describe("WithEmailScreen", () => {
 
     await user.type(
       await screen.findByLabelText("Email address"),
-      "athlete@example.com",
+      "anna@example.com",
     );
 
     await user.press(

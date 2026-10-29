@@ -4,13 +4,49 @@ import {
   exerciseEquipment,
   exerciseMuscleGroup,
 } from "@ankaa/database/schema/exercise";
+import { sql } from "drizzle-orm";
+import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
+import * as Fiber from "effect/Fiber";
 import { afterAll, describe, expect, it } from "vitest";
+
+import type { TestRuntime } from "#/shared/testing/create-test-runtime.ts";
 
 import { createCaller } from "#/shared/testing/create-caller.ts";
 import { createSignedInCaller } from "#/shared/testing/create-signed-in-caller.ts";
 import { createTestRuntime } from "#/shared/testing/create-test-runtime.ts";
+import { waitForLockWait } from "#/shared/testing/wait-for-lock-wait.ts";
 import { createInnerContext } from "#/trpc/context.ts";
+
+/**
+ * Locks the Exercise table in a transaction that stays open until the
+ * returned function runs, so a read of the Exercises waits while it holds.
+ */
+async function lockExerciseTable(runtime: TestRuntime) {
+  const tableLocked = await runtime.runPromise(Deferred.make<boolean>());
+  const releaseRequested = await runtime.runPromise(Deferred.make<boolean>());
+  const fiber = runtime.runFork(
+    Effect.gen(function* () {
+      const database = yield* Database;
+
+      yield* database.transaction(() =>
+        Effect.gen(function* () {
+          yield* database.execute(
+            sql`lock table ${exercise} in access exclusive mode`,
+          );
+          yield* Deferred.succeed(tableLocked, true);
+          yield* Deferred.await(releaseRequested);
+        }),
+      );
+    }),
+  );
+  await runtime.runPromise(Deferred.await(tableLocked));
+
+  return async () => {
+    await runtime.runPromise(Deferred.succeed(releaseRequested, true));
+    await runtime.runPromise(Fiber.join(fiber));
+  };
+}
 
 describe("exercise.list", () => {
   const runtime = createTestRuntime();
@@ -34,12 +70,16 @@ describe("exercise.list", () => {
       signal: abortController.signal,
     });
 
+    const releaseExerciseTable = await lockExerciseTable(runtime);
     const exercises = caller.exercise.list();
+    await waitForLockWait(runtime);
+
     abortController.abort();
 
     await expect(exercises).rejects.toMatchObject({
       code: "CLIENT_CLOSED_REQUEST",
     });
+    await releaseExerciseTable();
   });
 
   it("returns every Exercise with its Equipment and Muscle groups, ordered by name, to a signed-in User", async () => {

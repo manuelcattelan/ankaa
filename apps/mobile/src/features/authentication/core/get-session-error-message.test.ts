@@ -33,4 +33,19 @@ describe("getSessionErrorMessage", () => {
 
     expect(getSessionErrorMessage(authenticationSession)).toBe(null);
   });
+
+  it("returns the server unreachable message for a session error that comes with no HTTP status, because the request never reached the server", () => {
+    const error = {
+      error: null,
+      message: "Network request failed",
+      name: "TypeError",
+      status: 0,
+      statusText: "",
+    };
+    Reflect.deleteProperty(error, "status");
+
+    expect(getSessionErrorMessage({ ...AUTHENTICATION_SESSION, error })).toBe(
+      "Ankaa can't connect: check your internet connection and try again.",
+    );
+  });
 });

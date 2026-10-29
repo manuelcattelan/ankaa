@@ -2,8 +2,8 @@ import type { SignInResponse } from "@react-native-google-signin/google-signin";
 
 import { AUTHORIZATION_CODE_HEADER_NAME } from "@ankaa/core/features/authentication/constants/authorization-code-header-name";
 import { fireEvent, screen, userEvent } from "@testing-library/react-native";
-import * as ExpoAppleAuthentication from "expo-apple-authentication";
 
+import { APPLE_AUTHENTICATION_CREDENTIAL } from "#/features/authentication/testing/apple-authentication-credential.ts";
 import { fakeAppleSignInLayer } from "#/features/authentication/testing/fake-apple-sign-in-layer.ts";
 import { fakeGoogleSignInLayer } from "#/features/authentication/testing/fake-google-sign-in-layer.ts";
 import { advanceFakeTime } from "#/shared/testing/advance-fake-time.ts";
@@ -13,26 +13,13 @@ import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authenticat
 import { fakeCryptoLayer } from "#/shared/testing/fake-crypto-layer.ts";
 import { renderScreen } from "#/testing/render-screen.tsx";
 
-const APPLE_AUTHENTICATION_CREDENTIAL: ExpoAppleAuthentication.AppleAuthenticationCredential =
-  {
-    authorizationCode: null,
-    email: null,
-    fullName: null,
-    identityToken: "apple-identity-token",
-    realUserStatus:
-      ExpoAppleAuthentication.AppleAuthenticationUserDetectionStatus
-        .LIKELY_REAL,
-    ["state"]: null,
-    user: "apple-user-1",
-  };
-
 const GOOGLE_SIGN_IN_RESPONSE: SignInResponse = {
   data: {
     idToken: "google-id-token",
     scopes: [],
     serverAuthCode: null,
     user: {
-      email: "athlete@example.com",
+      email: "anna@example.com",
       familyName: null,
       givenName: null,
       id: "google-user-1",
@@ -122,7 +109,7 @@ describe("SignInScreen", () => {
     expect(announcedMessages).toEqual([]);
   });
 
-  it("leaves the screen as it was when the User cancels Apple sign-in", async () => {
+  it("leaves the sign-in buttons enabled and shows no error when the User cancels Apple sign-in", async () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
@@ -130,14 +117,17 @@ describe("SignInScreen", () => {
         crypto: fakeCryptoLayer,
       },
     });
-    const appleSignInButton = await screen.findByTestId("apple-sign-in-button");
-    const screenBeforeSignIn = JSON.stringify(screen.toJSON());
 
-    fireEvent.press(appleSignInButton);
-
+    fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
     await advanceFakeTime(1000);
 
-    expect(JSON.stringify(screen.toJSON())).toBe(screenBeforeSignIn);
+    expect(screen.getByTestId("google-sign-in-button")).toBeEnabled();
+    expect(screen.queryByText("Something went wrong: try again.")).toBeNull();
+    expect(
+      screen.queryByText(
+        "Ankaa can't connect: check your internet connection and try again.",
+      ),
+    ).toBeNull();
   });
 
   it("tells the User that the account can't be linked when the server can't link the Apple sign-in to the User with the same email address", async () => {
@@ -188,7 +178,7 @@ describe("SignInScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("leaves the screen as it was when the User cancels Google sign-in", async () => {
+  it("leaves the sign-in buttons enabled and shows no error when the User cancels Google sign-in", async () => {
     const user = userEvent.setup();
     renderScreen({
       initialUrl: "/sign-in",
@@ -198,16 +188,17 @@ describe("SignInScreen", () => {
         }),
       },
     });
-    const googleSignInButton = await screen.findByTestId(
-      "google-sign-in-button",
-    );
-    const screenBeforeSignIn = JSON.stringify(screen.toJSON());
 
-    await user.press(googleSignInButton);
-
+    await user.press(await screen.findByTestId("google-sign-in-button"));
     await advanceFakeTime(1000);
 
-    expect(JSON.stringify(screen.toJSON())).toBe(screenBeforeSignIn);
+    expect(screen.getByTestId("google-sign-in-button")).toBeEnabled();
+    expect(screen.queryByText("Something went wrong: try again.")).toBeNull();
+    expect(
+      screen.queryByText(
+        "Ankaa can't connect: check your internet connection and try again.",
+      ),
+    ).toBeNull();
   });
 
   it("signs the User in with Google and opens the home screen", async () => {

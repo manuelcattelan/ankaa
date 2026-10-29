@@ -1,4 +1,3 @@
-import type { applicationLayer } from "@ankaa/api/application-layer";
 import type { TestRuntime } from "@ankaa/api/shared/testing/create-test-runtime";
 import type {
   FakeSocialProviderResponses,
@@ -10,6 +9,7 @@ import type { FastifyInstance } from "fastify";
 import { ExerciseApplicationService } from "@ankaa/api/features/exercise/exercise-application-service";
 import { RoutineApplicationService } from "@ankaa/api/features/routine/routine-application-service";
 import { WorkoutApplicationService } from "@ankaa/api/features/workout/workout-application-service";
+import { createSignedInCaller } from "@ankaa/api/shared/testing/create-signed-in-caller";
 import { createTestRuntime } from "@ankaa/api/shared/testing/create-test-runtime";
 import { Authentication } from "@ankaa/authentication/authentication";
 import { AuthenticationTestHelpers } from "@ankaa/authentication/testing/authentication-test-helpers";
@@ -19,8 +19,7 @@ import { TEST_APPLE_PRIVATE_KEY } from "@ankaa/authentication/testing/test-apple
 import { AUTHORIZATION_CODE_HEADER_NAME } from "@ankaa/core/features/authentication/constants/authorization-code-header-name";
 import { Database } from "@ankaa/database/database";
 import { verification } from "@ankaa/database/schema/authentication";
-import { routine, routineDay } from "@ankaa/database/schema/routine";
-import { workout } from "@ankaa/database/schema/workout";
+import { exercise } from "@ankaa/database/schema/exercise";
 import { fakeEmailLayer } from "@ankaa/email/testing/fake-email-layer";
 import { fakeStalledEmailLayer } from "@ankaa/email/testing/fake-stalled-email-layer";
 import * as Cause from "effect/Cause";
@@ -29,7 +28,15 @@ import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import fastify from "fastify";
 import { createPublicKey, verify } from "node:crypto";
-import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "vitest";
 
 import { applicationPlugin } from "#/application-plugin.ts";
 import { createLoggerLayer } from "#/create-logger-layer.ts";
@@ -44,6 +51,8 @@ const DELETE_ACCOUNT_LINK_PATTERN =
 const OTP_CODE_PATTERN = /^\d{6}$/;
 
 const RATE_LIMIT_MAXIMUM_REQUEST_COUNT = 1000;
+
+const BENCH_PRESS_EXERCISE_ID = "019a0000-0000-7000-8000-000000000001";
 
 const DELETED_ROUTINE_ID = "019a0000-0000-7000-8000-000000000011";
 
@@ -102,23 +111,38 @@ const session = {
   },
   user: {
     createdAt: new Date("2026-10-29T10:00:00.000Z"),
-    email: "athlete@example.com",
+    email: "anna@example.com",
     emailVerified: true,
     id: "user-1",
-    name: "Athlete",
+    name: "Anna",
     updatedAt: new Date("2026-10-29T10:00:00.000Z"),
   },
 };
 
+/**
+ * Builds a server whose Services do only what `authentication` and
+ * `exerciseApplicationService` implement, and fail loudly otherwise, and
+ * whose log lines at `level` go to `logLines`.
+ */
 async function createLoggingServer({
-  layer,
+  authentication = {},
+  exerciseApplicationService = {},
   level,
   logLines,
 }: {
-  layer: Layer.Layer<Layer.Success<typeof applicationLayer>>;
+  authentication?: Layer.PartialEffectful<Authentication["Service"]>;
+  exerciseApplicationService?: Layer.PartialEffectful<
+    ExerciseApplicationService["Service"]
+  >;
   level: string;
   logLines: unknown[];
 }) {
+  const layer = Layer.mergeAll(
+    Layer.mock(Authentication, authentication),
+    Layer.mock(ExerciseApplicationService, exerciseApplicationService),
+    Layer.mock(RoutineApplicationService, {}),
+    Layer.mock(WorkoutApplicationService, {}),
+  );
   const server = fastify({
     genReqId: () => REQUEST_ID,
     logger: {
@@ -232,47 +256,30 @@ async function deleteAccount({
   });
 }
 
-function insertRoutine({
-  routineId,
-  runtime,
-  userId,
-}: {
-  routineId: string;
-  runtime: TestRuntime;
-  userId: string;
-}) {
-  return runtime.runPromise(
-    Effect.gen(function* () {
-      const database = yield* Database;
-
-      yield* database
-        .insert(routine)
-        .values({ id: routineId, name: "Push day", userId });
-      yield* database
-        .insert(routineDay)
-        .values({ dayOfWeek: "monday", routineId });
-    }),
-  );
-}
-
-function insertWorkout({
-  id,
-  routineId,
-  runtime,
-  userId,
-}: {
-  id: string;
-  routineId: string;
-  runtime: TestRuntime;
-  userId: string;
-}) {
-  return runtime.runPromise(
-    Effect.gen(function* () {
-      const database = yield* Database;
-
-      yield* database.insert(workout).values({ id, routineId, userId });
-    }),
-  );
+function buildRoutineSaveInput(id: string) {
+  return {
+    days: ["monday" as const],
+    id,
+    name: "Push day",
+    sections: {
+      coolDown: [],
+      main: [
+        {
+          exercises: [
+            {
+              exerciseId: BENCH_PRESS_EXERCISE_ID,
+              id: `${id.slice(0, -3)}301`,
+              note: null,
+              sets: [],
+              warmUpExercises: [],
+            },
+          ],
+          id: `${id.slice(0, -3)}201`,
+        },
+      ],
+      warmUp: [],
+    },
+  };
 }
 
 function listRowsOwnedBy({
@@ -367,6 +374,21 @@ describe("applicationPlugin", () => {
   });
   let server: FastifyInstance;
 
+  beforeAll(async () => {
+    await runtime.runPromise(
+      Effect.gen(function* () {
+        const database = yield* Database;
+
+        yield* database.insert(exercise).values({
+          amountUnit: "repetition",
+          id: BENCH_PRESS_EXERCISE_ID,
+          name: "Bench Press (Barbell)",
+          weightType: "total",
+        });
+      }),
+    );
+  });
+
   beforeEach(async () => {
     server = fastify();
 
@@ -452,12 +474,12 @@ describe("applicationPlugin", () => {
   it("sends the verification code by email when /api/auth/email-otp/send-verification-otp is requested", async () => {
     await server.inject({
       method: "POST",
-      payload: { email: "athlete@example.com", type: "sign-in" },
+      payload: { email: "anna@example.com", type: "sign-in" },
       url: "/api/auth/email-otp/send-verification-otp",
     });
 
     expect(sentEmails).toMatchObject([
-      { subject: "Your sign-in verification code", to: "athlete@example.com" },
+      { subject: "Your sign-in verification code", to: "anna@example.com" },
     ]);
 
     expect(sentEmails[0]?.text).toMatch(OTP_CODE_PATTERN);
@@ -994,11 +1016,8 @@ describe("applicationPlugin", () => {
 
   it("deletes the User and every row they own when /api/auth/delete-user is requested with the token of the emailed link", async () => {
     const testUser = await createTestUser(runtime);
-    await insertRoutine({
-      routineId: DELETED_ROUTINE_ID,
-      runtime,
-      userId: testUser.user.id,
-    });
+    const caller = await createSignedInCaller({ runtime, testUser });
+    await caller.routine.save(buildRoutineSaveInput(DELETED_ROUTINE_ID));
     await server.inject({
       headers: Object.fromEntries(testUser.headers),
       method: "POST",
@@ -1031,16 +1050,13 @@ describe("applicationPlugin", () => {
 
   it("deletes the User together with a Workout they started from one of their Routines when /api/auth/delete-user is requested with the token of the emailed link", async () => {
     const testUser = await createTestUser(runtime);
-    await insertRoutine({
-      routineId: DELETED_WORKOUT_ROUTINE_ID,
-      runtime,
-      userId: testUser.user.id,
-    });
-    await insertWorkout({
+    const caller = await createSignedInCaller({ runtime, testUser });
+    await caller.routine.save(
+      buildRoutineSaveInput(DELETED_WORKOUT_ROUTINE_ID),
+    );
+    await caller.workout.start({
       id: DELETED_WORKOUT_ID,
       routineId: DELETED_WORKOUT_ROUTINE_ID,
-      runtime,
-      userId: testUser.user.id,
     });
     await server.inject({
       headers: Object.fromEntries(testUser.headers),
@@ -1066,11 +1082,11 @@ describe("applicationPlugin", () => {
   it("rejects the token of another User's emailed link with 404 and the code INVALID_TOKEN, and keeps that User and every row they own", async () => {
     const linkOwner = await createTestUser(runtime);
     const otherUser = await createTestUser(runtime);
-    await insertRoutine({
-      routineId: KEPT_ROUTINE_ID,
+    const linkOwnerCaller = await createSignedInCaller({
       runtime,
-      userId: linkOwner.user.id,
+      testUser: linkOwner,
     });
+    await linkOwnerCaller.routine.save(buildRoutineSaveInput(KEPT_ROUTINE_ID));
     await server.inject({
       headers: Object.fromEntries(linkOwner.headers),
       method: "POST",
@@ -1088,18 +1104,11 @@ describe("applicationPlugin", () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.json()).toMatchObject({ code: "INVALID_TOKEN" });
-    expect(
-      await listRowsOwnedBy({
-        routineId: KEPT_ROUTINE_ID,
-        runtime,
-        userId: linkOwner.user.id,
-      }),
-    ).toMatchObject({
-      routineDays: [{ dayOfWeek: "monday", routineId: KEPT_ROUTINE_ID }],
-      routines: [{ id: KEPT_ROUTINE_ID, userId: linkOwner.user.id }],
-      sessions: [{ userId: linkOwner.user.id }],
-      users: [{ id: linkOwner.user.id }],
-    });
+    await expect(
+      (
+        await createSignedInCaller({ runtime, testUser: linkOwner })
+      ).routine.list(),
+    ).resolves.toMatchObject([{ days: ["monday"], id: KEPT_ROUTINE_ID }]);
   });
 
   it("answers a tRPC procedure called by a signed-in User whose session cookie the request carries with its data", async () => {
@@ -1112,7 +1121,20 @@ describe("applicationPlugin", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toStrictEqual({ ["result"]: { data: [] } });
+    expect(response.json()).toStrictEqual({
+      ["result"]: {
+        data: [
+          {
+            amountUnit: "repetition",
+            equipment: [],
+            id: BENCH_PRESS_EXERCISE_ID,
+            muscleGroups: [],
+            name: "Bench Press (Barbell)",
+            weightType: "total",
+          },
+        ],
+      },
+    });
   });
 
   it("answers a tRPC procedure called without a session with 401 and the UNAUTHORIZED code", async () => {
@@ -1157,19 +1179,15 @@ describe("applicationPlugin", () => {
 
   it("answers a tRPC procedure that fails with an internal error with 500, its message hidden and no Wire error", async () => {
     const failingServer = await createLoggingServer({
-      layer: Layer.mergeAll(
-        Layer.mock(Authentication, {
-          getSession: () => Effect.succeed(session),
-        }),
-        Layer.mock(ExerciseApplicationService, {
-          list: () =>
-            Effect.die(
-              new Error("Failed to connect to the database at 10.0.0.1"),
-            ),
-        }),
-        Layer.mock(RoutineApplicationService, {}),
-        Layer.mock(WorkoutApplicationService, {}),
-      ),
+      authentication: {
+        getSession: () => Effect.succeed(session),
+      },
+      exerciseApplicationService: {
+        list: () =>
+          Effect.die(
+            new Error("Failed to connect to the database at 10.0.0.1"),
+          ),
+      },
       level: "silent",
       logLines: [],
     });
@@ -1222,19 +1240,38 @@ describe("applicationPlugin", () => {
     );
   });
 
+  it("logs a tRPC call that the client closed at info level", async () => {
+    const logLines: unknown[] = [];
+    const loggingServer = await createLoggingServer({
+      authentication: { getSession: () => Effect.succeed(session) },
+      exerciseApplicationService: { list: () => Effect.interrupt },
+      level: "info",
+      logLines,
+    });
+
+    await loggingServer.inject({ method: "GET", url: "/trpc/exercise.list" });
+    await loggingServer.close();
+
+    expect(logLines).toContainEqual(
+      expect.objectContaining<Record<string, unknown>>({
+        err: expect.objectContaining<Record<string, unknown>>({
+          code: "CLIENT_CLOSED_REQUEST",
+        }),
+        level: 30,
+        msg: 'Failed to handle tRPC request on path "exercise.list"',
+      }),
+    );
+  });
+
   it("writes an Effect log of a tRPC procedure to the log of its request, with the request's ID", async () => {
     const logLines: unknown[] = [];
     const loggingServer = await createLoggingServer({
-      layer: Layer.mergeAll(
-        Layer.mock(Authentication, {
-          getSession: () => Effect.succeed(session),
-        }),
-        Layer.mock(ExerciseApplicationService, {
-          list: () => Effect.log("Listing the Exercises").pipe(Effect.as([])),
-        }),
-        Layer.mock(RoutineApplicationService, {}),
-        Layer.mock(WorkoutApplicationService, {}),
-      ),
+      authentication: {
+        getSession: () => Effect.succeed(session),
+      },
+      exerciseApplicationService: {
+        list: () => Effect.log("Listing the Exercises").pipe(Effect.as([])),
+      },
       level: "info",
       logLines,
     });
@@ -1253,15 +1290,10 @@ describe("applicationPlugin", () => {
   it("writes an Effect log of the tRPC context's session read to the log of its request, with the request's ID", async () => {
     const logLines: unknown[] = [];
     const loggingServer = await createLoggingServer({
-      layer: Layer.mergeAll(
-        Layer.mock(Authentication, {
-          getSession: () =>
-            Effect.log("Reading the session").pipe(Effect.as(null)),
-        }),
-        Layer.mock(ExerciseApplicationService, {}),
-        Layer.mock(RoutineApplicationService, {}),
-        Layer.mock(WorkoutApplicationService, {}),
-      ),
+      authentication: {
+        getSession: () =>
+          Effect.log("Reading the session").pipe(Effect.as(null)),
+      },
       level: "info",
       logLines,
     });
@@ -1280,17 +1312,12 @@ describe("applicationPlugin", () => {
   it("writes an Effect log of the better-auth route to the log of its request, with the request's ID", async () => {
     const logLines: unknown[] = [];
     const loggingServer = await createLoggingServer({
-      layer: Layer.mergeAll(
-        Layer.mock(Authentication, {
-          handleRequest: () =>
-            Effect.log("Handling the better-auth request").pipe(
-              Effect.as(new Response(null)),
-            ),
-        }),
-        Layer.mock(ExerciseApplicationService, {}),
-        Layer.mock(RoutineApplicationService, {}),
-        Layer.mock(WorkoutApplicationService, {}),
-      ),
+      authentication: {
+        handleRequest: () =>
+          Effect.log("Handling the better-auth request").pipe(
+            Effect.as(new Response(null)),
+          ),
+      },
       level: "info",
       logLines,
     });
@@ -1309,15 +1336,10 @@ describe("applicationPlugin", () => {
   it("writes an Effect debug log when pino logs at debug level", async () => {
     const logLines: unknown[] = [];
     const loggingServer = await createLoggingServer({
-      layer: Layer.mergeAll(
-        Layer.mock(Authentication, {
-          getSession: () =>
-            Effect.logDebug("Reading the session").pipe(Effect.as(null)),
-        }),
-        Layer.mock(ExerciseApplicationService, {}),
-        Layer.mock(RoutineApplicationService, {}),
-        Layer.mock(WorkoutApplicationService, {}),
-      ),
+      authentication: {
+        getSession: () =>
+          Effect.logDebug("Reading the session").pipe(Effect.as(null)),
+      },
       level: "debug",
       logLines,
     });
@@ -1333,15 +1355,10 @@ describe("applicationPlugin", () => {
   it("writes no Effect log when pino is silent", async () => {
     const logLines: unknown[] = [];
     const loggingServer = await createLoggingServer({
-      layer: Layer.mergeAll(
-        Layer.mock(Authentication, {
-          getSession: () =>
-            Effect.logError("Failed to read the session").pipe(Effect.as(null)),
-        }),
-        Layer.mock(ExerciseApplicationService, {}),
-        Layer.mock(RoutineApplicationService, {}),
-        Layer.mock(WorkoutApplicationService, {}),
-      ),
+      authentication: {
+        getSession: () =>
+          Effect.logError("Failed to read the session").pipe(Effect.as(null)),
+      },
       level: "silent",
       logLines,
     });
@@ -1355,21 +1372,16 @@ describe("applicationPlugin", () => {
   it("writes an Effect log of a failure that holds two errors as an AggregateError with the stack of each", async () => {
     const logLines: unknown[] = [];
     const loggingServer = await createLoggingServer({
-      layer: Layer.mergeAll(
-        Layer.mock(Authentication, {
-          getSession: () =>
-            Effect.logError(
-              "Failed to read the session",
-              Cause.combine(
-                Cause.fail(new Error("Failed to read the session cookie")),
-                Cause.die(new Error("Failed to reach the database")),
-              ),
-            ).pipe(Effect.as(null)),
-        }),
-        Layer.mock(ExerciseApplicationService, {}),
-        Layer.mock(RoutineApplicationService, {}),
-        Layer.mock(WorkoutApplicationService, {}),
-      ),
+      authentication: {
+        getSession: () =>
+          Effect.logError(
+            "Failed to read the session",
+            Cause.combine(
+              Cause.fail(new Error("Failed to read the session cookie")),
+              Cause.die(new Error("Failed to reach the database")),
+            ),
+          ).pipe(Effect.as(null)),
+      },
       level: "info",
       logLines,
     });
@@ -1404,23 +1416,18 @@ describe("applicationPlugin", () => {
   it("writes an Effect log with its annotations and spans as fields, its string parts as the message and its Error part as the error", async () => {
     const logLines: unknown[] = [];
     const loggingServer = await createLoggingServer({
-      layer: Layer.mergeAll(
-        Layer.mock(Authentication, {
-          getSession: () =>
-            Effect.logWarning(
-              "Failed to read",
-              new Error("The session cookie expired"),
-              "the session",
-            ).pipe(
-              Effect.annotateLogs({ userId: "user-1" }),
-              Effect.withLogSpan("sessionRead"),
-              Effect.as(null),
-            ),
-        }),
-        Layer.mock(ExerciseApplicationService, {}),
-        Layer.mock(RoutineApplicationService, {}),
-        Layer.mock(WorkoutApplicationService, {}),
-      ),
+      authentication: {
+        getSession: () =>
+          Effect.logWarning(
+            "Failed to read",
+            new Error("The session cookie expired"),
+            "the session",
+          ).pipe(
+            Effect.annotateLogs({ userId: "user-1" }),
+            Effect.withLogSpan("sessionRead"),
+            Effect.as(null),
+          ),
+      },
       level: "info",
       logLines,
     });

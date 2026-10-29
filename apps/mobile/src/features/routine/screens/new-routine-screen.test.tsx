@@ -249,7 +249,7 @@ describe("NewRoutineScreen", () => {
     ).not.toBeOnTheScreen();
   });
 
-  it("shows the errors once the User Saves, updates them as the User edits, and doesn't Save", async () => {
+  it("shows the errors once the User Saves, and doesn't Save", async () => {
     const receivedPaths: string[] = [];
     const user = await openNewRoutineScreen({
       receivedPaths,
@@ -278,6 +278,24 @@ describe("NewRoutineScreen", () => {
         "Some fields aren't valid: correct the fields marked with an error.",
       ),
     ).toBeOnTheScreen();
+    expect(receivedPaths).not.toContain("routine.save");
+  });
+
+  it("updates the errors as the User edits after the first Save", async () => {
+    const receivedPaths: string[] = [];
+    const user = await openNewRoutineScreen({
+      receivedPaths,
+      responses: { "routine.save": constUndefined },
+    });
+    await addExercise({
+      addExerciseButtonIndex: 1,
+      exerciseName: "Bench Press (Barbell)",
+      user,
+    });
+    await user.press(screen.getByRole("button", { name: "Add set" }));
+    await user.type(screen.getByLabelText("Repetitions or seconds"), "0");
+    await user.press(screen.getByRole("button", { name: "Save routine" }));
+    await screen.findByText("This routine has no name: enter a name.");
 
     await user.type(
       screen.getByLabelText(
@@ -294,7 +312,6 @@ describe("NewRoutineScreen", () => {
         "This number isn't valid: enter a whole number of at least 1.",
       ),
     ).toBeOnTheScreen();
-    expect(receivedPaths).not.toContain("routine.save");
   });
 
   it("tells the User that the main Section needs an exercise when they Save a Routine without one", async () => {

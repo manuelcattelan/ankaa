@@ -9,7 +9,7 @@ import type {
   WorkoutExerciseDrafts,
   WorkoutExerciseDraftsAction,
 } from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
-import type { Workout } from "#/features/workout/workout-application-service.ts";
+import type { Workout } from "#/shared/workout.ts";
 
 import { WorkoutExerciseGroup } from "#/features/workout/components/workout-exercise-group.tsx";
 import { Text } from "#/shared/components/text.tsx";

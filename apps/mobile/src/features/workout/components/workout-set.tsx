@@ -8,7 +8,7 @@ import { useState } from "react";
 import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
 import type { RecordedSetDraftsAction } from "#/features/workout/core/recorded-set-drafts-reducer.ts";
 import type { RecordedSetDraft } from "#/features/workout/core/recorded-set-form-schema.ts";
-import type { Workout } from "#/features/workout/workout-application-service.ts";
+import type { Workout } from "#/shared/workout.ts";
 
 import { WorkoutCountdown } from "#/features/workout/components/workout-countdown.tsx";
 import { WorkoutPlannedSet } from "#/features/workout/components/workout-planned-set.tsx";

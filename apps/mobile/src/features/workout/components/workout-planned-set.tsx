@@ -1,6 +1,6 @@
 import type { AmountUnit } from "@ankaa/core/shared/constants/amount";
 
-import type { Workout } from "#/features/workout/workout-application-service.ts";
+import type { Workout } from "#/shared/workout.ts";
 
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { Text } from "#/shared/components/text.tsx";

@@ -17,7 +17,7 @@ export type SegmentDraft = typeof segmentFormSchema.Encoded;
 
 const WEIGHT_PATTERN = /^[0-9]+(\.[0-9]+)?$/;
 
-const WEIGHT_INVALID_ERROR = WORKOUT_MESSAGES.weightInvalidError({
+const weightInvalidError = WORKOUT_MESSAGES.weightInvalidError({
   maximum: MAXIMUM_WEIGHT,
   minimum: MINIMUM_WEIGHT,
 });
@@ -28,13 +28,13 @@ export const segmentFormSchema = Schema.Struct({
     message: WORKOUT_MESSAGES.amountInvalidError(MINIMUM_AMOUNT),
   }),
   weight: createNullableTextSchema(
-    Schema.Trim.check(
-      Schema.isPattern(WEIGHT_PATTERN, { message: WEIGHT_INVALID_ERROR }),
+    Schema.String.check(
+      Schema.isPattern(WEIGHT_PATTERN, { message: weightInvalidError }),
     ).pipe(
       Schema.decodeTo(
         Schema.Number.check(
-          weightFilter.annotate({ message: WEIGHT_INVALID_ERROR }),
-          weightStepFilter.annotate({ message: WEIGHT_INVALID_ERROR }),
+          weightFilter.annotate({ message: weightInvalidError }),
+          weightStepFilter.annotate({ message: weightInvalidError }),
         ),
         SchemaTransformation.numberFromString,
       ),

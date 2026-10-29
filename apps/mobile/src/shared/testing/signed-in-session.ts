@@ -18,10 +18,10 @@ export const signedInSession: Session = {
   },
   user: {
     createdAt: new Date(SIGNED_IN_AT),
-    email: "athlete@example.com",
+    email: "anna@example.com",
     emailVerified: true,
     id: SIGNED_IN_USER_ID,
-    name: "Athlete",
+    name: "Anna",
     updatedAt: new Date(SIGNED_IN_AT),
   },
 };

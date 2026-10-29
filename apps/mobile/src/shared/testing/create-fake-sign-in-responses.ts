@@ -4,7 +4,9 @@ const signedInSessionCookie = `better-auth.session_token=${signedInSession.sessi
 
 /**
  * Answers `signInPath` by signing the User in, and records each request to it
- * into `receivedSignInRequests`.
+ * into `receivedSignInRequests`. Like the server, `/get-session` answers with
+ * the session only while a request carries its cookie, which signing out
+ * removes from the device.
  */
 export function createFakeSignInResponses({
   receivedSignInRequests = [],
@@ -13,13 +15,17 @@ export function createFakeSignInResponses({
   receivedSignInRequests?: Request[];
   signInPath: string;
 }) {
-  let currentSession: null | typeof signedInSession = null;
-
   return {
-    "/get-session": () => Response.json(currentSession),
+    "/get-session": (request: Request) =>
+      Response.json(
+        request.headers
+          .get("cookie")
+          ?.includes(signedInSession.session.token) === true
+          ? signedInSession
+          : null,
+      ),
     [signInPath]: (request: Request) => {
       receivedSignInRequests.push(request);
-      currentSession = signedInSession;
 
       return Response.json(
         { token: signedInSession.session.token, user: signedInSession.user },

@@ -1,6 +1,6 @@
 import type { Routine } from "#/shared/routine.ts";
 
-export const pushDayRoutine: Routine = {
+export const PUSH_DAY_ROUTINE: Routine = {
   days: ["monday"],
   id: "01900000-0000-7000-8000-000000000004",
   name: "Push day",
