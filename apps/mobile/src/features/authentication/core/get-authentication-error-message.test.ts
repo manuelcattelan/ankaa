@@ -10,7 +10,7 @@ describe("getAuthenticationErrorMessage", () => {
     });
 
     expect(getAuthenticationErrorMessage(authenticationError)).toBe(
-      "The server can't be reached: check your connection and try again.",
+      "Ankaa can't connect: check your internet connection and try again.",
     );
   });
 
@@ -101,7 +101,9 @@ describe("getAuthenticationErrorMessage", () => {
   it("returns the server unreachable message for another error without a code", () => {
     expect(
       getAuthenticationErrorMessage(new TypeError("Network request failed")),
-    ).toBe("The server can't be reached: check your connection and try again.");
+    ).toBe(
+      "Ankaa can't connect: check your internet connection and try again.",
+    );
   });
 
   it("returns the unknown error message for another error with a code", () => {

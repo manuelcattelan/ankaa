@@ -28,7 +28,7 @@ describe("getTrpcErrorMessage", () => {
     });
 
     expect(getTrpcErrorMessage(trpcError)).toBe(
-      "The server can't be reached: check your connection and try again.",
+      "Ankaa can't connect: check your internet connection and try again.",
     );
   });
 
@@ -40,7 +40,7 @@ describe("getTrpcErrorMessage", () => {
 
   it("returns the server unreachable message for an error that isn't from tRPC", () => {
     expect(getTrpcErrorMessage(new TypeError("Network request failed"))).toBe(
-      "The server can't be reached: check your connection and try again.",
+      "Ankaa can't connect: check your internet connection and try again.",
     );
   });
 });

@@ -11,6 +11,5 @@ export function createOtpCodeSignInMutationOptions(
   return mutationOptions({
     mutationFn: (signInWithOtpCodeOptions: SignInWithOtpCodeOptions) =>
       runtime.runPromise(signInWithOtpCode(signInWithOtpCodeOptions)),
-    mutationKey: ["otp-code-sign-in"],
   });
 }

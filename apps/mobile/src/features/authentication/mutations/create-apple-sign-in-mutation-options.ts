@@ -13,6 +13,5 @@ export function createAppleSignInMutationOptions(runtime: ApplicationRuntime) {
           Effect.catchTag("AppleSignInCanceledError", () => Effect.void),
         ),
       ),
-    mutationKey: ["apple-sign-in"],
   });
 }

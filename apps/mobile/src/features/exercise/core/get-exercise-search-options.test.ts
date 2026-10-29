@@ -1,4 +1,4 @@
-import type { Exercise } from "@/shared/interactors/list-exercises";
+import type { Exercise } from "@/shared/exercise-application-service";
 
 import { getExerciseSearchOptions } from "@/features/exercise/core/get-exercise-search-options";
 

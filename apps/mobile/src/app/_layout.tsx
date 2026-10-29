@@ -1,43 +1,29 @@
-import type { Persister } from "@tanstack/react-query-persist-client";
 import type { ColorSchemeName } from "react-native";
 
-import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import {
   focusManager,
-  onlineManager,
   QueryClient,
-  useIsRestoring,
+  QueryClientProvider,
   useQueryClient,
 } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import expoConstants from "expo-constants";
-import * as ExpoNetwork from "expo-network";
 import {
   DarkTheme,
   DefaultTheme,
   SplashScreen,
   ThemeProvider,
 } from "expo-router";
-import * as ExpoSqliteKeyValueStore from "expo-sqlite/kv-store";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { AppState, Platform, useColorScheme } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { registerMutationDefaults } from "@/defaults";
 import { applicationLayer, createRuntime } from "@/layer";
 import { RootNavigator } from "@/root";
 import { Text } from "@/shared/components/text";
 import { useAuthenticationSession } from "@/shared/hooks/use-authentication-session";
 import { errorMessages } from "@/shared/messages/error-messages";
 import { RuntimeContext } from "@/shared/providers/runtime-context";
-
-type QueryCacheControllerProperties = {
-  queryPersister: Persister;
-};
-
-const QUERY_STALE_TIME_MILLISECONDS = 60_000;
 
 export function ErrorBoundary() {
   const colorScheme = useColorScheme();
@@ -56,15 +42,6 @@ export default function RootLayout() {
 
   const [runtime] = useState(createApplicationRuntime);
   const [queryClient] = useState(createQueryClient);
-  const [queryPersister] = useState(createQueryPersister);
-
-  useEffect(() => {
-    registerMutationDefaults({ queryClient, runtime });
-  }, [queryClient, runtime]);
-
-  useEffect(() => {
-    onlineManager.setEventListener(listenToNetworkState);
-  }, []);
 
   useEffect(() => {
     if (Platform.OS === "web") {
@@ -86,22 +63,14 @@ export default function RootLayout() {
   return (
     <RuntimeContext value={runtime}>
       <KeyboardProvider>
-        <PersistQueryClientProvider
-          client={queryClient}
-          persistOptions={{
-            buster: expoConstants.expoConfig?.version ?? "",
-            dehydrateOptions: { shouldDehydrateMutation: () => false },
-            maxAge: Infinity,
-            persister: queryPersister,
-          }}
-        >
-          <QueryCacheController queryPersister={queryPersister} />
+        <QueryClientProvider client={queryClient}>
+          <QueryCacheController />
           <ThemeProvider value={getNavigationTheme(colorScheme)}>
             <SplashScreenController />
             <RootNavigator />
             <StatusBar style="auto" />
           </ThemeProvider>
-        </PersistQueryClientProvider>
+        </QueryClientProvider>
       </KeyboardProvider>
     </RuntimeContext>
   );
@@ -112,51 +81,14 @@ function createApplicationRuntime() {
 }
 
 function createQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: { gcTime: Infinity, staleTime: QUERY_STALE_TIME_MILLISECONDS },
-    },
-  });
-}
-
-function createQueryPersister() {
-  return createAsyncStoragePersister({
-    storage: ExpoSqliteKeyValueStore.Storage,
-  });
+  return new QueryClient();
 }
 
 function getNavigationTheme(colorScheme: ColorSchemeName) {
   return colorScheme === "dark" ? DarkTheme : DefaultTheme;
 }
 
-function listenToNetworkState(setOnline: (isOnline: boolean) => void) {
-  let isInitialized = false;
-
-  const subscription = ExpoNetwork.addNetworkStateListener((networkState) => {
-    isInitialized = true;
-    setOnline(!!networkState.isConnected);
-  });
-
-  async function setInitialOnlineState() {
-    const networkState = await ExpoNetwork.getNetworkStateAsync();
-
-    if (!isInitialized) {
-      setOnline(!!networkState.isConnected);
-    }
-  }
-
-  void setInitialOnlineState();
-
-  return () => {
-    subscription.remove();
-  };
-}
-
-function QueryCacheController({
-  queryPersister,
-}: QueryCacheControllerProperties) {
-  const isRestoring = useIsRestoring();
-
+function QueryCacheController() {
   const queryClient = useQueryClient();
 
   const session = useAuthenticationSession();
@@ -164,13 +96,12 @@ function QueryCacheController({
   const hasSession = !!session.data;
 
   useEffect(() => {
-    if (isRestoring || session.isPending || hasSession) {
+    if (session.isPending || hasSession) {
       return;
     }
 
     queryClient.clear();
-    void queryPersister.removeClient();
-  }, [hasSession, isRestoring, queryClient, queryPersister, session.isPending]);
+  }, [hasSession, queryClient, session.isPending]);
 
   return null;
 }

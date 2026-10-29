@@ -1,4 +1,4 @@
-import type { Exercise } from "@/shared/interactors/list-exercises";
+import type { Exercise } from "@/shared/exercise-application-service";
 
 export function getExerciseSearchOptions(exercises: Exercise[]) {
   return {

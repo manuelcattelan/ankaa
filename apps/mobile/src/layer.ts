@@ -6,6 +6,7 @@ import * as ManagedRuntime from "effect/ManagedRuntime";
 
 import { AppleSignIn } from "@/features/authentication/services/apple-sign-in";
 import { GoogleSignIn } from "@/features/authentication/services/google-sign-in";
+import { ExerciseApplicationService } from "@/shared/exercise-application-service";
 import { Accessibility } from "@/shared/services/accessibility";
 import { AuthenticationClient } from "@/shared/services/authentication-client";
 import { Crypto } from "@/shared/services/crypto";
@@ -21,6 +22,7 @@ export const applicationLayer = Layer.mergeAll(
   AppleSignIn.layer,
   AuthenticationClient.layer,
   Crypto.layer,
+  ExerciseApplicationService.layer,
   GoogleSignIn.layer,
   TrpcClient.layer,
 ).pipe(

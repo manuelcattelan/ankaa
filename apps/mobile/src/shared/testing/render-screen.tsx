@@ -4,7 +4,6 @@ import { renderRouter } from "expo-router/testing-library";
 import type { ApplicationRuntime } from "@/layer";
 import type { TestRuntimeLayers } from "@/shared/testing/create-test-runtime";
 
-import { registerMutationDefaults } from "@/defaults";
 import { RootNavigator } from "@/root";
 import { RuntimeContext } from "@/shared/providers/runtime-context";
 import { createTestRuntime } from "@/shared/testing/create-test-runtime";
@@ -28,8 +27,6 @@ export function renderScreen({
   const queryClient = new QueryClient({
     defaultOptions: { queries: { gcTime: Infinity, retry: false } },
   });
-
-  registerMutationDefaults({ queryClient, runtime });
 
   return renderRouter(
     {

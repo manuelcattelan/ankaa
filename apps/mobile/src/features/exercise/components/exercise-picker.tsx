@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ActivityIndicator } from "react-native";
 
-import type { Exercise } from "@/shared/interactors/list-exercises";
+import type { Exercise } from "@/shared/exercise-application-service";
 
 import { getExerciseSearchOptions } from "@/features/exercise/core/get-exercise-search-options";
 import { searchExercises } from "@/features/exercise/core/search-exercises";

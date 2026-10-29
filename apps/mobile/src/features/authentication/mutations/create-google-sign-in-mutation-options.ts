@@ -13,6 +13,5 @@ export function createGoogleSignInMutationOptions(runtime: ApplicationRuntime) {
           Effect.catchTag("GoogleSignInCanceledError", () => Effect.void),
         ),
       ),
-    mutationKey: ["google-sign-in"],
   });
 }

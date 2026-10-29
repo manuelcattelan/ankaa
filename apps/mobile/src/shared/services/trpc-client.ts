@@ -23,7 +23,10 @@ export type TrpcTestResponses = {
 };
 
 type TrpcRequest<TData> = {
-  call: (vanillaTrpcClient: TRPCClient<AppRouter>) => Promise<TData>;
+  call: (callOptions: {
+    signal: AbortSignal;
+    vanillaTrpcClient: TRPCClient<AppRouter>;
+  }) => Promise<TData>;
   errors: readonly Schema.Top[];
 };
 
@@ -117,7 +120,7 @@ function createTrpcClientService(vanillaTrpcClient: TRPCClient<AppRouter>) {
   function request<TData>({ call }: TrpcRequest<TData>) {
     return Effect.tryPromise({
       catch: (cause) => new TrpcError({ cause }),
-      try: () => call(vanillaTrpcClient),
+      try: (signal) => call({ signal, vanillaTrpcClient }),
     });
   }
 

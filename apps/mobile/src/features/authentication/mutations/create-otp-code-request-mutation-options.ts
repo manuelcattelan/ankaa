@@ -11,6 +11,5 @@ export function createOtpCodeRequestMutationOptions(
   return mutationOptions({
     mutationFn: (requestOtpCodeOptions: RequestOtpCodeOptions) =>
       runtime.runPromise(requestOtpCode(requestOtpCodeOptions)),
-    mutationKey: ["otp-code-request"],
   });
 }

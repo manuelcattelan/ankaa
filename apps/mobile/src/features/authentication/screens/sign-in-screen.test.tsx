@@ -161,7 +161,7 @@ describe("SignInScreen", () => {
     expect(await screen.findByLabelText("Email address")).toBeOnTheScreen();
   });
 
-  it("tells the person that the server can't be reached when the session can't be loaded", async () => {
+  it("tells the User that Ankaa can't connect when the server can't be reached", async () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
@@ -174,7 +174,7 @@ describe("SignInScreen", () => {
 
     expect(
       await screen.findByText(
-        "The server can't be reached: check your connection and try again.",
+        "Ankaa can't connect: check your internet connection and try again.",
       ),
     ).toBeOnTheScreen();
   });

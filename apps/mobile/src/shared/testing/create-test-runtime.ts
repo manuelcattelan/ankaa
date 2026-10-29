@@ -3,6 +3,7 @@ import * as Layer from "effect/Layer";
 import { AppleSignIn } from "@/features/authentication/services/apple-sign-in";
 import { GoogleSignIn } from "@/features/authentication/services/google-sign-in";
 import { createRuntime } from "@/layer";
+import { ExerciseApplicationService } from "@/shared/exercise-application-service";
 import { Accessibility } from "@/shared/services/accessibility";
 import { AuthenticationClient } from "@/shared/services/authentication-client";
 import { Crypto } from "@/shared/services/crypto";
@@ -31,7 +32,9 @@ export function createTestRuntime({
       appleSignInLayer,
       cryptoLayer,
       googleSignInLayer,
-      trpcClientLayer,
+      ExerciseApplicationService.layerNoDeps.pipe(
+        Layer.provideMerge(trpcClientLayer),
+      ),
     ).pipe(Layer.provideMerge(authenticationClientLayer)),
   );
 }
