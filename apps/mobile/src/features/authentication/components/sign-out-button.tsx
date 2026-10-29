@@ -11,15 +11,12 @@ export function SignOutButton() {
   const signOut = useMutation(signOutMutationOptions(runtime));
 
   function handleSignOut() {
-    if (signOut.isPending) {
-      return;
-    }
-
     signOut.mutate();
   }
 
   return (
     <Button
+      disabled={signOut.isPending}
       isBusy={signOut.isPending}
       onPress={handleSignOut}
       title={AUTHENTICATION_MESSAGES.signOutButton}

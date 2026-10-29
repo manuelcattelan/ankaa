@@ -19,16 +19,13 @@ export function AccountDeletionRequestButton() {
     : null;
 
   function handleRequestAccountDeletion() {
-    if (requestAccountDeletion.isPending) {
-      return;
-    }
-
     requestAccountDeletion.mutate();
   }
 
   return (
     <>
       <Button
+        disabled={requestAccountDeletion.isPending}
         isBusy={requestAccountDeletion.isPending}
         onPress={handleRequestAccountDeletion}
         title={AUTHENTICATION_MESSAGES.deleteAccountButton}

@@ -53,6 +53,8 @@ export function SignInScreen({
       : getAuthenticationErrorMessage(signInError);
 
   function handleSignInWithApple() {
+    // Apple's native button takes no disabled state
+    // (https://docs.expo.dev/versions/v57.0.0/sdk/apple-authentication/#appleauthenticationbutton).
     if (isSignInPending) {
       return;
     }
@@ -63,10 +65,6 @@ export function SignInScreen({
   }
 
   function handleSignInWithGoogle() {
-    if (isSignInPending) {
-      return;
-    }
-
     signInWithApple.reset();
 
     signInWithGoogle.mutate();
@@ -97,6 +95,7 @@ export function SignInScreen({
             ? GoogleSigninButton.Color.Dark
             : GoogleSigninButton.Color.Light
         }
+        disabled={isSignInPending}
         onPress={handleSignInWithGoogle}
         size={GoogleSigninButton.Size.Wide}
         testID="google-sign-in-button"

@@ -182,7 +182,7 @@ describe("HomeScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("shows Delete account as busy while the request to delete the Account waits for its answer", async () => {
+  it("disables Delete account, and shows it busy, while the request to delete the Account waits for its answer", async () => {
     const user = userEvent.setup();
     const deleteUserResponse = Promise.withResolvers<Response>();
     renderScreen({
@@ -199,6 +199,9 @@ describe("HomeScreen", () => {
       await screen.findByRole("button", { name: "Delete account" }),
     );
 
+    expect(
+      screen.getByRole("button", { name: "Delete account" }),
+    ).toBeDisabled();
     expect(screen.getByRole("button", { name: "Delete account" })).toBeBusy();
   });
 
@@ -229,7 +232,7 @@ describe("HomeScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("shows Delete account as no longer busy once the server answers the request to delete the Account", async () => {
+  it("enables Delete account again once the server answers the request to delete the Account", async () => {
     const user = userEvent.setup();
     const deleteUserResponse = Promise.withResolvers<Response>();
     renderScreen({
@@ -252,7 +255,10 @@ describe("HomeScreen", () => {
     await waitFor(() => {
       expect(
         screen.getByRole("button", { name: "Delete account" }),
-      ).not.toBeBusy();
+      ).toBeEnabled();
     });
+    expect(
+      screen.getByRole("button", { name: "Delete account" }),
+    ).not.toBeBusy();
   });
 });

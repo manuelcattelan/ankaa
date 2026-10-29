@@ -42,6 +42,8 @@ export function WithEmailScreen() {
       : getAuthenticationErrorMessage(sendOtpCode.error);
 
   function handleSendOtpCode() {
+    // The keyboard's submit key also sends the code, and a TextInput has no
+    // disabled state that holds it back while a request is in flight.
     if (sendOtpCode.isPending) {
       return;
     }
@@ -94,6 +96,7 @@ export function WithEmailScreen() {
         value={email}
       />
       <Button
+        disabled={sendOtpCode.isPending}
         isBusy={sendOtpCode.isPending}
         onPress={handleSendOtpCode}
         title={AUTHENTICATION_MESSAGES.sendOtpCodeButton}

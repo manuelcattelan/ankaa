@@ -57,10 +57,6 @@ export function ValidateOtpCodeForm({ email }: { email: string }) {
       : getAuthenticationErrorMessage(authenticationError);
 
   function handleResendOtpCode() {
-    if (resendOtpCode.isPending) {
-      return;
-    }
-
     setHasSubmitted(false);
     resendOtpCode.reset();
     validateOtpCode.reset();
@@ -69,6 +65,8 @@ export function ValidateOtpCodeForm({ email }: { email: string }) {
   }
 
   function handleValidateOtpCode() {
+    // The keyboard's submit key also validates the code, and a TextInput has
+    // no disabled state that holds it back while a validation is in flight.
     if (validateOtpCode.isPending) {
       return;
     }
@@ -113,6 +111,7 @@ export function ValidateOtpCodeForm({ email }: { email: string }) {
         value={otpCode}
       />
       <Button
+        disabled={validateOtpCode.isPending}
         isBusy={validateOtpCode.isPending}
         onPress={handleValidateOtpCode}
         title={AUTHENTICATION_MESSAGES.validateOtpCodeButton}
