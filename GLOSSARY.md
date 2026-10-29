@@ -1,12 +1,120 @@
 # Glossary
 
-A mobile app where people plan their strength training and record the workouts they do.
+A mobile app where [Users](#user) plan their strength training and record the [Workouts](#workout) they do.
+
+## Accounts
+
+### Account
+
+What a [User](#user) has in Ankaa: the ways they sign in and everything they own, such as their [Routines](#routine) and [Workouts](#workout). Ankaa creates it at their first sign-in, and each User has exactly one.
+
+- **Distinct from**: [User](#user): the User is who trains, and the Account is what they have in Ankaa.
+
+### Account deletion
+
+Removing an [Account](#account) for good, at its [User](#user)'s request, together with everything it holds.
+
+- **Avoid**: account removal, account closure, user deletion, erasure
+
+### User
+
+Someone who has signed in to Ankaa at least once, to plan [Routines](#routine) and record [Workouts](#workout) of their own.
+
+- **Avoid**: person, lifter, athlete, member, customer
+
+## Architecture
+
+### Application Service
+
+A [Service](#service) that holds the business operations of a [Feature](#feature), such as [Saving](#save) a [Routine](#routine), each carried out by asking the [Core](#core) to decide.
+
+- **Avoid**: use case
+- **Distinct from**: [Repository](#repository): a Repository reads and writes a Feature's data, and an Application Service decides, through the Core, what to write.
+
+### Composition root
+
+The one place in each app that builds the [Runtime](#runtime) from every [Layer](#layer) the app needs, and wires the rest of the app to it.
+
+- **Avoid**: bootstrap, main module
+
+### Core
+
+The code that makes every decision, in plain TypeScript: given values, it returns values, including an [Outcome](#outcome) for every decision, and it never does I/O, reads the clock or throws.
+
+- **Avoid**: domain, domain layer, business logic, pure layer
+- **Distinct from**: [Shell](#shell): the Shell does the I/O and asks the Core for every decision.
+
+### Feature
+
+One area of the product, such as [Routines](#routine) or [Workouts](#workout), whose code is kept together in every workspace that has some.
+
+- **Avoid**: slice, vertical slice
+
+### Filter
+
+A reusable rule that an Effect Schema checks beyond the shape of the data, such as a maximum length or the format of a [Tempo](#tempo). Narrowing a list, such as the [Exercises](#exercise) shown in a picker, isn't a Filter.
+
+- **Avoid**: refinement
+
+### Infrastructure Service
+
+A [Service](#service) that wraps one piece of infrastructure or one device API, such as the database, sending email or notifications, and holds no business logic.
+
+- **Avoid**: adapter, port, gateway
+
+### Layer
+
+What builds a [Service](#service) when the [Runtime](#runtime) starts, as Effect defines it: it reads the Service's settings and takes the other Services it needs from their own Layers.
+
+- **Avoid**: live layer, default layer
+- **Distinct from**: [Service](#service): code uses the Service, and the Layer is how the Runtime builds it.
+
+### Outcome
+
+What a decision of the [Core](#core) returns: a success, or the error of the rule it breaks, such as a [Routine](#routine) name that another Routine of the same [User](#user) already has.
+
+- **Avoid**: result union, verdict
+
+### Query options
+
+The options that tell TanStack Query on the mobile app how to fetch and cache one piece of server data.
+
+- **Avoid**: query config, query hook
+
+### Repository
+
+A [Service](#service) that reads and writes the data of one [Feature](#feature) in the database.
+
+- **Avoid**: DAO, data access object
+
+### Runtime
+
+The Effect runtime that each app builds once from its [Layers](#layer), and that runs every Effect program of that app. The JavaScript engine that runs the code, such as Node or Hermes, isn't a Runtime.
+
+- **Avoid**: container, injector, executor
+
+### Service
+
+An Effect service: a set of operations that code asks for by its type, that its [Layer](#layer) builds, and that a test can replace. Each one is an [Application Service](#application-service), a [Repository](#repository) or an [Infrastructure Service](#infrastructure-service).
+
+### Shell
+
+The code that does every I/O, such as reading the database, calling the server or showing a notification, and asks the [Core](#core) for every decision: the [Services](#service), every other Effect program, and the code that runs them, such as tRPC procedures and React components.
+
+- **Avoid**: I/O layer, effectful code, side-effect layer
+- **Distinct from**: [Core](#core): the Core decides, and the Shell carries the decision out.
+
+### Wire error
+
+An error that a failed call carries from the server to the mobile app, defined once for both apps, so the mobile app receives the same error the server raised, such as a [Routine](#routine) name that's already taken.
+
+- **Avoid**: domain error, API error, tRPC error
 
 ## Exercise library
 
 ### Equipment
 
-An object that an [Exercise](#exercise) needs, such as a barbell, a bench or a rack. A person's own body weight isn't Equipment.
+An object that an [Exercise](#exercise) needs, such as a barbell, a bench or a rack. A [User](#user)'s own body weight isn't Equipment.
 
 - **Avoid**: gear, apparatus, implement
 
@@ -18,7 +126,7 @@ A movement from the exercise library that Ankaa provides, the same for everyone,
 
 ### Muscle group
 
-A muscle or group of muscles that an [Exercise](#exercise) trains, such as the chest or the front deltoid. An Exercise trains each of its Muscle groups either as primary, when it mainly works them, or as secondary, when they assist.
+A muscle or group of muscles that an [Exercise](#exercise) trains, such as the chest or the front deltoid. An Exercise trains each of its Muscle groups in one role: primary, when it mainly works them, or secondary, when they assist.
 
 - **Avoid**: muscle, body part, target muscle
 
@@ -27,58 +135,65 @@ A muscle or group of muscles that an [Exercise](#exercise) trains, such as the c
 How the weight entered for an [Exercise](#exercise) is counted: the total lifted, the weight of one dumbbell or one side, the weight added to body weight, the weight taken off body weight as assistance, or no weight at all. Each Exercise has exactly one.
 
 - **Avoid**: load type, weighting
+- **Distinct from**: [Weight unit](#weight-unit): the Weight unit says what an entered weight is counted in, and the Weight type says what it counts.
 
 ## Routines and workouts
 
+### Draft
+
+The values a [User](#user) is editing on the device and hasn't [Saved](#save): a [Routine](#routine) open in the editor, or one [Set](#set), note or skip of a [Workout exercise](#workout-exercise). A Draft exists from the moment editing starts, and only on the device.
+
+- **Avoid**: unsaved changes, pending changes, local copy, form state
+
+### Exercise group
+
+One or more [Routine exercises](#routine-exercise) or [Workout exercises](#workout-exercise) that take one place in a [Section](#section) and are done together: a single exercise on its own, or a [Superset](#superset). Every exercise of a Section belongs to exactly one Exercise group, except a [Warm-up exercise](#warm-up-exercise), which goes with the exercise it prepares for.
+
+- **Avoid**: group, block, slot, station
+- **Distinct from**: [Superset](#superset): a Superset is an Exercise group of two or more exercises, and an Exercise group can hold just one.
+
 ### Routine
 
-A person's named, reusable plan for one training session: which [Exercises](#exercise) to do, in what order and how, and optionally the days of the week it's meant for.
+A [User](#user)'s named, reusable plan for one training session: which [Exercises](#exercise) to do, in what order and how, and optionally the days of the week it's meant for.
 
 - **Avoid**: plan, template, workout plan, session plan
-- **Distinct from**: [Workout](#workout): a Workout records one time a person followed a Routine.
+- **Distinct from**: [Workout](#workout): a Workout records one time a User followed a Routine.
 
 ### Routine exercise
 
-One place an [Exercise](#exercise) takes in a [Routine](#routine), with its own [Section](#section), note and planned [Sets](#set). When a Routine uses the same Exercise twice, each use is a separate Routine exercise.
+One place an [Exercise](#exercise) takes in a [Routine](#routine), with its own note and planned [Sets](#set): in an [Exercise group](#exercise-group) of a [Section](#section), or as a [Warm-up exercise](#warm-up-exercise) of another Routine exercise. When a Routine uses the same Exercise twice, each use is a separate Routine exercise.
 
 - **Avoid**: planned exercise, routine entry, slot
 - **Distinct from**: [Exercise](#exercise): the Exercise is the movement in the library, and a Routine exercise is one use of it in one Routine.
 
 ### Save
 
-To send a [Routine](#routine) or a [Workout](#workout) to the server, which writes it to the database. A person saves a Routine from the editor. A Workout saves itself after every change, and the device [Stores](#store) it until its Save succeeds.
+To send a [Draft](#draft) to the server when the [User](#user) asks, so the server keeps it: a whole [Routine](#routine) from the editor, or one [Set](#set), note or skip of a [Workout](#workout). Nothing is Saved unless the User asks.
 
-- **Avoid**: sync, upload, persist, submit
-- **Distinct from**: [Store](#store): the device Stores a Workout, and a Save sends it to the server.
+- **Avoid**: sync, upload, persist, submit, autosave
+- **Distinct from**: [Draft](#draft): a Draft is what the User is still editing on the device, and a Save sends it to the server.
 
 ### Section
 
-One of the three parts, done in order, that every [Routine](#routine) and [Workout](#workout) splits its exercises into: warm-up, main and cool-down.
+One of the three parts, done in order, that every [Routine](#routine) and [Workout](#workout) splits its [Exercise groups](#exercise-group) into: warm-up, main and cool-down.
 
 - **Avoid**: phase, part, block, stage
 
 ### Skipped exercise
 
-A [Workout exercise](#workout-exercise) the person marked as not done as planned, with a reason: low on time, low energy, pain or other, and an optional note. It keeps any [Sets](#set) recorded before it was skipped.
+A [Workout exercise](#workout-exercise) the [User](#user) marked as not done as planned, with a reason: low on time, low energy, pain or other, and an optional note. It keeps any [Sets](#set) recorded before it was skipped.
 
 - **Avoid**: missed exercise, dropped exercise, abandoned exercise
 
-### Store
-
-To keep a [Workout](#workout) on the device, as its [Workout document](#workout-document), until its [Save](#save) succeeds, so no change is lost before the server has it.
-
-- **Avoid**: save locally, keep offline
-- **Distinct from**: [Save](#save): a Save sends the Workout to the server, and the device Stores it until that Save succeeds.
-
 ### Superset
 
-Two or more [Routine exercises](#routine-exercise) or [Workout exercises](#workout-exercise), next to each other in one [Section](#section), done by alternating them one [Set](#set) at a time, with [Rest](#rest) only after one Set of each.
+An [Exercise group](#exercise-group) of two or more [Routine exercises](#routine-exercise) or [Workout exercises](#workout-exercise), done by alternating them one [Set](#set) at a time, with [Rest](#rest) only after one Set of each.
 
 - **Avoid**: tri-set, giant set, compound set, paired set, circuit
 
 ### Warm-up exercise
 
-A [Routine exercise](#routine-exercise) or [Workout exercise](#workout-exercise) that uses a different [Exercise](#exercise) to prepare for one exercise of the main [Section](#section), done right before it. It belongs to the main Section, with the exercise it prepares for.
+A [Routine exercise](#routine-exercise) or [Workout exercise](#workout-exercise) that uses a different [Exercise](#exercise) to prepare for one exercise of the main [Section](#section), done right before it. It belongs to the exercise it prepares for, outside any [Exercise group](#exercise-group).
 
 - **Avoid**: specific warm-up, activation exercise, primer
 - **Distinct from**: [Section](#section): an exercise in the warm-up Section prepares for the whole session, not for one exercise.
@@ -86,32 +201,25 @@ A [Routine exercise](#routine-exercise) or [Workout exercise](#workout-exercise)
 
 ### Workout
 
-One training session a person does, started from a [Routine](#routine) and recorded from the moment they start it until they stop it. A person has at most one Workout in progress at a time, and changing the Routine afterwards doesn't change a Workout already started.
+One training session a [User](#user) does, started from a [Routine](#routine) and recorded from the moment they start it until they stop it. A User has at most one Workout in progress at a time, and changing the Routine afterwards doesn't change a Workout already started.
 
 - **Avoid**: session, training session, workout log, log
-- **Distinct from**: [Routine](#routine): a Routine is the reusable plan, and each Workout records one time a person followed it.
-
-### Workout document
-
-A [Workout](#workout) as the device [Stores](#store) it: everything recorded so far, with a version number that every change increases and the version of its last successful [Save](#save), so the device knows which changes the server doesn't have yet.
-
-- **Avoid**: local workout, workout draft, offline workout, cached workout
-- **Distinct from**: [Workout](#workout): the Workout is what the person does, and the Workout document is the copy of it that the device keeps.
+- **Distinct from**: [Routine](#routine): a Routine is the reusable plan, and each Workout records one time a User followed it.
 
 ### Workout exercise
 
-One place an [Exercise](#exercise) takes in a [Workout](#workout), copied from a [Routine exercise](#routine-exercise) when the Workout starts, with its own [Section](#section), note and recorded [Sets](#set). It keeps the [Weight type](#weight-type) and the kind of [Amount](#amount) the Exercise had at that moment.
+One place an [Exercise](#exercise) takes in a [Workout](#workout), copied from a [Routine exercise](#routine-exercise) when the Workout starts, together with that Routine exercise's note and planned [Sets](#set). It adds its own note, its recorded Sets, and the [Weight unit](#weight-unit) they're entered in, and it keeps the [Weight type](#weight-type) and the [Amount unit](#amount) the Exercise had at that moment.
 
 - **Avoid**: performed exercise, logged exercise, workout entry
-- **Distinct from**: [Routine exercise](#routine-exercise): the Routine exercise is the plan, and the Workout exercise records what was done against it.
+- **Distinct from**: [Routine exercise](#routine-exercise): the Routine exercise is the plan, and the Workout exercise records what was done against its own copy of that plan.
 
 ## Sets
 
 ### Amount
 
-How much of an [Exercise](#exercise) is done in one go: a number of [Repetitions](#repetition), or a number of seconds for an Exercise done for time, such as a plank. Each Exercise is measured in one of the two.
+How much of an [Exercise](#exercise) is done in one go: a number of [Repetitions](#repetition), or a number of seconds for an Exercise done for time, such as a plank. Each Exercise has one Amount unit, Repetitions or seconds, that all its Amounts are counted in.
 
-- **Avoid**: reps, duration, count, target, volume
+- **Avoid**: reps, duration, count, target, volume, kind of amount
 
 ### Drop set
 
@@ -125,6 +233,13 @@ A way of pushing a [Set](#set) past where it would end, by splitting it into sev
 
 - **Avoid**: variation, set variation, technique, method
 - **Distinct from**: [To failure](#to-failure): To failure says when a Set ends, with or without an Intensity technique.
+
+### Pause
+
+A stop of a few seconds between two [Segments](#segment) of a [Rest-pause set](#rest-pause-set), planned in seconds by a [Routine](#routine) and counted down during a [Workout](#workout). A Pause belongs to its [Set](#set).
+
+- **Avoid**: mini-rest, intra-set rest, breather, rest-pause period
+- **Distinct from**: [Rest](#rest): Rest comes after a whole Set, and a Pause sits inside one.
 
 ### Pyramid
 
@@ -141,37 +256,38 @@ One full cycle of a movement, such as lowering the bar to the chest and pressing
 
 ### Rest
 
-The pause after a [Set](#set) before the next one, given in seconds for each planned Set and counted down during a [Workout](#workout). The short pauses inside a [Rest-pause set](#rest-pause-set) aren't Rest.
+The time after a [Set](#set) before the next one, planned in seconds for each planned Set, and counted down during a [Workout](#workout) once the [User](#user) starts it after that Set.
 
 - **Avoid**: rest period, rest interval, break, recovery
+- **Distinct from**: [Pause](#pause): a Pause sits inside a Rest-pause set, and Rest comes after a whole Set.
 
 ### Rest-pause set
 
-A [Set](#set) split into a planned number of [Segments](#segment), the first included, by pauses of a few seconds, usually at the same weight. Those pauses belong to the Set and aren't [Rest](#rest).
+A [Set](#set) split into a planned number of [Segments](#segment), the first included, by [Pauses](#pause), usually at the same weight.
 
 - **Avoid**: cluster set, myo-reps
 
 ### Segment
 
-One uninterrupted stretch of a [Set](#set), with its own [Amount](#amount) and weight. A Set has a single Segment, unless it's a [Drop set](#drop-set), where each drop starts a new Segment, or a [Rest-pause set](#rest-pause-set), where each short pause starts a new one.
+One uninterrupted stretch of a [Set](#set), with its own [Amount](#amount) and weight. A Set has a single Segment, unless it's a [Drop set](#drop-set), where each drop starts a new Segment, or a [Rest-pause set](#rest-pause-set), where each [Pause](#pause) starts a new one.
 
 - **Avoid**: mini-set, sub-set, cluster
 
 ### Set
 
-One run of a single [Exercise](#exercise) done without a break, such as 8 [Repetitions](#repetition) of Bench Press (Barbell), apart from the short pauses inside a [Drop set](#drop-set) or [Rest-pause set](#rest-pause-set). The same term covers a Set a [Routine](#routine) plans and a Set a [Workout](#workout) records.
+One run of a single [Exercise](#exercise) done without a break, such as 8 [Repetitions](#repetition) of Bench Press (Barbell), apart from the moments between its [Segments](#segment). A planned Set is one that a [Routine](#routine) plans and that a [Workout](#workout) copies when it starts, and a recorded Set is one that a Workout records as the [User](#user) does it.
 
-- **Avoid**: series
+- **Avoid**: series, logged set, performed set
 
 ### Tempo
 
-The seconds each [Repetition](#repetition) spends lowering, paused at the bottom, lifting and paused at the top, written as four numbers such as 3-0-1-2. An X in third place means lifting as fast as possible.
+The seconds each [Repetition](#repetition) spends lowering, held at the bottom, lifting and held at the top, written as four numbers such as 3-0-1-2. An X in third place means lifting as fast as possible.
 
 - **Avoid**: cadence, rhythm, speed
 
 ### To failure
 
-Said of a [Set](#set) done until the person can't complete another [Repetition](#repetition).
+Said of a [Set](#set) done until the [User](#user) can't complete another [Repetition](#repetition).
 
 - **Avoid**: until failure, AMRAP, max effort
 
@@ -182,46 +298,29 @@ A lighter [Set](#set) done to prepare for the [Working sets](#working-set) of th
 - **Avoid**: ramp-up set, feeder set, preparatory set
 - **Distinct from**: [Section](#section): the warm-up Section holds whole exercises, and a Warm-up set is one Set of an exercise in any Section.
 
+### Weight unit
+
+What the weights of a [Workout exercise](#workout-exercise) are entered in: kilograms or pounds. Every [Set](#set) recorded for one Workout exercise uses its Weight unit.
+
+- **Avoid**: unit, measurement system
+- **Distinct from**: [Weight type](#weight-type): the Weight type says what an entered weight counts, and the Weight unit says what it's counted in.
+
 ### Working set
 
 A [Set](#set) done for the training its exercise is there for, rather than to prepare for it. A [Workout](#workout) counts its progress in Working sets only.
 
 - **Avoid**: work set, main set
 
-## Architecture
-
-### Composition root
-
-The one place in each app that builds the application [Layer](#layer) and the [Runtime](#runtime), and wires the rest of the app to them: `src/server.ts` on the server and the root `src/app/_layout.tsx` on the mobile app.
-
-- **Avoid**: bootstrap, main module
-
-### Core
-
-The code that makes every decision, written in plain TypeScript: given values, it returns values, including an [Outcome](#outcome) for every rule it checks, and it never does I/O, reads the clock or throws. It lives in the `core/` folder of each [Feature](#feature), and in `@ankaa/core` for what more than one workspace runs.
-
-- **Avoid**: domain, domain layer, business logic, pure layer
-- **Distinct from**: [Shell](#shell): the Shell does the I/O and asks the Core for every decision.
+## Deprecated
 
 ### Database query
 
 One Drizzle query of a server [Feature](#feature), in its own file in the `queries/` folder of that Feature: a plain async function over the database or a transaction, with no business branching. Only the [Interactors](#interactor) of the same Feature call it.
 
-- **Avoid**: repository, data access object, DAO
+- **Avoid**: data access object, DAO
 - **Distinct from**: [Query procedure](#query-procedure): a tRPC procedure that the mobile app calls to read data.
 - **Distinct from**: [Query options](#query-options): what TanStack Query uses on the mobile app to fetch and cache data.
-
-### Feature
-
-One area of the product, such as Workouts or Routines, whose code sits together in one `features/<feature>/` folder on the server, in `@ankaa/core` and on the mobile app. Features don't import each other, except when a route file composes components from several Features, or a server [Interactor](#interactor) calls an Interactor of another Feature. The `shared/` folder holds what several Features use, in the same folders a Feature has.
-
-- **Avoid**: slice, vertical slice
-
-### Filter
-
-A reusable rule of an Effect Schema, made with `Schema.makeFilter` or taken from Effect's built-in ones, such as `Schema.isMaxLength`, and added to a Schema with `.check()`. `@ankaa/core` keeps the Filters that both the server and the mobile app enforce. Narrowing a list, such as the Exercises shown in a picker, isn't a Filter.
-
-- **Avoid**: refinement
+- **Deprecated**: retired by [#86 Rebuild Ankaa on one Core and Shell architecture, with redesigned Routines, Workouts and Account deletion](https://github.com/manuelcattelan/ankaa/issues/86); replaced by [Repository](#repository).
 
 ### Interactor
 
@@ -229,27 +328,7 @@ One business operation, such as saving a Workout, written as a standalone `Effec
 
 - **Avoid**: use case
 - **Distinct from**: [Service](#service): a Service wraps an implementation that can be swapped, and an Interactor uses Services to carry out one operation.
-
-### Layer
-
-An Effect Layer: what builds a [Service](#service) when the [Runtime](#runtime) starts, reading its settings with Effect `Config` and taking the other Services it needs from their Layers. A Service's `layer` provides its default dependencies, its `layerNoDeps` leaves them open, and other variants carry a descriptive suffix, such as `layerTest`. The application Layer, `applicationLayer`, combines every Layer that one app needs.
-
-- **Avoid**: live layer, default layer
-- **Distinct from**: [Service](#service): code yields the Service, and the Layer is how the Runtime builds it.
-
-### Outcome
-
-One possible return of a [Core](#core) function, as a variant of the discriminated union that it returns: a success or a broken rule, with a PascalCase `_tag`. The Core returns an Outcome instead of throwing, and the [Shell](#shell) turns each one into a write, a no-op or a typed error.
-
-- **Avoid**: result union, verdict
-
-### Query options
-
-The options, built with TanStack Query's `queryOptions`, that tell the mobile app how to fetch and cache one piece of server data. Each mobile [Feature](#feature) keeps its own in its `queries/` folder, as factory functions that take the [Runtime](#runtime), such as `createRoutineListQueryOptions(runtime)`.
-
-- **Avoid**: query config, query hook
-- **Distinct from**: [Database query](#database-query): a server function that reads or writes the database.
-- **Distinct from**: [Query procedure](#query-procedure): the tRPC procedure that Query options may call.
+- **Deprecated**: retired by [#86 Rebuild Ankaa on one Core and Shell architecture, with redesigned Routines, Workouts and Account deletion](https://github.com/manuelcattelan/ankaa/issues/86); replaced by [Application Service](#application-service).
 
 ### Query procedure
 
@@ -258,23 +337,20 @@ A tRPC procedure, defined with `.query()`, that the mobile app calls to read dat
 - **Avoid**: query route, read procedure
 - **Distinct from**: [Database query](#database-query): a server function that a Query procedure's [Interactor](#interactor) calls to read the database.
 - **Distinct from**: [Query options](#query-options): what TanStack Query uses on the mobile app to fetch and cache data.
+- **Deprecated**: retired by [#86 Rebuild Ankaa on one Core and Shell architecture, with redesigned Routines, Workouts and Account deletion](https://github.com/manuelcattelan/ankaa/issues/86).
 
-### Runtime
+### Store
 
-The Effect `ManagedRuntime` that the [Composition root](#composition-root) of each app builds once from the application [Layer](#layer), and that runs every Effect program of that app. The server keeps it in tRPC's inner context, and the mobile app provides it through React context, read with `useRuntime()`. The JavaScript engine that runs the code, such as Node or Hermes, isn't a Runtime.
+To keep a [Workout](#workout) on the device, as its [Workout document](#workout-document), until its [Save](#save) succeeds, so no change is lost before the server has it.
 
-- **Avoid**: container, injector, executor
+- **Avoid**: save locally, keep offline
+- **Distinct from**: [Save](#save): a Save sends the Workout to the server, and the device Stores it until that Save succeeds.
+- **Deprecated**: retired by [#86 Rebuild Ankaa on one Core and Shell architecture, with redesigned Routines, Workouts and Account deletion](https://github.com/manuelcattelan/ankaa/issues/86).
 
-### Service
+### Workout document
 
-An implementation that can be swapped, such as in a test, wrapped in an Effect `Context.Service` class with static [Layers](#layer): infrastructure on the server, such as `Database`, `Email`, `Authentication` and `CurrentSession`, and device and platform APIs on the mobile app, such as the API client, storage on the device and notifications. Code yields a Service to use it.
+A [Workout](#workout) as the device [Stores](#store) it: everything recorded so far, with a version number that every change increases and the version of its last successful [Save](#save), so the device knows which changes the server doesn't have yet.
 
-- **Avoid**: adapter, port, gateway
-- **Distinct from**: [Interactor](#interactor): an Interactor is one business operation, and a Service is something it uses.
-
-### Shell
-
-The code that does every I/O, such as reading the database, calling the server or showing a notification, and asks the [Core](#core) for every decision: [Services](#service), [Interactors](#interactor) and every other Effect program, and the code that runs them, such as tRPC procedures and React components.
-
-- **Avoid**: I/O layer, effectful code, side-effect layer
-- **Distinct from**: [Core](#core): the Core decides, and the Shell carries the decision out.
+- **Avoid**: local workout, workout draft, offline workout, cached workout
+- **Distinct from**: [Workout](#workout): the Workout is what the person does, and the Workout document is the copy of it that the device keeps.
+- **Deprecated**: retired by [#86 Rebuild Ankaa on one Core and Shell architecture, with redesigned Routines, Workouts and Account deletion](https://github.com/manuelcattelan/ankaa/issues/86).
