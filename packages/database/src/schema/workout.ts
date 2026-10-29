@@ -1,3 +1,10 @@
+import {
+  MAXIMUM_DROP_SET_WEIGHT_PERCENTAGE,
+  MINIMUM_DROP_SET_WEIGHT_PERCENTAGE,
+} from "@ankaa/core/features/routine/constants/drop-set";
+import { MINIMUM_PAUSE_SECONDS } from "@ankaa/core/features/routine/constants/minimum-pause-seconds";
+import { MINIMUM_REST_SECONDS } from "@ankaa/core/features/routine/constants/minimum-rest-seconds";
+import { MINIMUM_SEGMENT_COUNT } from "@ankaa/core/features/routine/constants/minimum-segment-count";
 import { SKIP_REASONS } from "@ankaa/core/features/workout/constants/skip-reasons";
 import {
   MINIMUM_WEIGHT_VALUE,
@@ -13,7 +20,7 @@ import { SECTIONS } from "@ankaa/core/shared/constants/sections";
 import { SET_TYPES } from "@ankaa/core/shared/constants/set-types";
 import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo-pattern";
 import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-types";
-import { gte, inArray, isNull, sql } from "drizzle-orm";
+import { between, gte, inArray, isNull, sql } from "drizzle-orm";
 import {
   boolean,
   check,
@@ -42,16 +49,14 @@ export const workout = snakeCase.table(
   {
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     endedAt: timestamp({ withTimezone: true }),
-    id: uuid()
-      .primaryKey()
-      .default(sql`uuidv7()`),
+    id: uuid().primaryKey(),
     routineId: uuid()
       .notNull()
       .references(() => routine.id, {
         name: "workout_routine_id_fkey",
         onDelete: "restrict",
       }),
-    startedAt: timestamp({ withTimezone: true }).notNull(),
+    startedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true })
       .notNull()
       .defaultNow()
@@ -62,7 +67,6 @@ export const workout = snakeCase.table(
         name: "workout_user_id_fkey",
         onDelete: "cascade",
       }),
-    version: integer().notNull(),
   },
   (table) => [
     uniqueIndex("workout_in_progress_idx")
@@ -70,6 +74,38 @@ export const workout = snakeCase.table(
       .where(isNull(table.endedAt)),
     index("workout_user_id_idx").on(table.userId),
     index("workout_routine_id_idx").on(table.routineId),
+  ],
+);
+
+export const workoutExerciseGroup = snakeCase.table(
+  "workout_exercise_group",
+  {
+    id: uuid()
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    position: integer().notNull(),
+    section: text({ enum: SECTIONS }).notNull(),
+    workoutId: uuid()
+      .notNull()
+      .references(() => workout.id, {
+        name: "workout_exercise_group_workout_id_fkey",
+        onDelete: "cascade",
+      }),
+  },
+  (table) => [
+    unique("workout_exercise_group_workout_id_section_position_key").on(
+      table.workoutId,
+      table.section,
+      table.position,
+    ),
+    check(
+      "workout_exercise_group_section_check",
+      inArray(table.section, SECTIONS),
+    ),
+    check(
+      "workout_exercise_group_position_check",
+      gte(table.position, MINIMUM_POSITION),
+    ),
   ],
 );
 
@@ -88,23 +124,20 @@ export const workoutExercise = snakeCase.table(
       .primaryKey()
       .default(sql`uuidv7()`),
     note: text(),
+    plannedNote: text(),
     position: integer().notNull(),
-    section: text({ enum: SECTIONS }).notNull(),
     skipReason: text({ enum: SKIP_REASONS }),
     skipReasonNote: text(),
-    superset: integer(),
     updatedAt: timestamp({ withTimezone: true })
       .notNull()
       .defaultNow()
       .$onUpdate(() => sql`now()`),
     warmUpForWorkoutExerciseId: uuid(),
     weightType: text({ enum: WEIGHT_TYPES }).notNull(),
-    workoutId: uuid()
-      .notNull()
-      .references(() => workout.id, {
-        name: "workout_exercise_workout_id_fkey",
-        onDelete: "cascade",
-      }),
+    workoutExerciseGroupId: uuid().references(() => workoutExerciseGroup.id, {
+      name: "workout_exercise_workout_exercise_group_id_fkey",
+      onDelete: "cascade",
+    }),
   },
   (table) => [
     foreignKey({
@@ -112,14 +145,15 @@ export const workoutExercise = snakeCase.table(
       foreignColumns: [table.id],
       name: "workout_exercise_warm_up_for_workout_exercise_id_fkey",
     }).onDelete("cascade"),
-    unique("workout_exercise_workout_id_position_key").on(
-      table.workoutId,
+    unique("workout_exercise_workout_exercise_group_id_position_key").on(
+      table.workoutExerciseGroupId,
+      table.position,
+    ),
+    unique("workout_exercise_warm_up_for_workout_exercise_id_position_key").on(
+      table.warmUpForWorkoutExerciseId,
       table.position,
     ),
     index("workout_exercise_exercise_id_idx").on(table.exerciseId),
-    index("workout_exercise_warm_up_for_workout_exercise_id_idx").on(
-      table.warmUpForWorkoutExerciseId,
-    ),
     check(
       "workout_exercise_amount_unit_check",
       inArray(table.amountUnit, AMOUNT_UNITS),
@@ -128,7 +162,6 @@ export const workoutExercise = snakeCase.table(
       "workout_exercise_weight_type_check",
       inArray(table.weightType, WEIGHT_TYPES),
     ),
-    check("workout_exercise_section_check", inArray(table.section, SECTIONS)),
     check(
       "workout_exercise_skip_reason_check",
       inArray(table.skipReason, SKIP_REASONS),
@@ -140,6 +173,93 @@ export const workoutExercise = snakeCase.table(
     check(
       "workout_exercise_skip_check",
       sql`${table.skipReason} is not null or ${table.skipReasonNote} is null`,
+    ),
+    check(
+      "workout_exercise_parent_check",
+      sql`num_nonnulls(${table.workoutExerciseGroupId}, ${table.warmUpForWorkoutExerciseId}) = 1`,
+    ),
+  ],
+);
+
+export const workoutExercisePlannedSet = snakeCase.table(
+  "workout_exercise_planned_set",
+  {
+    amount: integer(),
+    id: uuid()
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    intensityTechnique: text({ enum: INTENSITY_TECHNIQUES }),
+    isToFailure: boolean().notNull(),
+    pauseSeconds: integer(),
+    position: integer().notNull(),
+    restSeconds: integer(),
+    segmentCount: integer(),
+    tempo: text(),
+    type: text({ enum: SET_TYPES }).notNull(),
+    weightPercentage: integer(),
+    workoutExerciseId: uuid()
+      .notNull()
+      .references(() => workoutExercise.id, {
+        name: "workout_exercise_planned_set_workout_exercise_id_fkey",
+        onDelete: "cascade",
+      }),
+  },
+  (table) => [
+    unique("workout_exercise_planned_set_workout_exercise_id_position_key").on(
+      table.workoutExerciseId,
+      table.position,
+    ),
+    check(
+      "workout_exercise_planned_set_type_check",
+      inArray(table.type, SET_TYPES),
+    ),
+    check(
+      "workout_exercise_planned_set_intensity_technique_check",
+      inArray(table.intensityTechnique, INTENSITY_TECHNIQUES),
+    ),
+    check(
+      "workout_exercise_planned_set_tempo_check",
+      sql`${table.tempo} ~ ${TEMPO_PATTERN.source}`,
+    ),
+    check(
+      "workout_exercise_planned_set_position_check",
+      gte(table.position, MINIMUM_POSITION),
+    ),
+    check(
+      "workout_exercise_planned_set_amount_check",
+      gte(table.amount, MINIMUM_AMOUNT),
+    ),
+    check(
+      "workout_exercise_planned_set_rest_seconds_check",
+      gte(table.restSeconds, MINIMUM_REST_SECONDS),
+    ),
+    check(
+      "workout_exercise_planned_set_segment_count_check",
+      gte(table.segmentCount, MINIMUM_SEGMENT_COUNT),
+    ),
+    check(
+      "workout_exercise_planned_set_weight_percentage_check",
+      between(
+        table.weightPercentage,
+        MINIMUM_DROP_SET_WEIGHT_PERCENTAGE,
+        MAXIMUM_DROP_SET_WEIGHT_PERCENTAGE,
+      ),
+    ),
+    check(
+      "workout_exercise_planned_set_pause_seconds_check",
+      gte(table.pauseSeconds, MINIMUM_PAUSE_SECONDS),
+    ),
+    check(
+      "workout_exercise_planned_set_no_intensity_technique_check",
+      sql`${table.intensityTechnique} is not null or (${table.segmentCount} is null and ${table.weightPercentage} is null and ${table.pauseSeconds} is null)`,
+    ),
+    check(
+      "workout_exercise_planned_set_drop_set_check",
+      sql`${table.intensityTechnique} <> 'drop_set' or (${table.segmentCount} is not null and ${table.pauseSeconds} is null)`,
+    ),
+    check(
+      "workout_exercise_planned_set_rest_pause_set_check",
+      sql`${table.intensityTechnique} <> 'rest_pause_set' or (${table.segmentCount} is not null and ${table.pauseSeconds} is not null and ${table.weightPercentage} is null)`,
     ),
   ],
 );

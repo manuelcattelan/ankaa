@@ -5,6 +5,7 @@ import type { FastifyInstance } from "fastify";
 
 import { ExerciseApplicationService } from "@ankaa/api/features/exercise/exercise-application-service";
 import { RoutineApplicationService } from "@ankaa/api/features/routine/routine-application-service";
+import { WorkoutApplicationService } from "@ankaa/api/features/workout/workout-application-service";
 import { createTestRuntime } from "@ankaa/api/shared/testing/create-test-runtime";
 import { Authentication } from "@ankaa/authentication/authentication";
 import { AuthenticationTestHelpers } from "@ankaa/authentication/testing/authentication-test-helpers";
@@ -12,6 +13,7 @@ import { createTestUser } from "@ankaa/authentication/testing/create-test-user";
 import { Database } from "@ankaa/database/database";
 import { verification } from "@ankaa/database/schema/authentication";
 import { routine, routineDay } from "@ankaa/database/schema/routine";
+import { workout } from "@ankaa/database/schema/workout";
 import { fakeEmailLayer } from "@ankaa/email/testing/fake-email-layer";
 import { fakeStalledEmailLayer } from "@ankaa/email/testing/fake-stalled-email-layer";
 import * as Cause from "effect/Cause";
@@ -36,6 +38,10 @@ const OTP_CODE_PATTERN = /^\d{6}$/;
 const RATE_LIMIT_MAXIMUM_REQUEST_COUNT = 1000;
 
 const DELETED_ROUTINE_ID = "019a0000-0000-7000-8000-000000000011";
+
+const DELETED_WORKOUT_ROUTINE_ID = "019a0000-0000-7000-8000-000000000013";
+
+const DELETED_WORKOUT_ID = "019a0000-0000-7000-8000-000000000021";
 
 const KEPT_ROUTINE_ID = "019a0000-0000-7000-8000-000000000012";
 
@@ -140,6 +146,26 @@ function insertRoutine({
   );
 }
 
+function insertWorkout({
+  id,
+  routineId,
+  runtime,
+  userId,
+}: {
+  id: string;
+  routineId: string;
+  runtime: TestRuntime;
+  userId: string;
+}) {
+  return runtime.runPromise(
+    Effect.gen(function* () {
+      const database = yield* Database;
+
+      yield* database.insert(workout).values({ id, routineId, userId });
+    }),
+  );
+}
+
 function listRowsOwnedBy({
   routineId,
   runtime,
@@ -165,6 +191,22 @@ function listRowsOwnedBy({
         }),
         users: yield* database.query.user.findMany({ where: { id: userId } }),
       };
+    }),
+  );
+}
+
+function listWorkoutsOwnedBy({
+  runtime,
+  userId,
+}: {
+  runtime: TestRuntime;
+  userId: string;
+}) {
+  return runtime.runPromise(
+    Effect.gen(function* () {
+      const database = yield* Database;
+
+      return yield* database.query.workout.findMany({ where: { userId } });
     }),
   );
 }
@@ -636,6 +678,40 @@ describe("applicationPlugin", () => {
     });
   });
 
+  it("deletes the User together with a Workout they started from one of their Routines when /api/auth/delete-user is requested with the token of the emailed link", async () => {
+    const testUser = await createTestUser(runtime);
+    await insertRoutine({
+      routineId: DELETED_WORKOUT_ROUTINE_ID,
+      runtime,
+      userId: testUser.user.id,
+    });
+    await insertWorkout({
+      id: DELETED_WORKOUT_ID,
+      routineId: DELETED_WORKOUT_ROUTINE_ID,
+      runtime,
+      userId: testUser.user.id,
+    });
+    await server.inject({
+      headers: Object.fromEntries(testUser.headers),
+      method: "POST",
+      payload: {},
+      url: "/api/auth/delete-user",
+    });
+    const token = /token=([\da-z]+)/.exec(String(sentEmails.at(-1)?.text))?.[1];
+
+    const response = await server.inject({
+      headers: Object.fromEntries(testUser.headers),
+      method: "POST",
+      payload: { token },
+      url: "/api/auth/delete-user",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(
+      await listWorkoutsOwnedBy({ runtime, userId: testUser.user.id }),
+    ).toStrictEqual([]);
+  });
+
   it("rejects the token of another User's emailed link with 404 and the code INVALID_TOKEN, and keeps that User and every row they own", async () => {
     const linkOwner = await createTestUser(runtime);
     const otherUser = await createTestUser(runtime);
@@ -741,6 +817,7 @@ describe("applicationPlugin", () => {
             ),
         }),
         Layer.mock(RoutineApplicationService, {}),
+        Layer.mock(WorkoutApplicationService, {}),
       ),
       level: "silent",
       logLines: [],
@@ -805,6 +882,7 @@ describe("applicationPlugin", () => {
           list: () => Effect.log("Listing the Exercises").pipe(Effect.as([])),
         }),
         Layer.mock(RoutineApplicationService, {}),
+        Layer.mock(WorkoutApplicationService, {}),
       ),
       level: "info",
       logLines,
@@ -831,6 +909,7 @@ describe("applicationPlugin", () => {
         }),
         Layer.mock(ExerciseApplicationService, {}),
         Layer.mock(RoutineApplicationService, {}),
+        Layer.mock(WorkoutApplicationService, {}),
       ),
       level: "info",
       logLines,
@@ -859,6 +938,7 @@ describe("applicationPlugin", () => {
         }),
         Layer.mock(ExerciseApplicationService, {}),
         Layer.mock(RoutineApplicationService, {}),
+        Layer.mock(WorkoutApplicationService, {}),
       ),
       level: "info",
       logLines,
@@ -885,6 +965,7 @@ describe("applicationPlugin", () => {
         }),
         Layer.mock(ExerciseApplicationService, {}),
         Layer.mock(RoutineApplicationService, {}),
+        Layer.mock(WorkoutApplicationService, {}),
       ),
       level: "debug",
       logLines,
@@ -908,6 +989,7 @@ describe("applicationPlugin", () => {
         }),
         Layer.mock(ExerciseApplicationService, {}),
         Layer.mock(RoutineApplicationService, {}),
+        Layer.mock(WorkoutApplicationService, {}),
       ),
       level: "silent",
       logLines,
@@ -935,6 +1017,7 @@ describe("applicationPlugin", () => {
         }),
         Layer.mock(ExerciseApplicationService, {}),
         Layer.mock(RoutineApplicationService, {}),
+        Layer.mock(WorkoutApplicationService, {}),
       ),
       level: "info",
       logLines,
@@ -985,6 +1068,7 @@ describe("applicationPlugin", () => {
         }),
         Layer.mock(ExerciseApplicationService, {}),
         Layer.mock(RoutineApplicationService, {}),
+        Layer.mock(WorkoutApplicationService, {}),
       ),
       level: "info",
       logLines,

@@ -16,6 +16,7 @@ import { Button } from "#/shared/components/button.tsx";
 import { Text } from "#/shared/components/text.tsx";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { createId } from "#/shared/interactors/create-id.ts";
+import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 const MINIMUM_SUPERSET_EXERCISE_COUNT = 2;
 
@@ -65,7 +66,7 @@ export function RoutineEditorExerciseGroup({
 
   return (
     <>
-      {isSuperset ? <Text>{ROUTINE_MESSAGES.supersetLabel}</Text> : null}
+      {isSuperset ? <Text>{SHARED_MESSAGES.supersetLabel}</Text> : null}
       {exerciseGroup.exercises.map((routineExercise) => (
         <Fragment key={routineExercise.id}>
           {"warmUpExercises" in routineExercise

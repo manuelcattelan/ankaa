@@ -13,6 +13,7 @@ import { PickerField } from "#/shared/components/picker-field.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
 import { Text } from "#/shared/components/text.tsx";
 import { decodeForm } from "#/shared/core/decode-form.ts";
+import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 const INTENSITY_TECHNIQUE_OPTIONS = [
   "none",
@@ -66,7 +67,7 @@ export function RoutineEditorSet({
 
   return (
     <>
-      <Text>{ROUTINE_MESSAGES.setLabel(setNumber)}</Text>
+      <Text>{SHARED_MESSAGES.setLabel(setNumber)}</Text>
       <PickerField
         label={ROUTINE_MESSAGES.setTypeLabel}
         onChangeSelectedOption={(type) => {

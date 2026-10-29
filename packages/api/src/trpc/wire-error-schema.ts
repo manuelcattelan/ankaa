@@ -1,4 +1,6 @@
 import { RoutineNameConflictError } from "@ankaa/core/features/routine/errors/routine-name-conflict-error";
+import { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
+import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 import * as Schema from "effect/Schema";
 
@@ -10,4 +12,6 @@ export type WireError = typeof wireErrorSchema.Type;
 export const wireErrorSchema = Schema.Union([
   RoutineNameConflictError,
   RoutineNotFoundError,
+  WorkoutInProgressConflictError,
+  WorkoutNotFoundError,
 ]);

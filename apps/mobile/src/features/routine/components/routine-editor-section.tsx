@@ -10,6 +10,7 @@ import { RoutineEditorExerciseGroup } from "#/features/routine/components/routin
 import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
 import { Button } from "#/shared/components/button.tsx";
 import { Text } from "#/shared/components/text.tsx";
+import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 /**
  * Where the exercise that the User picks goes: a new Exercise group at the
@@ -36,7 +37,7 @@ export function RoutineEditorSection({
 }) {
   return (
     <>
-      <Text>{ROUTINE_MESSAGES.sectionLabels[section]}</Text>
+      <Text>{SHARED_MESSAGES.sectionLabels[section]}</Text>
       {exerciseGroups.map((exerciseGroup, exerciseGroupIndex) => (
         <RoutineEditorExerciseGroup
           dispatch={dispatch}

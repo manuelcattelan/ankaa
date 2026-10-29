@@ -6,5 +6,7 @@ export function getWireErrorCode(wireError: WireError) {
   return Match.valueTags(wireError, {
     RoutineNameConflictError: () => "CONFLICT" as const,
     RoutineNotFoundError: () => "NOT_FOUND" as const,
+    WorkoutInProgressConflictError: () => "CONFLICT" as const,
+    WorkoutNotFoundError: () => "NOT_FOUND" as const,
   });
 }

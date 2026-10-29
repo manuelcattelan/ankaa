@@ -8,6 +8,7 @@ import { AuthenticationApplicationService } from "#/features/authentication/auth
 import { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts";
 import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
 import { RoutineApplicationService } from "#/features/routine/routine-application-service.ts";
+import { WorkoutApplicationService } from "#/features/workout/workout-application-service.ts";
 import { ExerciseApplicationService } from "#/shared/exercise-application-service.ts";
 import { Accessibility } from "#/shared/services/accessibility.ts";
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
@@ -29,6 +30,7 @@ export const applicationLayer = Layer.mergeAll(
   GoogleSignIn.layer,
   RoutineApplicationService.layer,
   TrpcClient.layer,
+  WorkoutApplicationService.layer,
 ).pipe(
   Layer.provide(
     ConfigProvider.layer(

@@ -12,6 +12,7 @@ import { TextField } from "#/shared/components/text-field.tsx";
 import { Text } from "#/shared/components/text.tsx";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { createId } from "#/shared/interactors/create-id.ts";
+import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 /**
  * Edits one Routine exercise, with `children` for the actions that only some
@@ -47,7 +48,7 @@ export function RoutineEditorExercise({
       <Text>{exerciseNames.get(routineExercise.exerciseId)}</Text>
       {warmUpForExerciseName === undefined ? null : (
         <Text>
-          {ROUTINE_MESSAGES.warmUpForExerciseLabel(warmUpForExerciseName)}
+          {SHARED_MESSAGES.warmUpForExerciseLabel(warmUpForExerciseName)}
         </Text>
       )}
       <TextField

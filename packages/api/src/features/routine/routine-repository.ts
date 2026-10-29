@@ -13,12 +13,12 @@ import {
   routineExerciseSet,
 } from "@ankaa/database/schema/routine";
 import { eq, sql } from "drizzle-orm";
-import * as Cause from "effect/Cause";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
-import { isSqlError } from "effect/sql/SqlError";
+
+import { buildIntensityTechnique } from "#/shared/build-intensity-technique.ts";
+import { isUniqueIndexViolation } from "#/shared/is-unique-index-violation.ts";
 
 type ListedRoutine = ReturnType<typeof buildRoutine>;
 
@@ -170,7 +170,7 @@ export class RoutineRepository extends Context.Service<
           })
           .pipe(
             Effect.catch((error) =>
-              isRoutineNameIndexViolation(error)
+              isUniqueIndexViolation({ error, index: ROUTINE_NAME_INDEX })
                 ? Effect.fail(new RoutineNameConflictError())
                 : Effect.die(error),
             ),
@@ -234,30 +234,6 @@ export class RoutineRepository extends Context.Service<
   static readonly layer = RoutineRepository.layerNoDeps.pipe(
     Layer.provide(Database.layer),
   );
-}
-
-function buildIntensityTechnique(set: RoutineExerciseSetRow) {
-  if (set.intensityTechnique === "drop_set" && set.segmentCount !== null) {
-    return {
-      _tag: "DropSet" as const,
-      segmentCount: set.segmentCount,
-      weightPercentage: set.weightPercentage,
-    };
-  }
-
-  if (
-    set.intensityTechnique === "rest_pause_set" &&
-    set.segmentCount !== null &&
-    set.pauseSeconds !== null
-  ) {
-    return {
-      _tag: "RestPauseSet" as const,
-      pauseSeconds: set.pauseSeconds,
-      segmentCount: set.segmentCount,
-    };
-  }
-
-  return null;
 }
 
 /**
@@ -434,22 +410,4 @@ function buildRoutineRows(input: RoutineSaveInput) {
       }),
     ),
   };
-}
-
-/**
- * Tells whether a query failed on the index that keeps the names of a User's
- * live Routines unique, which the driver reports as a `UniqueViolation`
- * inside the query error's `Cause`.
- */
-function isRoutineNameIndexViolation(error: { cause: unknown }) {
-  return (
-    Cause.isCause(error.cause) &&
-    Option.exists(
-      Cause.findErrorOption(error.cause),
-      (sqlError) =>
-        isSqlError(sqlError) &&
-        sqlError.reason._tag === "UniqueViolation" &&
-        sqlError.reason.constraint === ROUTINE_NAME_INDEX,
-    )
-  );
 }

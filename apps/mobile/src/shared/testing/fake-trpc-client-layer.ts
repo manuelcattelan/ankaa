@@ -12,6 +12,10 @@ import { ROUTINE_DELETE_WIRE_ERRORS } from "@ankaa/core/features/routine/errors/
 import { ROUTINE_SAVE_WIRE_ERRORS } from "@ankaa/core/features/routine/errors/routine-save-wire-errors";
 import { routineDeleteInputSchema } from "@ankaa/core/features/routine/schemas/routine-delete-input-schema";
 import { routineSaveInputSchema } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
+import { WORKOUT_START_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-start-wire-errors";
+import { WORKOUT_STOP_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-stop-wire-errors";
+import { workoutStartInputSchema } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
+import { workoutStopInputSchema } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
@@ -85,6 +89,9 @@ const FAKE_TRPC_WIRE_ERRORS: {
   "routine.delete": ROUTINE_DELETE_WIRE_ERRORS,
   "routine.list": [],
   "routine.save": ROUTINE_SAVE_WIRE_ERRORS,
+  "workout.findInProgress": [],
+  "workout.start": WORKOUT_START_WIRE_ERRORS,
+  "workout.stop": WORKOUT_STOP_WIRE_ERRORS,
 };
 
 /**
@@ -217,6 +224,25 @@ function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
       .mutation(
         createFakeTrpcResolver({
           response: fakeTrpcResponses["routine.save"],
+        }),
+      ),
+    "workout.findInProgress": t.procedure.query(
+      createFakeTrpcResolver({
+        response: fakeTrpcResponses["workout.findInProgress"],
+      }),
+    ),
+    "workout.start": t.procedure
+      .input(Schema.toStandardSchemaV1(workoutStartInputSchema))
+      .mutation(
+        createFakeTrpcResolver({
+          response: fakeTrpcResponses["workout.start"],
+        }),
+      ),
+    "workout.stop": t.procedure
+      .input(Schema.toStandardSchemaV1(workoutStopInputSchema))
+      .mutation(
+        createFakeTrpcResolver({
+          response: fakeTrpcResponses["workout.stop"],
         }),
       ),
   };

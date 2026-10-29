@@ -11,6 +11,7 @@ import * as ManagedRuntime from "effect/ManagedRuntime";
 
 import { ExerciseApplicationService } from "#/features/exercise/exercise-application-service.ts";
 import { RoutineApplicationService } from "#/features/routine/routine-application-service.ts";
+import { WorkoutApplicationService } from "#/features/workout/workout-application-service.ts";
 import { pinoBridge } from "#/shared/pino-bridge.ts";
 
 export type TestRuntime = ReturnType<typeof createTestRuntime>;
@@ -33,6 +34,7 @@ export function createTestRuntime(
       Database.layer,
       ExerciseApplicationService.layer,
       RoutineApplicationService.layer,
+      WorkoutApplicationService.layer,
       Logger.layer([pinoBridge]),
     ).pipe(
       Layer.provideMerge(testDatabaseLayer),

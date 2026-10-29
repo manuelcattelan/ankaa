@@ -147,6 +147,10 @@ export const relations = defineRelations(
       }),
     },
     workout: {
+      exerciseGroups: r.many.workoutExerciseGroup({
+        from: r.workout.id,
+        to: r.workoutExerciseGroup.workoutId,
+      }),
       routine: r.one.routine({
         from: r.workout.routineId,
         optional: false,
@@ -157,10 +161,6 @@ export const relations = defineRelations(
         optional: false,
         to: r.user.id,
       }),
-      workoutExercises: r.many.workoutExercise({
-        from: r.workout.id,
-        to: r.workoutExercise.workoutId,
-      }),
     },
     workoutExercise: {
       exercise: r.one.exercise({
@@ -168,24 +168,45 @@ export const relations = defineRelations(
         optional: false,
         to: r.exercise.id,
       }),
+      plannedSets: r.many.workoutExercisePlannedSet({
+        from: r.workoutExercise.id,
+        to: r.workoutExercisePlannedSet.workoutExerciseId,
+      }),
+      warmUpExercises: r.many.workoutExercise({
+        alias: "warmUp",
+        from: r.workoutExercise.id,
+        to: r.workoutExercise.warmUpForWorkoutExerciseId,
+      }),
       warmUpForWorkoutExercise: r.one.workoutExercise({
         alias: "warmUp",
         from: r.workoutExercise.warmUpForWorkoutExerciseId,
         to: r.workoutExercise.id,
       }),
-      warmUpWorkoutExercises: r.many.workoutExercise({
-        alias: "warmUp",
-        from: r.workoutExercise.id,
-        to: r.workoutExercise.warmUpForWorkoutExerciseId,
-      }),
-      workout: r.one.workout({
-        from: r.workoutExercise.workoutId,
-        optional: false,
-        to: r.workout.id,
+      workoutExerciseGroup: r.one.workoutExerciseGroup({
+        from: r.workoutExercise.workoutExerciseGroupId,
+        to: r.workoutExerciseGroup.id,
       }),
       workoutExerciseSets: r.many.workoutExerciseSet({
         from: r.workoutExercise.id,
         to: r.workoutExerciseSet.workoutExerciseId,
+      }),
+    },
+    workoutExerciseGroup: {
+      exercises: r.many.workoutExercise({
+        from: r.workoutExerciseGroup.id,
+        to: r.workoutExercise.workoutExerciseGroupId,
+      }),
+      workout: r.one.workout({
+        from: r.workoutExerciseGroup.workoutId,
+        optional: false,
+        to: r.workout.id,
+      }),
+    },
+    workoutExercisePlannedSet: {
+      workoutExercise: r.one.workoutExercise({
+        from: r.workoutExercisePlannedSet.workoutExerciseId,
+        optional: false,
+        to: r.workoutExercise.id,
       }),
     },
     workoutExerciseSet: {

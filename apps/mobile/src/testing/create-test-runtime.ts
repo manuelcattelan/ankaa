@@ -8,6 +8,7 @@ import { AuthenticationApplicationService } from "#/features/authentication/auth
 import { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts";
 import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
 import { RoutineApplicationService } from "#/features/routine/routine-application-service.ts";
+import { WorkoutApplicationService } from "#/features/workout/workout-application-service.ts";
 import { createRuntime } from "#/layer.ts";
 import { ExerciseApplicationService } from "#/shared/exercise-application-service.ts";
 import { Crypto } from "#/shared/services/crypto.ts";
@@ -45,6 +46,7 @@ export function createTestRuntime(layers: TestRuntimeLayers) {
       Layer.mergeAll(
         ExerciseApplicationService.layerNoDeps,
         RoutineApplicationService.layerNoDeps,
+        WorkoutApplicationService.layerNoDeps,
       ).pipe(Layer.provideMerge(layers.trpcClient ?? fakeTrpcClientLayer({}))),
     ).pipe(
       Layer.provideMerge(
