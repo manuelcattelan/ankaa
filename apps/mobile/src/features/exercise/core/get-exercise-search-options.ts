@@ -2,7 +2,7 @@ import type { Exercise } from "#/shared/exercise-application-service.ts";
 
 export function getExerciseSearchOptions(exercises: Exercise[]) {
   return {
-    equipmentOptions: [
+    equipment: [
       ...new Set(
         exercises.flatMap((exercise) =>
           exercise.equipment.map(
@@ -11,7 +11,7 @@ export function getExerciseSearchOptions(exercises: Exercise[]) {
         ),
       ),
     ],
-    muscleGroupOptions: [
+    muscleGroups: [
       ...new Set(
         exercises.flatMap((exercise) =>
           exercise.muscleGroups.map(

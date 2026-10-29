@@ -13,19 +13,17 @@ export const testAuthenticationLayer = Layer.effectContext(
   Effect.gen(function* () {
     const authenticationOptions = yield* loadAuthenticationOptions();
 
-    const betterAuthentication = betterAuth({
+    const auth = betterAuth({
       ...authenticationOptions,
       plugins: [...authenticationOptions.plugins, testUtils()],
     });
 
-    const authentication = yield* makeAuthentication(betterAuthentication);
+    const authentication = yield* makeAuthentication(auth);
 
-    const betterAuthenticationContext = yield* Effect.promise(
-      () => betterAuthentication.$context,
-    );
+    const ctx = yield* Effect.promise(() => auth.$context);
 
     return Context.make(Authentication, authentication).pipe(
-      Context.add(AuthenticationTestHelpers, betterAuthenticationContext.test),
+      Context.add(AuthenticationTestHelpers, ctx.test),
     );
   }),
 );

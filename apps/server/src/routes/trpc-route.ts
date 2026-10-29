@@ -15,18 +15,18 @@ export const trpcRoute = (async (server, { runtime }) => {
   await server.register(fastifyTRPCPlugin, {
     trpcOptions: {
       createContext: (options) => createContext({ ...options, runtime }),
-      onError: ({ error, path, req: request }) => {
+      onError: ({ error, path, req }) => {
         const message = `Failed to handle tRPC request on path "${path}"`;
 
         if (
           getHTTPStatusCodeFromError(error) < HTTP_STATUS_INTERNAL_SERVER_ERROR
         ) {
-          request.log.info(error, message);
+          req.log.info(error, message);
 
           return;
         }
 
-        request.log.error(error, message);
+        req.log.error(error, message);
       },
       router: appRouter,
     } satisfies FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],

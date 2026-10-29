@@ -8,7 +8,7 @@ import { expo } from "@better-auth/expo";
 import { emailOTP } from "better-auth/plugins";
 
 type CreateAuthenticationOptionsOptions = {
-  appleAppBundleIdentifier: string;
+  appleBundleId: string;
   baseUrl: string;
   database: DB;
   googleIosClientId: string;
@@ -32,7 +32,7 @@ const DEVELOPMENT_TRUSTED_ORIGINS = [
 ];
 
 export function createAuthenticationOptions({
-  appleAppBundleIdentifier,
+  appleBundleId,
   baseUrl,
   database,
   googleIosClientId,
@@ -59,7 +59,7 @@ export function createAuthenticationOptions({
     secret,
     session: { cookieCache: { enabled: true } },
     socialProviders: {
-      apple: { clientId: appleAppBundleIdentifier },
+      apple: { clientId: appleBundleId },
       google: { clientId: [googleWebClientId, googleIosClientId] },
     },
     trustedOrigins: [

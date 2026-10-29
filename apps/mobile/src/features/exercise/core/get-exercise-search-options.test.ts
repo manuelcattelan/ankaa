@@ -34,15 +34,15 @@ describe("getExerciseSearchOptions", () => {
     expect(
       getExerciseSearchOptions([OVERHEAD_PRESS_EXERCISE, BENCH_PRESS_EXERCISE]),
     ).toEqual({
-      equipmentOptions: ["barbell", "rack", "bench"],
-      muscleGroupOptions: ["front_deltoid", "triceps", "chest"],
+      equipment: ["barbell", "rack", "bench"],
+      muscleGroups: ["front_deltoid", "triceps", "chest"],
     });
   });
 
   it("returns no option for no Exercise", () => {
     expect(getExerciseSearchOptions([])).toEqual({
-      equipmentOptions: [],
-      muscleGroupOptions: [],
+      equipment: [],
+      muscleGroups: [],
     });
   });
 });

@@ -34,12 +34,12 @@ export type FakeTrpcResponses = {
 };
 
 type CreateFakeTrpcResolverOptions<TProcedure extends AnyProcedure> = {
-  fakeTrpcResponse: FakeTrpcResponse<TProcedure> | undefined;
+  response: FakeTrpcResponse<TProcedure> | undefined;
 };
 
 type FakeTrpcClientLayerOptions = {
-  fakeTrpcResponses?: FakeTrpcResponses;
-  receivedTrpcPaths?: string[];
+  receivedPaths?: string[];
+  responses?: FakeTrpcResponses;
 };
 
 type FakeTrpcResolverOptions<TProcedure extends AnyProcedure> = {
@@ -76,20 +76,20 @@ type TrpcProcedures = {
 
 /**
  * Serves the real tRPC client from a fake router that answers each procedure
- * with its response in `fakeTrpcResponses`, and records the path of every
- * procedure the client calls into `receivedTrpcPaths`. A procedure with no
- * response fails with `NOT_FOUND`.
+ * with its response in `responses`, and records the path of every procedure
+ * the client calls into `receivedPaths`. A procedure with no response fails
+ * with `NOT_FOUND`.
  */
 export function fakeTrpcClientLayer({
-  fakeTrpcResponses = {},
-  receivedTrpcPaths = [],
+  receivedPaths = [],
+  responses = {},
 }: FakeTrpcClientLayerOptions) {
   return Layer.effect(
     TrpcClient,
     Effect.gen(function* () {
       const authenticationClient = yield* AuthenticationClient;
 
-      const fakeTrpcRouter = createFakeTrpcRouter(fakeTrpcResponses);
+      const fakeTrpcRouter = createFakeTrpcRouter(responses);
 
       return TrpcClient.of(
         makeTrpcClient(
@@ -99,7 +99,7 @@ export function fakeTrpcClientLayer({
                 fetch: (url, options) => {
                   const fakeTrpcRequest = new Request(url, options);
 
-                  receivedTrpcPaths.push(
+                  receivedPaths.push(
                     ...getFakeTrpcRequestPaths(fakeTrpcRequest),
                   );
 
@@ -120,32 +120,32 @@ export function fakeTrpcClientLayer({
 }
 
 function createFakeTrpcResolver<TProcedure extends AnyProcedure>({
-  fakeTrpcResponse,
+  response,
 }: CreateFakeTrpcResolverOptions<TProcedure>) {
   return async ({ input, path }: FakeTrpcResolverOptions<TProcedure>) => {
-    if (!fakeTrpcResponse) {
+    if (!response) {
       throw new TRPCError({
         code: "NOT_FOUND",
         message: `No fake response for "${path}"`,
       });
     }
 
-    return await fakeTrpcResponse(input);
+    return await response(input);
   };
 }
 
 function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
-  const trpc = initTRPC.create();
+  const t = initTRPC.create();
 
   const fakeTrpcProcedures: FakeTrpcProcedures = {
-    "exercise.list": trpc.procedure.query(
+    "exercise.list": t.procedure.query(
       createFakeTrpcResolver({
-        fakeTrpcResponse: fakeTrpcResponses["exercise.list"],
+        response: fakeTrpcResponses["exercise.list"],
       }),
     ),
   };
 
-  return trpc.router(fakeTrpcProcedures);
+  return t.router(fakeTrpcProcedures);
 }
 
 function getFakeTrpcRequestPaths(fakeTrpcRequest: Request) {

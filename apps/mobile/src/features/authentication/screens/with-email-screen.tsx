@@ -7,8 +7,8 @@ import { getAuthenticationErrorMessage } from "#/features/authentication/core/ge
 import { getEmailValidationErrorMessage } from "#/features/authentication/core/get-email-validation-error-message.ts";
 import { validateEmail } from "#/features/authentication/core/validate-email.ts";
 import { announceAuthenticationError } from "#/features/authentication/interactors/announce-authentication-error.ts";
-import { withEmailScreenMessages } from "#/features/authentication/messages/with-email-screen-messages.ts";
-import { createOtpCodeRequestMutationOptions } from "#/features/authentication/mutations/create-otp-code-request-mutation-options.ts";
+import { WITH_EMAIL_SCREEN_MESSAGES } from "#/features/authentication/messages/with-email-screen-messages.ts";
+import { otpCodeRequestMutationOptions } from "#/features/authentication/mutations/otp-code-request-mutation-options.ts";
 import { Button } from "#/shared/components/button.tsx";
 import { ScrollView } from "#/shared/components/scroll-view.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
@@ -24,7 +24,7 @@ export function WithEmailScreen() {
   const [emailValidationError, setEmailValidationError] = useState<string>();
 
   const sendOtpCode = useMutation({
-    ...createOtpCodeRequestMutationOptions(runtime),
+    ...otpCodeRequestMutationOptions(runtime),
     onError: (error) => {
       runtime.runSync(announceAuthenticationError(error));
     },
@@ -82,7 +82,7 @@ export function WithEmailScreen() {
         enterKeyHint="send"
         errorMessage={emailErrorMessage}
         inputMode="email"
-        label={withEmailScreenMessages.emailLabel}
+        label={WITH_EMAIL_SCREEN_MESSAGES.emailLabel}
         onChangeText={setEmail}
         onSubmitEditing={handleSendOtpCode}
         value={email}
@@ -90,7 +90,7 @@ export function WithEmailScreen() {
       <Button
         isBusy={sendOtpCode.isPending}
         onPress={handleSendOtpCode}
-        title={withEmailScreenMessages.sendOtpCodeButton}
+        title={WITH_EMAIL_SCREEN_MESSAGES.sendOtpCodeButton}
       />
     </ScrollView>
   );

@@ -15,12 +15,12 @@ import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authenticat
 import { fakeTrpcClientLayer } from "#/shared/testing/fake-trpc-client-layer.ts";
 
 export type TestRuntimeLayers = {
-  accessibilityLayer?: Layer.Layer<Accessibility>;
-  appleSignInLayer?: Layer.Layer<AppleSignIn>;
-  authenticationClientLayer?: Layer.Layer<AuthenticationClient>;
-  cryptoLayer?: Layer.Layer<Crypto>;
-  googleSignInLayer?: Layer.Layer<GoogleSignIn>;
-  trpcClientLayer?: Layer.Layer<TrpcClient, never, AuthenticationClient>;
+  accessibility?: Layer.Layer<Accessibility>;
+  appleSignIn?: Layer.Layer<AppleSignIn>;
+  authenticationClient?: Layer.Layer<AuthenticationClient>;
+  crypto?: Layer.Layer<Crypto>;
+  googleSignIn?: Layer.Layer<GoogleSignIn>;
+  trpcClient?: Layer.Layer<TrpcClient, never, AuthenticationClient>;
 };
 
 /**
@@ -28,23 +28,20 @@ export type TestRuntimeLayers = {
  * from `Layer.mock` for every Service that no default scenario reaches, so
  * an unexpected use fails loudly.
  */
-export function createTestRuntime({
-  accessibilityLayer = fakeAccessibilityLayer([]),
-  appleSignInLayer = fakeAppleSignInLayer({ isAvailable: false }),
-  authenticationClientLayer = fakeAuthenticationClientLayer({}),
-  cryptoLayer = Layer.mock(Crypto, {}),
-  googleSignInLayer = Layer.mock(GoogleSignIn, {}),
-  trpcClientLayer = fakeTrpcClientLayer({}),
-}: TestRuntimeLayers) {
+export function createTestRuntime(layers: TestRuntimeLayers) {
   return createRuntime(
     Layer.mergeAll(
-      accessibilityLayer,
-      appleSignInLayer,
-      cryptoLayer,
-      googleSignInLayer,
+      layers.accessibility ?? fakeAccessibilityLayer([]),
+      layers.appleSignIn ?? fakeAppleSignInLayer({ isAvailable: false }),
+      layers.crypto ?? Layer.mock(Crypto, {}),
+      layers.googleSignIn ?? Layer.mock(GoogleSignIn, {}),
       ExerciseApplicationService.layerNoDeps.pipe(
-        Layer.provideMerge(trpcClientLayer),
+        Layer.provideMerge(layers.trpcClient ?? fakeTrpcClientLayer({})),
       ),
-    ).pipe(Layer.provideMerge(authenticationClientLayer)),
+    ).pipe(
+      Layer.provideMerge(
+        layers.authenticationClient ?? fakeAuthenticationClientLayer({}),
+      ),
+    ),
   );
 }

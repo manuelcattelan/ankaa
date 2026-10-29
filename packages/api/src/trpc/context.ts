@@ -27,19 +27,19 @@ type CreateInnerContextOptions = {
 };
 
 export async function createContext({
-  req: request,
-  res: response,
+  req,
+  res,
   runtime,
 }: CreateContextOptions) {
   const session = await runtime.runPromise(
     Effect.gen(function* () {
       const authentication = yield* Authentication;
 
-      return yield* authentication.getSession(fromNodeHeaders(request.headers));
-    }).pipe(Effect.provideService(PinoLogger, request.log)),
+      return yield* authentication.getSession(fromNodeHeaders(req.headers));
+    }).pipe(Effect.provideService(PinoLogger, req.log)),
   );
 
-  return { ...createInnerContext({ runtime, session }), request, response };
+  return { ...createInnerContext({ runtime, session }), req, res };
 }
 
 export function createInnerContext({

@@ -5,7 +5,7 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import type { TrpcError } from "#/shared/errors/trpc-error.ts";
+import type { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
 
 import { TrpcClient } from "#/shared/services/trpc-client.ts";
 
@@ -13,7 +13,7 @@ export type Exercise =
   inferRouterOutputs<AppRouter>["exercise"]["list"][number];
 
 type ExerciseApplicationServiceShape = {
-  readonly list: () => Effect.Effect<Exercise[], TrpcError>;
+  readonly list: () => Effect.Effect<Exercise[], TrpcClientError>;
 };
 
 export class ExerciseApplicationService extends Context.Service<
@@ -27,8 +27,8 @@ export class ExerciseApplicationService extends Context.Service<
 
       const list = Effect.fn("ExerciseApplicationService.list")(function* () {
         return yield* trpcClient.request({
-          call: ({ signal, vanillaTrpcClient }) =>
-            vanillaTrpcClient.exercise.list.query(undefined, { signal }),
+          call: ({ signal, trpc }) =>
+            trpc.exercise.list.query(undefined, { signal }),
           errors: [],
         });
       });

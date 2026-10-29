@@ -28,7 +28,7 @@ type GetSpecifierExportedNameOptions = {
   specifier: TSESTree.ExportSpecifier;
 };
 
-const TYPE_DECLARATION_TYPES = new Set<string>([
+const typeDeclarationTypes = new Set<string>([
   AST_NODE_TYPES.TSInterfaceDeclaration,
   AST_NODE_TYPES.TSTypeAliasDeclaration,
 ]);
@@ -93,7 +93,7 @@ function convertToKebabCase(name: string) {
 function getDeclarationExportedNames(
   declaration: TSESTree.NamedExportDeclarations,
 ) {
-  const isType = TYPE_DECLARATION_TYPES.has(declaration.type);
+  const isType = typeDeclarationTypes.has(declaration.type);
 
   if (declaration.type === AST_NODE_TYPES.VariableDeclaration) {
     return declaration.declarations.flatMap((declarator) =>

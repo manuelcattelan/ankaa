@@ -4,7 +4,7 @@ import type { ApplicationRuntime } from "#/layer.ts";
 
 import { checkAppleSignInAvailability } from "#/features/authentication/interactors/check-apple-sign-in-availability.ts";
 
-export function createAppleSignInAvailabilityQueryOptions(
+export function appleSignInAvailabilityQueryOptions(
   runtime: ApplicationRuntime,
 ) {
   return queryOptions({

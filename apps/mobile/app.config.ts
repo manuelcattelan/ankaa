@@ -1,7 +1,7 @@
 import type { ExpoConfig } from "expo/config";
 
-const APP_IDENTIFIER = "app.ankaa";
-const APP_SLUG = "ankaa";
+const APPLICATION_ID = "app.ankaa";
+const APPLICATION_SLUG = "ankaa";
 
 const GOOGLE_IOS_CLIENT_ID_PATTERN = /^(.+)\.apps\.googleusercontent\.com$/;
 
@@ -27,7 +27,7 @@ const configuration: ExpoConfig = {
       foregroundImage: "./assets/images/android-icon-foreground.png",
       monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
-    package: APP_IDENTIFIER,
+    package: APPLICATION_ID,
     predictiveBackGestureEnabled: false,
   },
   experiments: {
@@ -36,7 +36,7 @@ const configuration: ExpoConfig = {
   },
   icon: "./assets/images/icon.png",
   ios: {
-    bundleIdentifier: APP_IDENTIFIER,
+    bundleIdentifier: APPLICATION_ID,
     icon: "./assets/expo.icon",
     usesAppleSignIn: true,
   },
@@ -57,8 +57,8 @@ const configuration: ExpoConfig = {
     "expo-apple-authentication",
     ["@react-native-google-signin/google-signin", { iosUrlScheme }],
   ],
-  scheme: APP_SLUG,
-  slug: APP_SLUG,
+  scheme: APPLICATION_SLUG,
+  slug: APPLICATION_SLUG,
   userInterfaceStyle: "automatic",
   version: "1.0.0",
   web: {

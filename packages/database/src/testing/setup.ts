@@ -21,7 +21,7 @@ import "#/testing/provided-context.ts";
 type BuildTemplateDatabaseOptions = {
   maintenanceClient: Client;
   maintenanceDatabaseUrl: string;
-  templateDatabaseName: string;
+  name: string;
 };
 
 const MIGRATIONS_HASH_LENGTH = 16;
@@ -54,7 +54,7 @@ export async function setup(project: TestProject) {
   const postgresContainer = await startPostgresContainer();
 
   const maintenanceDatabaseUrl = getDatabaseUrl({
-    databaseName: "postgres",
+    name: "postgres",
     postgresServerUrl: postgresContainer.getConnectionUri(),
   });
 
@@ -69,12 +69,12 @@ export async function setup(project: TestProject) {
 async function buildTemplateDatabase({
   maintenanceClient,
   maintenanceDatabaseUrl,
-  templateDatabaseName,
+  name,
 }: BuildTemplateDatabaseOptions) {
-  const buildingDatabaseName = `${templateDatabaseName}_building`;
+  const buildingDatabaseName = `${name}_building`;
 
   await dropDatabase({
-    databaseName: buildingDatabaseName,
+    name: buildingDatabaseName,
     postgresClient: maintenanceClient,
   });
 
@@ -83,22 +83,22 @@ async function buildTemplateDatabase({
   );
 
   await queryDatabase({
-    databaseUrl: getDatabaseUrl({
-      databaseName: buildingDatabaseName,
-      postgresServerUrl: maintenanceDatabaseUrl,
-    }),
     execute: (migrationClient) =>
       migrate(drizzle({ client: migrationClient }), {
         migrationsFolder: migrationsFolderPath,
       }),
+    url: getDatabaseUrl({
+      name: buildingDatabaseName,
+      postgresServerUrl: maintenanceDatabaseUrl,
+    }),
   });
 
   await maintenanceClient.query(
-    `ALTER DATABASE ${escapeIdentifier(buildingDatabaseName)} RENAME TO ${escapeIdentifier(templateDatabaseName)}`,
+    `ALTER DATABASE ${escapeIdentifier(buildingDatabaseName)} RENAME TO ${escapeIdentifier(name)}`,
   );
 
   await maintenanceClient.query(
-    `ALTER DATABASE ${escapeIdentifier(templateDatabaseName)} WITH IS_TEMPLATE true ALLOW_CONNECTIONS false`,
+    `ALTER DATABASE ${escapeIdentifier(name)} WITH IS_TEMPLATE true ALLOW_CONNECTIONS false`,
   );
 }
 
@@ -106,7 +106,6 @@ async function createTemplateDatabase(maintenanceDatabaseUrl: string) {
   const templateDatabaseName = `ankaa_template_${getMigrationsHash()}`;
 
   await queryDatabase({
-    databaseUrl: maintenanceDatabaseUrl,
     execute: async (maintenanceClient) => {
       await maintenanceClient.query("SELECT pg_advisory_lock($1)", [
         TEMPLATE_DATABASE_LOCK_KEY,
@@ -121,10 +120,11 @@ async function createTemplateDatabase(maintenanceDatabaseUrl: string) {
         await buildTemplateDatabase({
           maintenanceClient,
           maintenanceDatabaseUrl,
-          templateDatabaseName,
+          name: templateDatabaseName,
         });
       }
     },
+    url: maintenanceDatabaseUrl,
   });
 
   return templateDatabaseName;

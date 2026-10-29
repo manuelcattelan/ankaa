@@ -2,9 +2,9 @@ import type { KeyboardAwareScrollViewProps } from "react-native-keyboard-control
 
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
-type ScrollViewProperties = KeyboardAwareScrollViewProps;
+type ScrollViewProps = KeyboardAwareScrollViewProps;
 
-export function ScrollView({ children, ...rest }: ScrollViewProperties) {
+export function ScrollView({ children, ...rest }: ScrollViewProps) {
   return (
     <KeyboardAwareScrollView
       contentInsetAdjustmentBehavior="automatic"

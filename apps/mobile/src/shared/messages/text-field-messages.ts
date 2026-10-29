@@ -3,7 +3,7 @@ type TextFieldErrorLabelOptions = {
   label: string;
 };
 
-export const textFieldMessages = {
+export const TEXT_FIELD_MESSAGES = {
   errorLabel: ({ errorMessage, label }: TextFieldErrorLabelOptions) =>
     `${label}, error: ${errorMessage}`,
 };

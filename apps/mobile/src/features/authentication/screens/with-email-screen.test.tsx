@@ -31,7 +31,7 @@ describe("WithEmailScreen", () => {
     renderScreen({
       initialUrl: "/sign-in/with-email",
       testRuntimeLayers: {
-        authenticationClientLayer: fakeAuthenticationClientLayer({
+        authenticationClient: fakeAuthenticationClientLayer({
           "/email-otp/send-verification-otp": () =>
             Response.json({ success: true }),
         }),

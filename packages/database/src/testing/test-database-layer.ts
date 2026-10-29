@@ -20,7 +20,7 @@ export const testDatabaseLayer = Layer.unwrap(
       ConfigProvider.layerAdd(
         ConfigProvider.fromUnknown({
           DATABASE_URL_POOLED: getDatabaseUrl({
-            databaseName: testDatabaseName,
+            name: testDatabaseName,
             postgresServerUrl: inject("postgresMaintenanceDatabaseUrl"),
           }),
         }),
@@ -34,11 +34,11 @@ async function createTestDatabase() {
   const testDatabaseName = `ankaa_test_${randomUUID().replaceAll("-", "")}`;
 
   await queryDatabase({
-    databaseUrl: inject("postgresMaintenanceDatabaseUrl"),
     execute: (postgresClient) =>
       postgresClient.query(
         `CREATE DATABASE ${escapeIdentifier(testDatabaseName)} TEMPLATE ${escapeIdentifier(inject("postgresTemplateDatabaseName"))}`,
       ),
+    url: inject("postgresMaintenanceDatabaseUrl"),
   });
 
   return testDatabaseName;
@@ -46,8 +46,8 @@ async function createTestDatabase() {
 
 async function dropTestDatabase(testDatabaseName: string) {
   await queryDatabase({
-    databaseUrl: inject("postgresMaintenanceDatabaseUrl"),
     execute: (postgresClient) =>
-      dropDatabase({ databaseName: testDatabaseName, postgresClient }),
+      dropDatabase({ name: testDatabaseName, postgresClient }),
+    url: inject("postgresMaintenanceDatabaseUrl"),
   });
 }

@@ -61,9 +61,9 @@ const EXERCISES = [
 
 const EXERCISE_SEARCH = {
   equipmentSelection: [],
-  exerciseNameSearchText: "",
   exercises: EXERCISES,
   muscleGroupSelection: [],
+  nameSearchText: "",
 };
 
 describe("searchExercises", () => {
@@ -75,7 +75,7 @@ describe("searchExercises", () => {
     expect(
       searchExercises({
         ...EXERCISE_SEARCH,
-        exerciseNameSearchText: "press BENCH",
+        nameSearchText: "press BENCH",
       }),
     ).toEqual([BENCH_PRESS_EXERCISE, CLOSE_GRIP_BENCH_PRESS_EXERCISE]);
   });
@@ -84,7 +84,7 @@ describe("searchExercises", () => {
     expect(
       searchExercises({
         ...EXERCISE_SEARCH,
-        exerciseNameSearchText: "bench squat",
+        nameSearchText: "bench squat",
       }),
     ).toEqual([]);
   });
@@ -115,9 +115,9 @@ describe("searchExercises", () => {
     expect(
       searchExercises({
         equipmentSelection: ["barbell", "bench", "rack"],
-        exerciseNameSearchText: "press",
         exercises: EXERCISES,
         muscleGroupSelection: ["chest"],
+        nameSearchText: "press",
       }),
     ).toEqual([BENCH_PRESS_EXERCISE, CLOSE_GRIP_BENCH_PRESS_EXERCISE]);
   });

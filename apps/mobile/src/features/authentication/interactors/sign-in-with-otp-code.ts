@@ -12,14 +12,13 @@ export const signInWithOtpCode = Effect.fn("signInWithOtpCode")(function* (
 ) {
   const authenticationClient = yield* AuthenticationClient;
 
-  return yield* authenticationClient.request(
-    (betterAuthenticationClient, fetchOptions) =>
-      betterAuthenticationClient.signIn.emailOtp(
-        {
-          email: signInWithOtpCodeOptions.email,
-          otp: signInWithOtpCodeOptions.otpCode,
-        },
-        fetchOptions,
-      ),
+  return yield* authenticationClient.request((authClient, fetchOptions) =>
+    authClient.signIn.emailOtp(
+      {
+        email: signInWithOtpCodeOptions.email,
+        otp: signInWithOtpCodeOptions.otpCode,
+      },
+      fetchOptions,
+    ),
   );
 });

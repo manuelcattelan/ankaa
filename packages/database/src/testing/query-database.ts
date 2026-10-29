@@ -1,15 +1,15 @@
 import { Client } from "pg";
 
 type QueryDatabaseOptions<TQueryResult> = {
-  databaseUrl: string;
   execute: (postgresClient: Client) => Promise<TQueryResult>;
+  url: string;
 };
 
 export async function queryDatabase<TQueryResult>({
-  databaseUrl,
   execute,
+  url,
 }: QueryDatabaseOptions<TQueryResult>) {
-  const postgresClient = new Client({ connectionString: databaseUrl });
+  const postgresClient = new Client({ connectionString: url });
 
   await postgresClient.connect();
 

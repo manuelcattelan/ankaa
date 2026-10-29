@@ -25,13 +25,13 @@ describe("ValidateOtpCodeScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("signs the person in and opens the home screen when the server accepts the verification code", async () => {
+  it("signs the User in and opens the home screen when the server accepts the verification code", async () => {
     const user = userEvent.setup();
 
     renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
-        authenticationClientLayer: fakeAuthenticationClientLayer(
+        authenticationClient: fakeAuthenticationClientLayer(
           createFakeSignInResponses("/sign-in/email-otp"),
         ),
       },
@@ -55,7 +55,7 @@ describe("ValidateOtpCodeScreen", () => {
     renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
-        authenticationClientLayer: fakeAuthenticationClientLayer({
+        authenticationClient: fakeAuthenticationClientLayer({
           "/sign-in/email-otp": () =>
             Response.json(
               { code: "INVALID_OTP", message: "Invalid OTP" },
@@ -93,7 +93,7 @@ describe("ValidateOtpCodeScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("lets the person resend the verification code once the resend cooldown ends", async () => {
+  it("lets the User resend the verification code once the resend cooldown ends", async () => {
     renderScreen({ initialUrl: VALIDATE_OTP_CODE_URL });
 
     await screen.findByText(
@@ -107,14 +107,14 @@ describe("ValidateOtpCodeScreen", () => {
     ).toBeEnabled();
   });
 
-  it("requests a new verification code when the person resends it once the resend cooldown ends", async () => {
+  it("requests a new verification code when the User resends it once the resend cooldown ends", async () => {
     const otpCodeRequestBodies: unknown[] = [];
     const user = userEvent.setup();
 
     renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
-        authenticationClientLayer: fakeAuthenticationClientLayer({
+        authenticationClient: fakeAuthenticationClientLayer({
           "/email-otp/send-verification-otp": async (request) => {
             const otpCodeRequestBody: unknown = await request.json();
 
@@ -143,13 +143,13 @@ describe("ValidateOtpCodeScreen", () => {
     });
   });
 
-  it("restarts the resend cooldown once the person resends the verification code", async () => {
+  it("restarts the resend cooldown once the User resends the verification code", async () => {
     const user = userEvent.setup();
 
     renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
-        authenticationClientLayer: fakeAuthenticationClientLayer({
+        authenticationClient: fakeAuthenticationClientLayer({
           "/email-otp/send-verification-otp": () =>
             Response.json({ success: true }),
         }),

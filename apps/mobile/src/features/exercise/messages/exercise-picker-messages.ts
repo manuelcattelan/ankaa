@@ -1,4 +1,4 @@
-export const exercisePickerMessages = {
+export const EXERCISE_PICKER_MESSAGES = {
   barbellEquipmentLabel: "Barbell",
   benchEquipmentLabel: "Bench",
   chestMuscleGroupLabel: "Chest",

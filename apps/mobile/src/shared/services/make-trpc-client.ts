@@ -4,12 +4,12 @@ import type * as Schema from "effect/Schema";
 
 import * as Effect from "effect/Effect";
 
-import { TrpcError } from "#/shared/errors/trpc-error.ts";
+import { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
 
 type TrpcRequest<TData> = {
   call: (callOptions: {
     signal: AbortSignal;
-    vanillaTrpcClient: TRPCClient<AppRouter>;
+    trpc: TRPCClient<AppRouter>;
   }) => Promise<TData>;
   errors: readonly Schema.Top[];
 };
@@ -19,13 +19,13 @@ type TrpcRequest<TData> = {
  * the fake in `#/shared/testing/` run the same `request` and differ only in
  * the client's link.
  */
-export function makeTrpcClient(vanillaTrpcClient: TRPCClient<AppRouter>) {
+export function makeTrpcClient(trpc: TRPCClient<AppRouter>) {
   function request<TData>({ call }: TrpcRequest<TData>) {
     return Effect.tryPromise({
-      catch: (cause) => new TrpcError({ cause }),
-      try: (signal) => call({ signal, vanillaTrpcClient }),
+      catch: (cause) => new TrpcClientError({ cause }),
+      try: (signal) => call({ signal, trpc }),
     });
   }
 
-  return { request, vanillaTrpcClient };
+  return { request, trpc };
 }

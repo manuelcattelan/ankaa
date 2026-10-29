@@ -190,8 +190,10 @@ export const RESTRICTED_IMPORT_PATTERNS = [
   },
 ];
 
-const BOOLEAN_PREFIXES = ["is", "has", "can", "should"];
-const ASYNC_SUFFIX = { match: false, regex: "Async$" };
+const TYPE_WORD_SUFFIX = {
+  match: false,
+  regex: "(?:Array|Async|List|Promise|String)$",
+};
 
 const GENERATED_FILES_KEPT_RULE_PREFIXES = ["@stylistic/", "perfectionist/"];
 
@@ -234,6 +236,7 @@ export const rulesConfiguration = defineConfig([
       "@ankaa/naming-convention": [
         "error",
         {
+          custom: TYPE_WORD_SUFFIX,
           format: ["strictCamelCase"],
           leadingUnderscore: "forbid",
           selector: "default",
@@ -251,48 +254,35 @@ export const rulesConfiguration = defineConfig([
           selector: "import",
         },
         {
-          custom: ASYNC_SUFFIX,
+          custom: TYPE_WORD_SUFFIX,
           format: ["strictCamelCase", "StrictPascalCase", "UPPER_CASE"],
           modifiers: ["const", "global"],
           selector: "variable",
         },
         {
-          custom: ASYNC_SUFFIX,
+          custom: TYPE_WORD_SUFFIX,
           format: ["strictCamelCase"],
           selector: "variable",
         },
-        {
-          format: ["StrictPascalCase"],
-          prefix: BOOLEAN_PREFIXES,
-          selector: "variable",
-          types: ["boolean"],
-        },
-        {
-          format: ["StrictPascalCase"],
-          prefix: BOOLEAN_PREFIXES,
-          selector: "parameter",
-          types: ["boolean"],
-        },
-        {
-          format: ["StrictPascalCase"],
-          prefix: BOOLEAN_PREFIXES,
-          selector: "typeProperty",
-          types: ["boolean"],
-        },
-        {
-          format: null,
-          modifiers: ["destructured"],
-          selector: "parameter",
-          types: ["boolean"],
-        },
         { format: null, modifiers: ["destructured"], selector: "parameter" },
         {
-          custom: ASYNC_SUFFIX,
+          custom: TYPE_WORD_SUFFIX,
           format: ["strictCamelCase", "StrictPascalCase"],
           selector: "function",
         },
-        { format: ["StrictPascalCase"], selector: "typeLike" },
-        { format: ["PascalCase"], selector: "typeParameter" },
+        {
+          custom: TYPE_WORD_SUFFIX,
+          format: ["StrictPascalCase"],
+          selector: "typeLike",
+        },
+        // Google's guide writes a type parameter in UpperCamelCase, where a
+        // one-letter word such as the T of TData stays one capital, which
+        // StrictPascalCase rejects (https://google.github.io/styleguide/tsguide.html#identifiers-type-parameters).
+        {
+          custom: TYPE_WORD_SUFFIX,
+          format: ["PascalCase"],
+          selector: "typeParameter",
+        },
         {
           format: null,
           selector: ["objectLiteralMethod", "objectLiteralProperty"],
@@ -349,6 +339,7 @@ export const rulesConfiguration = defineConfig([
       "object-shorthand": ["error", "properties"],
       "prefer-template": "error",
       "unicorn/catch-error-name": "error",
+      "unicorn/consistent-boolean-name": "error",
       "unicorn/filename-case": ["error", { case: "kebabCase" }],
       "unicorn/no-exports-in-scripts": "error",
       "unicorn/no-top-level-side-effects": "error",

@@ -10,7 +10,7 @@ export function RootNavigator() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={hasSession}>
-        <Stack.Screen name="(app)" />
+        <Stack.Screen name="(application)" />
       </Stack.Protected>
       <Stack.Protected guard={!hasSession}>
         <Stack.Screen name="(authentication)" />

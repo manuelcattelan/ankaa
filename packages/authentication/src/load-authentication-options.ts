@@ -18,9 +18,7 @@ export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
     const email = yield* Email;
 
     const authenticationConfiguration = yield* Config.all({
-      appleAppBundleIdentifier: Config.NonEmptyString(
-        "APPLE_APP_BUNDLE_IDENTIFIER",
-      ),
+      appleBundleId: Config.NonEmptyString("APPLE_APP_BUNDLE_IDENTIFIER"),
       baseUrl: Config.schema(urlSchema, "BETTER_AUTH_URL"),
       googleIosClientId: Config.NonEmptyString("GOOGLE_IOS_CLIENT_ID"),
       googleWebClientId: Config.NonEmptyString("GOOGLE_WEB_CLIENT_ID"),

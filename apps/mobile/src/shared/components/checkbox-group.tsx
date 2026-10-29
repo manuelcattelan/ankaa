@@ -2,7 +2,7 @@ import { Checkbox, Column, Host } from "@expo/ui";
 
 import { Text } from "#/shared/components/text.tsx";
 
-type CheckboxGroupProperties<TOption extends string> = {
+type CheckboxGroupProps<TOption extends string> = {
   label: string;
   onChangeSelectedOptions: (selectedOptions: TOption[]) => void;
   optionLabels: Record<TOption, string>;
@@ -16,7 +16,7 @@ export function CheckboxGroup<TOption extends string>({
   optionLabels,
   options,
   selectedOptions,
-}: CheckboxGroupProperties<TOption>) {
+}: CheckboxGroupProps<TOption>) {
   function handleToggleOption(option: TOption) {
     onChangeSelectedOptions(
       selectedOptions.includes(option)

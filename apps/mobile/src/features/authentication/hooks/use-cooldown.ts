@@ -6,21 +6,19 @@ import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { announceMessage } from "#/shared/interactors/announce-message.ts";
 
 type UseCooldownOptions = {
-  cooldownEndMessage: string;
-  getCooldownInitialDeadline?: () => number;
+  endMessage: string;
+  getInitialDeadline?: () => number;
 };
 
 const COOLDOWN_INTERVAL_MILLISECONDS = 1_000;
 
 export function useCooldown({
-  cooldownEndMessage,
-  getCooldownInitialDeadline = Date.now,
+  endMessage,
+  getInitialDeadline = Date.now,
 }: UseCooldownOptions) {
   const runtime = useRuntime();
 
-  const [cooldownDeadline, setCooldownDeadline] = useState(
-    getCooldownInitialDeadline,
-  );
+  const [cooldownDeadline, setCooldownDeadline] = useState(getInitialDeadline);
   const [cooldownNow, setCooldownNow] = useState(Date.now);
 
   const isCooldownActive = cooldownNow < cooldownDeadline;
@@ -41,23 +39,21 @@ export function useCooldown({
 
       if (cooldownTickTime >= cooldownDeadline) {
         clearInterval(cooldownInterval);
-        runtime.runSync(announceMessage(cooldownEndMessage));
+        runtime.runSync(announceMessage(endMessage));
       }
     }, COOLDOWN_INTERVAL_MILLISECONDS);
 
     return () => {
       clearInterval(cooldownInterval);
     };
-  }, [cooldownDeadline, cooldownEndMessage, isCooldownActive, runtime]);
+  }, [cooldownDeadline, endMessage, isCooldownActive, runtime]);
 
-  function startCooldown(cooldownSeconds: number) {
-    const cooldownStart = Date.now();
+  function startCooldown(seconds: number) {
+    const start = Date.now();
 
-    setCooldownNow(cooldownStart);
+    setCooldownNow(start);
 
-    setCooldownDeadline(
-      getCooldownDeadline({ cooldownSeconds, cooldownStart }),
-    );
+    setCooldownDeadline(getCooldownDeadline({ seconds, start }));
   }
 
   function stopCooldown() {

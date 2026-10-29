@@ -11,7 +11,7 @@ const program = Effect.gen(function* () {
   return yield* exerciseApplicationService.list();
 });
 
-export function createExerciseListQueryOptions(runtime: ApplicationRuntime) {
+export function exerciseListQueryOptions(runtime: ApplicationRuntime) {
   return queryOptions({
     queryFn: ({ signal }) => runtime.runPromise(program, { signal }),
     queryKey: ["exercise", "list"],

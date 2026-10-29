@@ -1,18 +1,18 @@
 import { HTTP_STATUS_TOO_MANY_REQUESTS } from "#/features/authentication/constants/http-status-too-many-requests.ts";
-import { AuthenticationError } from "#/shared/errors/authentication-error.ts";
+import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
 
-type RateLimitedAuthenticationError = AuthenticationError &
-  RateLimitedAuthenticationErrorStatus;
+type RateLimitedAuthenticationClientError = AuthenticationClientError &
+  RateLimitedAuthenticationClientErrorStatus;
 
-type RateLimitedAuthenticationErrorStatus = {
+type RateLimitedAuthenticationClientErrorStatus = {
   readonly status: typeof HTTP_STATUS_TOO_MANY_REQUESTS;
 };
 
 export function isAuthenticationRateLimited(
   error: unknown,
-): error is RateLimitedAuthenticationError {
+): error is RateLimitedAuthenticationClientError {
   return (
-    error instanceof AuthenticationError &&
+    error instanceof AuthenticationClientError &&
     error.status === HTTP_STATUS_TOO_MANY_REQUESTS
   );
 }

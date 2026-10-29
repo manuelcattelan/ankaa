@@ -2,11 +2,11 @@ import * as ReactNative from "react-native";
 
 import { Text } from "#/shared/components/text.tsx";
 
-type StatusMessageProperties = {
+type StatusMessageProps = {
   message?: string;
 };
 
-export function StatusMessage({ message }: StatusMessageProperties) {
+export function StatusMessage({ message }: StatusMessageProps) {
   return (
     <ReactNative.View accessible={!!message} aria-live="polite">
       <Text selectable>{message}</Text>

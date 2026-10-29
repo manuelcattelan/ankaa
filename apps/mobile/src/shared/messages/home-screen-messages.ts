@@ -1,3 +1,3 @@
-export const homeScreenMessages = {
+export const HOME_SCREEN_MESSAGES = {
   title: "Ankaa",
 };

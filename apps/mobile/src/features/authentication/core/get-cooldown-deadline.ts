@@ -1,13 +1,13 @@
 import { MILLISECONDS_PER_SECOND } from "#/shared/constants/milliseconds-per-second.ts";
 
 type GetCooldownDeadlineOptions = {
-  cooldownSeconds: number;
-  cooldownStart: number;
+  seconds: number;
+  start: number;
 };
 
 export function getCooldownDeadline({
-  cooldownSeconds,
-  cooldownStart,
+  seconds,
+  start,
 }: GetCooldownDeadlineOptions) {
-  return cooldownStart + cooldownSeconds * MILLISECONDS_PER_SECOND;
+  return start + seconds * MILLISECONDS_PER_SECOND;
 }

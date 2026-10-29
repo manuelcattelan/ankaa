@@ -1,14 +1,14 @@
 import { useMutation } from "@tanstack/react-query";
 
-import { signOutButtonMessages } from "#/features/authentication/messages/sign-out-button-messages.ts";
-import { createSignOutMutationOptions } from "#/features/authentication/mutations/create-sign-out-mutation-options.ts";
+import { SIGN_OUT_BUTTON_MESSAGES } from "#/features/authentication/messages/sign-out-button-messages.ts";
+import { signOutMutationOptions } from "#/features/authentication/mutations/sign-out-mutation-options.ts";
 import { Button } from "#/shared/components/button.tsx";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
 export function SignOutButton() {
   const runtime = useRuntime();
 
-  const signOut = useMutation(createSignOutMutationOptions(runtime));
+  const signOut = useMutation(signOutMutationOptions(runtime));
 
   function handleSignOut() {
     if (signOut.isPending) {
@@ -22,7 +22,7 @@ export function SignOutButton() {
     <Button
       isBusy={signOut.isPending}
       onPress={handleSignOut}
-      title={signOutButtonMessages.signOutButton}
+      title={SIGN_OUT_BUTTON_MESSAGES.signOutButton}
     />
   );
 }

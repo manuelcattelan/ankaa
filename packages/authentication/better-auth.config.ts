@@ -4,7 +4,7 @@ import { createAuthenticationOptions } from "#/create-authentication-options.ts"
 
 export default betterAuth(
   createAuthenticationOptions({
-    appleAppBundleIdentifier: "apple-app-bundle-identifier",
+    appleBundleId: "apple-bundle-id",
     baseUrl: "http://localhost:3000",
     database: {},
     googleIosClientId: "google-ios-client-id",

@@ -3,15 +3,15 @@ import type { Client } from "pg";
 import { escapeIdentifier } from "pg";
 
 type DropDatabaseOptions = {
-  databaseName: string;
+  name: string;
   postgresClient: Client;
 };
 
 export async function dropDatabase({
-  databaseName,
+  name,
   postgresClient,
 }: DropDatabaseOptions) {
   await postgresClient.query(
-    `DROP DATABASE IF EXISTS ${escapeIdentifier(databaseName)} WITH (FORCE)`,
+    `DROP DATABASE IF EXISTS ${escapeIdentifier(name)} WITH (FORCE)`,
   );
 }

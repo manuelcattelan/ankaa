@@ -4,7 +4,7 @@ import { fakeSignedInAuthenticationClientLayer } from "#/shared/testing/fake-sig
 import { renderScreen } from "#/testing/render-screen.tsx";
 
 describe("NotFoundScreen", () => {
-  it("tells the person that the screen they opened doesn't exist", async () => {
+  it("tells the User that the screen they opened doesn't exist", async () => {
     renderScreen({ initialUrl: "/screen-that-does-not-exist" });
 
     expect(
@@ -12,13 +12,13 @@ describe("NotFoundScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("takes the person to the home screen when they press the button to go home", async () => {
+  it("takes the User to the home screen when they press the button to go home", async () => {
     const user = userEvent.setup();
 
     renderScreen({
       initialUrl: "/screen-that-does-not-exist",
       testRuntimeLayers: {
-        authenticationClientLayer: fakeSignedInAuthenticationClientLayer,
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
       },
     });
 

@@ -1,6 +1,6 @@
 import * as Data from "effect/Data";
 
-type AuthenticationErrorFields = {
+type AuthenticationClientErrorFields = {
   readonly cause?: unknown;
   readonly code?: string;
   readonly message?: string;
@@ -8,6 +8,6 @@ type AuthenticationErrorFields = {
   readonly status?: number;
 };
 
-export class AuthenticationError extends Data.TaggedError(
-  "AuthenticationError",
-)<AuthenticationErrorFields> {}
+export class AuthenticationClientError extends Data.TaggedError(
+  "AuthenticationClientError",
+)<AuthenticationClientErrorFields> {}

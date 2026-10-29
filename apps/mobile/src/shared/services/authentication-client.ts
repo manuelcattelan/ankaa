@@ -19,8 +19,8 @@ export class AuthenticationClient extends Context.Service<AuthenticationClient>(
 
       return makeAuthenticationClient({
         apiUrl,
-        authenticationFetch: fetch,
-        authenticationStorage: {
+        fetch,
+        storage: {
           getItem: (key) => ExpoSecureStore.getItem(key, SECURE_STORE_OPTIONS),
           getItemAsync: (key) =>
             ExpoSecureStore.getItemAsync(key, SECURE_STORE_OPTIONS),

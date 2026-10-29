@@ -3,7 +3,7 @@ import type * as ExpoAppleAuthentication from "expo-apple-authentication";
 import * as Effect from "effect/Effect";
 
 import { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts";
-import { AuthenticationError } from "#/shared/errors/authentication-error.ts";
+import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 import { Crypto } from "#/shared/services/crypto.ts";
 
@@ -24,7 +24,7 @@ export const signInWithApple = Effect.fn("signInWithApple")(function* () {
   const credential = yield* appleSignIn.signIn(hashedNonce);
 
   if (!credential.identityToken) {
-    return yield* new AuthenticationError({
+    return yield* new AuthenticationClientError({
       message: "Failed to receive an identity token from Apple",
     });
   }
@@ -35,12 +35,11 @@ export const signInWithApple = Effect.fn("signInWithApple")(function* () {
     nonce,
   });
 
-  return yield* authenticationClient.request(
-    (betterAuthenticationClient, fetchOptions) =>
-      betterAuthenticationClient.signIn.social(
-        { idToken: appleIdToken, provider: "apple" },
-        fetchOptions,
-      ),
+  return yield* authenticationClient.request((authClient, fetchOptions) =>
+    authClient.signIn.social(
+      { idToken: appleIdToken, provider: "apple" },
+      fetchOptions,
+    ),
   );
 });
 

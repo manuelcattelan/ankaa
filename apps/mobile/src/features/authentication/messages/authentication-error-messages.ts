@@ -1,6 +1,6 @@
 import { formatCount } from "#/shared/core/format-count.ts";
 
-export const authenticationErrorMessages = {
+export const AUTHENTICATION_ERROR_MESSAGES = {
   accountNotConnected:
     "This account can't be linked with the selected provider: try another sign-in method.",
   emailInvalid:

@@ -9,23 +9,17 @@ export async function createTestUser(
 ) {
   return runtime.runPromise(
     Effect.gen(function* () {
-      const authenticationTestHelpers = yield* AuthenticationTestHelpers;
+      const test = yield* AuthenticationTestHelpers;
 
-      return yield* Effect.promise(() =>
-        saveTestUser(authenticationTestHelpers),
-      );
+      return yield* Effect.promise(() => saveTestUser(test));
     }),
   );
 }
 
-async function saveTestUser(
-  authenticationTestHelpers: AuthenticationTestHelpers["Service"],
-) {
-  const user = await authenticationTestHelpers.saveUser(
-    authenticationTestHelpers.createUser(),
-  );
+async function saveTestUser(test: AuthenticationTestHelpers["Service"]) {
+  const user = await test.saveUser(test.createUser());
 
-  const headers = await authenticationTestHelpers.getAuthHeaders({
+  const headers = await test.getAuthHeaders({
     userId: user.id,
   });
 

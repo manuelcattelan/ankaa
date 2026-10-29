@@ -6,7 +6,7 @@ import type { createAuthenticationOptions } from "#/create-authentication-option
 
 import { AuthenticationError } from "#/authentication-error.ts";
 
-type BetterAuthentication = {
+type BetterAuth = {
   $context: Promise<unknown>;
   api: Pick<
     Auth<ReturnType<typeof createAuthenticationOptions>>["api"],
@@ -16,7 +16,7 @@ type BetterAuthentication = {
 };
 
 export const makeAuthentication = Effect.fn("makeAuthentication")(function* (
-  betterAuthentication: BetterAuthentication,
+  auth: BetterAuth,
 ) {
   function request<TResponse>(execute: () => Promise<TResponse>) {
     return Effect.tryPromise({
@@ -25,14 +25,14 @@ export const makeAuthentication = Effect.fn("makeAuthentication")(function* (
     });
   }
 
-  yield* request(() => betterAuthentication.$context);
+  yield* request(() => auth.$context);
 
   function getSession(headers: Headers) {
-    return request(() => betterAuthentication.api.getSession({ headers }));
+    return request(() => auth.api.getSession({ headers }));
   }
 
   function handleRequest(webRequest: Request) {
-    return request(() => betterAuthentication.handler(webRequest));
+    return request(() => auth.handler(webRequest));
   }
 
   return { getSession, handleRequest };

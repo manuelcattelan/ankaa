@@ -47,7 +47,7 @@ describe("SignInScreen", () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        appleSignInLayer: fakeAppleSignInLayer({ isAvailable: true }),
+        appleSignIn: fakeAppleSignInLayer({ isAvailable: true }),
       },
     });
 
@@ -62,18 +62,18 @@ describe("SignInScreen", () => {
     expect(screen.queryByTestId("apple-sign-in-button")).not.toBeOnTheScreen();
   });
 
-  it("signs the person in with Apple and opens the home screen", async () => {
+  it("signs the User in with Apple and opens the home screen", async () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        appleSignInLayer: fakeAppleSignInLayer({
+        appleSignIn: fakeAppleSignInLayer({
           appleAuthenticationCredential: APPLE_AUTHENTICATION_CREDENTIAL,
           isAvailable: true,
         }),
-        authenticationClientLayer: fakeAuthenticationClientLayer(
+        authenticationClient: fakeAuthenticationClientLayer(
           createFakeSignInResponses("/sign-in/social"),
         ),
-        cryptoLayer: fakeCryptoLayer,
+        crypto: fakeCryptoLayer,
       },
     });
 
@@ -84,15 +84,15 @@ describe("SignInScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("announces no error when the person cancels Apple sign-in", async () => {
+  it("announces no error when the User cancels Apple sign-in", async () => {
     const announcedMessages: string[] = [];
 
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        accessibilityLayer: fakeAccessibilityLayer(announcedMessages),
-        appleSignInLayer: fakeAppleSignInLayer({ isAvailable: true }),
-        cryptoLayer: fakeCryptoLayer,
+        accessibility: fakeAccessibilityLayer(announcedMessages),
+        appleSignIn: fakeAppleSignInLayer({ isAvailable: true }),
+        crypto: fakeCryptoLayer,
       },
     });
 
@@ -103,16 +103,16 @@ describe("SignInScreen", () => {
     expect(announcedMessages).toEqual([]);
   });
 
-  it("signs the person in with Google and opens the home screen", async () => {
+  it("signs the User in with Google and opens the home screen", async () => {
     const user = userEvent.setup();
 
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        authenticationClientLayer: fakeAuthenticationClientLayer(
+        authenticationClient: fakeAuthenticationClientLayer(
           createFakeSignInResponses("/sign-in/social"),
         ),
-        googleSignInLayer: fakeGoogleSignInLayer(GOOGLE_SIGN_IN_RESPONSE),
+        googleSignIn: fakeGoogleSignInLayer(GOOGLE_SIGN_IN_RESPONSE),
       },
     });
 
@@ -129,7 +129,7 @@ describe("SignInScreen", () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        authenticationClientLayer: fakeAuthenticationClientLayer({
+        authenticationClient: fakeAuthenticationClientLayer({
           "/sign-in/social": () =>
             Response.json(
               {
@@ -139,7 +139,7 @@ describe("SignInScreen", () => {
               { status: 400 },
             ),
         }),
-        googleSignInLayer: fakeGoogleSignInLayer(GOOGLE_SIGN_IN_RESPONSE),
+        googleSignIn: fakeGoogleSignInLayer(GOOGLE_SIGN_IN_RESPONSE),
       },
     });
 
@@ -152,7 +152,7 @@ describe("SignInScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("opens the email screen when the person continues with an email address", async () => {
+  it("opens the email screen when the User continues with an email address", async () => {
     const user = userEvent.setup();
 
     renderScreen({ initialUrl: "/sign-in" });
@@ -168,7 +168,7 @@ describe("SignInScreen", () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        authenticationClientLayer: fakeAuthenticationClientLayer({
+        authenticationClient: fakeAuthenticationClientLayer({
           "/get-session": () =>
             Promise.reject(new TypeError("Network request failed")),
         }),

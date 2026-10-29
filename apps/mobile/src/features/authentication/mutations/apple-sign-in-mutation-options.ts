@@ -5,7 +5,7 @@ import type { ApplicationRuntime } from "#/layer.ts";
 
 import { signInWithApple } from "#/features/authentication/interactors/sign-in-with-apple.ts";
 
-export function createAppleSignInMutationOptions(runtime: ApplicationRuntime) {
+export function appleSignInMutationOptions(runtime: ApplicationRuntime) {
   return mutationOptions({
     mutationFn: () =>
       runtime.runPromise(

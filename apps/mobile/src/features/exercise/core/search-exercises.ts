@@ -5,20 +5,20 @@ import type { Exercise } from "#/shared/exercise-application-service.ts";
 
 type SearchExercisesOptions = {
   equipmentSelection: Equipment[];
-  exerciseNameSearchText: string;
   exercises: Exercise[];
   muscleGroupSelection: MuscleGroup[];
+  nameSearchText: string;
 };
 
 const EXERCISE_NAME_SEARCH_WORD_SEPARATOR = /\s+/;
 
 export function searchExercises({
   equipmentSelection,
-  exerciseNameSearchText,
   exercises,
   muscleGroupSelection,
+  nameSearchText,
 }: SearchExercisesOptions) {
-  const exerciseNameSearchWords = exerciseNameSearchText
+  const exerciseNameSearchWords = nameSearchText
     .trim()
     .toLowerCase()
     .split(EXERCISE_NAME_SEARCH_WORD_SEPARATOR);

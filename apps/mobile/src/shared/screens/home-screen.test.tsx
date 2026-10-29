@@ -5,14 +5,14 @@ import { signedInSession } from "#/shared/testing/signed-in-session.ts";
 import { renderScreen } from "#/testing/render-screen.tsx";
 
 describe("HomeScreen", () => {
-  it("takes the person to the sign-in screen when they sign out", async () => {
+  it("takes the User to the sign-in screen when they sign out", async () => {
     const user = userEvent.setup();
     let currentSession: null | typeof signedInSession = signedInSession;
 
     renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
-        authenticationClientLayer: fakeAuthenticationClientLayer({
+        authenticationClient: fakeAuthenticationClientLayer({
           "/get-session": () => Response.json(currentSession),
           "/sign-out": () => {
             currentSession = null;

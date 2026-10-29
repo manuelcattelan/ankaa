@@ -40,7 +40,7 @@ const REQUEST_ID = "request-1";
 const UUID_V7_PATTERN =
   /^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/;
 
-const SESSION = {
+const session = {
   session: {
     createdAt: new Date("2026-10-29T10:00:00.000Z"),
     expiresAt: new Date("2026-11-05T10:00:00.000Z"),
@@ -118,7 +118,7 @@ describe("applicationPlugin", () => {
     await runtime.dispose();
   });
 
-  it("answers /api/auth/get-session with the session of the signed-in person whose session cookie the request carries", async () => {
+  it("answers /api/auth/get-session with the session of the signed-in User whose session cookie the request carries", async () => {
     const testUser = await createTestUser(runtime);
 
     const response = await server.inject({
@@ -169,7 +169,7 @@ describe("applicationPlugin", () => {
     );
   });
 
-  it("answers a tRPC procedure called by a signed-in person whose session cookie the request carries with its data", async () => {
+  it("answers a tRPC procedure called by a signed-in User whose session cookie the request carries with its data", async () => {
     const testUser = await createTestUser(runtime);
 
     const response = await server.inject({
@@ -227,7 +227,7 @@ describe("applicationPlugin", () => {
     const loggingServer = await createLoggingServer({
       layer: Layer.mergeAll(
         Layer.mock(Authentication, {
-          getSession: () => Effect.succeed(SESSION),
+          getSession: () => Effect.succeed(session),
         }),
         Layer.mock(ExerciseApplicationService, {
           list: () => Effect.log("Listing the Exercises").pipe(Effect.as([])),

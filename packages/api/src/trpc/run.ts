@@ -20,7 +20,7 @@ type RunOptions<TSuccess, TWireError extends WireError> = {
   context: {
     // Only a procedure called over HTTP has a request, because a caller
     // takes the inner context (https://trpc.io/docs/server/context#inner-and-outer-context).
-    request?: CreateFastifyContextOptions["req"];
+    req?: CreateFastifyContextOptions["req"];
     runtime: ApplicationRuntime;
   };
   effect: Effect.Effect<
@@ -38,9 +38,9 @@ export async function run<TSuccess, TWireError extends WireError>({
   signal,
 }: RunOptions<TSuccess, TWireError>) {
   const exit = await context.runtime.runPromiseExit(
-    context.request === undefined
+    context.req === undefined
       ? effect
-      : Effect.provideService(effect, PinoLogger, context.request.log),
+      : Effect.provideService(effect, PinoLogger, context.req.log),
     { signal },
   );
 

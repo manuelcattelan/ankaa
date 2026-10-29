@@ -5,7 +5,9 @@ import { emailOTPClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import * as Effect from "effect/Effect";
 
-import { AuthenticationError } from "#/shared/errors/authentication-error.ts";
+import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
+
+type AuthClient = ReturnType<typeof buildAuthClient>;
 
 type AuthenticationFetch = (
   input: Request | string | URL,
@@ -40,22 +42,18 @@ type AuthenticationResponseSuccess<TData> = {
   error: null;
 };
 
-type BetterAuthenticationClient = ReturnType<
-  typeof createBetterAuthenticationClient
->;
-
 type MakeAuthenticationClientOptions = {
   apiUrl: string;
-  authenticationFetch: AuthenticationFetch;
-  authenticationStorage: ExpoClientStorage;
+  fetch: AuthenticationFetch;
+  storage: ExpoClientStorage;
 };
 
 type SendAuthenticationRequest<TData> = (
-  betterAuthenticationClient: BetterAuthenticationClient,
+  authClient: AuthClient,
   fetchOptions: AuthenticationFetchOptions,
 ) => Promise<AuthenticationResponse<TData>>;
 
-const APP_SLUG = "ankaa";
+const APPLICATION_SLUG = "ankaa";
 
 /**
  * Builds the `AuthenticationClient` Service over the better-auth client, so
@@ -64,22 +62,18 @@ const APP_SLUG = "ankaa";
  */
 export function makeAuthenticationClient({
   apiUrl,
-  authenticationFetch,
-  authenticationStorage,
+  fetch,
+  storage,
 }: MakeAuthenticationClientOptions) {
-  const betterAuthenticationClient = createBetterAuthenticationClient({
-    apiUrl,
-    authenticationFetch,
-    authenticationStorage,
-  });
+  const authClient = buildAuthClient({ apiUrl, fetch, storage });
 
   function request<TData>(sendRequest: SendAuthenticationRequest<TData>) {
     return Effect.tryPromise({
-      catch: (cause) => new AuthenticationError({ cause }),
+      catch: (cause) => new AuthenticationClientError({ cause }),
       try: async () => {
         let retryAfterSeconds: number | undefined;
 
-        const response = await sendRequest(betterAuthenticationClient, {
+        const response = await sendRequest(authClient, {
           onError: (context) => {
             const retryAfterHeader =
               context.response.headers.get("X-Retry-After");
@@ -96,7 +90,7 @@ export function makeAuthenticationClient({
       Effect.flatMap((authenticationRequest) =>
         authenticationRequest.response.error
           ? Effect.fail(
-              new AuthenticationError({
+              new AuthenticationClientError({
                 code: authenticationRequest.response.error.code,
                 message:
                   authenticationRequest.response.error.message ??
@@ -110,22 +104,22 @@ export function makeAuthenticationClient({
     );
   }
 
-  return { apiUrl, betterAuthenticationClient, request };
+  return { apiUrl, authClient, request };
 }
 
-function createBetterAuthenticationClient({
+function buildAuthClient({
   apiUrl,
-  authenticationFetch,
-  authenticationStorage,
+  fetch,
+  storage,
 }: MakeAuthenticationClientOptions) {
   return createAuthClient({
     baseURL: apiUrl,
-    fetchOptions: { customFetchImpl: authenticationFetch },
+    fetchOptions: { customFetchImpl: fetch },
     plugins: [
       expoClient({
-        scheme: APP_SLUG,
-        storage: authenticationStorage,
-        storagePrefix: APP_SLUG,
+        scheme: APPLICATION_SLUG,
+        storage,
+        storagePrefix: APPLICATION_SLUG,
       }),
       emailOTPClient(),
     ],

@@ -7,14 +7,14 @@ import { StyleSheet, useColorScheme } from "react-native";
 import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
 import { getSessionErrorMessage } from "#/features/authentication/core/get-session-error-message.ts";
 import { announceAuthenticationError } from "#/features/authentication/interactors/announce-authentication-error.ts";
-import { signInScreenMessages } from "#/features/authentication/messages/sign-in-screen-messages.ts";
-import { createAppleSignInMutationOptions } from "#/features/authentication/mutations/create-apple-sign-in-mutation-options.ts";
-import { createGoogleSignInMutationOptions } from "#/features/authentication/mutations/create-google-sign-in-mutation-options.ts";
-import { createAppleSignInAvailabilityQueryOptions } from "#/features/authentication/queries/create-apple-sign-in-availability-query-options.ts";
+import { SIGN_IN_SCREEN_MESSAGES } from "#/features/authentication/messages/sign-in-screen-messages.ts";
+import { appleSignInMutationOptions } from "#/features/authentication/mutations/apple-sign-in-mutation-options.ts";
+import { googleSignInMutationOptions } from "#/features/authentication/mutations/google-sign-in-mutation-options.ts";
+import { appleSignInAvailabilityQueryOptions } from "#/features/authentication/queries/apple-sign-in-availability-query-options.ts";
 import { LinkButton } from "#/shared/components/link-button.tsx";
 import { ScrollView } from "#/shared/components/scroll-view.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
-import { TOUCH_TARGET_SIZE_MINIMUM } from "#/shared/constants/touch-target-size-minimum.ts";
+import { MINIMUM_TOUCH_TARGET_SIZE } from "#/shared/constants/minimum-touch-target-size.ts";
 import { useAuthenticationSession } from "#/shared/hooks/use-authentication-session.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { announceMessage } from "#/shared/interactors/announce-message.ts";
@@ -29,21 +29,21 @@ export function SignInScreen() {
   const colorScheme = useColorScheme();
 
   const signInApple = useMutation({
-    ...createAppleSignInMutationOptions(runtime),
+    ...appleSignInMutationOptions(runtime),
     onError: (error) => {
       runtime.runSync(announceAuthenticationError(error));
     },
   });
 
   const signInGoogle = useMutation({
-    ...createGoogleSignInMutationOptions(runtime),
+    ...googleSignInMutationOptions(runtime),
     onError: (error) => {
       runtime.runSync(announceAuthenticationError(error));
     },
   });
 
   const appleSignInAvailability = useQuery(
-    createAppleSignInAvailabilityQueryOptions(runtime),
+    appleSignInAvailabilityQueryOptions(runtime),
   );
 
   const isSignInPending = signInApple.isPending || signInGoogle.isPending;
@@ -111,12 +111,12 @@ export function SignInScreen() {
       />
       <LinkButton
         href="/sign-in/with-email"
-        title={signInScreenMessages.continueWithEmailButton}
+        title={SIGN_IN_SCREEN_MESSAGES.continueWithEmailButton}
       />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  appleButton: { height: TOUCH_TARGET_SIZE_MINIMUM, width: "100%" },
+  appleButton: { height: MINIMUM_TOUCH_TARGET_SIZE, width: "100%" },
 });

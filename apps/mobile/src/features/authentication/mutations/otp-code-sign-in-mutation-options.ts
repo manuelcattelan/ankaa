@@ -5,9 +5,7 @@ import type { ApplicationRuntime } from "#/layer.ts";
 
 import { signInWithOtpCode } from "#/features/authentication/interactors/sign-in-with-otp-code.ts";
 
-export function createOtpCodeSignInMutationOptions(
-  runtime: ApplicationRuntime,
-) {
+export function otpCodeSignInMutationOptions(runtime: ApplicationRuntime) {
   return mutationOptions({
     mutationFn: (signInWithOtpCodeOptions: SignInWithOtpCodeOptions) =>
       runtime.runPromise(signInWithOtpCode(signInWithOtpCodeOptions)),

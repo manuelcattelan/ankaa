@@ -1,13 +1,13 @@
 import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/days-of-week";
 import {
-  DROP_SET_WEIGHT_PERCENTAGE_MAXIMUM,
-  DROP_SET_WEIGHT_PERCENTAGE_MINIMUM,
+  MAXIMUM_DROP_SET_WEIGHT_PERCENTAGE,
+  MINIMUM_DROP_SET_WEIGHT_PERCENTAGE,
 } from "@ankaa/core/features/routine/constants/drop-set";
-import { REST_SECONDS_MINIMUM } from "@ankaa/core/features/routine/constants/rest-seconds-minimum";
-import { SEGMENT_COUNT_MINIMUM } from "@ankaa/core/features/routine/constants/segment-count-minimum";
-import { AMOUNT_MINIMUM } from "@ankaa/core/shared/constants/amount";
+import { MINIMUM_REST_SECONDS } from "@ankaa/core/features/routine/constants/minimum-rest-seconds";
+import { MINIMUM_SEGMENT_COUNT } from "@ankaa/core/features/routine/constants/minimum-segment-count";
+import { MINIMUM_AMOUNT } from "@ankaa/core/shared/constants/amount";
 import { INTENSITY_TECHNIQUES } from "@ankaa/core/shared/constants/intensity-techniques";
-import { POSITION_MINIMUM } from "@ankaa/core/shared/constants/position-minimum";
+import { MINIMUM_POSITION } from "@ankaa/core/shared/constants/minimum-position";
 import { SECTIONS } from "@ankaa/core/shared/constants/sections";
 import { SET_TYPES } from "@ankaa/core/shared/constants/set-types";
 import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo-pattern";
@@ -134,7 +134,7 @@ export const routineExercise = snakeCase.table(
     check("routine_exercise_section_check", inArray(table.section, SECTIONS)),
     check(
       "routine_exercise_position_check",
-      gte(table.position, POSITION_MINIMUM),
+      gte(table.position, MINIMUM_POSITION),
     ),
   ],
 );
@@ -187,34 +187,34 @@ export const routineExerciseSet = snakeCase.table(
     ),
     check(
       "routine_exercise_set_position_check",
-      gte(table.position, POSITION_MINIMUM),
+      gte(table.position, MINIMUM_POSITION),
     ),
     check(
       "routine_exercise_set_amount_check",
-      gte(table.amount, AMOUNT_MINIMUM),
+      gte(table.amount, MINIMUM_AMOUNT),
     ),
     check(
       "routine_exercise_set_rest_seconds_check",
-      gte(table.restSeconds, REST_SECONDS_MINIMUM),
+      gte(table.restSeconds, MINIMUM_REST_SECONDS),
     ),
     check(
       "routine_exercise_set_rest_pause_rest_seconds_check",
-      gte(table.restPauseRestSeconds, REST_SECONDS_MINIMUM),
+      gte(table.restPauseRestSeconds, MINIMUM_REST_SECONDS),
     ),
     check(
       "routine_exercise_set_rest_pause_segment_count_check",
-      gte(table.restPauseSegmentCount, SEGMENT_COUNT_MINIMUM),
+      gte(table.restPauseSegmentCount, MINIMUM_SEGMENT_COUNT),
     ),
     check(
       "routine_exercise_set_drop_set_segment_count_check",
-      gte(table.dropSetSegmentCount, SEGMENT_COUNT_MINIMUM),
+      gte(table.dropSetSegmentCount, MINIMUM_SEGMENT_COUNT),
     ),
     check(
       "routine_exercise_set_drop_set_weight_percentage_check",
       between(
         table.dropSetWeightPercentage,
-        DROP_SET_WEIGHT_PERCENTAGE_MINIMUM,
-        DROP_SET_WEIGHT_PERCENTAGE_MAXIMUM,
+        MINIMUM_DROP_SET_WEIGHT_PERCENTAGE,
+        MAXIMUM_DROP_SET_WEIGHT_PERCENTAGE,
       ),
     ),
     check(

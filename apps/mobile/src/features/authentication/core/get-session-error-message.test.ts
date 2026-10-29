@@ -3,7 +3,7 @@ import type { AuthenticationClient } from "#/shared/services/authentication-clie
 import { getSessionErrorMessage } from "#/features/authentication/core/get-session-error-message.ts";
 
 type AuthenticationSession = ReturnType<
-  AuthenticationClient["Service"]["betterAuthenticationClient"]["useSession"]
+  AuthenticationClient["Service"]["authClient"]["useSession"]
 >;
 
 const AUTHENTICATION_SESSION: AuthenticationSession = {

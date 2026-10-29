@@ -35,9 +35,9 @@ const serverConfiguration = await Effect.runPromise(
       positiveIntegerSchema,
       "CLOSE_GRACE_DELAY_MILLISECONDS",
     ),
+    host: Config.NonEmptyString("SERVER_HOST"),
     nodeEnvironment: Config.Literals(NODE_ENVIRONMENTS, "NODE_ENV"),
-    serverHost: Config.NonEmptyString("SERVER_HOST"),
-    serverPort: Config.schema(positiveIntegerSchema, "SERVER_PORT"),
+    port: Config.schema(positiveIntegerSchema, "SERVER_PORT"),
   }),
 );
 
@@ -73,9 +73,9 @@ closeWithGrace(
     delay: serverConfiguration.closeGraceDelayMilliseconds,
     logger: server.log,
   },
-  async ({ err: error }) => {
-    if (error) {
-      server.log.error(error, "Closing server after an uncaught error");
+  async ({ err }) => {
+    if (err) {
+      server.log.error(err, "Closing server after an uncaught error");
     }
 
     await server.close();
@@ -84,8 +84,8 @@ closeWithGrace(
 
 try {
   await server.listen({
-    host: serverConfiguration.serverHost,
-    port: serverConfiguration.serverPort,
+    host: serverConfiguration.host,
+    port: serverConfiguration.port,
   });
 } catch (error) {
   await exitAfterStartFailure(error);

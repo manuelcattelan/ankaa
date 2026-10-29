@@ -9,8 +9,8 @@ export type FakeAuthenticationResponses = Partial<
 >;
 
 type AnswerFakeAuthenticationRequestOptions = {
-  fakeAuthenticationResponses: FakeAuthenticationResponses;
   request: Request;
+  responses: FakeAuthenticationResponses;
 };
 
 const FAKE_API_URL = "https://api.ankaa.test";
@@ -31,16 +31,16 @@ export function fakeAuthenticationClientLayer(
     return AuthenticationClient.of(
       makeAuthenticationClient({
         apiUrl: FAKE_API_URL,
-        authenticationFetch: (input, options) =>
+        fetch: (input, options) =>
           answerFakeAuthenticationRequest({
-            fakeAuthenticationResponses: {
+            request: new Request(input, options),
+            responses: {
               "/get-session": () =>
                 Response.json(convertUndefinedToNull(undefined)),
               ...fakeAuthenticationResponses,
             },
-            request: new Request(input, options),
           }),
-        authenticationStorage: {
+        storage: {
           getItem: (key) =>
             convertUndefinedToNull(authenticationStorageItems.get(key)),
           getItemAsync: (key) =>
@@ -62,13 +62,11 @@ export function fakeAuthenticationClientLayer(
 }
 
 function answerFakeAuthenticationRequest({
-  fakeAuthenticationResponses,
   request,
+  responses,
 }: AnswerFakeAuthenticationRequestOptions) {
   const fakeAuthenticationResponse =
-    fakeAuthenticationResponses[
-      new URL(request.url).pathname.replace("/api/auth", "")
-    ];
+    responses[new URL(request.url).pathname.replace("/api/auth", "")];
 
   if (!fakeAuthenticationResponse) {
     return Promise.resolve(

@@ -1,6 +1,6 @@
 import { formatCount } from "#/shared/core/format-count.ts";
 
-export const validateOtpCodeScreenMessages = {
+export const VALIDATE_OTP_CODE_SCREEN_MESSAGES = {
   otpCodeIncompleteError: (otpCodeLength: number) =>
     `This verification code is incomplete: enter all ${formatCount({ count: otpCodeLength, plural: "digits", singular: "digit" })}.`,
   otpCodeLabel: "Verification code",

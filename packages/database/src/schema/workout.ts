@@ -1,14 +1,14 @@
 import { SKIP_REASONS } from "@ankaa/core/features/workout/constants/skip-reasons";
 import {
+  MINIMUM_WEIGHT_VALUE,
   WEIGHT_UNITS,
-  WEIGHT_VALUE_MINIMUM,
 } from "@ankaa/core/features/workout/constants/weight";
 import {
-  AMOUNT_MINIMUM,
   AMOUNT_UNITS,
+  MINIMUM_AMOUNT,
 } from "@ankaa/core/shared/constants/amount";
 import { INTENSITY_TECHNIQUES } from "@ankaa/core/shared/constants/intensity-techniques";
-import { POSITION_MINIMUM } from "@ankaa/core/shared/constants/position-minimum";
+import { MINIMUM_POSITION } from "@ankaa/core/shared/constants/minimum-position";
 import { SECTIONS } from "@ankaa/core/shared/constants/sections";
 import { SET_TYPES } from "@ankaa/core/shared/constants/set-types";
 import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo-pattern";
@@ -135,7 +135,7 @@ export const workoutExercise = snakeCase.table(
     ),
     check(
       "workout_exercise_position_check",
-      gte(table.position, POSITION_MINIMUM),
+      gte(table.position, MINIMUM_POSITION),
     ),
     check(
       "workout_exercise_skip_check",
@@ -186,7 +186,7 @@ export const workoutExerciseSet = snakeCase.table(
     ),
     check(
       "workout_exercise_set_position_check",
-      gte(table.position, POSITION_MINIMUM),
+      gte(table.position, MINIMUM_POSITION),
     ),
   ],
 );
@@ -228,15 +228,15 @@ export const workoutExerciseSetSegment = snakeCase.table(
     ),
     check(
       "workout_exercise_set_segment_position_check",
-      gte(table.position, POSITION_MINIMUM),
+      gte(table.position, MINIMUM_POSITION),
     ),
     check(
       "workout_exercise_set_segment_amount_check",
-      gte(table.amount, AMOUNT_MINIMUM),
+      gte(table.amount, MINIMUM_AMOUNT),
     ),
     check(
       "workout_exercise_set_segment_weight_value_check",
-      gte(table.weightValue, WEIGHT_VALUE_MINIMUM),
+      gte(table.weightValue, MINIMUM_WEIGHT_VALUE),
     ),
     check(
       "workout_exercise_set_segment_weight_check",

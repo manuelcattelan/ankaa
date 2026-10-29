@@ -42,7 +42,7 @@ describe("exercise.list", () => {
     });
   });
 
-  it("returns every Exercise with its Equipment and Muscle groups, ordered by name, to a signed-in person", async () => {
+  it("returns every Exercise with its Equipment and Muscle groups, ordered by name, to a signed-in User", async () => {
     await runtime.runPromise(
       Effect.gen(function* () {
         const database = yield* Database;

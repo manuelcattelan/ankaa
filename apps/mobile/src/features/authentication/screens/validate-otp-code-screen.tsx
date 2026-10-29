@@ -12,30 +12,28 @@ import { isAuthenticationRateLimited } from "#/features/authentication/core/is-a
 import { validateOtpCodeCompleteness } from "#/features/authentication/core/validate-otp-code-completeness.ts";
 import { useCooldown } from "#/features/authentication/hooks/use-cooldown.ts";
 import { announceAuthenticationError } from "#/features/authentication/interactors/announce-authentication-error.ts";
-import { validateOtpCodeScreenMessages } from "#/features/authentication/messages/validate-otp-code-screen-messages.ts";
-import { createOtpCodeRequestMutationOptions } from "#/features/authentication/mutations/create-otp-code-request-mutation-options.ts";
-import { createOtpCodeSignInMutationOptions } from "#/features/authentication/mutations/create-otp-code-sign-in-mutation-options.ts";
+import { VALIDATE_OTP_CODE_SCREEN_MESSAGES } from "#/features/authentication/messages/validate-otp-code-screen-messages.ts";
+import { otpCodeRequestMutationOptions } from "#/features/authentication/mutations/otp-code-request-mutation-options.ts";
+import { otpCodeSignInMutationOptions } from "#/features/authentication/mutations/otp-code-sign-in-mutation-options.ts";
 import { Button } from "#/shared/components/button.tsx";
 import { ScrollView } from "#/shared/components/scroll-view.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
 import { Text } from "#/shared/components/text.tsx";
-import { AuthenticationError } from "#/shared/errors/authentication-error.ts";
+import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { announceMessage } from "#/shared/interactors/announce-message.ts";
 
-type ValidateOtpCodeContentProperties = {
+type ValidateOtpCodeContentProps = {
   email: string;
 };
 
-type ValidateOtpCodeScreenProperties = {
+type ValidateOtpCodeScreenProps = {
   email?: string;
 };
 
 const COOLDOWN_SECONDS = 60;
 
-export function ValidateOtpCodeScreen({
-  email,
-}: ValidateOtpCodeScreenProperties) {
+export function ValidateOtpCodeScreen({ email }: ValidateOtpCodeScreenProps) {
   if (!email) {
     return <Redirect href="/sign-in" />;
   }
@@ -45,12 +43,12 @@ export function ValidateOtpCodeScreen({
 
 function getResendCooldownInitialDeadline() {
   return getCooldownDeadline({
-    cooldownSeconds: COOLDOWN_SECONDS,
-    cooldownStart: Date.now(),
+    seconds: COOLDOWN_SECONDS,
+    start: Date.now(),
   });
 }
 
-function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
+function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProps) {
   const runtime = useRuntime();
 
   const [
@@ -58,14 +56,14 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
     startResendCooldown,
     stopResendCooldown,
   ] = useCooldown({
-    cooldownEndMessage:
-      validateOtpCodeScreenMessages.resendOtpCodeReadyAnnouncement,
-    getCooldownInitialDeadline: getResendCooldownInitialDeadline,
+    endMessage:
+      VALIDATE_OTP_CODE_SCREEN_MESSAGES.resendOtpCodeReadyAnnouncement,
+    getInitialDeadline: getResendCooldownInitialDeadline,
   });
   const [validateCooldownRemainingSeconds, startValidateCooldown] = useCooldown(
     {
-      cooldownEndMessage:
-        validateOtpCodeScreenMessages.validateOtpCodeReadyAnnouncement,
+      endMessage:
+        VALIDATE_OTP_CODE_SCREEN_MESSAGES.validateOtpCodeReadyAnnouncement,
     },
   );
 
@@ -75,7 +73,7 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
   const [shouldRequestNewOtpCode, setShouldRequestNewOtpCode] = useState(false);
 
   const resendOtpCode = useMutation({
-    ...createOtpCodeRequestMutationOptions(runtime),
+    ...otpCodeRequestMutationOptions(runtime),
     onError: (error) => {
       runtime.runSync(announceAuthenticationError(error));
 
@@ -91,11 +89,11 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
   });
 
   const validateOtpCode = useMutation({
-    ...createOtpCodeSignInMutationOptions(runtime),
+    ...otpCodeSignInMutationOptions(runtime),
     onError: (error) => {
       runtime.runSync(announceAuthenticationError(error));
 
-      if (!(error instanceof AuthenticationError)) {
+      if (!(error instanceof AuthenticationClientError)) {
         return;
       }
 
@@ -187,7 +185,7 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
         enterKeyHint="done"
         errorMessage={otpCodeErrorMessage}
         inputMode="numeric"
-        label={validateOtpCodeScreenMessages.otpCodeLabel}
+        label={VALIDATE_OTP_CODE_SCREEN_MESSAGES.otpCodeLabel}
         maxLength={OTP_CODE_LENGTH}
         onChangeText={setOtpCode}
         onSubmitEditing={handleValidateOtpCode}
@@ -197,18 +195,18 @@ function ValidateOtpCodeContent({ email }: ValidateOtpCodeContentProperties) {
         disabled={!canValidateOtpCode}
         isBusy={validateOtpCode.isPending}
         onPress={handleValidateOtpCode}
-        title={validateOtpCodeScreenMessages.validateOtpCodeButton}
+        title={VALIDATE_OTP_CODE_SCREEN_MESSAGES.validateOtpCodeButton}
       />
       <Button
-        accessibilityHint={validateOtpCodeScreenMessages.resendOtpCodeHint}
+        accessibilityHint={VALIDATE_OTP_CODE_SCREEN_MESSAGES.resendOtpCodeHint}
         disabled={resendCooldownRemainingSeconds > 0}
         isBusy={resendOtpCode.isPending}
         onPress={handleResendOtpCode}
-        title={validateOtpCodeScreenMessages.resendOtpCodeButton}
+        title={VALIDATE_OTP_CODE_SCREEN_MESSAGES.resendOtpCodeButton}
       />
       {resendCooldownRemainingSeconds > 0 ? (
         <Text>
-          {validateOtpCodeScreenMessages.resendOtpCodeCooldownStatus(
+          {VALIDATE_OTP_CODE_SCREEN_MESSAGES.resendOtpCodeCooldownStatus(
             resendCooldownRemainingSeconds,
           )}
         </Text>

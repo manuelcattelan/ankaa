@@ -2,12 +2,9 @@ import { useTheme } from "expo-router";
 import * as ReactNative from "react-native";
 
 import { Text } from "#/shared/components/text.tsx";
-import { TOUCH_TARGET_SIZE_MINIMUM } from "#/shared/constants/touch-target-size-minimum.ts";
+import { MINIMUM_TOUCH_TARGET_SIZE } from "#/shared/constants/minimum-touch-target-size.ts";
 
-type ButtonProperties = Omit<
-  ReactNative.PressableProps,
-  "children" | "style"
-> & {
+type ButtonProps = Omit<ReactNative.PressableProps, "children" | "style"> & {
   isBusy?: boolean;
   style?: ReactNative.StyleProp<ReactNative.ViewStyle>;
   title: string;
@@ -21,7 +18,7 @@ export function Button({
   style,
   title,
   ...rest
-}: ButtonProperties) {
+}: ButtonProps) {
   const theme = useTheme();
 
   const titleStyle = { color: theme.colors.primary };
@@ -45,6 +42,6 @@ export function Button({
 }
 
 const styles = ReactNative.StyleSheet.create({
-  button: { minHeight: TOUCH_TARGET_SIZE_MINIMUM },
+  button: { minHeight: MINIMUM_TOUCH_TARGET_SIZE },
   disabled: { opacity: DISABLED_OPACITY },
 });

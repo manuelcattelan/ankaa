@@ -4,7 +4,7 @@ import type { ApplicationRuntime } from "#/layer.ts";
 
 import { signOut } from "#/features/authentication/interactors/sign-out.ts";
 
-export function createSignOutMutationOptions(runtime: ApplicationRuntime) {
+export function signOutMutationOptions(runtime: ApplicationRuntime) {
   return mutationOptions({
     mutationFn: () => runtime.runPromise(signOut()),
   });

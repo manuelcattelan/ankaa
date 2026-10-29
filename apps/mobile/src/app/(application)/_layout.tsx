@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
 
-export default function AppLayout() {
+export default function ApplicationLayout() {
   return <Stack />;
 }

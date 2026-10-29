@@ -5,7 +5,7 @@ import type { Context } from "#/trpc/context.ts";
 
 const HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
 
-const trpc = initTRPC.context<Context>().create({
+const t = initTRPC.context<Context>().create({
   errorFormatter: ({ shape }) => {
     if (shape.data.httpStatus < HTTP_STATUS_INTERNAL_SERVER_ERROR) {
       return shape;
@@ -18,7 +18,7 @@ const trpc = initTRPC.context<Context>().create({
   },
 });
 
-const requireSession = trpc.middleware(({ ctx, next }) => {
+const requireSession = t.middleware(({ ctx, next }) => {
   if (!ctx.session) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
@@ -26,7 +26,7 @@ const requireSession = trpc.middleware(({ ctx, next }) => {
   return next({ ctx: { session: ctx.session } });
 });
 
-export const createCallerFactory = trpc.createCallerFactory;
-export const router = trpc.router;
-export const publicProcedure = trpc.procedure;
-export const protectedProcedure = trpc.procedure.use(requireSession);
+export const createCallerFactory = t.createCallerFactory;
+export const router = t.router;
+export const publicProcedure = t.procedure;
+export const protectedProcedure = t.procedure.use(requireSession);
