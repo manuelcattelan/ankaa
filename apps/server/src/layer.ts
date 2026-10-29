@@ -1,13 +1,12 @@
 import type { FastifyBaseLogger } from "fastify";
 
-import { Authentication } from "@ankaa/authentication";
-import { Database } from "@ankaa/database";
+import { applicationLayer } from "@ankaa/api/layer";
 import * as Layer from "effect/Layer";
 
 import { createLoggerLayer } from "./logger.ts";
 
 export function createApplicationLayer(serverLogger: FastifyBaseLogger) {
-  return Layer.mergeAll(Authentication.layer, Database.layer).pipe(
+  return applicationLayer.pipe(
     Layer.provideMerge(createLoggerLayer(serverLogger)),
   );
 }

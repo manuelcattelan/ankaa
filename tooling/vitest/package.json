@@ -17,6 +17,7 @@
   },
   "name": "@ankaa/vitest",
   "peerDependencies": {
+    "@ankaa/api": "workspace:*",
     "@ankaa/authentication": "workspace:*",
     "@ankaa/database": "workspace:*",
     "@ankaa/email": "workspace:*",

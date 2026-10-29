@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@ankaa/core": "workspace:*",
+    "@effect/sql-pg": "4.0.5",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "pg": "catalog:"
@@ -8,17 +9,19 @@
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
     "@ankaa/typescript": "workspace:*",
+    "@ankaa/vitest": "workspace:*",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
     "drizzle-kit": "1.0.0-rc.4",
     "eslint": "catalog:",
     "jiti": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "exports": {
     ".": "./src/index.ts",
-    "./error": "./src/error.ts",
     "./migrations-folder-path": "./src/migrations-folder-path.ts",
+    "./relations": "./src/relations.ts",
     "./schema/authentication": "./src/schema/authentication.ts",
     "./schema/exercise": "./src/schema/exercise.ts",
     "./schema/routine": "./src/schema/routine.ts",
@@ -32,7 +35,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "migrate": "DOTENV_CONFIG_PATH=../../.env drizzle-kit migrate",
-    "seed": "node --env-file-if-exists=../../.env src/seed.ts"
+    "seed": "node --env-file-if-exists=../../.env src/seed.ts",
+    "test": "vitest run"
   },
   "type": "module"
 }

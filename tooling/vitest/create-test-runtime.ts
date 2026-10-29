@@ -1,5 +1,6 @@
 import type { SendEmailOptions } from "@ankaa/email";
 
+import { ExerciseApplicationService } from "@ankaa/api/features/exercise/exercise-application-service";
 import { Authentication } from "@ankaa/authentication";
 import { Database } from "@ankaa/database";
 import { Email } from "@ankaa/email";
@@ -27,7 +28,7 @@ const testDatabaseLayer = Layer.unwrap(
     Effect.map((testDatabaseName) =>
       ConfigProvider.layerAdd(
         ConfigProvider.fromUnknown({
-          DATABASE_URL: getDatabaseUrl({
+          DATABASE_URL_POOLED: getDatabaseUrl({
             databaseName: testDatabaseName,
             postgresServerUrl: inject("postgresMaintenanceDatabaseUrl"),
           }),
@@ -40,12 +41,13 @@ const testDatabaseLayer = Layer.unwrap(
 
 export function createTestRuntime(sentEmails: SendEmailOptions[] = []) {
   return ManagedRuntime.make(
-    Authentication.layerNoDeps.pipe(
-      Layer.provideMerge(
-        Layer.mergeAll(Database.layer, Email.layerTest(sentEmails)),
+    Layer.mergeAll(
+      Authentication.layerNoDeps.pipe(
+        Layer.provideMerge(Email.layerTest(sentEmails)),
       ),
-      Layer.provideMerge(testDatabaseLayer),
-    ),
+      Database.layer,
+      ExerciseApplicationService.layer,
+    ).pipe(Layer.provideMerge(testDatabaseLayer)),
   );
 }
 

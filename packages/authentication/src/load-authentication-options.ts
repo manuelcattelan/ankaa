@@ -1,11 +1,13 @@
 import { NODE_ENVIRONMENTS } from "@ankaa/core/shared/constants/node-environment";
 import { urlSchema } from "@ankaa/core/shared/schemas/url-schema";
-import { Database } from "@ankaa/database";
+import { relations } from "@ankaa/database/relations";
 import { Email } from "@ankaa/email";
+import { drizzle } from "drizzle-orm/node-postgres";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
+import { Pool } from "pg";
 
 import { createAuthenticationOptions } from "./create-authentication-options.ts";
 
@@ -13,7 +15,6 @@ const BETTER_AUTH_SECRET_MINIMUM_LENGTH = 32;
 
 export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
   function* () {
-    const database = yield* Database;
     const email = yield* Email;
 
     const authenticationConfiguration = yield* Config.all({
@@ -34,11 +35,22 @@ export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
       ),
     });
 
+    const databaseUrl = yield* Config.Redacted("DATABASE_URL_POOLED");
+
+    const pool = yield* Effect.acquireRelease(
+      Effect.sync(
+        () => new Pool({ connectionString: Redacted.value(databaseUrl) }),
+      ),
+      closePool,
+    );
+
+    const db = drizzle({ client: pool, relations });
+
     const context = yield* Effect.context();
 
     return createAuthenticationOptions({
       ...authenticationConfiguration,
-      database: database.drizzleDatabase,
+      database: db,
       secret: Redacted.value(authenticationConfiguration.secret),
       sendVerificationOtpCode: ({ email: emailAddress, otpCode }) =>
         Effect.runPromiseWith(context)(
@@ -51,3 +63,7 @@ export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
     });
   },
 );
+
+function closePool(pool: Pool) {
+  return Effect.promise(() => pool.end());
+}

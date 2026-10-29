@@ -1,7 +1,5 @@
-import type { Authentication } from "@ankaa/authentication";
-import type { Database } from "@ankaa/database";
-import type { DatabaseError } from "@ankaa/database/error";
 import type { TRPC_ERROR_CODE_KEY } from "@trpc/server";
+import type * as Layer from "effect/Layer";
 
 import { CurrentSession } from "@ankaa/authentication/current-session";
 import { TRPCError } from "@trpc/server";
@@ -10,6 +8,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Result from "effect/Result";
 
+import type { applicationLayer } from "../layer.ts";
 import type { ApplicationRuntime } from "./context.ts";
 
 type RunContext = {
@@ -21,8 +20,8 @@ type RunOptions<TSuccess, TError> = {
   context: RunContext;
   effect: Effect.Effect<
     TSuccess,
-    DatabaseError | NoInfer<TError>,
-    Authentication | CurrentSession | Database
+    NoInfer<TError>,
+    CurrentSession | Layer.Success<typeof applicationLayer>
   >;
   getErrorCode: (error: TError) => TRPC_ERROR_CODE_KEY;
   signal: AbortSignal | undefined;
@@ -37,7 +36,6 @@ export async function run<TSuccess, TError = never>({
   const exit = await context.runtime.runPromiseExit(
     effect.pipe(
       Effect.provideService(CurrentSession, context.session),
-      Effect.catchTag("DatabaseError", Effect.die),
       Effect.result,
     ),
     { signal },

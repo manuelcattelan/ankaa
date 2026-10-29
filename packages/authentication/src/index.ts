@@ -1,4 +1,3 @@
-import { Database } from "@ankaa/database";
 import { Email } from "@ankaa/email";
 import { betterAuth } from "better-auth";
 import * as Context from "effect/Context";
@@ -39,7 +38,5 @@ export class Authentication extends Context.Service<Authentication>()(
 ) {
   static readonly layerNoDeps = Layer.effect(this, this.make);
 
-  static readonly layer = this.layerNoDeps.pipe(
-    Layer.provide([Database.layer, Email.layer]),
-  );
+  static readonly layer = this.layerNoDeps.pipe(Layer.provide(Email.layer));
 }

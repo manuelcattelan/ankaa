@@ -6,6 +6,7 @@ import {
 } from "@ankaa/database/schema/exercise";
 import { createTestRuntime } from "@ankaa/vitest/create-test-runtime";
 import { afterAll, describe, expect, it } from "@effect/vitest";
+import * as Effect from "effect/Effect";
 
 import { createCaller } from "../../shared/testing/create-caller.ts";
 import { createSignedInCaller } from "../../shared/testing/create-signed-in-caller.ts";
@@ -28,62 +29,66 @@ describe("exercise.list", () => {
 
   it("returns every Exercise with its Equipment and Muscle groups, ordered by name, to a signed-in person", async () => {
     await runtime.runPromise(
-      Database.use((database) =>
-        database.transaction(async (transaction) => {
-          await transaction.insert(exercise).values([
-            {
-              amountUnit: "repetition",
-              id: "019a0000-0000-7000-8000-000000000001",
-              name: "Push-Up",
-              weightType: "bodyweight",
-            },
-            {
-              amountUnit: "repetition",
-              id: "019a0000-0000-7000-8000-000000000002",
-              name: "Bench Press (Barbell)",
-              weightType: "total",
-            },
-          ]);
+      Effect.gen(function* () {
+        const database = yield* Database;
 
-          await transaction.insert(exerciseEquipment).values([
-            {
-              equipment: "rack",
-              exerciseId: "019a0000-0000-7000-8000-000000000002",
-            },
-            {
-              equipment: "barbell",
-              exerciseId: "019a0000-0000-7000-8000-000000000002",
-            },
-            {
-              equipment: "bench",
-              exerciseId: "019a0000-0000-7000-8000-000000000002",
-            },
-          ]);
+        yield* database.transaction((tx) =>
+          Effect.gen(function* () {
+            yield* tx.insert(exercise).values([
+              {
+                amountUnit: "repetition",
+                id: "019a0000-0000-7000-8000-000000000001",
+                name: "Push-Up",
+                weightType: "bodyweight",
+              },
+              {
+                amountUnit: "repetition",
+                id: "019a0000-0000-7000-8000-000000000002",
+                name: "Bench Press (Barbell)",
+                weightType: "total",
+              },
+            ]);
 
-          await transaction.insert(exerciseMuscleGroup).values([
-            {
-              exerciseId: "019a0000-0000-7000-8000-000000000001",
-              muscleGroup: "triceps",
-              muscleGroupRole: "secondary",
-            },
-            {
-              exerciseId: "019a0000-0000-7000-8000-000000000001",
-              muscleGroup: "chest",
-              muscleGroupRole: "primary",
-            },
-            {
-              exerciseId: "019a0000-0000-7000-8000-000000000002",
-              muscleGroup: "front_deltoid",
-              muscleGroupRole: "secondary",
-            },
-            {
-              exerciseId: "019a0000-0000-7000-8000-000000000002",
-              muscleGroup: "chest",
-              muscleGroupRole: "primary",
-            },
-          ]);
-        }),
-      ),
+            yield* tx.insert(exerciseEquipment).values([
+              {
+                equipment: "rack",
+                exerciseId: "019a0000-0000-7000-8000-000000000002",
+              },
+              {
+                equipment: "barbell",
+                exerciseId: "019a0000-0000-7000-8000-000000000002",
+              },
+              {
+                equipment: "bench",
+                exerciseId: "019a0000-0000-7000-8000-000000000002",
+              },
+            ]);
+
+            yield* tx.insert(exerciseMuscleGroup).values([
+              {
+                exerciseId: "019a0000-0000-7000-8000-000000000001",
+                muscleGroup: "triceps",
+                muscleGroupRole: "secondary",
+              },
+              {
+                exerciseId: "019a0000-0000-7000-8000-000000000001",
+                muscleGroup: "chest",
+                muscleGroupRole: "primary",
+              },
+              {
+                exerciseId: "019a0000-0000-7000-8000-000000000002",
+                muscleGroup: "front_deltoid",
+                muscleGroupRole: "secondary",
+              },
+              {
+                exerciseId: "019a0000-0000-7000-8000-000000000002",
+                muscleGroup: "chest",
+                muscleGroupRole: "primary",
+              },
+            ]);
+          }),
+        );
+      }),
     );
 
     const caller = await createSignedInCaller(runtime);

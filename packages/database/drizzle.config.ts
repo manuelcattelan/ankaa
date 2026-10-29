@@ -1,9 +1,9 @@
 import { defineConfig } from "drizzle-kit";
 
-const databaseUrl = process.env.DATABASE_URL?.trim() ?? "";
+const databaseUrl = process.env.DATABASE_URL_DIRECT?.trim() ?? "";
 
 if (!URL.canParse(databaseUrl)) {
-  throw new Error("DATABASE_URL must be a valid URL");
+  throw new Error("DATABASE_URL_DIRECT must be a valid URL");
 }
 
 export default defineConfig({

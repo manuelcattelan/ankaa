@@ -22,7 +22,7 @@ Follow the [PostgreSQL docs](https://www.postgresql.org/docs/current/) and the w
 A schema change reaches a database only through a migration that Drizzle Kit generates in `drizzle/` from `src/schema/`, so every change to `src/schema/` needs one. After each change:
 
 1. Generate a migration with a `snake_case` name that sums up the change, so `drizzle/` reads as the history of the schema: `pnpm --filter @ankaa/database generate <name>`.
-2. Apply it to the development database, which `DATABASE_URL` in the root `.env` points to: `pnpm --filter @ankaa/database migrate`. Never run `migrate` with any other `DATABASE_URL`, such as one set in your shell, unless the maintainer asks, because only the maintainer decides when another database changes.
+2. Apply it to the development database, which `DATABASE_URL_DIRECT` in the root `.env` points to: `pnpm --filter @ankaa/database migrate`. Never run `migrate` with any other `DATABASE_URL_DIRECT`, such as one set in your shell, unless the maintainer asks, because only the maintainer decides when another database changes.
 
 - Never use `drizzle-kit push`, because it changes a database without a migration, so no other database can apply the same change.
 - Never edit an existing migration, because a database that already ran it never runs it again. Generate a new migration to amend or undo a change.

@@ -1,13 +1,15 @@
 import type { CurrentSession } from "@ankaa/authentication/current-session";
-import type { Database } from "@ankaa/database";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
+import type * as Layer from "effect/Layer";
 import type * as ManagedRuntime from "effect/ManagedRuntime";
 
 import { Authentication } from "@ankaa/authentication";
 import { fromNodeHeaders } from "better-auth/node";
 
+import type { applicationLayer } from "../layer.ts";
+
 export type ApplicationRuntime = ManagedRuntime.ManagedRuntime<
-  Authentication | Database,
+  Layer.Success<typeof applicationLayer>,
   unknown
 >;
 

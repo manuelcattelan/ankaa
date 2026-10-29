@@ -50,15 +50,16 @@ const applicationLayer = createApplicationLayer(server.log);
 
 const runtime = ManagedRuntime.make(applicationLayer);
 
-function exitAfterStartFailure(error: unknown) {
+async function exitAfterStartFailure(error: unknown) {
   server.log.error(error, "Failed to start server");
+  await runtime.dispose();
   process.exit(1);
 }
 
 try {
   await runtime.context();
 } catch (error) {
-  exitAfterStartFailure(error);
+  await exitAfterStartFailure(error);
 }
 
 await server.register(applicationPlugin, { runtime });
@@ -87,5 +88,5 @@ try {
     port: serverConfiguration.serverPort,
   });
 } catch (error) {
-  exitAfterStartFailure(error);
+  await exitAfterStartFailure(error);
 }
