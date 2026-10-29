@@ -1,7 +1,7 @@
 import { screen, userEvent } from "@testing-library/react-native";
 
-import { renderScreen } from "#/shared/testing/render-screen.tsx";
-import { signedInAuthenticationClientLayer } from "#/shared/testing/signed-in-authentication-client-layer.ts";
+import { fakeSignedInAuthenticationClientLayer } from "#/shared/testing/fake-signed-in-authentication-client-layer.ts";
+import { renderScreen } from "#/testing/render-screen.tsx";
 
 describe("NotFoundScreen", () => {
   it("tells the person that the screen they opened doesn't exist", async () => {
@@ -18,7 +18,7 @@ describe("NotFoundScreen", () => {
     renderScreen({
       initialUrl: "/screen-that-does-not-exist",
       testRuntimeLayers: {
-        authenticationClientLayer: signedInAuthenticationClientLayer,
+        authenticationClientLayer: fakeSignedInAuthenticationClientLayer,
       },
     });
 

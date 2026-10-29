@@ -1,7 +1,7 @@
 import { screen, userEvent } from "@testing-library/react-native";
 
-import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
-import { renderScreen } from "#/shared/testing/render-screen.tsx";
+import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";
+import { renderScreen } from "#/testing/render-screen.tsx";
 
 describe("WithEmailScreen", () => {
   it("shows a validation message when the email address isn't valid", async () => {
@@ -31,7 +31,7 @@ describe("WithEmailScreen", () => {
     renderScreen({
       initialUrl: "/sign-in/with-email",
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest({
+        authenticationClientLayer: fakeAuthenticationClientLayer({
           "/email-otp/send-verification-otp": () =>
             Response.json({ success: true }),
         }),

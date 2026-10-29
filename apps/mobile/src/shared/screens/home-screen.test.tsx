@@ -1,8 +1,8 @@
 import { screen, userEvent } from "@testing-library/react-native";
 
-import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
-import { renderScreen } from "#/shared/testing/render-screen.tsx";
+import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";
 import { signedInSession } from "#/shared/testing/signed-in-session.ts";
+import { renderScreen } from "#/testing/render-screen.tsx";
 
 describe("HomeScreen", () => {
   it("takes the person to the sign-in screen when they sign out", async () => {
@@ -12,7 +12,7 @@ describe("HomeScreen", () => {
     renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest({
+        authenticationClientLayer: fakeAuthenticationClientLayer({
           "/get-session": () => Response.json(currentSession),
           "/sign-out": () => {
             currentSession = null;

@@ -3,13 +3,14 @@ import type { SignInResponse } from "@react-native-google-signin/google-signin";
 import { fireEvent, screen, userEvent } from "@testing-library/react-native";
 import * as ExpoAppleAuthentication from "expo-apple-authentication";
 
-import { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts";
-import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
-import { Accessibility } from "#/shared/services/accessibility.ts";
-import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
+import { fakeAppleSignInLayer } from "#/features/authentication/testing/fake-apple-sign-in-layer.ts";
+import { fakeGoogleSignInLayer } from "#/features/authentication/testing/fake-google-sign-in-layer.ts";
 import { advanceFakeTime } from "#/shared/testing/advance-fake-time.ts";
-import { createSignInTestResponses } from "#/shared/testing/create-sign-in-test-responses.ts";
-import { renderScreen } from "#/shared/testing/render-screen.tsx";
+import { createFakeSignInResponses } from "#/shared/testing/create-fake-sign-in-responses.ts";
+import { fakeAccessibilityLayer } from "#/shared/testing/fake-accessibility-layer.ts";
+import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";
+import { fakeCryptoLayer } from "#/shared/testing/fake-crypto-layer.ts";
+import { renderScreen } from "#/testing/render-screen.tsx";
 
 const APPLE_AUTHENTICATION_CREDENTIAL: ExpoAppleAuthentication.AppleAuthenticationCredential =
   {
@@ -46,7 +47,7 @@ describe("SignInScreen", () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        appleSignInLayer: AppleSignIn.layerTest({ isAvailable: true }),
+        appleSignInLayer: fakeAppleSignInLayer({ isAvailable: true }),
       },
     });
 
@@ -65,13 +66,14 @@ describe("SignInScreen", () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        appleSignInLayer: AppleSignIn.layerTest({
+        appleSignInLayer: fakeAppleSignInLayer({
           appleAuthenticationCredential: APPLE_AUTHENTICATION_CREDENTIAL,
           isAvailable: true,
         }),
-        authenticationClientLayer: AuthenticationClient.layerTest(
-          createSignInTestResponses("/sign-in/social"),
+        authenticationClientLayer: fakeAuthenticationClientLayer(
+          createFakeSignInResponses("/sign-in/social"),
         ),
+        cryptoLayer: fakeCryptoLayer,
       },
     });
 
@@ -88,8 +90,9 @@ describe("SignInScreen", () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        accessibilityLayer: Accessibility.layerTest(announcedMessages),
-        appleSignInLayer: AppleSignIn.layerTest({ isAvailable: true }),
+        accessibilityLayer: fakeAccessibilityLayer(announcedMessages),
+        appleSignInLayer: fakeAppleSignInLayer({ isAvailable: true }),
+        cryptoLayer: fakeCryptoLayer,
       },
     });
 
@@ -106,10 +109,10 @@ describe("SignInScreen", () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest(
-          createSignInTestResponses("/sign-in/social"),
+        authenticationClientLayer: fakeAuthenticationClientLayer(
+          createFakeSignInResponses("/sign-in/social"),
         ),
-        googleSignInLayer: GoogleSignIn.layerTest(GOOGLE_SIGN_IN_RESPONSE),
+        googleSignInLayer: fakeGoogleSignInLayer(GOOGLE_SIGN_IN_RESPONSE),
       },
     });
 
@@ -126,7 +129,7 @@ describe("SignInScreen", () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest({
+        authenticationClientLayer: fakeAuthenticationClientLayer({
           "/sign-in/social": () =>
             Response.json(
               {
@@ -136,7 +139,7 @@ describe("SignInScreen", () => {
               { status: 400 },
             ),
         }),
-        googleSignInLayer: GoogleSignIn.layerTest(GOOGLE_SIGN_IN_RESPONSE),
+        googleSignInLayer: fakeGoogleSignInLayer(GOOGLE_SIGN_IN_RESPONSE),
       },
     });
 
@@ -165,7 +168,7 @@ describe("SignInScreen", () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest({
+        authenticationClientLayer: fakeAuthenticationClientLayer({
           "/get-session": () =>
             Promise.reject(new TypeError("Network request failed")),
         }),

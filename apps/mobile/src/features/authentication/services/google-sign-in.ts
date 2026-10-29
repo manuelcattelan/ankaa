@@ -1,5 +1,3 @@
-import type { SignInResponse } from "@react-native-google-signin/google-signin";
-
 import {
   GoogleSignin,
   isErrorWithCode,
@@ -41,15 +39,6 @@ export class GoogleSignIn extends Context.Service<GoogleSignIn>()(
   },
 ) {
   static readonly layer = Layer.effect(this, this.make);
-
-  static readonly layerTest = (googleSignInResponse: SignInResponse) =>
-    Layer.succeed(
-      this,
-      this.of({
-        checkPlayServices: () => Effect.succeed(true),
-        signIn: () => Effect.succeed(googleSignInResponse),
-      }),
-    );
 }
 
 function failWithGoogleSignInError(defect: unknown) {

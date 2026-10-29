@@ -1,9 +1,9 @@
 import { screen, userEvent, waitFor } from "@testing-library/react-native";
 
-import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 import { advanceFakeTime } from "#/shared/testing/advance-fake-time.ts";
-import { createSignInTestResponses } from "#/shared/testing/create-sign-in-test-responses.ts";
-import { renderScreen } from "#/shared/testing/render-screen.tsx";
+import { createFakeSignInResponses } from "#/shared/testing/create-fake-sign-in-responses.ts";
+import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";
+import { renderScreen } from "#/testing/render-screen.tsx";
 
 const VALIDATE_OTP_CODE_URL =
   "/sign-in/with-email/validate-otp-code?email=athlete%40example.com";
@@ -31,8 +31,8 @@ describe("ValidateOtpCodeScreen", () => {
     renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest(
-          createSignInTestResponses("/sign-in/email-otp"),
+        authenticationClientLayer: fakeAuthenticationClientLayer(
+          createFakeSignInResponses("/sign-in/email-otp"),
         ),
       },
     });
@@ -55,7 +55,7 @@ describe("ValidateOtpCodeScreen", () => {
     renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest({
+        authenticationClientLayer: fakeAuthenticationClientLayer({
           "/sign-in/email-otp": () =>
             Response.json(
               { code: "INVALID_OTP", message: "Invalid OTP" },
@@ -114,7 +114,7 @@ describe("ValidateOtpCodeScreen", () => {
     renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest({
+        authenticationClientLayer: fakeAuthenticationClientLayer({
           "/email-otp/send-verification-otp": async (request) => {
             const otpCodeRequestBody: unknown = await request.json();
 
@@ -149,7 +149,7 @@ describe("ValidateOtpCodeScreen", () => {
     renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest({
+        authenticationClientLayer: fakeAuthenticationClientLayer({
           "/email-otp/send-verification-otp": () =>
             Response.json({ success: true }),
         }),

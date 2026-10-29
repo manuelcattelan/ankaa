@@ -16,9 +16,12 @@ import {
   getFeatureNames,
   JAVASCRIPT_FILES,
   RESTRICTED_IMPORT_PATTERNS,
+  RESTRICTED_MOCK_METHODS,
   RESTRICTED_SYNTAX,
+  restrictedCallMatchers,
   rulesConfiguration,
   TEST_FILES,
+  TEST_RESTRICTED_SYNTAX,
 } from "#/base.ts";
 
 type CreateMobileConfigurationOptions = {
@@ -194,8 +197,18 @@ export function createMobileConfiguration({
       extends: [eslintPluginJest.configs["flat/recommended"]],
       files: TEST_FILES,
       rules: {
+        "jest/max-nested-describe": ["error", { max: 1 }],
         "jest/no-conditional-in-test": "error",
         "jest/no-disabled-tests": "error",
+        "jest/no-restricted-jest-methods": ["error", RESTRICTED_MOCK_METHODS],
+        "jest/no-restricted-matchers": ["error", restrictedCallMatchers],
+        "jest/require-top-level-describe": "error",
+        "no-restricted-syntax": [
+          "error",
+          ...RESTRICTED_SYNTAX,
+          ...MOBILE_RESTRICTED_SYNTAX,
+          ...TEST_RESTRICTED_SYNTAX,
+        ],
       },
     },
   ]);

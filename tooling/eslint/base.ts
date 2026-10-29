@@ -61,7 +61,7 @@ const TESTING_IMPORT_PATTERN = {
   regex: "(?:^|/)testing(?:/|$)",
 };
 
-const TEST_RESTRICTED_SYNTAX = [
+export const TEST_RESTRICTED_SYNTAX = [
   {
     message:
       "Write a test as straight-line code, because a loop repeats the code's logic in the test. Write one test per case.",
@@ -81,8 +81,13 @@ const TEST_RESTRICTED_SYNTAX = [
   },
 ];
 
-const RESTRICTED_VI_METHOD_MESSAGE =
+const RESTRICTED_MOCK_METHOD_MESSAGE =
   "Swap behavior only through a Service's Layers, because a module mock replaces the code a test should run and breaks when the code is refactored.";
+
+export const RESTRICTED_MOCK_METHODS = {
+  doMock: RESTRICTED_MOCK_METHOD_MESSAGE,
+  mock: RESTRICTED_MOCK_METHOD_MESSAGE,
+};
 
 const RESTRICTED_CALL_MATCHER_MESSAGE =
   "Check what the code did through what a fake recorded or what a later call returns, because a call assertion checks how the code works instead of what it does.";
@@ -99,6 +104,13 @@ const RESTRICTED_CALL_MATCHERS = [
   "toHaveBeenCalledTimes",
   "toHaveBeenCalledWith",
 ];
+
+export const restrictedCallMatchers = Object.fromEntries(
+  RESTRICTED_CALL_MATCHERS.flatMap((matcher) => [
+    [matcher, RESTRICTED_CALL_MATCHER_MESSAGE],
+    [`not.${matcher}`, RESTRICTED_CALL_MATCHER_MESSAGE],
+  ]),
+);
 
 export const RESTRICTED_SYNTAX = [
   {
@@ -428,22 +440,8 @@ export const vitestConfiguration = defineConfig({
     "vitest/max-nested-describe": ["error", { max: 1 }],
     "vitest/no-conditional-in-test": "error",
     "vitest/no-disabled-tests": "error",
-    "vitest/no-restricted-matchers": [
-      "error",
-      Object.fromEntries(
-        RESTRICTED_CALL_MATCHERS.flatMap((matcher) => [
-          [matcher, RESTRICTED_CALL_MATCHER_MESSAGE],
-          [`not.${matcher}`, RESTRICTED_CALL_MATCHER_MESSAGE],
-        ]),
-      ),
-    ],
-    "vitest/no-restricted-vi-methods": [
-      "error",
-      {
-        doMock: RESTRICTED_VI_METHOD_MESSAGE,
-        mock: RESTRICTED_VI_METHOD_MESSAGE,
-      },
-    ],
+    "vitest/no-restricted-matchers": ["error", restrictedCallMatchers],
+    "vitest/no-restricted-vi-methods": ["error", RESTRICTED_MOCK_METHODS],
     "vitest/require-top-level-describe": "error",
   },
 });

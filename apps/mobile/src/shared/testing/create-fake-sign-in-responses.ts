@@ -3,7 +3,7 @@ import { signedInSession } from "#/shared/testing/signed-in-session.ts";
 
 const SIGNED_IN_SESSION_COOKIE = `better-auth.session_token=${signedInSession.session.token}; Path=/; HttpOnly`;
 
-export function createSignInTestResponses(signInPath: string) {
+export function createFakeSignInResponses(signInPath: string) {
   let currentSession: typeof signedInSession | undefined;
 
   return {

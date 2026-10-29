@@ -24,17 +24,4 @@ export class Accessibility extends Context.Service<Accessibility>()(
   },
 ) {
   static readonly layer = Layer.effect(this, this.make);
-
-  static readonly layerTest = (announcedMessages: string[]) =>
-    Layer.succeed(
-      this,
-      this.of({
-        announceMessage: (message: string) =>
-          Effect.sync(() => {
-            if (message) {
-              announcedMessages.push(message);
-            }
-          }),
-      }),
-    );
 }
