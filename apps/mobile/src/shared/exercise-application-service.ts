@@ -5,9 +5,9 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import type { TrpcError } from "@/shared/errors/trpc-error";
+import type { TrpcError } from "#/shared/errors/trpc-error.ts";
 
-import { TrpcClient } from "@/shared/services/trpc-client";
+import { TrpcClient } from "#/shared/services/trpc-client.ts";
 
 export type Exercise =
   inferRouterOutputs<AppRouter>["exercise"]["list"][number];

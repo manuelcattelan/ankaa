@@ -1,9 +1,9 @@
 import * as Effect from "effect/Effect";
 
-import { GoogleSignInCanceledError } from "@/features/authentication/errors/google-sign-in-canceled-error";
-import { GoogleSignIn } from "@/features/authentication/services/google-sign-in";
-import { AuthenticationError } from "@/shared/errors/authentication-error";
-import { AuthenticationClient } from "@/shared/services/authentication-client";
+import { GoogleSignInCanceledError } from "#/features/authentication/errors/google-sign-in-canceled-error.ts";
+import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
+import { AuthenticationError } from "#/shared/errors/authentication-error.ts";
+import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 
 export const signInWithGoogle = Effect.fn("signInWithGoogle")(function* () {
   const authenticationClient = yield* AuthenticationClient;

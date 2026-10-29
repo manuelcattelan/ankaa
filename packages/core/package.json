@@ -16,6 +16,9 @@
   "exports": {
     "./*": "./src/*.ts"
   },
+  "imports": {
+    "#/*": "./src/*"
+  },
   "name": "@ankaa/core",
   "private": true,
   "scripts": {

@@ -1,11 +1,11 @@
 import type { TestRuntime } from "@ankaa/vitest/create-test-runtime";
 
-import { Authentication } from "@ankaa/authentication";
+import { Authentication } from "@ankaa/authentication/authentication";
 import { createTestUser } from "@ankaa/vitest/create-test-user";
 import * as Effect from "effect/Effect";
 
-import { createInnerContext } from "../../trpc/context.ts";
-import { createCaller } from "./create-caller.ts";
+import { createCaller } from "#/shared/testing/create-caller.ts";
+import { createInnerContext } from "#/trpc/context.ts";
 
 type CreateSignedInCallerOptions = {
   runtime: TestRuntime;

@@ -1,7 +1,7 @@
 import { screen, userEvent } from "@testing-library/react-native";
 
-import { renderScreen } from "@/shared/testing/render-screen";
-import { signedInAuthenticationClientLayer } from "@/shared/testing/signed-in-authentication-client-layer";
+import { renderScreen } from "#/shared/testing/render-screen.tsx";
+import { signedInAuthenticationClientLayer } from "#/shared/testing/signed-in-authentication-client-layer.ts";
 
 describe("NotFoundScreen", () => {
   it("tells the person that the screen they opened doesn't exist", async () => {

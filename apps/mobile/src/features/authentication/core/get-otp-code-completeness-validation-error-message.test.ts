@@ -1,4 +1,4 @@
-import { getOtpCodeCompletenessValidationErrorMessage } from "@/features/authentication/core/get-otp-code-completeness-validation-error-message";
+import { getOtpCodeCompletenessValidationErrorMessage } from "#/features/authentication/core/get-otp-code-completeness-validation-error-message.ts";
 
 describe("getOtpCodeCompletenessValidationErrorMessage", () => {
   it("returns no message for a complete OTP code", () => {

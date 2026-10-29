@@ -9,8 +9,8 @@ import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Schema from "effect/Schema";
 import fastify from "fastify";
 
-import { applicationPlugin } from "./application.ts";
-import { createApplicationLayer } from "./layer.ts";
+import { applicationPlugin } from "#/application.ts";
+import { createApplicationLayer } from "#/layer.ts";
 
 const LOGGER_CONFIGURATIONS = {
   development: {

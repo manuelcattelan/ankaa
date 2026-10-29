@@ -1,4 +1,4 @@
-import { validateOtpCodeCompleteness } from "@/features/authentication/core/validate-otp-code-completeness";
+import { validateOtpCodeCompleteness } from "#/features/authentication/core/validate-otp-code-completeness.ts";
 
 describe("validateOtpCodeCompleteness", () => {
   it("accepts an OTP code of 6 digits as complete", () => {

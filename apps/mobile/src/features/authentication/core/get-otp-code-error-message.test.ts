@@ -1,5 +1,5 @@
-import { getOtpCodeErrorMessage } from "@/features/authentication/core/get-otp-code-error-message";
-import { AuthenticationError } from "@/shared/errors/authentication-error";
+import { getOtpCodeErrorMessage } from "#/features/authentication/core/get-otp-code-error-message.ts";
+import { AuthenticationError } from "#/shared/errors/authentication-error.ts";
 
 describe("getOtpCodeErrorMessage", () => {
   it("returns no message without an error", () => {

@@ -10,8 +10,8 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { GooglePlayServicesMissingError } from "@/features/authentication/errors/google-play-services-missing-error";
-import { GoogleSignInInProgressError } from "@/features/authentication/errors/google-sign-in-in-progress-error";
+import { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
+import { GoogleSignInInProgressError } from "#/features/authentication/errors/google-sign-in-in-progress-error.ts";
 
 export class GoogleSignIn extends Context.Service<GoogleSignIn>()(
   "@ankaa/mobile/features/authentication/services/GoogleSignIn",

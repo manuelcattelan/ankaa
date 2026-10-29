@@ -1,4 +1,4 @@
-import { getEmailValidationErrorMessage } from "@/features/authentication/core/get-email-validation-error-message";
+import { getEmailValidationErrorMessage } from "#/features/authentication/core/get-email-validation-error-message.ts";
 
 describe("getEmailValidationErrorMessage", () => {
   it("returns no message for a valid email address", () => {

@@ -13,7 +13,7 @@ import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import typescriptEslint from "typescript-eslint";
 
-import { plugin } from "./plugin.ts";
+import { plugin } from "#/plugin.ts";
 
 type CreateFeatureIsolationZoneOptions = {
   allowedFeaturePaths?: string[];
@@ -78,6 +78,36 @@ export const RESTRICTED_SYNTAX = [
     selector:
       "CallExpression > MemberExpression.callee[property.name=/^(then|catch|finally)$/]:not([object.name='Effect'][property.name='catch'])",
   },
+  {
+    message:
+      "Import each name from the file that defines it instead of re-exporting a module, because Metro doesn't tree-shake and a barrel file loads every module it re-exports.",
+    selector: "ExportAllDeclaration",
+  },
+  {
+    message:
+      "Import each name from the file that defines it instead of re-exporting it, because Metro doesn't tree-shake and a barrel file loads every module it re-exports.",
+    selector: "ExportNamedDeclaration[source]",
+  },
+];
+
+export const RESTRICTED_IMPORT_PATTERNS = [
+  {
+    message:
+      "Import your workspace's own files through #/ instead of a relative path, so every import of a file reads the same.",
+    regex: String.raw`^\.\.?(?:/|$)`,
+  },
+  {
+    caseSensitive: true,
+    message:
+      "Import each Effect module from its subpath, such as effect/Schema, because Metro doesn't tree-shake and the root effect import loads every module.",
+    regex: "^effect$",
+  },
+  {
+    caseSensitive: true,
+    message:
+      "Validate with Effect Schema instead of zod, so validation has one library and one vocabulary.",
+    regex: "^zod(?:/|$)",
+  },
 ];
 
 const BOOLEAN_PREFIXES = ["is", "has", "can", "should"];
@@ -92,7 +122,7 @@ export const CORE_RESTRICTED_IMPORT_PATTERNS = [
     caseSensitive: true,
     message:
       "Keep core code pure: import only Effect's data modules, such as effect/Schema, from their subpaths.",
-    regex: "^effect(?:/(?:Context|Effect|Layer|ManagedRuntime))?$",
+    regex: "^effect/(?:Context|Effect|Layer|ManagedRuntime)$",
   },
   {
     caseSensitive: true,
@@ -108,7 +138,12 @@ export const CORE_FILES = ["**/core/**"];
 const CORE_PURITY_RULES: Linter.RulesRecord = {
   "no-restricted-imports": [
     "error",
-    { patterns: CORE_RESTRICTED_IMPORT_PATTERNS },
+    {
+      patterns: [
+        ...RESTRICTED_IMPORT_PATTERNS,
+        ...CORE_RESTRICTED_IMPORT_PATTERNS,
+      ],
+    },
   ],
 };
 
@@ -236,6 +271,10 @@ export const rulesConfiguration = defineConfig([
       "no-else-return": ["error", { allowElseIf: false }],
       "no-magic-numbers": "off",
       "no-nested-ternary": "error",
+      "no-restricted-imports": [
+        "error",
+        { patterns: RESTRICTED_IMPORT_PATTERNS },
+      ],
       "no-restricted-syntax": ["error", ...RESTRICTED_SYNTAX],
       "no-shadow": "off",
       "object-shorthand": ["error", "properties"],

@@ -1,8 +1,8 @@
 import * as Effect from "effect/Effect";
 
-import { protectedProcedure, router } from "../../trpc/procedures.ts";
-import { run } from "../../trpc/run.ts";
-import { ExerciseApplicationService } from "./exercise-application-service.ts";
+import { ExerciseApplicationService } from "#/features/exercise/exercise-application-service.ts";
+import { protectedProcedure, router } from "#/trpc/procedures.ts";
+import { run } from "#/trpc/run.ts";
 
 export const exerciseRouter = router({
   list: protectedProcedure.query(({ ctx, signal }) =>

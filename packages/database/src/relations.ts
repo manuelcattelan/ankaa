@@ -1,9 +1,9 @@
 import { defineRelations } from "drizzle-orm";
 
-import * as AuthenticationDatabaseSchema from "./schema/authentication.ts";
-import * as ExerciseDatabaseSchema from "./schema/exercise.ts";
-import * as RoutineDatabaseSchema from "./schema/routine.ts";
-import * as WorkoutDatabaseSchema from "./schema/workout.ts";
+import * as AuthenticationDatabaseSchema from "#/schema/authentication.ts";
+import * as ExerciseDatabaseSchema from "#/schema/exercise.ts";
+import * as RoutineDatabaseSchema from "#/schema/routine.ts";
+import * as WorkoutDatabaseSchema from "#/schema/workout.ts";
 
 export const relations = defineRelations(
   {

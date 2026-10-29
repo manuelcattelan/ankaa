@@ -1,7 +1,7 @@
 import type { Equipment } from "@ankaa/core/features/exercise/constants/equipment";
 import type { MuscleGroup } from "@ankaa/core/features/exercise/constants/muscle-group";
 
-import type { Exercise } from "@/shared/exercise-application-service";
+import type { Exercise } from "#/shared/exercise-application-service.ts";
 
 type SearchExercisesOptions = {
   equipmentSelection: Equipment[];

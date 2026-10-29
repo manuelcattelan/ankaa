@@ -1,11 +1,11 @@
-import { Email } from "@ankaa/email";
+import { Email } from "@ankaa/email/email";
 import { betterAuth } from "better-auth";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { AuthenticationError } from "./error.ts";
-import { loadAuthenticationOptions } from "./load-authentication-options.ts";
+import { AuthenticationError } from "#/error.ts";
+import { loadAuthenticationOptions } from "#/load-authentication-options.ts";
 
 export class Authentication extends Context.Service<Authentication>()(
   "@ankaa/authentication/Authentication",

@@ -1,4 +1,4 @@
-import type { Exercise } from "@/shared/exercise-application-service";
+import type { Exercise } from "#/shared/exercise-application-service.ts";
 
 export function getExerciseSearchOptions(exercises: Exercise[]) {
   return {

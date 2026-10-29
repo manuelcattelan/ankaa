@@ -1,10 +1,10 @@
-import type { SendEmailOptions } from "@ankaa/email";
+import type { SendEmailOptions } from "@ankaa/email/email";
 
 import { ExerciseApplicationService } from "@ankaa/api/features/exercise/exercise-application-service";
 import { pinoBridge } from "@ankaa/api/shared/pino-bridge";
-import { Authentication } from "@ankaa/authentication";
-import { Database } from "@ankaa/database";
-import { Email } from "@ankaa/email";
+import { Authentication } from "@ankaa/authentication/authentication";
+import { Database } from "@ankaa/database/database";
+import { Email } from "@ankaa/email/email";
 import * as ConfigProvider from "effect/ConfigProvider";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -14,10 +14,10 @@ import { randomUUID } from "node:crypto";
 import { escapeIdentifier } from "pg";
 import { inject } from "vitest";
 
-import { dropDatabase } from "./drop-database.ts";
-import { getDatabaseUrl } from "./get-database-url.ts";
-import { queryDatabase } from "./query-database.ts";
-import "./provided-context.ts";
+import { dropDatabase } from "#/drop-database.ts";
+import { getDatabaseUrl } from "#/get-database-url.ts";
+import { queryDatabase } from "#/query-database.ts";
+import "#/provided-context.ts";
 
 export type TestRuntime = ReturnType<typeof createTestRuntime>;
 

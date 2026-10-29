@@ -10,8 +10,8 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { TrpcError } from "@/shared/errors/trpc-error";
-import { AuthenticationClient } from "@/shared/services/authentication-client";
+import { TrpcError } from "#/shared/errors/trpc-error.ts";
+import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 
 export type TrpcTestResponses = {
   [RouterName in keyof TrpcRouterOutputs]?: {

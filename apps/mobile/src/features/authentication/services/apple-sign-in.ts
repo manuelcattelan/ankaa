@@ -4,8 +4,8 @@ import * as Layer from "effect/Layer";
 import * as Predicate from "effect/Predicate";
 import * as ExpoAppleAuthentication from "expo-apple-authentication";
 
-import { REQUEST_CANCELED_ERROR_CODE } from "@/features/authentication/constants/request-error-code";
-import { AppleSignInCanceledError } from "@/features/authentication/errors/apple-sign-in-canceled-error";
+import { REQUEST_CANCELED_ERROR_CODE } from "#/features/authentication/constants/request-error-code.ts";
+import { AppleSignInCanceledError } from "#/features/authentication/errors/apple-sign-in-canceled-error.ts";
 
 type AppleSignInTestOptions = {
   appleAuthenticationCredential?: ExpoAppleAuthentication.AppleAuthenticationCredential;

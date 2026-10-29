@@ -2,7 +2,7 @@ import type { Href } from "expo-router";
 
 import { Link } from "expo-router";
 
-import { Button } from "@/shared/components/button";
+import { Button } from "#/shared/components/button.tsx";
 
 type LinkButtonProperties = {
   href: Href;

@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { testUtils } from "better-auth/plugins";
 import * as Effect from "effect/Effect";
 
-import { loadAuthenticationOptions } from "../load-authentication-options.ts";
+import { loadAuthenticationOptions } from "#/load-authentication-options.ts";
 
 export type TestAuthentication = Effect.Success<
   ReturnType<typeof createTestAuthentication>

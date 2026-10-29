@@ -5,20 +5,20 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ActivityIndicator } from "react-native";
 
-import type { Exercise } from "@/shared/exercise-application-service";
+import type { Exercise } from "#/shared/exercise-application-service.ts";
 
-import { getExerciseSearchOptions } from "@/features/exercise/core/get-exercise-search-options";
-import { searchExercises } from "@/features/exercise/core/search-exercises";
-import { exercisePickerMessages } from "@/features/exercise/messages/exercise-picker-messages";
-import { Button } from "@/shared/components/button";
-import { CheckboxGroup } from "@/shared/components/checkbox-group";
-import { ScrollView } from "@/shared/components/scroll-view";
-import { StatusMessage } from "@/shared/components/status-message";
-import { TextField } from "@/shared/components/text-field";
-import { getTrpcErrorMessage } from "@/shared/core/get-trpc-error-message";
-import { useRuntime } from "@/shared/hooks/use-runtime";
-import { announceMessage } from "@/shared/interactors/announce-message";
-import { createExerciseListQueryOptions } from "@/shared/queries/create-exercise-list-query-options";
+import { getExerciseSearchOptions } from "#/features/exercise/core/get-exercise-search-options.ts";
+import { searchExercises } from "#/features/exercise/core/search-exercises.ts";
+import { exercisePickerMessages } from "#/features/exercise/messages/exercise-picker-messages.ts";
+import { Button } from "#/shared/components/button.tsx";
+import { CheckboxGroup } from "#/shared/components/checkbox-group.tsx";
+import { ScrollView } from "#/shared/components/scroll-view.tsx";
+import { StatusMessage } from "#/shared/components/status-message.tsx";
+import { TextField } from "#/shared/components/text-field.tsx";
+import { getTrpcErrorMessage } from "#/shared/core/get-trpc-error-message.ts";
+import { useRuntime } from "#/shared/hooks/use-runtime.ts";
+import { announceMessage } from "#/shared/interactors/announce-message.ts";
+import { createExerciseListQueryOptions } from "#/shared/queries/create-exercise-list-query-options.ts";
 
 type ExercisePickerContentProperties = ExercisePickerProperties & {
   exercises: Exercise[];

@@ -3,12 +3,12 @@ import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { Database } from "./index.ts";
+import { Database } from "#/database.ts";
 import {
   exercise,
   exerciseEquipment,
   exerciseMuscleGroup,
-} from "./schema/exercise.ts";
+} from "#/schema/exercise.ts";
 
 type ExerciseSeed = Pick<
   typeof exercise.$inferSelect,

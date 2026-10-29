@@ -6,7 +6,7 @@ import * as Logger from "effect/Logger";
 import * as Predicate from "effect/Predicate";
 import * as Record from "effect/Record";
 
-import { PinoLogger } from "./pino-logger.ts";
+import { PinoLogger } from "#/shared/pino-logger.ts";
 
 const PINO_LOG_LEVELS = {
   All: "trace",

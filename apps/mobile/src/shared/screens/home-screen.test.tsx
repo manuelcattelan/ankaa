@@ -1,8 +1,8 @@
 import { screen, userEvent } from "@testing-library/react-native";
 
-import { AuthenticationClient } from "@/shared/services/authentication-client";
-import { renderScreen } from "@/shared/testing/render-screen";
-import { signedInSession } from "@/shared/testing/signed-in-session";
+import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
+import { renderScreen } from "#/shared/testing/render-screen.tsx";
+import { signedInSession } from "#/shared/testing/signed-in-session.ts";
 
 describe("HomeScreen", () => {
   it("takes the person to the sign-in screen when they sign out", async () => {

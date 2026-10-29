@@ -2,7 +2,7 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { ExerciseRepository } from "./exercise-repository.ts";
+import { ExerciseRepository } from "#/features/exercise/exercise-repository.ts";
 
 type ExerciseApplicationServiceShape = {
   readonly list: ExerciseRepository["Service"]["list"];

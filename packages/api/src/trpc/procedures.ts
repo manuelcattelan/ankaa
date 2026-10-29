@@ -1,7 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import { STATUS_CODES } from "node:http";
 
-import type { Context } from "./context.ts";
+import type { Context } from "#/trpc/context.ts";
 
 const HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
 

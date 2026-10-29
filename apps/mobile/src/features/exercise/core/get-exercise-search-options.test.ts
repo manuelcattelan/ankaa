@@ -1,6 +1,6 @@
-import type { Exercise } from "@/shared/exercise-application-service";
+import type { Exercise } from "#/shared/exercise-application-service.ts";
 
-import { getExerciseSearchOptions } from "@/features/exercise/core/get-exercise-search-options";
+import { getExerciseSearchOptions } from "#/features/exercise/core/get-exercise-search-options.ts";
 
 const BENCH_PRESS_EXERCISE: Exercise = {
   amountUnit: "repetition",

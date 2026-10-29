@@ -1,5 +1,5 @@
-import { isAuthenticationRateLimited } from "@/features/authentication/core/is-authentication-rate-limited";
-import { AuthenticationError } from "@/shared/errors/authentication-error";
+import { isAuthenticationRateLimited } from "#/features/authentication/core/is-authentication-rate-limited.ts";
+import { AuthenticationError } from "#/shared/errors/authentication-error.ts";
 
 describe("isAuthenticationRateLimited", () => {
   it("returns true for an AuthenticationError with the status 429", () => {

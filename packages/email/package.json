@@ -12,7 +12,10 @@
     "typescript": "catalog:"
   },
   "exports": {
-    ".": "./src/index.ts"
+    "./*": "./src/*.ts"
+  },
+  "imports": {
+    "#/*": "./src/*"
   },
   "name": "@ankaa/email",
   "private": true,

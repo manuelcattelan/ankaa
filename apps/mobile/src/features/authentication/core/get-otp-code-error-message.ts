@@ -1,6 +1,6 @@
-import { getAuthenticationErrorMessage } from "@/features/authentication/core/get-authentication-error-message";
-import { isAuthenticationRateLimited } from "@/features/authentication/core/is-authentication-rate-limited";
-import { authenticationErrorMessages } from "@/features/authentication/messages/authentication-error-messages";
+import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
+import { isAuthenticationRateLimited } from "#/features/authentication/core/is-authentication-rate-limited.ts";
+import { authenticationErrorMessages } from "#/features/authentication/messages/authentication-error-messages.ts";
 
 type GetOtpCodeErrorMessageOptions = {
   cooldownRemainingSeconds: number;

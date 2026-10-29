@@ -1,10 +1,13 @@
 {
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "allowJs": true,
     "isolatedModules": true,
     "module": "nodenext",
     "moduleDetection": "force",
-    "resolveJsonModule": true
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "rewriteRelativeImportExtensions": false
   },
   "extends": [
     "./base.json",

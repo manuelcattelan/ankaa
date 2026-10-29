@@ -1,8 +1,8 @@
 import * as Match from "effect/Match";
 
-import type { EmailValidationOutcome } from "@/features/authentication/core/validate-email";
+import type { EmailValidationOutcome } from "#/features/authentication/core/validate-email.ts";
 
-import { authenticationErrorMessages } from "@/features/authentication/messages/authentication-error-messages";
+import { authenticationErrorMessages } from "#/features/authentication/messages/authentication-error-messages.ts";
 
 export function getEmailValidationErrorMessage(
   emailValidationOutcome: EmailValidationOutcome,

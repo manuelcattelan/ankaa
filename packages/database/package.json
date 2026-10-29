@@ -19,13 +19,10 @@
     "vitest": "catalog:"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./migrations-folder-path": "./src/migrations-folder-path.ts",
-    "./relations": "./src/relations.ts",
-    "./schema/authentication": "./src/schema/authentication.ts",
-    "./schema/exercise": "./src/schema/exercise.ts",
-    "./schema/routine": "./src/schema/routine.ts",
-    "./schema/workout": "./src/schema/workout.ts"
+    "./*": "./src/*.ts"
+  },
+  "imports": {
+    "#/*": "./src/*"
   },
   "name": "@ankaa/database",
   "private": true,

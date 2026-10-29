@@ -18,12 +18,12 @@ import { AppState, Platform, useColorScheme } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { applicationLayer, createRuntime } from "@/layer";
-import { RootNavigator } from "@/root";
-import { Text } from "@/shared/components/text";
-import { useAuthenticationSession } from "@/shared/hooks/use-authentication-session";
-import { errorMessages } from "@/shared/messages/error-messages";
-import { RuntimeContext } from "@/shared/providers/runtime-context";
+import { applicationLayer, createRuntime } from "#/layer.ts";
+import { RootNavigator } from "#/root.tsx";
+import { Text } from "#/shared/components/text.tsx";
+import { useAuthenticationSession } from "#/shared/hooks/use-authentication-session.ts";
+import { errorMessages } from "#/shared/messages/error-messages.ts";
+import { RuntimeContext } from "#/shared/providers/runtime-context.ts";
 
 export function ErrorBoundary() {
   const colorScheme = useColorScheme();

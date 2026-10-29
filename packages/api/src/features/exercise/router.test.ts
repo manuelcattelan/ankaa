@@ -1,4 +1,4 @@
-import { Database } from "@ankaa/database";
+import { Database } from "@ankaa/database/database";
 import {
   exercise,
   exerciseEquipment,
@@ -8,9 +8,9 @@ import { createTestRuntime } from "@ankaa/vitest/create-test-runtime";
 import { afterAll, describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 
-import { createCaller } from "../../shared/testing/create-caller.ts";
-import { createSignedInCaller } from "../../shared/testing/create-signed-in-caller.ts";
-import { createInnerContext } from "../../trpc/context.ts";
+import { createCaller } from "#/shared/testing/create-caller.ts";
+import { createSignedInCaller } from "#/shared/testing/create-signed-in-caller.ts";
+import { createInnerContext } from "#/trpc/context.ts";
 
 describe("exercise.list", () => {
   const runtime = createTestRuntime();

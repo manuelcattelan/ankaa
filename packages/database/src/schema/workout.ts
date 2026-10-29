@@ -29,9 +29,9 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { user } from "./authentication.ts";
-import { exercise } from "./exercise.ts";
-import { routine } from "./routine.ts";
+import { user } from "#/schema/authentication.ts";
+import { exercise } from "#/schema/exercise.ts";
+import { routine } from "#/schema/routine.ts";
 
 const WEIGHT_VALUE_PRECISION = 6;
 

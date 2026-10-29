@@ -26,8 +26,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { user } from "./authentication.ts";
-import { exercise } from "./exercise.ts";
+import { user } from "#/schema/authentication.ts";
+import { exercise } from "#/schema/exercise.ts";
 
 export const routine = snakeCase.table(
   "routine",

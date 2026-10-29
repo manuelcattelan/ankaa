@@ -1,7 +1,7 @@
 import { NODE_ENVIRONMENTS } from "@ankaa/core/shared/constants/node-environment";
 import { urlSchema } from "@ankaa/core/shared/schemas/url-schema";
 import { relations } from "@ankaa/database/relations";
-import { Email } from "@ankaa/email";
+import { Email } from "@ankaa/email/email";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
@@ -9,7 +9,7 @@ import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
 import { Pool } from "pg";
 
-import { createAuthenticationOptions } from "./create-authentication-options.ts";
+import { createAuthenticationOptions } from "#/create-authentication-options.ts";
 
 const BETTER_AUTH_SECRET_MINIMUM_LENGTH = 32;
 

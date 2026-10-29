@@ -3,7 +3,7 @@ import type { TestAuthentication } from "@ankaa/authentication/testing/create-te
 import { createTestAuthentication } from "@ankaa/authentication/testing/create-test-authentication";
 import * as Effect from "effect/Effect";
 
-import type { TestRuntime } from "./create-test-runtime.ts";
+import type { TestRuntime } from "#/create-test-runtime.ts";
 
 export async function createTestUser(runtime: TestRuntime) {
   return runtime.runPromise(

@@ -1,9 +1,9 @@
 import { mutationOptions } from "@tanstack/react-query";
 
-import type { SignInWithOtpCodeOptions } from "@/features/authentication/interactors/sign-in-with-otp-code";
-import type { ApplicationRuntime } from "@/layer";
+import type { SignInWithOtpCodeOptions } from "#/features/authentication/interactors/sign-in-with-otp-code.ts";
+import type { ApplicationRuntime } from "#/layer.ts";
 
-import { signInWithOtpCode } from "@/features/authentication/interactors/sign-in-with-otp-code";
+import { signInWithOtpCode } from "#/features/authentication/interactors/sign-in-with-otp-code.ts";
 
 export function createOtpCodeSignInMutationOptions(
   runtime: ApplicationRuntime,

@@ -1,4 +1,4 @@
-import { getCooldownDeadline } from "@/features/authentication/core/get-cooldown-deadline";
+import { getCooldownDeadline } from "#/features/authentication/core/get-cooldown-deadline.ts";
 
 describe("getCooldownDeadline", () => {
   it("returns the start of the cooldown plus its seconds in milliseconds", () => {

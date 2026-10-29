@@ -24,6 +24,9 @@
   "exports": {
     "./*": "./src/*.ts"
   },
+  "imports": {
+    "#/*": "./src/*"
+  },
   "name": "@ankaa/api",
   "private": true,
   "scripts": {

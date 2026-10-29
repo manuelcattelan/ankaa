@@ -1,4 +1,4 @@
-import { formatCount } from "@/shared/core/format-count";
+import { formatCount } from "#/shared/core/format-count.ts";
 
 export const validateOtpCodeScreenMessages = {
   otpCodeIncompleteError: (otpCodeLength: number) =>

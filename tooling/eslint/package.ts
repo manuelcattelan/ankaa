@@ -8,7 +8,7 @@ import {
   getFeatureNames,
   JAVASCRIPT_FILES,
   vitestConfiguration,
-} from "./base.ts";
+} from "#/base.ts";
 
 const DATABASE_QUERY_MESSAGE =
   "Import a database query only in an interactor of its own feature.";

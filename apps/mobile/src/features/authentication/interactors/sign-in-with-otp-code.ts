@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
 
-import { AuthenticationClient } from "@/shared/services/authentication-client";
+import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 
 export type SignInWithOtpCodeOptions = {
   email: string;

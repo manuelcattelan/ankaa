@@ -1,4 +1,4 @@
-import { convertUndefinedToNull } from "@/shared/core/convert-undefined-to-null";
+import { convertUndefinedToNull } from "#/shared/core/convert-undefined-to-null.ts";
 
 describe("convertUndefinedToNull", () => {
   it("converts undefined to null", () => {

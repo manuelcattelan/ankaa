@@ -1,9 +1,9 @@
 import { mutationOptions } from "@tanstack/react-query";
 import * as Effect from "effect/Effect";
 
-import type { ApplicationRuntime } from "@/layer";
+import type { ApplicationRuntime } from "#/layer.ts";
 
-import { signInWithApple } from "@/features/authentication/interactors/sign-in-with-apple";
+import { signInWithApple } from "#/features/authentication/interactors/sign-in-with-apple.ts";
 
 export function createAppleSignInMutationOptions(runtime: ApplicationRuntime) {
   return mutationOptions({

@@ -1,4 +1,4 @@
-import { validateEmail } from "@/features/authentication/core/validate-email";
+import { validateEmail } from "#/features/authentication/core/validate-email.ts";
 
 describe("validateEmail", () => {
   it("accepts an address like name@example.com", () => {

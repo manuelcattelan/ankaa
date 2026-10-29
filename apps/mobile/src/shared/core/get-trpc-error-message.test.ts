@@ -1,7 +1,7 @@
 import { TRPCClientError } from "@trpc/client";
 
-import { getTrpcErrorMessage } from "@/shared/core/get-trpc-error-message";
-import { TrpcError } from "@/shared/errors/trpc-error";
+import { getTrpcErrorMessage } from "#/shared/core/get-trpc-error-message.ts";
+import { TrpcError } from "#/shared/errors/trpc-error.ts";
 
 const NOT_FOUND_TRPC_ERROR_RESPONSE = {
   error: {

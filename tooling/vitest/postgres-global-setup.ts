@@ -13,10 +13,10 @@ import path from "node:path";
 import { escapeIdentifier } from "pg";
 import { lock } from "proper-lockfile";
 
-import { dropDatabase } from "./drop-database.ts";
-import { getDatabaseUrl } from "./get-database-url.ts";
-import { queryDatabase } from "./query-database.ts";
-import "./provided-context.ts";
+import { dropDatabase } from "#/drop-database.ts";
+import { getDatabaseUrl } from "#/get-database-url.ts";
+import { queryDatabase } from "#/query-database.ts";
+import "#/provided-context.ts";
 
 type BuildTemplateDatabaseOptions = {
   maintenanceClient: Client;

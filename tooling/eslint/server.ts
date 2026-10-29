@@ -5,7 +5,7 @@ import {
   baseConfiguration,
   JAVASCRIPT_FILES,
   vitestConfiguration,
-} from "./base.ts";
+} from "#/base.ts";
 
 export const serverConfiguration = defineConfig([
   baseConfiguration,

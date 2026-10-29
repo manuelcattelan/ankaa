@@ -1,6 +1,6 @@
 import * as Data from "effect/Data";
 
-import { OTP_CODE_LENGTH } from "@/features/authentication/constants/otp-code";
+import { OTP_CODE_LENGTH } from "#/features/authentication/constants/otp-code.ts";
 
 export type OtpCodeCompletenessValidationOutcome = Data.TaggedEnum<{
   OtpCodeCompletenessValid: object;

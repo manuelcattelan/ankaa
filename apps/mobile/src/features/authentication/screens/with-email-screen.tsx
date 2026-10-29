@@ -3,17 +3,17 @@ import * as Match from "effect/Match";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 
-import { getAuthenticationErrorMessage } from "@/features/authentication/core/get-authentication-error-message";
-import { getEmailValidationErrorMessage } from "@/features/authentication/core/get-email-validation-error-message";
-import { validateEmail } from "@/features/authentication/core/validate-email";
-import { announceAuthenticationError } from "@/features/authentication/interactors/announce-authentication-error";
-import { withEmailScreenMessages } from "@/features/authentication/messages/with-email-screen-messages";
-import { createOtpCodeRequestMutationOptions } from "@/features/authentication/mutations/create-otp-code-request-mutation-options";
-import { Button } from "@/shared/components/button";
-import { ScrollView } from "@/shared/components/scroll-view";
-import { TextField } from "@/shared/components/text-field";
-import { useRuntime } from "@/shared/hooks/use-runtime";
-import { announceMessage } from "@/shared/interactors/announce-message";
+import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
+import { getEmailValidationErrorMessage } from "#/features/authentication/core/get-email-validation-error-message.ts";
+import { validateEmail } from "#/features/authentication/core/validate-email.ts";
+import { announceAuthenticationError } from "#/features/authentication/interactors/announce-authentication-error.ts";
+import { withEmailScreenMessages } from "#/features/authentication/messages/with-email-screen-messages.ts";
+import { createOtpCodeRequestMutationOptions } from "#/features/authentication/mutations/create-otp-code-request-mutation-options.ts";
+import { Button } from "#/shared/components/button.tsx";
+import { ScrollView } from "#/shared/components/scroll-view.tsx";
+import { TextField } from "#/shared/components/text-field.tsx";
+import { useRuntime } from "#/shared/hooks/use-runtime.ts";
+import { announceMessage } from "#/shared/interactors/announce-message.ts";
 
 export function WithEmailScreen() {
   const router = useRouter();

@@ -1,9 +1,9 @@
 import { Stack } from "expo-router";
 import { View } from "react-native";
 
-import { LinkButton } from "@/shared/components/link-button";
-import { Text } from "@/shared/components/text";
-import { notFoundScreenMessages } from "@/shared/messages/not-found-screen-messages";
+import { LinkButton } from "#/shared/components/link-button.tsx";
+import { Text } from "#/shared/components/text.tsx";
+import { notFoundScreenMessages } from "#/shared/messages/not-found-screen-messages.ts";
 
 export function NotFoundScreen() {
   return (

@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 
-import { useAuthenticationSession } from "@/shared/hooks/use-authentication-session";
+import { useAuthenticationSession } from "#/shared/hooks/use-authentication-session.ts";
 
 export function RootNavigator() {
   const session = useAuthenticationSession();

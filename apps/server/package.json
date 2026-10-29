@@ -27,6 +27,9 @@
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
+  "imports": {
+    "#/*": "./src/*"
+  },
   "name": "@ankaa/server",
   "private": true,
   "scripts": {

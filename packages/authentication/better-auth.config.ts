@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 
-import { createAuthenticationOptions } from "./src/create-authentication-options.ts";
+import { createAuthenticationOptions } from "#/create-authentication-options.ts";
 
 export default betterAuth(
   createAuthenticationOptions({

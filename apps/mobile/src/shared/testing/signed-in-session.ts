@@ -1,4 +1,4 @@
-import type { AuthenticationClient } from "@/shared/services/authentication-client";
+import type { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 
 type AuthenticationSession =
   AuthenticationClient["Service"]["betterAuthenticationClient"]["$Infer"]["Session"];

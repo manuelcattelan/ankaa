@@ -1,5 +1,5 @@
-import { convertUndefinedToNull } from "@/shared/core/convert-undefined-to-null";
-import { signedInSession } from "@/shared/testing/signed-in-session";
+import { convertUndefinedToNull } from "#/shared/core/convert-undefined-to-null.ts";
+import { signedInSession } from "#/shared/testing/signed-in-session.ts";
 
 const SIGNED_IN_SESSION_COOKIE = `better-auth.session_token=${signedInSession.session.token}; Path=/; HttpOnly`;
 

@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
 
-import { AppleSignIn } from "@/features/authentication/services/apple-sign-in";
+import { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts";
 
 export const checkAppleSignInAvailability = Effect.fn(
   "checkAppleSignInAvailability",

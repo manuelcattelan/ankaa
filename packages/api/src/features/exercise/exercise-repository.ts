@@ -4,7 +4,7 @@ import type {
   exerciseMuscleGroup,
 } from "@ankaa/database/schema/exercise";
 
-import { Database } from "@ankaa/database";
+import { Database } from "@ankaa/database/database";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";

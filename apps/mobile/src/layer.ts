@@ -4,13 +4,13 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 
-import { AppleSignIn } from "@/features/authentication/services/apple-sign-in";
-import { GoogleSignIn } from "@/features/authentication/services/google-sign-in";
-import { ExerciseApplicationService } from "@/shared/exercise-application-service";
-import { Accessibility } from "@/shared/services/accessibility";
-import { AuthenticationClient } from "@/shared/services/authentication-client";
-import { Crypto } from "@/shared/services/crypto";
-import { TrpcClient } from "@/shared/services/trpc-client";
+import { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts";
+import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
+import { ExerciseApplicationService } from "#/shared/exercise-application-service.ts";
+import { Accessibility } from "#/shared/services/accessibility.ts";
+import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
+import { Crypto } from "#/shared/services/crypto.ts";
+import { TrpcClient } from "#/shared/services/trpc-client.ts";
 
 export type ApplicationRuntime = ManagedRuntime.ManagedRuntime<
   Layer.Success<typeof applicationLayer>,

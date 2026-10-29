@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
-import { getCooldownDeadline } from "@/features/authentication/core/get-cooldown-deadline";
-import { getRemainingSeconds } from "@/shared/core/get-remaining-seconds";
-import { useRuntime } from "@/shared/hooks/use-runtime";
-import { announceMessage } from "@/shared/interactors/announce-message";
+import { getCooldownDeadline } from "#/features/authentication/core/get-cooldown-deadline.ts";
+import { getRemainingSeconds } from "#/shared/core/get-remaining-seconds.ts";
+import { useRuntime } from "#/shared/hooks/use-runtime.ts";
+import { announceMessage } from "#/shared/interactors/announce-message.ts";
 
 type UseCooldownOptions = {
   cooldownEndMessage: string;

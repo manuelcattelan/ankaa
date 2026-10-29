@@ -1,9 +1,5 @@
 {
   "compilerOptions": {
-    "paths": {
-      "@/*": ["./src/*"],
-      "@/assets/*": ["./assets/*"]
-    },
     "types": ["jest"]
   },
   "extends": ["@ankaa/typescript/mobile.json", "expo/tsconfig.base"],

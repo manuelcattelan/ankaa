@@ -1,9 +1,9 @@
 import type { applicationLayer } from "@ankaa/api/layer";
-import type { SendEmailOptions } from "@ankaa/email";
+import type { SendEmailOptions } from "@ankaa/email/email";
 import type { FastifyInstance } from "fastify";
 
 import { ExerciseApplicationService } from "@ankaa/api/features/exercise/exercise-application-service";
-import { Authentication } from "@ankaa/authentication";
+import { Authentication } from "@ankaa/authentication/authentication";
 import { createTestRuntime } from "@ankaa/vitest/create-test-runtime";
 import { createTestUser } from "@ankaa/vitest/create-test-user";
 import {
@@ -20,8 +20,8 @@ import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import fastify from "fastify";
 
-import { applicationPlugin } from "./application.ts";
-import { createLoggerLayer } from "./logger.ts";
+import { applicationPlugin } from "#/application.ts";
+import { createLoggerLayer } from "#/logger.ts";
 
 type CreateLoggingServerOptions = {
   layer: Layer.Layer<Layer.Success<typeof applicationLayer>>;

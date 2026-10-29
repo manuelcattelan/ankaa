@@ -1,13 +1,13 @@
 import * as Predicate from "effect/Predicate";
 
-import type { AuthenticationClient } from "@/shared/services/authentication-client";
+import type { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 
-import { isAuthenticationRateLimited } from "@/features/authentication/core/is-authentication-rate-limited";
-import { GooglePlayServicesMissingError } from "@/features/authentication/errors/google-play-services-missing-error";
-import { GoogleSignInInProgressError } from "@/features/authentication/errors/google-sign-in-in-progress-error";
-import { authenticationErrorMessages } from "@/features/authentication/messages/authentication-error-messages";
-import { AuthenticationError } from "@/shared/errors/authentication-error";
-import { errorMessages } from "@/shared/messages/error-messages";
+import { isAuthenticationRateLimited } from "#/features/authentication/core/is-authentication-rate-limited.ts";
+import { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
+import { GoogleSignInInProgressError } from "#/features/authentication/errors/google-sign-in-in-progress-error.ts";
+import { authenticationErrorMessages } from "#/features/authentication/messages/authentication-error-messages.ts";
+import { AuthenticationError } from "#/shared/errors/authentication-error.ts";
+import { errorMessages } from "#/shared/messages/error-messages.ts";
 
 type AuthenticationErrorCode =
   | "EMAIL_NOT_VERIFIED"

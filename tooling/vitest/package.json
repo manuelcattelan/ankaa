@@ -15,6 +15,9 @@
     "./create-test-user": "./create-test-user.ts",
     "./database-configuration": "./database-configuration.ts"
   },
+  "imports": {
+    "#/*": "./*"
+  },
   "name": "@ankaa/vitest",
   "peerDependencies": {
     "@ankaa/api": "workspace:*",

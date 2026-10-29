@@ -23,8 +23,10 @@
     "vitest": "catalog:"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./testing/create-test-authentication": "./src/testing/create-test-authentication.ts"
+    "./*": "./src/*.ts"
+  },
+  "imports": {
+    "#/*": "./src/*"
   },
   "name": "@ankaa/authentication",
   "private": true,

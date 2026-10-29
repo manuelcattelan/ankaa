@@ -6,8 +6,8 @@ import * as Exit from "effect/Exit";
 import * as Fiber from "effect/Fiber";
 import { afterAll, describe, expect, it } from "vitest";
 
-import { Database } from "./index.ts";
-import { exercise } from "./schema/exercise.ts";
+import { Database } from "#/database.ts";
+import { exercise } from "#/schema/exercise.ts";
 
 const findExerciseIds = Effect.fn("findExerciseIds")(function* (id: string) {
   const database = yield* Database;

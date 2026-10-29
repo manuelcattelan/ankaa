@@ -3,13 +3,13 @@ import type { SignInResponse } from "@react-native-google-signin/google-signin";
 import { fireEvent, screen, userEvent } from "@testing-library/react-native";
 import * as ExpoAppleAuthentication from "expo-apple-authentication";
 
-import { AppleSignIn } from "@/features/authentication/services/apple-sign-in";
-import { GoogleSignIn } from "@/features/authentication/services/google-sign-in";
-import { Accessibility } from "@/shared/services/accessibility";
-import { AuthenticationClient } from "@/shared/services/authentication-client";
-import { advanceFakeTime } from "@/shared/testing/advance-fake-time";
-import { createSignInTestResponses } from "@/shared/testing/create-sign-in-test-responses";
-import { renderScreen } from "@/shared/testing/render-screen";
+import { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts";
+import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
+import { Accessibility } from "#/shared/services/accessibility.ts";
+import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
+import { advanceFakeTime } from "#/shared/testing/advance-fake-time.ts";
+import { createSignInTestResponses } from "#/shared/testing/create-sign-in-test-responses.ts";
+import { renderScreen } from "#/shared/testing/render-screen.tsx";
 
 const APPLE_AUTHENTICATION_CREDENTIAL: ExpoAppleAuthentication.AppleAuthenticationCredential =
   {

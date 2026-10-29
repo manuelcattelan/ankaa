@@ -1,7 +1,7 @@
-import { getAuthenticationErrorMessage } from "@/features/authentication/core/get-authentication-error-message";
-import { GooglePlayServicesMissingError } from "@/features/authentication/errors/google-play-services-missing-error";
-import { GoogleSignInInProgressError } from "@/features/authentication/errors/google-sign-in-in-progress-error";
-import { AuthenticationError } from "@/shared/errors/authentication-error";
+import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
+import { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
+import { GoogleSignInInProgressError } from "#/features/authentication/errors/google-sign-in-in-progress-error.ts";
+import { AuthenticationError } from "#/shared/errors/authentication-error.ts";
 
 describe("getAuthenticationErrorMessage", () => {
   it("returns the server unreachable message for an AuthenticationError caused by a network failure", () => {

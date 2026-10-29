@@ -1,4 +1,4 @@
-import { useAuthenticationClient } from "@/shared/hooks/use-authentication-client";
+import { useAuthenticationClient } from "#/shared/hooks/use-authentication-client.ts";
 
 export function useAuthenticationSession() {
   const authenticationClient = useAuthenticationClient();

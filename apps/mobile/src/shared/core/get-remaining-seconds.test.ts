@@ -1,4 +1,4 @@
-import { getRemainingSeconds } from "@/shared/core/get-remaining-seconds";
+import { getRemainingSeconds } from "#/shared/core/get-remaining-seconds.ts";
 
 describe("getRemainingSeconds", () => {
   it("returns the whole seconds left before the deadline", () => {

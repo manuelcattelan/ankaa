@@ -1,6 +1,6 @@
-import type { AuthenticationClient } from "@/shared/services/authentication-client";
+import type { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 
-import { getAuthenticationErrorMessage } from "@/features/authentication/core/get-authentication-error-message";
+import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
 
 type AuthenticationSession = ReturnType<
   AuthenticationClient["Service"]["betterAuthenticationClient"]["useSession"]

@@ -14,10 +14,11 @@ import {
   FEATURES_PATH,
   getFeatureNames,
   JAVASCRIPT_FILES,
+  RESTRICTED_IMPORT_PATTERNS,
   RESTRICTED_SYNTAX,
   rulesConfiguration,
   TEST_FILES,
-} from "./base.ts";
+} from "#/base.ts";
 
 const MOBILE_RESTRICTED_SYNTAX = [
   {
@@ -45,20 +46,15 @@ const DYNAMIC_ROUTE_FILE_NAME_PATTERN = /^\[[a-z][A-Za-z]*\]\.tsx$/;
 
 const WRAPPED_PRIMITIVES = ["Pressable", "ScrollView", "Text", "TextInput"];
 
-const RELATIVE_IMPORT_PATTERN = {
-  group: ["./*", "../*"],
-  message: "Import through @/ instead of a relative path.",
-};
-
 const ROUTE_PACKAGE_IMPORT_PATTERN = {
   message:
     "Import only screens and components in a route file, and expo-router for its params and navigators. The root layout wires the rest of the app.",
-  regex: "^(?!@/|expo-router$|react$)",
+  regex: "^(?!#/|expo-router$|react$)",
 };
 
 const WRAPPED_PRIMITIVES_IMPORT = {
   importNames: WRAPPED_PRIMITIVES,
-  message: "Use the component with the same name from @/shared/components.",
+  message: "Use the component with the same name from #/shared/components.",
   name: "react-native",
 };
 
@@ -127,7 +123,7 @@ export const mobileConfiguration = defineConfig([
         "error",
         {
           paths: [WRAPPED_PRIMITIVES_IMPORT],
-          patterns: [RELATIVE_IMPORT_PATTERN],
+          patterns: RESTRICTED_IMPORT_PATTERNS,
         },
       ],
       "no-restricted-syntax": [
@@ -171,7 +167,10 @@ export const mobileConfiguration = defineConfig([
         "error",
         {
           paths: [WRAPPED_PRIMITIVES_IMPORT],
-          patterns: [RELATIVE_IMPORT_PATTERN, ROUTE_PACKAGE_IMPORT_PATTERN],
+          patterns: [
+            ...RESTRICTED_IMPORT_PATTERNS,
+            ROUTE_PACKAGE_IMPORT_PATTERN,
+          ],
         },
       ],
     },
@@ -181,7 +180,7 @@ export const mobileConfiguration = defineConfig([
     rules: {
       "no-restricted-imports": [
         "error",
-        { patterns: [RELATIVE_IMPORT_PATTERN] },
+        { patterns: RESTRICTED_IMPORT_PATTERNS },
       ],
       "react/jsx-props-no-spreading": "off",
     },
@@ -193,7 +192,7 @@ export const mobileConfiguration = defineConfig([
         "error",
         {
           patterns: [
-            RELATIVE_IMPORT_PATTERN,
+            ...RESTRICTED_IMPORT_PATTERNS,
             ...CORE_RESTRICTED_IMPORT_PATTERNS,
           ],
         },

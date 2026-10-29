@@ -4,20 +4,20 @@ import * as ExpoAppleAuthentication from "expo-apple-authentication";
 import { useEffect } from "react";
 import { StyleSheet, useColorScheme } from "react-native";
 
-import { getAuthenticationErrorMessage } from "@/features/authentication/core/get-authentication-error-message";
-import { getSessionErrorMessage } from "@/features/authentication/core/get-session-error-message";
-import { announceAuthenticationError } from "@/features/authentication/interactors/announce-authentication-error";
-import { signInScreenMessages } from "@/features/authentication/messages/sign-in-screen-messages";
-import { createAppleSignInMutationOptions } from "@/features/authentication/mutations/create-apple-sign-in-mutation-options";
-import { createGoogleSignInMutationOptions } from "@/features/authentication/mutations/create-google-sign-in-mutation-options";
-import { createAppleSignInAvailabilityQueryOptions } from "@/features/authentication/queries/create-apple-sign-in-availability-query-options";
-import { LinkButton } from "@/shared/components/link-button";
-import { ScrollView } from "@/shared/components/scroll-view";
-import { StatusMessage } from "@/shared/components/status-message";
-import { TOUCH_TARGET_SIZE_MINIMUM } from "@/shared/constants/touch-target";
-import { useAuthenticationSession } from "@/shared/hooks/use-authentication-session";
-import { useRuntime } from "@/shared/hooks/use-runtime";
-import { announceMessage } from "@/shared/interactors/announce-message";
+import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
+import { getSessionErrorMessage } from "#/features/authentication/core/get-session-error-message.ts";
+import { announceAuthenticationError } from "#/features/authentication/interactors/announce-authentication-error.ts";
+import { signInScreenMessages } from "#/features/authentication/messages/sign-in-screen-messages.ts";
+import { createAppleSignInMutationOptions } from "#/features/authentication/mutations/create-apple-sign-in-mutation-options.ts";
+import { createGoogleSignInMutationOptions } from "#/features/authentication/mutations/create-google-sign-in-mutation-options.ts";
+import { createAppleSignInAvailabilityQueryOptions } from "#/features/authentication/queries/create-apple-sign-in-availability-query-options.ts";
+import { LinkButton } from "#/shared/components/link-button.tsx";
+import { ScrollView } from "#/shared/components/scroll-view.tsx";
+import { StatusMessage } from "#/shared/components/status-message.tsx";
+import { TOUCH_TARGET_SIZE_MINIMUM } from "#/shared/constants/touch-target.ts";
+import { useAuthenticationSession } from "#/shared/hooks/use-authentication-session.ts";
+import { useRuntime } from "#/shared/hooks/use-runtime.ts";
+import { announceMessage } from "#/shared/interactors/announce-message.ts";
 
 const APPLE_BUTTON_CORNER_RADIUS = 8;
 

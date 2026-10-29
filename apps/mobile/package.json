@@ -55,6 +55,9 @@
     "react-test-renderer": "19.2.3",
     "typescript": "catalog:"
   },
+  "imports": {
+    "#/*": "./src/*"
+  },
   "jest": {
     "fakeTimers": {
       "doNotFake": [

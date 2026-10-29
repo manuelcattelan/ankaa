@@ -1,11 +1,11 @@
 import type { FastifyPluginCallback } from "fastify";
 
 import { PinoLogger } from "@ankaa/api/shared/pino-logger";
-import { Authentication } from "@ankaa/authentication";
+import { Authentication } from "@ankaa/authentication/authentication";
 import { fromNodeHeaders } from "better-auth/node";
 import * as Effect from "effect/Effect";
 
-import type { ApplicationPluginOptions } from "../../../application.ts";
+import type { ApplicationPluginOptions } from "#/application.ts";
 
 export default ((server, { runtime }, done) => {
   server.route({

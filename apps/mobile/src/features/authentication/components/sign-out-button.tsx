@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 
-import { signOutButtonMessages } from "@/features/authentication/messages/sign-out-button-messages";
-import { createSignOutMutationOptions } from "@/features/authentication/mutations/create-sign-out-mutation-options";
-import { Button } from "@/shared/components/button";
-import { useRuntime } from "@/shared/hooks/use-runtime";
+import { signOutButtonMessages } from "#/features/authentication/messages/sign-out-button-messages.ts";
+import { createSignOutMutationOptions } from "#/features/authentication/mutations/create-sign-out-mutation-options.ts";
+import { Button } from "#/shared/components/button.tsx";
+import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
 export function SignOutButton() {
   const runtime = useRuntime();

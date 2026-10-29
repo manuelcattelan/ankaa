@@ -7,7 +7,7 @@ import { appRouter } from "@ankaa/api/trpc/router";
 import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 
-import type { ApplicationPluginOptions } from "../../application.ts";
+import type { ApplicationPluginOptions } from "#/application.ts";
 
 const HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
 

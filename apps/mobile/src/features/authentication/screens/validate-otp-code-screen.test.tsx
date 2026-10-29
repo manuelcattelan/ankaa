@@ -1,9 +1,9 @@
 import { screen, userEvent, waitFor } from "@testing-library/react-native";
 
-import { AuthenticationClient } from "@/shared/services/authentication-client";
-import { advanceFakeTime } from "@/shared/testing/advance-fake-time";
-import { createSignInTestResponses } from "@/shared/testing/create-sign-in-test-responses";
-import { renderScreen } from "@/shared/testing/render-screen";
+import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
+import { advanceFakeTime } from "#/shared/testing/advance-fake-time.ts";
+import { createSignInTestResponses } from "#/shared/testing/create-sign-in-test-responses.ts";
+import { renderScreen } from "#/shared/testing/render-screen.tsx";
 
 const VALIDATE_OTP_CODE_URL =
   "/sign-in/with-email/validate-otp-code?email=athlete%40example.com";

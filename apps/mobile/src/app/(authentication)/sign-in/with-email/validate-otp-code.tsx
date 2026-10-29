@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from "expo-router";
 
-import { ValidateOtpCodeScreen } from "@/features/authentication/screens/validate-otp-code-screen";
+import { ValidateOtpCodeScreen } from "#/features/authentication/screens/validate-otp-code-screen.tsx";
 
 type ValidateOtpCodeSearchParameters = {
   email?: string;

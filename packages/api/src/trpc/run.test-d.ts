@@ -1,8 +1,8 @@
 import * as Effect from "effect/Effect";
 import { describe, it } from "vitest";
 
-import { protectedProcedure, router } from "./procedures.ts";
-import { run } from "./run.ts";
+import { protectedProcedure, router } from "#/trpc/procedures.ts";
+import { run } from "#/trpc/run.ts";
 
 describe("run", () => {
   it("rejects a procedure whose Effect can fail with an error outside its list of Wire errors", () => {

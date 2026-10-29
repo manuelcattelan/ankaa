@@ -24,6 +24,9 @@
     "./server": "./server.ts",
     "./tooling": "./tooling.ts"
   },
+  "imports": {
+    "#/*": "./*"
+  },
   "name": "@ankaa/eslint",
   "peerDependencies": {
     "eslint": ">=10.4.0"

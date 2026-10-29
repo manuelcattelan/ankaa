@@ -1,4 +1,4 @@
-import { MILLISECONDS_PER_SECOND } from "@/shared/constants/time";
+import { MILLISECONDS_PER_SECOND } from "#/shared/constants/time.ts";
 
 type GetRemainingSecondsOptions = {
   currentTime: number;

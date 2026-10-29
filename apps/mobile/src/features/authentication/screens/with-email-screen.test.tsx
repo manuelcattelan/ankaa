@@ -1,7 +1,7 @@
 import { screen, userEvent } from "@testing-library/react-native";
 
-import { AuthenticationClient } from "@/shared/services/authentication-client";
-import { renderScreen } from "@/shared/testing/render-screen";
+import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
+import { renderScreen } from "#/shared/testing/render-screen.tsx";
 
 describe("WithEmailScreen", () => {
   it("shows a validation message when the email address isn't valid", async () => {

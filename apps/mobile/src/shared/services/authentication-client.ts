@@ -9,9 +9,9 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ExpoSecureStore from "expo-secure-store";
 
-import { apiUrlSchema } from "@/shared/core/api-url-schema";
-import { convertUndefinedToNull } from "@/shared/core/convert-undefined-to-null";
-import { AuthenticationError } from "@/shared/errors/authentication-error";
+import { apiUrlSchema } from "#/shared/core/api-url-schema.ts";
+import { convertUndefinedToNull } from "#/shared/core/convert-undefined-to-null.ts";
+import { AuthenticationError } from "#/shared/errors/authentication-error.ts";
 
 export type AuthenticationTestResponses = Partial<
   Record<string, (request: Request) => Promise<Response> | Response>

@@ -7,7 +7,7 @@ import { getColumns, is } from "drizzle-orm";
 import { getTableConfig, IndexedColumn, PgTable } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
-import { createAuthenticationOptions } from "./create-authentication-options.ts";
+import { createAuthenticationOptions } from "#/create-authentication-options.ts";
 
 const COLUMN_DATA_TYPES: Record<string, string> = {
   boolean: "boolean",

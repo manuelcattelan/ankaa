@@ -8,13 +8,13 @@ import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import type { applicationLayer } from "../layer.ts";
-import type { ApplicationRuntime } from "./context.ts";
-import type { WireError } from "./wire-error-schema.ts";
+import type { applicationLayer } from "#/layer.ts";
+import type { ApplicationRuntime } from "#/trpc/context.ts";
+import type { WireError } from "#/trpc/wire-error-schema.ts";
 
-import { PinoLogger } from "../shared/pino-logger.ts";
-import { getWireErrorCode } from "./get-wire-error-code.ts";
-import { wireErrorSchema } from "./wire-error-schema.ts";
+import { PinoLogger } from "#/shared/pino-logger.ts";
+import { getWireErrorCode } from "#/trpc/get-wire-error-code.ts";
+import { wireErrorSchema } from "#/trpc/wire-error-schema.ts";
 
 type RunOptions<TSuccess, TWireError extends WireError> = {
   context: {

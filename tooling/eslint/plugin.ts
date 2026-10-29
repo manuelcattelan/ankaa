@@ -1,5 +1,5 @@
-import { componentOrder } from "./rules/component-order.ts";
-import { namingConvention } from "./rules/naming-convention.ts";
+import { componentOrder } from "#/rules/component-order.ts";
+import { namingConvention } from "#/rules/naming-convention.ts";
 
 type CompatiblePlugin = {
   meta: { name: string };
