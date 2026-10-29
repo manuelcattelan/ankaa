@@ -4,6 +4,10 @@ import type {
   RecordedSetDraftEntry,
   RecordedSetDraftsAction,
 } from "#/features/workout/core/recorded-set-drafts-reducer.ts";
+import type {
+  WorkoutExerciseDrafts,
+  WorkoutExerciseDraftsAction,
+} from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
 import type { Workout } from "#/features/workout/workout-application-service.ts";
 
 import { WorkoutExerciseGroup } from "#/features/workout/components/workout-exercise-group.tsx";
@@ -12,16 +16,20 @@ import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 export function WorkoutSection({
   dispatch,
+  dispatchWorkoutExerciseDrafts,
   exerciseGroups,
   exerciseNames,
   recordedSetDraftEntries,
   section,
+  workoutExerciseDrafts,
 }: {
   dispatch: (action: RecordedSetDraftsAction) => void;
+  dispatchWorkoutExerciseDrafts: (action: WorkoutExerciseDraftsAction) => void;
   exerciseGroups: Workout["sections"][keyof Workout["sections"]];
   exerciseNames: Map<string, string>;
   recordedSetDraftEntries: readonly RecordedSetDraftEntry[];
   section: Section;
+  workoutExerciseDrafts: WorkoutExerciseDrafts;
 }) {
   if (exerciseGroups.length === 0) {
     return null;
@@ -33,10 +41,12 @@ export function WorkoutSection({
       {exerciseGroups.map((exerciseGroup) => (
         <WorkoutExerciseGroup
           dispatch={dispatch}
+          dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
           exerciseGroup={exerciseGroup}
           exerciseNames={exerciseNames}
           key={exerciseGroup.id}
           recordedSetDraftEntries={recordedSetDraftEntries}
+          workoutExerciseDrafts={workoutExerciseDrafts}
         />
       ))}
     </>

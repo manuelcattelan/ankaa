@@ -1,4 +1,6 @@
+import type { WorkoutSaveNoteInput } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
+import type { WorkoutSkipExerciseInput } from "@ankaa/core/features/workout/schemas/workout-skip-exercise-input-schema";
 import type { Section } from "@ankaa/core/shared/constants/sections";
 import type * as ExerciseDatabaseSchema from "@ankaa/database/schema/exercise";
 import type * as RoutineDatabaseSchema from "@ankaa/database/schema/routine";
@@ -73,7 +75,10 @@ type WorkoutExerciseRow = Pick<
   | "amountUnit"
   | "exerciseId"
   | "id"
+  | "note"
   | "plannedNote"
+  | "skipReason"
+  | "skipReasonNote"
   | "weightType"
   | "weightUnit"
 > & {
@@ -116,7 +121,10 @@ const WORKOUT_EXERCISE_COLUMNS = {
   amountUnit: true,
   exerciseId: true,
   id: true,
+  note: true,
   plannedNote: true,
+  skipReason: true,
+  skipReasonNote: true,
   weightType: true,
   weightUnit: true,
 } as const;
@@ -161,10 +169,16 @@ export class WorkoutRepository extends Context.Service<
       id: string;
     }) => Effect.Effect<LockedWorkoutExercise | null>;
     readonly removeSet: (options: { id: string }) => Effect.Effect<void>;
+    readonly saveNote: (options: {
+      input: WorkoutSaveNoteInput;
+    }) => Effect.Effect<void>;
     readonly saveSet: (options: {
       input: WorkoutSaveSetInput;
       position: number;
     }) => Effect.Effect<void, WorkoutNotFoundError>;
+    readonly skipExercise: (options: {
+      input: WorkoutSkipExerciseInput;
+    }) => Effect.Effect<void>;
     readonly start: (options: {
       id: string;
       routine: StartedRoutine;
@@ -358,6 +372,18 @@ export class WorkoutRepository extends Context.Service<
           .pipe(Effect.orDie);
       });
 
+      const saveNote = Effect.fn("WorkoutRepository.saveNote")(function* ({
+        input,
+      }: {
+        input: WorkoutSaveNoteInput;
+      }) {
+        yield* database
+          .update(workoutExercise)
+          .set({ note: input.note })
+          .where(eq(workoutExercise.id, input.workoutExerciseId))
+          .pipe(Effect.orDie);
+      });
+
       const saveSet = Effect.fn("WorkoutRepository.saveSet")(function* ({
         input,
         position,
@@ -419,6 +445,16 @@ export class WorkoutRepository extends Context.Service<
           )
           .pipe(Effect.orDie);
       });
+
+      const skipExercise = Effect.fn("WorkoutRepository.skipExercise")(
+        function* ({ input }: { input: WorkoutSkipExerciseInput }) {
+          yield* database
+            .update(workoutExercise)
+            .set({ skipReason: input.reason, skipReasonNote: input.note })
+            .where(eq(workoutExercise.id, input.workoutExerciseId))
+            .pipe(Effect.orDie);
+        },
+      );
 
       const start = Effect.fn("WorkoutRepository.start")(function* ({
         id,
@@ -592,7 +628,9 @@ export class WorkoutRepository extends Context.Service<
         findRoutine,
         findWorkoutExerciseForUpdate,
         removeSet,
+        saveNote,
         saveSet,
+        skipExercise,
         start,
         stop,
       });
@@ -653,6 +691,7 @@ function buildWorkoutExercise(workoutExerciseRow: WorkoutExerciseRow) {
     amountUnit: workoutExerciseRow.amountUnit,
     exerciseId: workoutExerciseRow.exerciseId,
     id: workoutExerciseRow.id,
+    note: workoutExerciseRow.note,
     plannedNote: workoutExerciseRow.plannedNote,
     plannedSets: workoutExerciseRow.plannedSets.map((plannedSet) => ({
       amount: plannedSet.amount,
@@ -664,6 +703,8 @@ function buildWorkoutExercise(workoutExerciseRow: WorkoutExerciseRow) {
       type: plannedSet.type,
     })),
     recordedSets: workoutExerciseRow.recordedSets,
+    skipReason: workoutExerciseRow.skipReason,
+    skipReasonNote: workoutExerciseRow.skipReasonNote,
     weightType: workoutExerciseRow.weightType,
     weightUnit: workoutExerciseRow.weightUnit,
   };

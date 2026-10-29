@@ -1,3 +1,4 @@
+import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reasons";
 import type { WeightUnit } from "@ankaa/core/features/workout/constants/weight";
 import type { AmountUnit } from "@ankaa/core/shared/constants/amount";
 
@@ -13,10 +14,14 @@ export const WORKOUT_MESSAGES = {
     repetition: "Repetitions",
     second: "Seconds",
   } satisfies Record<AmountUnit, string>,
+  draftsUnsavedError: (draftLabels: string[]) =>
+    `You haven't saved these: ${draftLabels.join("; ")}. Save them before you stop the workout.`,
   dropSetLabel: (weightPercentage: null | number) =>
     weightPercentage === null
       ? "Drop set"
       : `Drop set: take off ${String(weightPercentage)}% at each drop`,
+  noteLabel: "Note for this workout",
+  notSkippedLabel: "Not skipped",
   plannedAmountLabels: {
     repetition: (amount: number) =>
       formatCount({
@@ -44,20 +49,31 @@ export const WORKOUT_MESSAGES = {
   resumeWorkoutButton: "Resume workout",
   routineNotFoundError:
     "This routine doesn't exist anymore: start another routine.",
+  saveNoteButton: "Save note",
   saveSetButton: "Save set",
+  saveSkipButton: "Save skip",
   segmentCountInvalidError:
     "This set has more segments than planned: remove a segment and save the set again.",
   segmentLabel: (segmentNumber: number) => `Segment ${String(segmentNumber)}`,
   segmentWeightNotAllowedError:
     "This exercise takes no weight: clear the weight and save the set again.",
-  setDraftsUnsavedError: (setLabels: string[]) =>
-    `You haven't saved these sets: ${setLabels.join("; ")}. Save them before you stop the workout.`,
+  skipNoteLabel: "Why you skipped it",
+  skipNoteWithoutReasonError:
+    "This note needs a reason: pick why you skipped the exercise, or clear the note.",
+  skipReasonLabel: "Skipped",
+  skipReasonLabels: {
+    low_energy: "Low energy",
+    low_on_time: "Low on time",
+    other: "Other",
+    pain: "Pain",
+  } satisfies Record<SkipReason, string>,
   startWorkoutButton: (routineName: string) => `Start ${routineName}`,
   stopWorkoutButton: "Stop workout",
   tempoDescription:
     "The seconds for lowering, holding at the bottom, lifting and holding at the top. X means lifting as fast as you can.",
   tempoLabel: (tempo: string) => `Tempo ${tempo}`,
   toFailureLabel: "To failure",
+  unsavedNoteLabel: (exerciseName: string) => `${exerciseName}, note`,
   unsavedSetLabel: ({
     exerciseName,
     setNumber,
@@ -65,6 +81,7 @@ export const WORKOUT_MESSAGES = {
     exerciseName: string;
     setNumber: number;
   }) => `${exerciseName}, set ${String(setNumber)}`,
+  unsavedSkipLabel: (exerciseName: string) => `${exerciseName}, skip`,
   warmUpSetLabel: (setNumber: number) => `Set ${String(setNumber)}, warm-up`,
   weightInvalidError: ({
     maximum,

@@ -4,10 +4,12 @@ import { useReducer } from "react";
 import { ActivityIndicator } from "react-native";
 
 import type { RecordedSetDraftEntry } from "#/features/workout/core/recorded-set-drafts-reducer.ts";
+import type { WorkoutExerciseDrafts } from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
 
 import { WorkoutSection } from "#/features/workout/components/workout-section.tsx";
 import { WorkoutStopButton } from "#/features/workout/components/workout-stop-button.tsx";
 import { recordedSetDraftsReducer } from "#/features/workout/core/recorded-set-drafts-reducer.ts";
+import { workoutExerciseDraftsReducer } from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/workout-find-in-progress-query-options.ts";
 import { ScrollView } from "#/shared/components/scroll-view.tsx";
@@ -18,9 +20,15 @@ import { exerciseListQueryOptions } from "#/shared/queries/exercise-list-query-o
 
 const NO_RECORDED_SET_DRAFT_ENTRIES: readonly RecordedSetDraftEntry[] = [];
 
+const NO_WORKOUT_EXERCISE_DRAFTS: WorkoutExerciseDrafts = {
+  notes: [],
+  skips: [],
+};
+
 /**
- * Shows the User's Workout in progress, and keeps the Draft of every Set
- * that has something to Save, so stopping can be refused while one has.
+ * Shows the User's Workout in progress, and keeps the Draft of every Set,
+ * note and skip that has something to Save, so stopping can be refused while
+ * one has.
  */
 export function WorkoutScreen() {
   const runtime = useRuntime();
@@ -28,6 +36,10 @@ export function WorkoutScreen() {
   const [recordedSetDraftEntries, dispatch] = useReducer(
     recordedSetDraftsReducer,
     NO_RECORDED_SET_DRAFT_ENTRIES,
+  );
+  const [workoutExerciseDrafts, dispatchWorkoutExerciseDrafts] = useReducer(
+    workoutExerciseDraftsReducer,
+    NO_WORKOUT_EXERCISE_DRAFTS,
   );
 
   const workoutInProgress = useQuery(
@@ -39,12 +51,24 @@ export function WorkoutScreen() {
   const exerciseNames = new Map(
     exerciseLibrary.data?.map((exercise) => [exercise.id, exercise.name]),
   );
-  const unsavedSetLabels = recordedSetDraftEntries.map((entry) =>
-    WORKOUT_MESSAGES.unsavedSetLabel({
-      exerciseName: exerciseNames.get(entry.exerciseId) ?? "",
-      setNumber: entry.position + 1,
-    }),
-  );
+  const unsavedDraftLabels = [
+    ...recordedSetDraftEntries.map((entry) =>
+      WORKOUT_MESSAGES.unsavedSetLabel({
+        exerciseName: exerciseNames.get(entry.exerciseId) ?? "",
+        setNumber: entry.position + 1,
+      }),
+    ),
+    ...workoutExerciseDrafts.notes.map((entry) =>
+      WORKOUT_MESSAGES.unsavedNoteLabel(
+        exerciseNames.get(entry.exerciseId) ?? "",
+      ),
+    ),
+    ...workoutExerciseDrafts.skips.map((entry) =>
+      WORKOUT_MESSAGES.unsavedSkipLabel(
+        exerciseNames.get(entry.exerciseId) ?? "",
+      ),
+    ),
+  ];
   const statusMessage = getStatusMessage();
 
   function getStatusMessage() {
@@ -67,27 +91,33 @@ export function WorkoutScreen() {
           <>
             <WorkoutSection
               dispatch={dispatch}
+              dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
               exerciseGroups={workout.sections.warmUp}
               exerciseNames={exerciseNames}
               recordedSetDraftEntries={recordedSetDraftEntries}
               section="warm_up"
+              workoutExerciseDrafts={workoutExerciseDrafts}
             />
             <WorkoutSection
               dispatch={dispatch}
+              dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
               exerciseGroups={workout.sections.main}
               exerciseNames={exerciseNames}
               recordedSetDraftEntries={recordedSetDraftEntries}
               section="main"
+              workoutExerciseDrafts={workoutExerciseDrafts}
             />
             <WorkoutSection
               dispatch={dispatch}
+              dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
               exerciseGroups={workout.sections.coolDown}
               exerciseNames={exerciseNames}
               recordedSetDraftEntries={recordedSetDraftEntries}
               section="cool_down"
+              workoutExerciseDrafts={workoutExerciseDrafts}
             />
             <WorkoutStopButton
-              unsavedSetLabels={unsavedSetLabels}
+              unsavedDraftLabels={unsavedDraftLabels}
               workoutId={workout.id}
             />
           </>

@@ -4,14 +4,18 @@ import type { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/
 import type { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
 import type { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
+import type { WorkoutSaveNoteInput } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
+import type { WorkoutSkipExerciseInput } from "@ankaa/core/features/workout/schemas/workout-skip-exercise-input-schema";
 import type { WorkoutStartInput } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
 import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 import type { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 import type { inferRouterOutputs } from "@trpc/server";
 
 import { WORKOUT_REMOVE_SET_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-remove-set-wire-errors";
+import { WORKOUT_SAVE_NOTE_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-save-note-wire-errors";
 import { WORKOUT_SAVE_SET_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-save-set-wire-errors";
+import { WORKOUT_SKIP_EXERCISE_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-skip-exercise-wire-errors";
 import { WORKOUT_START_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-start-wire-errors";
 import { WORKOUT_STOP_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-stop-wire-errors";
 import * as Context from "effect/Context";
@@ -37,6 +41,9 @@ export class WorkoutApplicationService extends Context.Service<
     readonly removeSet: (
       input: WorkoutRemoveSetInput,
     ) => Effect.Effect<void, TrpcClientError | WorkoutNotFoundError>;
+    readonly saveNote: (
+      input: WorkoutSaveNoteInput,
+    ) => Effect.Effect<void, TrpcClientError | WorkoutNotFoundError>;
     readonly saveSet: (
       input: WorkoutSaveSetInput,
     ) => Effect.Effect<
@@ -46,6 +53,9 @@ export class WorkoutApplicationService extends Context.Service<
       | TrpcClientError
       | WorkoutNotFoundError
     >;
+    readonly skipExercise: (
+      input: WorkoutSkipExerciseInput,
+    ) => Effect.Effect<void, TrpcClientError | WorkoutNotFoundError>;
     readonly start: (
       input: WorkoutStartInput,
     ) => Effect.Effect<
@@ -82,6 +92,16 @@ export class WorkoutApplicationService extends Context.Service<
         },
       );
 
+      const saveNote = Effect.fn("WorkoutApplicationService.saveNote")(
+        function* (input: WorkoutSaveNoteInput) {
+          yield* trpcClient.request({
+            call: ({ signal, trpc }) =>
+              trpc.workout.saveNote.mutate(input, { signal }),
+            errors: WORKOUT_SAVE_NOTE_WIRE_ERRORS,
+          });
+        },
+      );
+
       const saveSet = Effect.fn("WorkoutApplicationService.saveSet")(function* (
         input: WorkoutSaveSetInput,
       ) {
@@ -91,6 +111,16 @@ export class WorkoutApplicationService extends Context.Service<
           errors: WORKOUT_SAVE_SET_WIRE_ERRORS,
         });
       });
+
+      const skipExercise = Effect.fn("WorkoutApplicationService.skipExercise")(
+        function* (input: WorkoutSkipExerciseInput) {
+          yield* trpcClient.request({
+            call: ({ signal, trpc }) =>
+              trpc.workout.skipExercise.mutate(input, { signal }),
+            errors: WORKOUT_SKIP_EXERCISE_WIRE_ERRORS,
+          });
+        },
+      );
 
       const start = Effect.fn("WorkoutApplicationService.start")(function* (
         input: WorkoutStartInput,
@@ -115,7 +145,9 @@ export class WorkoutApplicationService extends Context.Service<
       return WorkoutApplicationService.of({
         findInProgress,
         removeSet,
+        saveNote,
         saveSet,
+        skipExercise,
         start,
         stop,
       });

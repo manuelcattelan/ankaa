@@ -3,7 +3,9 @@ import type { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/
 import type { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
 import type { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
+import type { WorkoutSaveNoteInput } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
+import type { WorkoutSkipExerciseInput } from "@ankaa/core/features/workout/schemas/workout-skip-exercise-input-schema";
 import type { WorkoutStartInput } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
 import type { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 
@@ -15,6 +17,7 @@ import * as Match from "effect/Match";
 
 import { decideRecordedSetRemove } from "#/features/workout/core/decide-recorded-set-remove.ts";
 import { decideRecordedSetSave } from "#/features/workout/core/decide-recorded-set-save.ts";
+import { decideWorkoutExerciseUpdate } from "#/features/workout/core/decide-workout-exercise-update.ts";
 import { decideWorkoutStart } from "#/features/workout/core/decide-workout-start.ts";
 import { decideWorkoutStop } from "#/features/workout/core/decide-workout-stop.ts";
 import { WorkoutRepository } from "#/features/workout/workout-repository.ts";
@@ -27,6 +30,10 @@ export class WorkoutApplicationService extends Context.Service<
       input: WorkoutRemoveSetInput;
       userId: string;
     }) => Effect.Effect<void, WorkoutNotFoundError>;
+    readonly saveNote: (options: {
+      input: WorkoutSaveNoteInput;
+      userId: string;
+    }) => Effect.Effect<void, WorkoutNotFoundError>;
     readonly saveSet: (options: {
       input: WorkoutSaveSetInput;
       userId: string;
@@ -36,6 +43,10 @@ export class WorkoutApplicationService extends Context.Service<
       | SegmentWeightNotAllowedError
       | WorkoutNotFoundError
     >;
+    readonly skipExercise: (options: {
+      input: WorkoutSkipExerciseInput;
+      userId: string;
+    }) => Effect.Effect<void, WorkoutNotFoundError>;
     readonly start: (options: {
       input: WorkoutStartInput;
       userId: string;
@@ -92,6 +103,36 @@ export class WorkoutApplicationService extends Context.Service<
         },
       );
 
+      const saveNote = Effect.fn("WorkoutApplicationService.saveNote")(
+        function* ({
+          input,
+          userId,
+        }: {
+          input: WorkoutSaveNoteInput;
+          userId: string;
+        }) {
+          yield* database
+            .transaction(() =>
+              Effect.gen(function* () {
+                const workoutExercise =
+                  yield* workoutRepository.findWorkoutExerciseForUpdate({
+                    id: input.workoutExerciseId,
+                  });
+
+                yield* Match.valueTags(
+                  decideWorkoutExerciseUpdate({ userId, workoutExercise }),
+                  {
+                    WorkoutExerciseUpdateAllowed: () =>
+                      workoutRepository.saveNote({ input }),
+                    WorkoutNotFoundError: (error) => Effect.fail(error),
+                  },
+                );
+              }),
+            )
+            .pipe(Effect.catchTag("SqlError", (error) => Effect.die(error)));
+        },
+      );
+
       const saveSet = Effect.fn("WorkoutApplicationService.saveSet")(
         function* ({
           input,
@@ -118,6 +159,36 @@ export class WorkoutApplicationService extends Context.Service<
                       }),
                     SegmentCountInvalidError: (error) => Effect.fail(error),
                     SegmentWeightNotAllowedError: (error) => Effect.fail(error),
+                    WorkoutNotFoundError: (error) => Effect.fail(error),
+                  },
+                );
+              }),
+            )
+            .pipe(Effect.catchTag("SqlError", (error) => Effect.die(error)));
+        },
+      );
+
+      const skipExercise = Effect.fn("WorkoutApplicationService.skipExercise")(
+        function* ({
+          input,
+          userId,
+        }: {
+          input: WorkoutSkipExerciseInput;
+          userId: string;
+        }) {
+          yield* database
+            .transaction(() =>
+              Effect.gen(function* () {
+                const workoutExercise =
+                  yield* workoutRepository.findWorkoutExerciseForUpdate({
+                    id: input.workoutExerciseId,
+                  });
+
+                yield* Match.valueTags(
+                  decideWorkoutExerciseUpdate({ userId, workoutExercise }),
+                  {
+                    WorkoutExerciseUpdateAllowed: () =>
+                      workoutRepository.skipExercise({ input }),
                     WorkoutNotFoundError: (error) => Effect.fail(error),
                   },
                 );
@@ -188,7 +259,9 @@ export class WorkoutApplicationService extends Context.Service<
       return WorkoutApplicationService.of({
         findInProgress,
         removeSet,
+        saveNote,
         saveSet,
+        skipExercise,
         start,
         stop,
       });

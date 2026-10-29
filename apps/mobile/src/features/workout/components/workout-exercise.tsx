@@ -6,8 +6,14 @@ import type {
   RecordedSetDraftEntry,
   RecordedSetDraftsAction,
 } from "#/features/workout/core/recorded-set-drafts-reducer.ts";
+import type {
+  WorkoutExerciseDrafts,
+  WorkoutExerciseDraftsAction,
+} from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
 import type { Workout } from "#/features/workout/workout-application-service.ts";
 
+import { WorkoutExerciseNote } from "#/features/workout/components/workout-exercise-note.tsx";
+import { WorkoutExerciseSkip } from "#/features/workout/components/workout-exercise-skip.tsx";
 import { WorkoutSet } from "#/features/workout/components/workout-set.tsx";
 import { getWorkingSetCounts } from "#/features/workout/core/get-working-set-counts.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
@@ -22,16 +28,20 @@ import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
  */
 export function WorkoutExercise({
   dispatch,
+  dispatchWorkoutExerciseDrafts,
   exerciseNames,
   recordedSetDraftEntries,
   warmUpForExerciseName,
   workoutExercise,
+  workoutExerciseDrafts,
 }: {
   dispatch: (action: RecordedSetDraftsAction) => void;
+  dispatchWorkoutExerciseDrafts: (action: WorkoutExerciseDraftsAction) => void;
   exerciseNames: Map<string, string>;
   recordedSetDraftEntries: readonly RecordedSetDraftEntry[];
   warmUpForExerciseName?: string;
   workoutExercise: Workout["sections"]["coolDown"][number]["exercises"][number];
+  workoutExerciseDrafts: WorkoutExerciseDrafts;
 }) {
   const [weightUnit, setWeightUnit] = useState(workoutExercise.weightUnit);
 
@@ -102,6 +112,29 @@ export function WorkoutExercise({
           workoutExerciseId={workoutExercise.id}
         />
       ))}
+      <WorkoutExerciseNote
+        dispatch={dispatchWorkoutExerciseDrafts}
+        draft={
+          workoutExerciseDrafts.notes.find(
+            (entry) => entry.workoutExerciseId === workoutExercise.id,
+          )?.draft ?? null
+        }
+        exerciseId={workoutExercise.exerciseId}
+        note={workoutExercise.note}
+        workoutExerciseId={workoutExercise.id}
+      />
+      <WorkoutExerciseSkip
+        dispatch={dispatchWorkoutExerciseDrafts}
+        draft={
+          workoutExerciseDrafts.skips.find(
+            (entry) => entry.workoutExerciseId === workoutExercise.id,
+          )?.draft ?? null
+        }
+        exerciseId={workoutExercise.exerciseId}
+        skipReason={workoutExercise.skipReason}
+        skipReasonNote={workoutExercise.skipReasonNote}
+        workoutExerciseId={workoutExercise.id}
+      />
     </>
   );
 }

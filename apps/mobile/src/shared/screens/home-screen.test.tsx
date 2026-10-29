@@ -35,6 +35,7 @@ const PUSH_DAY_WORKOUT: Workout = {
             amountUnit: "repetition",
             exerciseId: "01900000-0000-7000-8000-000000000001",
             id: "01900000-0000-7000-8000-000000000102",
+            note: null,
             plannedNote: null,
             plannedSets: [
               {
@@ -48,6 +49,8 @@ const PUSH_DAY_WORKOUT: Workout = {
               },
             ],
             recordedSets: [],
+            skipReason: null,
+            skipReasonNote: null,
             warmUpExercises: [],
             weightType: "total",
             weightUnit: "kilogram",

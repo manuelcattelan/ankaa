@@ -324,6 +324,7 @@ describe("workout.start", () => {
                 amountUnit: "second",
                 exerciseId: PLANK_EXERCISE_ID,
                 id: generatedId,
+                note: null,
                 plannedNote: null,
                 plannedSets: [
                   {
@@ -337,6 +338,8 @@ describe("workout.start", () => {
                   },
                 ],
                 recordedSets: [],
+                skipReason: null,
+                skipReasonNote: null,
                 weightType: "bodyweight",
                 weightUnit: "kilogram",
               },
@@ -351,6 +354,7 @@ describe("workout.start", () => {
                 amountUnit: "repetition",
                 exerciseId: BENCH_PRESS_EXERCISE_ID,
                 id: generatedId,
+                note: null,
                 plannedNote: "Pause at the chest",
                 plannedSets: [
                   {
@@ -381,11 +385,14 @@ describe("workout.start", () => {
                   },
                 ],
                 recordedSets: [],
+                skipReason: null,
+                skipReasonNote: null,
                 warmUpExercises: [
                   {
                     amountUnit: "repetition",
                     exerciseId: BAND_PULL_APART_EXERCISE_ID,
                     id: generatedId,
+                    note: null,
                     plannedNote: null,
                     plannedSets: [
                       {
@@ -399,6 +406,8 @@ describe("workout.start", () => {
                       },
                     ],
                     recordedSets: [],
+                    skipReason: null,
+                    skipReasonNote: null,
                     weightType: "none",
                     weightUnit: "kilogram",
                   },
@@ -410,9 +419,12 @@ describe("workout.start", () => {
                 amountUnit: "second",
                 exerciseId: PLANK_EXERCISE_ID,
                 id: generatedId,
+                note: null,
                 plannedNote: null,
                 plannedSets: [],
                 recordedSets: [],
+                skipReason: null,
+                skipReasonNote: null,
                 warmUpExercises: [],
                 weightType: "bodyweight",
                 weightUnit: "kilogram",
@@ -428,9 +440,12 @@ describe("workout.start", () => {
                 amountUnit: "repetition",
                 exerciseId: BAND_PULL_APART_EXERCISE_ID,
                 id: generatedId,
+                note: null,
                 plannedNote: "Slowly",
                 plannedSets: [],
                 recordedSets: [],
+                skipReason: null,
+                skipReasonNote: null,
                 weightType: "none",
                 weightUnit: "kilogram",
               },
@@ -1144,6 +1159,269 @@ describe("workout.removeSet", () => {
           },
         ],
       },
+    });
+  });
+});
+
+describe("workout.skipExercise", () => {
+  const runtime = createTestRuntime();
+
+  beforeAll(async () => {
+    await insertExercises(runtime);
+  });
+
+  afterAll(async () => {
+    await runtime.dispose();
+  });
+
+  it("Saves the reason and the note of a skip on the Workout exercise, which workout.findInProgress returns", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0801",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+
+    await caller.workout.skipExercise({
+      note: "Sore shoulder",
+      reason: "pain",
+      workoutExerciseId,
+    });
+
+    await expect(caller.workout.findInProgress()).resolves.toMatchObject({
+      sections: {
+        main: [
+          {
+            exercises: [
+              { skipReason: "pain", skipReasonNote: "Sore shoulder" },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
+  it("Saves a skip with a reason and no note", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0802",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+
+    await caller.workout.skipExercise({
+      note: null,
+      reason: "low_on_time",
+      workoutExerciseId,
+    });
+
+    await expect(caller.workout.findInProgress()).resolves.toMatchObject({
+      sections: {
+        main: [
+          {
+            exercises: [{ skipReason: "low_on_time", skipReasonNote: null }],
+          },
+        ],
+      },
+    });
+  });
+
+  it("fails with BAD_REQUEST for a note with no reason, and leaves the Workout exercise as it was", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0803",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+
+    await expect(
+      caller.workout.skipExercise({
+        note: "Sore shoulder",
+        reason: null,
+        workoutExerciseId,
+      }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.workout.findInProgress()).resolves.toMatchObject({
+      sections: {
+        main: [{ exercises: [{ skipReason: null, skipReasonNote: null }] }],
+      },
+    });
+  });
+
+  it("keeps the Sets that the Workout exercise already records", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0804",
+      plannedSets: [WORKING_PLANNED_SET, WORKING_PLANNED_SET],
+    });
+    await caller.workout.saveSet({
+      id: "019a0804-0000-7000-8000-000000000101",
+      segments: [{ amount: 8, weight: 60 }],
+      weightUnit: "kilogram",
+      workoutExerciseId,
+    });
+
+    await caller.workout.skipExercise({
+      note: null,
+      reason: "low_energy",
+      workoutExerciseId,
+    });
+
+    await expect(caller.workout.findInProgress()).resolves.toMatchObject({
+      sections: {
+        main: [
+          {
+            exercises: [
+              {
+                recordedSets: [
+                  {
+                    id: "019a0804-0000-7000-8000-000000000101",
+                    segments: [{ amount: 8, weight: 60 }],
+                  },
+                ],
+                skipReason: "low_energy",
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
+  it("fails with NOT_FOUND and WorkoutNotFoundError for a Workout exercise of a Workout the User stopped", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0805",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+    await caller.workout.stop({ id: "019a0805-0000-7000-8000-000000000004" });
+
+    await expect(
+      caller.workout.skipExercise({
+        note: null,
+        reason: "pain",
+        workoutExerciseId,
+      }),
+    ).rejects.toMatchObject({
+      cause: { _tag: "WorkoutNotFoundError" },
+      code: "NOT_FOUND",
+    });
+  });
+
+  it("fails with NOT_FOUND and WorkoutNotFoundError for a Workout exercise of another User's Workout, and leaves it as it was", async () => {
+    const otherCaller = await createSignedInCaller({ runtime });
+    const otherWorkoutExerciseId = await startBenchPressWorkout({
+      caller: otherCaller,
+      idPrefix: "019a0806",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+    const caller = await createSignedInCaller({ runtime });
+
+    await expect(
+      caller.workout.skipExercise({
+        note: null,
+        reason: "pain",
+        workoutExerciseId: otherWorkoutExerciseId,
+      }),
+    ).rejects.toMatchObject({
+      cause: { _tag: "WorkoutNotFoundError" },
+      code: "NOT_FOUND",
+    });
+    await expect(otherCaller.workout.findInProgress()).resolves.toMatchObject({
+      sections: { main: [{ exercises: [{ skipReason: null }] }] },
+    });
+  });
+});
+
+describe("workout.saveNote", () => {
+  const runtime = createTestRuntime();
+
+  beforeAll(async () => {
+    await insertExercises(runtime);
+  });
+
+  afterAll(async () => {
+    await runtime.dispose();
+  });
+
+  it("Saves the note of the Workout exercise, which workout.findInProgress returns", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0901",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+
+    await caller.workout.saveNote({
+      note: "Felt strong today",
+      workoutExerciseId,
+    });
+
+    await expect(caller.workout.findInProgress()).resolves.toMatchObject({
+      sections: {
+        main: [{ exercises: [{ note: "Felt strong today" }] }],
+      },
+    });
+  });
+
+  it("clears the note of the Workout exercise when the User Saves no note", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0902",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+    await caller.workout.saveNote({
+      note: "Felt strong today",
+      workoutExerciseId,
+    });
+
+    await caller.workout.saveNote({ note: null, workoutExerciseId });
+
+    await expect(caller.workout.findInProgress()).resolves.toMatchObject({
+      sections: { main: [{ exercises: [{ note: null }] }] },
+    });
+  });
+
+  it("fails with NOT_FOUND and WorkoutNotFoundError for a Workout exercise of a Workout the User stopped", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0903",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+    await caller.workout.stop({ id: "019a0903-0000-7000-8000-000000000004" });
+
+    await expect(
+      caller.workout.saveNote({ note: "Felt strong today", workoutExerciseId }),
+    ).rejects.toMatchObject({
+      cause: { _tag: "WorkoutNotFoundError" },
+      code: "NOT_FOUND",
+    });
+  });
+
+  it("fails with NOT_FOUND and WorkoutNotFoundError for a Workout exercise of another User's Workout, and leaves it as it was", async () => {
+    const otherCaller = await createSignedInCaller({ runtime });
+    const otherWorkoutExerciseId = await startBenchPressWorkout({
+      caller: otherCaller,
+      idPrefix: "019a0904",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+    const caller = await createSignedInCaller({ runtime });
+
+    await expect(
+      caller.workout.saveNote({
+        note: "Felt strong today",
+        workoutExerciseId: otherWorkoutExerciseId,
+      }),
+    ).rejects.toMatchObject({
+      cause: { _tag: "WorkoutNotFoundError" },
+      code: "NOT_FOUND",
+    });
+    await expect(otherCaller.workout.findInProgress()).resolves.toMatchObject({
+      sections: { main: [{ exercises: [{ note: null }] }] },
     });
   });
 });

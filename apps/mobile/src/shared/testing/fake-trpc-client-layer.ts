@@ -13,11 +13,15 @@ import { ROUTINE_SAVE_WIRE_ERRORS } from "@ankaa/core/features/routine/errors/ro
 import { routineDeleteInputSchema } from "@ankaa/core/features/routine/schemas/routine-delete-input-schema";
 import { routineSaveInputSchema } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
 import { WORKOUT_REMOVE_SET_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-remove-set-wire-errors";
+import { WORKOUT_SAVE_NOTE_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-save-note-wire-errors";
 import { WORKOUT_SAVE_SET_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-save-set-wire-errors";
+import { WORKOUT_SKIP_EXERCISE_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-skip-exercise-wire-errors";
 import { WORKOUT_START_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-start-wire-errors";
 import { WORKOUT_STOP_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-stop-wire-errors";
 import { workoutRemoveSetInputSchema } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
+import { workoutSaveNoteInputSchema } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import { workoutSaveSetInputSchema } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
+import { workoutSkipExerciseInputSchema } from "@ankaa/core/features/workout/schemas/workout-skip-exercise-input-schema";
 import { workoutStartInputSchema } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
 import { workoutStopInputSchema } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
@@ -95,7 +99,9 @@ const FAKE_TRPC_WIRE_ERRORS: {
   "routine.save": ROUTINE_SAVE_WIRE_ERRORS,
   "workout.findInProgress": [],
   "workout.removeSet": WORKOUT_REMOVE_SET_WIRE_ERRORS,
+  "workout.saveNote": WORKOUT_SAVE_NOTE_WIRE_ERRORS,
   "workout.saveSet": WORKOUT_SAVE_SET_WIRE_ERRORS,
+  "workout.skipExercise": WORKOUT_SKIP_EXERCISE_WIRE_ERRORS,
   "workout.start": WORKOUT_START_WIRE_ERRORS,
   "workout.stop": WORKOUT_STOP_WIRE_ERRORS,
 };
@@ -244,11 +250,25 @@ function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
           response: fakeTrpcResponses["workout.removeSet"],
         }),
       ),
+    "workout.saveNote": t.procedure
+      .input(Schema.toStandardSchemaV1(workoutSaveNoteInputSchema))
+      .mutation(
+        createFakeTrpcResolver({
+          response: fakeTrpcResponses["workout.saveNote"],
+        }),
+      ),
     "workout.saveSet": t.procedure
       .input(Schema.toStandardSchemaV1(workoutSaveSetInputSchema))
       .mutation(
         createFakeTrpcResolver({
           response: fakeTrpcResponses["workout.saveSet"],
+        }),
+      ),
+    "workout.skipExercise": t.procedure
+      .input(Schema.toStandardSchemaV1(workoutSkipExerciseInputSchema))
+      .mutation(
+        createFakeTrpcResolver({
+          response: fakeTrpcResponses["workout.skipExercise"],
         }),
       ),
     "workout.start": t.procedure

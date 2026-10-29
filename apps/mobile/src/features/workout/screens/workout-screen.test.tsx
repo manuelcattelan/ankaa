@@ -1,5 +1,8 @@
+import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reasons";
 import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
+import type { WorkoutSaveNoteInput } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
+import type { WorkoutSkipExerciseInput } from "@ankaa/core/features/workout/schemas/workout-skip-exercise-input-schema";
 import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 
 import {
@@ -71,6 +74,7 @@ const PUSH_DAY_WORKOUT: Workout = {
             amountUnit: "second",
             exerciseId: PLANK_EXERCISE_ID,
             id: "01900000-0000-7000-8000-000000000102",
+            note: null,
             plannedNote: null,
             plannedSets: [
               {
@@ -84,6 +88,8 @@ const PUSH_DAY_WORKOUT: Workout = {
               },
             ],
             recordedSets: [],
+            skipReason: null,
+            skipReasonNote: null,
             weightType: "bodyweight",
             weightUnit: "kilogram",
           },
@@ -98,6 +104,7 @@ const PUSH_DAY_WORKOUT: Workout = {
             amountUnit: "repetition",
             exerciseId: BENCH_PRESS_EXERCISE_ID,
             id: "01900000-0000-7000-8000-000000000105",
+            note: null,
             plannedNote: "Pause at the chest",
             plannedSets: [
               {
@@ -124,14 +131,19 @@ const PUSH_DAY_WORKOUT: Workout = {
               },
             ],
             recordedSets: [],
+            skipReason: null,
+            skipReasonNote: null,
             warmUpExercises: [
               {
                 amountUnit: "repetition",
                 exerciseId: BAND_PULL_APART_EXERCISE_ID,
                 id: "01900000-0000-7000-8000-000000000108",
+                note: null,
                 plannedNote: null,
                 plannedSets: [],
                 recordedSets: [],
+                skipReason: null,
+                skipReasonNote: null,
                 weightType: "none",
                 weightUnit: "kilogram",
               },
@@ -143,6 +155,7 @@ const PUSH_DAY_WORKOUT: Workout = {
             amountUnit: "repetition",
             exerciseId: PUSH_UP_EXERCISE_ID,
             id: "01900000-0000-7000-8000-000000000109",
+            note: null,
             plannedNote: null,
             plannedSets: [
               {
@@ -160,6 +173,8 @@ const PUSH_DAY_WORKOUT: Workout = {
               },
             ],
             recordedSets: [],
+            skipReason: null,
+            skipReasonNote: null,
             warmUpExercises: [],
             weightType: "bodyweight",
             weightUnit: "kilogram",
@@ -186,14 +201,20 @@ const WORKING_PLANNED_SET = {
 
 /**
  * Builds a Workout in progress of one Bench Press (Barbell) with its planned
- * and recorded Sets.
+ * and recorded Sets, and its note and skip, which are empty by default.
  */
 function buildBenchPressWorkout({
+  note = null,
   plannedSets,
   recordedSets,
+  skipReason = null,
+  skipReasonNote = null,
 }: {
+  note?: null | string;
   plannedSets: Workout["sections"]["main"][number]["exercises"][number]["plannedSets"];
   recordedSets: Workout["sections"]["main"][number]["exercises"][number]["recordedSets"];
+  skipReason?: null | SkipReason;
+  skipReasonNote?: null | string;
 }) {
   return {
     id: "01900000-0000-7000-8000-000000000201",
@@ -206,9 +227,12 @@ function buildBenchPressWorkout({
               amountUnit: "repetition",
               exerciseId: BENCH_PRESS_EXERCISE_ID,
               id: BENCH_PRESS_WORKOUT_EXERCISE_ID,
+              note,
               plannedNote: null,
               plannedSets,
               recordedSets,
+              skipReason,
+              skipReasonNote,
               warmUpExercises: [],
               weightType: "total",
               weightUnit: "kilogram",
@@ -631,7 +655,7 @@ describe("WorkoutScreen", () => {
 
     expect(
       await screen.findByText(
-        "You haven't saved these sets: Bench Press (Barbell), set 1. Save them before you stop the workout.",
+        "You haven't saved these: Bench Press (Barbell), set 1. Save them before you stop the workout.",
       ),
     ).toBeOnTheScreen();
     expect(stoppedInputs).toStrictEqual([]);
@@ -670,6 +694,249 @@ describe("WorkoutScreen", () => {
     expect(screen.getByLabelText("Repetitions")).toHaveDisplayValue("8");
     expect(screen.getByLabelText("Weight, in kilograms")).toHaveDisplayValue(
       "62.5",
+    );
+  });
+
+  it("Saves the note that the User writes on a Workout exercise through Save note", async () => {
+    const savedInputs: WorkoutSaveNoteInput[] = [];
+    let workoutInProgress = buildBenchPressWorkout({
+      plannedSets: [WORKING_PLANNED_SET],
+      recordedSets: [],
+    });
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () => workoutInProgress,
+            "workout.saveNote": (input) => {
+              savedInputs.push(input);
+              workoutInProgress = buildBenchPressWorkout({
+                note: "Felt strong today",
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              });
+            },
+          },
+        }),
+      },
+    });
+    await user.type(
+      await screen.findByLabelText("Note for this workout"),
+      "Felt strong today",
+    );
+
+    await user.press(screen.getByRole("button", { name: "Save note" }));
+
+    await waitFor(() => {
+      expect(savedInputs).toStrictEqual([
+        {
+          note: "Felt strong today",
+          workoutExerciseId: BENCH_PRESS_WORKOUT_EXERCISE_ID,
+        },
+      ]);
+    });
+    expect(screen.getByLabelText("Note for this workout")).toHaveDisplayValue(
+      "Felt strong today",
+    );
+  });
+
+  it("refuses to stop the Workout while a note has a Draft the User hasn't Saved, naming its Workout exercise", async () => {
+    const stoppedInputs: WorkoutStopInput[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+            "workout.stop": (input) => {
+              stoppedInputs.push(input);
+            },
+          },
+        }),
+      },
+    });
+    await user.type(
+      await screen.findByLabelText("Note for this workout"),
+      "Felt strong today",
+    );
+
+    await user.press(screen.getByRole("button", { name: "Stop workout" }));
+
+    expect(
+      await screen.findByText(
+        "You haven't saved these: Bench Press (Barbell), note. Save them before you stop the workout.",
+      ),
+    ).toBeOnTheScreen();
+    expect(stoppedInputs).toStrictEqual([]);
+  });
+
+  it("Saves the skip of a Workout exercise, with the reason the User picks and their note, through Save skip", async () => {
+    const skippedInputs: WorkoutSkipExerciseInput[] = [];
+    let workoutInProgress = buildBenchPressWorkout({
+      plannedSets: [WORKING_PLANNED_SET],
+      recordedSets: [],
+    });
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () => workoutInProgress,
+            "workout.skipExercise": (input) => {
+              skippedInputs.push(input);
+              workoutInProgress = buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+                skipReason: "pain",
+                skipReasonNote: "Sore shoulder",
+              });
+            },
+          },
+        }),
+      },
+    });
+    fireEvent(await screen.findByTestId("Skipped"), "selectionChange", {
+      nativeEvent: { selection: "pain" },
+    });
+    await user.type(
+      screen.getByLabelText("Why you skipped it"),
+      "Sore shoulder",
+    );
+
+    await user.press(screen.getByRole("button", { name: "Save skip" }));
+
+    await waitFor(() => {
+      expect(skippedInputs).toStrictEqual([
+        {
+          note: "Sore shoulder",
+          reason: "pain",
+          workoutExerciseId: BENCH_PRESS_WORKOUT_EXERCISE_ID,
+        },
+      ]);
+    });
+    expect(screen.getByLabelText("Why you skipped it")).toHaveDisplayValue(
+      "Sore shoulder",
+    );
+  });
+
+  it("refuses to stop the Workout while a skip has a Draft the User hasn't Saved, naming its Workout exercise", async () => {
+    const stoppedInputs: WorkoutStopInput[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+            "workout.stop": (input) => {
+              stoppedInputs.push(input);
+            },
+          },
+        }),
+      },
+    });
+    fireEvent(await screen.findByTestId("Skipped"), "selectionChange", {
+      nativeEvent: { selection: "low_on_time" },
+    });
+
+    await user.press(screen.getByRole("button", { name: "Stop workout" }));
+
+    expect(
+      await screen.findByText(
+        "You haven't saved these: Bench Press (Barbell), skip. Save them before you stop the workout.",
+      ),
+    ).toBeOnTheScreen();
+    expect(stoppedInputs).toStrictEqual([]);
+  });
+
+  it("refuses to Save a skip with a note and no reason, telling the User to pick a reason", async () => {
+    const receivedPaths: string[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          receivedPaths,
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.type(
+      await screen.findByLabelText("Why you skipped it"),
+      "Sore shoulder",
+    );
+
+    await user.press(screen.getByRole("button", { name: "Save skip" }));
+
+    expect(
+      await screen.findByText(
+        "This note needs a reason: pick why you skipped the exercise, or clear the note.",
+      ),
+    ).toBeOnTheScreen();
+    expect(receivedPaths).not.toContain("workout.skipExercise");
+  });
+
+  it("tells the User that Ankaa can't connect when a note's Save can't reach the server, and keeps the Draft on the screen", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+          unreachablePaths: ["workout.saveNote"],
+        }),
+      },
+    });
+    await user.type(
+      await screen.findByLabelText("Note for this workout"),
+      "Felt strong today",
+    );
+
+    await user.press(screen.getByRole("button", { name: "Save note" }));
+
+    expect(
+      await screen.findByText(
+        "Ankaa can't connect: check your internet connection and try again.",
+      ),
+    ).toBeOnTheScreen();
+    expect(screen.getByLabelText("Note for this workout")).toHaveDisplayValue(
+      "Felt strong today",
     );
   });
 });

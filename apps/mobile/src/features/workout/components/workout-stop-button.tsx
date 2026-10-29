@@ -11,14 +11,14 @@ import { StatusMessage } from "#/shared/components/status-message.tsx";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
 /**
- * Stops the Workout in progress, and refuses to while any Set has a Draft
- * left to Save, naming those Sets in `unsavedSetLabels`.
+ * Stops the Workout in progress, and refuses to while any Set, note or skip
+ * has a Draft left to Save, naming those rows in `unsavedDraftLabels`.
  */
 export function WorkoutStopButton({
-  unsavedSetLabels,
+  unsavedDraftLabels,
   workoutId,
 }: {
-  unsavedSetLabels: readonly string[];
+  unsavedDraftLabels: readonly string[];
   workoutId: string;
 }) {
   const router = useRouter();
@@ -43,8 +43,8 @@ export function WorkoutStopButton({
   const statusMessage = getStatusMessage();
 
   function getStatusMessage() {
-    if (hasRefusedStop && unsavedSetLabels.length > 0) {
-      return WORKOUT_MESSAGES.setDraftsUnsavedError([...unsavedSetLabels]);
+    if (hasRefusedStop && unsavedDraftLabels.length > 0) {
+      return WORKOUT_MESSAGES.draftsUnsavedError([...unsavedDraftLabels]);
     }
 
     return stopWorkout.error === null
@@ -59,7 +59,7 @@ export function WorkoutStopButton({
 
     stopWorkout.reset();
 
-    if (unsavedSetLabels.length > 0) {
+    if (unsavedDraftLabels.length > 0) {
       setHasRefusedStop(true);
 
       return;
