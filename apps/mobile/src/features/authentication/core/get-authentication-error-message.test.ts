@@ -1,6 +1,5 @@
 import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
 import { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
-import { GoogleSignInInProgressError } from "#/features/authentication/errors/google-sign-in-in-progress-error.ts";
 import { AccountNotLinkedError } from "#/shared/errors/account-not-linked-error.ts";
 import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
 import { EmailInvalidError } from "#/shared/errors/email-invalid-error.ts";
@@ -83,12 +82,6 @@ describe("getAuthenticationErrorMessage", () => {
     ).toBe(
       "Google Play services aren't installed on this device: try another sign-in method.",
     );
-  });
-
-  it("returns an empty message for a GoogleSignInInProgressError", () => {
-    expect(
-      getAuthenticationErrorMessage(new GoogleSignInInProgressError()),
-    ).toBe("");
   });
 
   it("returns the unknown error message for a defect", () => {

@@ -12,15 +12,12 @@ import { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts
  */
 export function fakeAppleSignInLayer({
   appleAuthenticationCredential,
-  isAvailable,
 }: {
   appleAuthenticationCredential?: ExpoAppleAuthentication.AppleAuthenticationCredential;
-  isAvailable: boolean;
 }) {
   return Layer.succeed(
     AppleSignIn,
     AppleSignIn.of({
-      checkAvailability: () => Effect.succeed(isAvailable),
       signIn: () =>
         appleAuthenticationCredential === undefined
           ? Effect.fail(new AppleSignInCanceledError())

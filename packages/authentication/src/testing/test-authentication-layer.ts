@@ -16,6 +16,20 @@ export const testAuthenticationLayer = Layer.effectContext(
     const auth = betterAuth({
       ...authenticationOptions,
       plugins: [...authenticationOptions.plugins, createTestUtilsPlugin()],
+      // Tests sign in with unsigned id tokens, because only Apple and Google
+      // can sign theirs, so the test instance accepts every id token and
+      // better-auth reads the User from its claims
+      // (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/core/src/oauth2/verify-id-token.ts).
+      socialProviders: {
+        apple: {
+          ...authenticationOptions.socialProviders.apple,
+          verifyIdToken: () => Promise.resolve(true),
+        },
+        google: {
+          ...authenticationOptions.socialProviders.google,
+          verifyIdToken: () => Promise.resolve(true),
+        },
+      },
     });
 
     const authentication = yield* makeAuthentication(auth);

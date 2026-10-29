@@ -5,12 +5,38 @@ import * as Layer from "effect/Layer";
 
 import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
 
-export function fakeGoogleSignInLayer(googleSignInResponse: SignInResponse) {
+/**
+ * Answers Google sign-in with `signInResponse`, and records the name of every
+ * method the app calls into `receivedCalls`.
+ */
+export function fakeGoogleSignInLayer({
+  receivedCalls = [],
+  signInResponse,
+}: {
+  receivedCalls?: string[];
+  signInResponse?: SignInResponse;
+}) {
   return Layer.succeed(
     GoogleSignIn,
     GoogleSignIn.of({
-      checkPlayServices: () => Effect.succeed(true),
-      signIn: () => Effect.succeed(googleSignInResponse),
+      checkPlayServices: () =>
+        Effect.sync(() => {
+          receivedCalls.push("checkPlayServices");
+
+          return true;
+        }),
+      signIn: () =>
+        Effect.suspend(() => {
+          receivedCalls.push("signIn");
+
+          return signInResponse === undefined
+            ? Effect.die(new Error("No fake Google sign-in response"))
+            : Effect.succeed(signInResponse);
+        }),
+      signOut: () =>
+        Effect.sync(() => {
+          receivedCalls.push("signOut");
+        }),
     }),
   );
 }

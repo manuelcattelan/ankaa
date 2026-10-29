@@ -1,5 +1,6 @@
 import { screen, userEvent } from "@testing-library/react-native";
 
+import { fakeGoogleSignInLayer } from "#/features/authentication/testing/fake-google-sign-in-layer.ts";
 import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";
 import { fakeSignedInAuthenticationClientLayer } from "#/shared/testing/fake-signed-in-authentication-client-layer.ts";
 import { fakeTrpcClientLayer } from "#/shared/testing/fake-trpc-client-layer.ts";
@@ -55,6 +56,7 @@ describe("HomeScreen", () => {
             return Response.json({ success: true });
           },
         }),
+        googleSignIn: fakeGoogleSignInLayer({}),
       },
     });
 
@@ -63,5 +65,33 @@ describe("HomeScreen", () => {
     expect(
       await screen.findByRole("link", { name: "Continue with email address" }),
     ).toBeOnTheScreen();
+  });
+
+  it("signs the User out of Google too when they sign out, so they can choose another Google account", async () => {
+    const googleSignInCalls: string[] = [];
+    const user = userEvent.setup();
+    let currentSession: null | typeof signedInSession = signedInSession;
+    renderScreen({
+      initialUrl: "/",
+      testRuntimeLayers: {
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/get-session": () => Response.json(currentSession),
+          "/sign-out": () => {
+            currentSession = null;
+
+            return Response.json({ success: true });
+          },
+        }),
+        googleSignIn: fakeGoogleSignInLayer({
+          receivedCalls: googleSignInCalls,
+        }),
+      },
+    });
+
+    await user.press(await screen.findByRole("button", { name: "Sign out" }));
+
+    await screen.findByRole("link", { name: "Continue with email address" });
+
+    expect(googleSignInCalls).toStrictEqual(["signOut"]);
   });
 });

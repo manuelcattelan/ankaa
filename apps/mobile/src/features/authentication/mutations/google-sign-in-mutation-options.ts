@@ -3,15 +3,17 @@ import * as Effect from "effect/Effect";
 
 import type { ApplicationRuntime } from "#/layer.ts";
 
-import { signInWithGoogle } from "#/features/authentication/interactors/sign-in-with-google.ts";
+import { AuthenticationApplicationService } from "#/features/authentication/authentication-application-service.ts";
+
+const program = Effect.fn("googleSignInMutation")(function* () {
+  const authenticationApplicationService =
+    yield* AuthenticationApplicationService;
+
+  yield* authenticationApplicationService.signInWithGoogle();
+});
 
 export function googleSignInMutationOptions(runtime: ApplicationRuntime) {
   return mutationOptions({
-    mutationFn: () =>
-      runtime.runPromise(
-        signInWithGoogle().pipe(
-          Effect.catchTag("GoogleSignInCanceledError", () => Effect.void),
-        ),
-      ),
+    mutationFn: () => runtime.runPromise(program()),
   });
 }

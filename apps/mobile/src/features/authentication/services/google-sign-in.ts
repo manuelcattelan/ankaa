@@ -25,6 +25,7 @@ export class GoogleSignIn extends Context.Service<
       SignInResponse,
       GooglePlayServicesMissingError | GoogleSignInInProgressError
     >;
+    readonly signOut: () => Effect.Effect<void>;
   }
 >()("@ankaa/mobile/features/authentication/services/GoogleSignIn") {
   static readonly layer = Layer.effect(
@@ -49,7 +50,11 @@ export class GoogleSignIn extends Context.Service<
         );
       }
 
-      return GoogleSignIn.of({ checkPlayServices, signIn });
+      function signOut() {
+        return Effect.promise(() => GoogleSignin.signOut());
+      }
+
+      return GoogleSignIn.of({ checkPlayServices, signIn, signOut });
     }),
   );
 }

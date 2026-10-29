@@ -10,7 +10,6 @@ import { getAppleSignInError } from "#/features/authentication/core/get-apple-si
 export class AppleSignIn extends Context.Service<
   AppleSignIn,
   {
-    readonly checkAvailability: () => Effect.Effect<boolean>;
     readonly signIn: (
       hashedNonce: string,
     ) => Effect.Effect<
@@ -22,10 +21,6 @@ export class AppleSignIn extends Context.Service<
   static readonly layer = Layer.effect(
     AppleSignIn,
     Effect.sync(() => {
-      function checkAvailability() {
-        return Effect.promise(() => ExpoAppleAuthentication.isAvailableAsync());
-      }
-
       function signIn(hashedNonce: string) {
         return Effect.promise(() =>
           ExpoAppleAuthentication.signInAsync({
@@ -38,7 +33,7 @@ export class AppleSignIn extends Context.Service<
         ).pipe(Effect.catchDefect(failWithAppleSignInError));
       }
 
-      return AppleSignIn.of({ checkAvailability, signIn });
+      return AppleSignIn.of({ signIn });
     }),
   );
 }

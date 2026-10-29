@@ -1,13 +1,12 @@
 import * as Layer from "effect/Layer";
 
-import type { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts";
 import type { Accessibility } from "#/shared/services/accessibility.ts";
 import type { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 import type { TrpcClient } from "#/shared/services/trpc-client.ts";
 
 import { AuthenticationApplicationService } from "#/features/authentication/authentication-application-service.ts";
+import { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts";
 import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
-import { fakeAppleSignInLayer } from "#/features/authentication/testing/fake-apple-sign-in-layer.ts";
 import { RoutineApplicationService } from "#/features/routine/routine-application-service.ts";
 import { createRuntime } from "#/layer.ts";
 import { ExerciseApplicationService } from "#/shared/exercise-application-service.ts";
@@ -34,10 +33,15 @@ export function createTestRuntime(layers: TestRuntimeLayers) {
   return createRuntime(
     Layer.mergeAll(
       layers.accessibility ?? fakeAccessibilityLayer([]),
-      layers.appleSignIn ?? fakeAppleSignInLayer({ isAvailable: false }),
-      layers.crypto ?? Layer.mock(Crypto, {}),
-      layers.googleSignIn ?? Layer.mock(GoogleSignIn, {}),
-      AuthenticationApplicationService.layerNoDeps,
+      AuthenticationApplicationService.layerNoDeps.pipe(
+        Layer.provideMerge(
+          Layer.mergeAll(
+            layers.appleSignIn ?? Layer.mock(AppleSignIn, {}),
+            layers.crypto ?? Layer.mock(Crypto, {}),
+            layers.googleSignIn ?? Layer.mock(GoogleSignIn, {}),
+          ),
+        ),
+      ),
       Layer.mergeAll(
         ExerciseApplicationService.layerNoDeps,
         RoutineApplicationService.layerNoDeps,

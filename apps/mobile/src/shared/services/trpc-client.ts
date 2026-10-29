@@ -31,8 +31,9 @@ export class TrpcClient extends Context.Service<
       const authenticationClient = yield* AuthenticationClient;
 
       return TrpcClient.of(
-        makeTrpcClient(
-          createTRPCClient<AppRouter>({
+        makeTrpcClient({
+          authClient: authenticationClient.authClient,
+          trpc: createTRPCClient<AppRouter>({
             links: [
               httpBatchLink({
                 fetch: (url, options) =>
@@ -51,7 +52,7 @@ export class TrpcClient extends Context.Service<
               }),
             ],
           }),
-        ),
+        }),
       );
     }),
   );

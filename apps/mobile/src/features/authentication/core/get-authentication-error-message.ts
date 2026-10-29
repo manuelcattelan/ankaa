@@ -2,7 +2,6 @@ import * as Match from "effect/Match";
 import * as Schema from "effect/Schema";
 
 import { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
-import { GoogleSignInInProgressError } from "#/features/authentication/errors/google-sign-in-in-progress-error.ts";
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 import { AccountNotLinkedError } from "#/shared/errors/account-not-linked-error.ts";
 import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
@@ -20,7 +19,6 @@ const authenticationErrorSchema = Schema.Union([
   EmailInvalidError,
   EmailNotSharedError,
   GooglePlayServicesMissingError,
-  GoogleSignInInProgressError,
   OtpCodeAttemptsExceededError,
   OtpCodeExpiredError,
   OtpCodeInvalidError,
@@ -44,7 +42,6 @@ export function getAuthenticationErrorMessage(error: unknown) {
     EmailNotSharedError: () => AUTHENTICATION_MESSAGES.emailNotSharedError,
     GooglePlayServicesMissingError: () =>
       AUTHENTICATION_MESSAGES.playServicesMissingError,
-    GoogleSignInInProgressError: () => "",
     OtpCodeAttemptsExceededError: () =>
       AUTHENTICATION_MESSAGES.otpCodeAttemptsExceededError,
     OtpCodeExpiredError: () => AUTHENTICATION_MESSAGES.otpCodeExpiredError,

@@ -43,23 +43,10 @@ const GOOGLE_SIGN_IN_RESPONSE: SignInResponse = {
 };
 
 describe("SignInScreen", () => {
-  it("shows Apple sign-in when the device offers it", async () => {
-    renderScreen({
-      initialUrl: "/sign-in",
-      testRuntimeLayers: {
-        appleSignIn: fakeAppleSignInLayer({ isAvailable: true }),
-      },
-    });
-
-    expect(await screen.findByTestId("apple-sign-in-button")).toBeOnTheScreen();
-  });
-
-  it("doesn't show Apple sign-in when the device doesn't offer it", async () => {
+  it("shows Apple sign-in on iOS without asking the device whether it offers it", async () => {
     renderScreen({ initialUrl: "/sign-in" });
 
-    await advanceFakeTime(1000);
-
-    expect(screen.queryByTestId("apple-sign-in-button")).not.toBeOnTheScreen();
+    expect(await screen.findByTestId("apple-sign-in-button")).toBeOnTheScreen();
   });
 
   it("signs the User in with Apple and opens the home screen", async () => {
@@ -68,7 +55,6 @@ describe("SignInScreen", () => {
       testRuntimeLayers: {
         appleSignIn: fakeAppleSignInLayer({
           appleAuthenticationCredential: APPLE_AUTHENTICATION_CREDENTIAL,
-          isAvailable: true,
         }),
         authenticationClient: fakeAuthenticationClientLayer(
           createFakeSignInResponses("/sign-in/social"),
@@ -91,7 +77,7 @@ describe("SignInScreen", () => {
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         accessibility: fakeAccessibilityLayer(announcedMessages),
-        appleSignIn: fakeAppleSignInLayer({ isAvailable: true }),
+        appleSignIn: fakeAppleSignInLayer({}),
         crypto: fakeCryptoLayer,
       },
     });
@@ -103,6 +89,94 @@ describe("SignInScreen", () => {
     expect(announcedMessages).toEqual([]);
   });
 
+  it("leaves the screen as it was when the User cancels Apple sign-in", async () => {
+    renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        appleSignIn: fakeAppleSignInLayer({}),
+        crypto: fakeCryptoLayer,
+      },
+    });
+    const appleSignInButton = await screen.findByTestId("apple-sign-in-button");
+    const screenBeforeSignIn = JSON.stringify(screen.toJSON());
+
+    fireEvent.press(appleSignInButton);
+
+    await advanceFakeTime(1000);
+
+    expect(JSON.stringify(screen.toJSON())).toBe(screenBeforeSignIn);
+  });
+
+  it("tells the User that the account can't be linked when the server can't link the Apple sign-in to the User with the same email address", async () => {
+    renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        appleSignIn: fakeAppleSignInLayer({
+          appleAuthenticationCredential: APPLE_AUTHENTICATION_CREDENTIAL,
+        }),
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/sign-in/social": () =>
+            Response.json(
+              { code: "OAUTH_LINK_ERROR", message: "account not linked" },
+              { status: 401 },
+            ),
+        }),
+        crypto: fakeCryptoLayer,
+      },
+    });
+
+    fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
+
+    expect(
+      await screen.findByText(
+        "This account can't be linked with the selected provider: try another sign-in method.",
+      ),
+    ).toBeOnTheScreen();
+  });
+
+  it("tells the User that something went wrong, not that Ankaa can't connect, when Apple returns no identity token", async () => {
+    renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        appleSignIn: fakeAppleSignInLayer({
+          appleAuthenticationCredential: {
+            ...APPLE_AUTHENTICATION_CREDENTIAL,
+            identityToken: null,
+          },
+        }),
+        crypto: fakeCryptoLayer,
+      },
+    });
+
+    fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
+
+    expect(
+      await screen.findByText("Something went wrong: try again."),
+    ).toBeOnTheScreen();
+  });
+
+  it("leaves the screen as it was when the User cancels Google sign-in", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        googleSignIn: fakeGoogleSignInLayer({
+          signInResponse: { data: null, type: "cancelled" },
+        }),
+      },
+    });
+    const googleSignInButton = await screen.findByTestId(
+      "google-sign-in-button",
+    );
+    const screenBeforeSignIn = JSON.stringify(screen.toJSON());
+
+    await user.press(googleSignInButton);
+
+    await advanceFakeTime(1000);
+
+    expect(JSON.stringify(screen.toJSON())).toBe(screenBeforeSignIn);
+  });
+
   it("signs the User in with Google and opens the home screen", async () => {
     const user = userEvent.setup();
 
@@ -112,7 +186,9 @@ describe("SignInScreen", () => {
         authenticationClient: fakeAuthenticationClientLayer(
           createFakeSignInResponses("/sign-in/social"),
         ),
-        googleSignIn: fakeGoogleSignInLayer(GOOGLE_SIGN_IN_RESPONSE),
+        googleSignIn: fakeGoogleSignInLayer({
+          signInResponse: GOOGLE_SIGN_IN_RESPONSE,
+        }),
       },
     });
 
@@ -139,7 +215,9 @@ describe("SignInScreen", () => {
               { status: 400 },
             ),
         }),
-        googleSignIn: fakeGoogleSignInLayer(GOOGLE_SIGN_IN_RESPONSE),
+        googleSignIn: fakeGoogleSignInLayer({
+          signInResponse: GOOGLE_SIGN_IN_RESPONSE,
+        }),
       },
     });
 
@@ -170,7 +248,9 @@ describe("SignInScreen", () => {
               { status: 400 },
             ),
         }),
-        googleSignIn: fakeGoogleSignInLayer(GOOGLE_SIGN_IN_RESPONSE),
+        googleSignIn: fakeGoogleSignInLayer({
+          signInResponse: GOOGLE_SIGN_IN_RESPONSE,
+        }),
       },
     });
 

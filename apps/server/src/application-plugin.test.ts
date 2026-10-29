@@ -87,6 +87,15 @@ async function createLoggingServer({
   return server;
 }
 
+function createUnsignedIdToken(claims: Record<string, unknown>) {
+  const header = Buffer.from(JSON.stringify({ alg: "none" })).toString(
+    "base64url",
+  );
+  const payload = Buffer.from(JSON.stringify(claims)).toString("base64url");
+
+  return `${header}.${payload}.`;
+}
+
 function sendOtpCodeRequests({
   count,
   remoteAddress,
@@ -182,6 +191,23 @@ describe("applicationPlugin", () => {
           ),
         ].join("; "),
       },
+      method: "GET",
+      url: "/api/auth/get-session",
+    });
+
+    expect(response.json()).toBe(null);
+  });
+
+  it("ends the session whose cookie /api/auth/sign-out carries, so /api/auth/get-session answers no session with that cookie", async () => {
+    const testUser = await createTestUser(runtime);
+    await server.inject({
+      headers: Object.fromEntries(testUser.headers),
+      method: "POST",
+      url: "/api/auth/sign-out",
+    });
+
+    const response = await server.inject({
+      headers: Object.fromEntries(testUser.headers),
       method: "GET",
       url: "/api/auth/get-session",
     });
@@ -334,6 +360,142 @@ describe("applicationPlugin", () => {
     expect(response.json<SignInResponseBody>().user.id).toMatch(
       UUID_V7_PATTERN,
     );
+  });
+
+  it("signs a new User in with an Apple id token when /api/auth/sign-in/social is requested", async () => {
+    const response = await server.inject({
+      method: "POST",
+      payload: {
+        idToken: {
+          token: createUnsignedIdToken({
+            email: "apple-user@example.com",
+            email_verified: true,
+            sub: "apple-user-1",
+          }),
+        },
+        provider: "apple",
+      },
+      remoteAddress: "192.0.2.30",
+      url: "/api/auth/sign-in/social",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      user: { email: "apple-user@example.com" },
+    });
+  });
+
+  it("answers /api/auth/get-session with the session that an id-token sign-in's cookie carries", async () => {
+    const signInResponse = await server.inject({
+      method: "POST",
+      payload: {
+        idToken: {
+          token: createUnsignedIdToken({
+            email: "apple-session@example.com",
+            email_verified: true,
+            sub: "apple-user-2",
+          }),
+        },
+        provider: "apple",
+      },
+      remoteAddress: "192.0.2.34",
+      url: "/api/auth/sign-in/social",
+    });
+
+    const response = await server.inject({
+      cookies: Object.fromEntries(
+        signInResponse.cookies.map((cookie) => [cookie.name, cookie.value]),
+      ),
+      method: "GET",
+      url: "/api/auth/get-session",
+    });
+
+    expect(response.json()).toMatchObject({
+      user: { email: "apple-session@example.com" },
+    });
+  });
+
+  it("signs a new User in with a Google id token when /api/auth/sign-in/social is requested", async () => {
+    const response = await server.inject({
+      method: "POST",
+      payload: {
+        idToken: {
+          token: createUnsignedIdToken({
+            email: "google-user@example.com",
+            email_verified: true,
+            sub: "google-user-1",
+          }),
+        },
+        provider: "google",
+      },
+      remoteAddress: "192.0.2.31",
+      url: "/api/auth/sign-in/social",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      user: { email: "google-user@example.com" },
+    });
+  });
+
+  it("signs in with a Google id token the User who already signed in with a verification code sent to the same verified email address", async () => {
+    const remoteAddress = "192.0.2.32";
+    await server.inject({
+      method: "POST",
+      payload: { email: "linked@example.com", type: "sign-in" },
+      remoteAddress,
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+    const otpCodeSignInResponse = await server.inject({
+      method: "POST",
+      payload: { email: "linked@example.com", otp: sentEmails.at(-1)?.text },
+      remoteAddress,
+      url: "/api/auth/sign-in/email-otp",
+    });
+
+    const response = await server.inject({
+      method: "POST",
+      payload: {
+        idToken: {
+          token: createUnsignedIdToken({
+            email: "linked@example.com",
+            email_verified: true,
+            sub: "google-user-2",
+          }),
+        },
+        provider: "google",
+      },
+      remoteAddress,
+      url: "/api/auth/sign-in/social",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json<SignInResponseBody>().user.id).toBe(
+      otpCodeSignInResponse.json<SignInResponseBody>().user.id,
+    );
+  });
+
+  it("rejects a Google id token whose email address Google hasn't verified, when a User already has that email address, with 401 and the code OAUTH_LINK_ERROR", async () => {
+    const testUser = await createTestUser(runtime);
+
+    const response = await server.inject({
+      method: "POST",
+      payload: {
+        idToken: {
+          token: createUnsignedIdToken({
+            email: testUser.user.email,
+            email_verified: false,
+            sub: "google-user-3",
+          }),
+        },
+        provider: "google",
+      },
+      remoteAddress: "192.0.2.33",
+      url: "/api/auth/sign-in/social",
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json()).toMatchObject({ code: "OAUTH_LINK_ERROR" });
   });
 
   it("answers a tRPC procedure called by a signed-in User whose session cookie the request carries with its data", async () => {

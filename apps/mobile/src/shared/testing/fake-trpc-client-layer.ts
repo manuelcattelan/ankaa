@@ -109,8 +109,9 @@ export function fakeTrpcClientLayer({
       const fakeTrpcRouter = createFakeTrpcRouter(responses);
 
       return TrpcClient.of(
-        makeTrpcClient(
-          createTRPCClient<AppRouter>({
+        makeTrpcClient({
+          authClient: authenticationClient.authClient,
+          trpc: createTRPCClient<AppRouter>({
             links: [
               httpBatchLink({
                 fetch: (url, options) => {
@@ -139,7 +140,7 @@ export function fakeTrpcClientLayer({
               }),
             ],
           }),
-        ),
+        }),
       );
     }),
   );
