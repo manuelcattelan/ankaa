@@ -1,3 +1,5 @@
+import type { SendEmailOptions } from "@ankaa/email/email";
+
 import { NODE_ENVIRONMENTS } from "@ankaa/core/shared/constants/node-environments";
 import { urlSchema } from "@ankaa/core/shared/schemas/url-schema";
 import { relations } from "@ankaa/database/relations";
@@ -47,24 +49,14 @@ export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
 
     const run = yield* FiberSet.makeRuntimePromise();
 
-    async function sendOtpCodeEmail({
-      emailAddress,
-      otpCode,
-    }: {
-      emailAddress: string;
-      otpCode: string;
-    }) {
+    async function sendEmail(sendEmailOptions: SendEmailOptions) {
       try {
         await run(
           email
-            .send({
-              subject: "Your sign-in verification code",
-              text: otpCode,
-              to: emailAddress,
-            })
+            .send(sendEmailOptions)
             .pipe(
               Effect.catchCause((cause) =>
-                Effect.logError("Failed to send the verification code", cause),
+                Effect.logError("Failed to send an email", cause),
               ),
             ),
         );
@@ -76,15 +68,32 @@ export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
       }
     }
 
+    // better-auth awaits each email callback, and awaiting the email would
+    // only add the provider's latency to the response
+    // (https://www.better-auth.com/docs/plugins/email-otp).
     return createAuthenticationOptions({
       ...authenticationConfiguration,
       database: db,
       secret: Redacted.value(authenticationConfiguration.secret),
+      sendAccountDeletionLink: ({ email: emailAddress, url }) => {
+        // The link stays plain text, which Resend never rewrites for click
+        // tracking (https://resend.com/docs/dashboard/domains/tracking),
+        // because only a link to the API host itself opens the app through
+        // Universal Links and App Links.
+        void sendEmail({
+          subject: "Confirm deleting your Ankaa account",
+          text: `Open this link to delete your Ankaa account and everything in it: ${url}\n\nIf you didn't ask to delete your account, ignore this email.`,
+          to: emailAddress,
+        });
+
+        return Promise.resolve();
+      },
       sendVerificationOtpCode: ({ email: emailAddress, otpCode }) => {
-        // better-auth awaits this callback, and awaiting the email would only
-        // add the provider's latency to the response
-        // (https://www.better-auth.com/docs/plugins/email-otp).
-        void sendOtpCodeEmail({ emailAddress, otpCode });
+        void sendEmail({
+          subject: "Your sign-in verification code",
+          text: otpCode,
+          to: emailAddress,
+        });
 
         return Promise.resolve();
       },

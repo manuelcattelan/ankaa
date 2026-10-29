@@ -54,4 +54,4 @@ export const authenticationRoute = ((server, { runtime }, done) => {
   });
 
   done();
-}) satisfies FastifyPluginCallback<ApplicationPluginOptions>;
+}) satisfies FastifyPluginCallback<Pick<ApplicationPluginOptions, "runtime">>;

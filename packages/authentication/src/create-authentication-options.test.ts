@@ -13,6 +13,7 @@ const models = getAuthTables(
     googleWebClientId: "google-web-client-id",
     nodeEnvironment: "test",
     secret: "better-auth-secret-placeholder-of-32-characters",
+    sendAccountDeletionLink: () => Promise.resolve(),
     sendVerificationOtpCode: () => Promise.resolve(),
   }),
 );

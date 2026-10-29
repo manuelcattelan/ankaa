@@ -3,6 +3,7 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 import { AccountNotLinkedError } from "#/shared/errors/account-not-linked-error.ts";
+import { DeleteAccountTokenInvalidError } from "#/shared/errors/delete-account-token-invalid-error.ts";
 import { EmailInvalidError } from "#/shared/errors/email-invalid-error.ts";
 import { EmailNotSharedError } from "#/shared/errors/email-not-shared-error.ts";
 import { OtpCodeAttemptsExceededError } from "#/shared/errors/otp-code-attempts-exceeded-error.ts";
@@ -44,6 +45,7 @@ export function getAuthenticationResponseError({
   return Match.value(code).pipe(
     Match.when("EMAIL_NOT_VERIFIED", () => new AccountNotLinkedError()),
     Match.when("INVALID_EMAIL", () => new EmailInvalidError()),
+    Match.when("INVALID_TOKEN", () => new DeleteAccountTokenInvalidError()),
     Match.when("INVALID_OTP", () => new OtpCodeInvalidError()),
     Match.when("OAUTH_LINK_ERROR", () => new AccountNotLinkedError()),
     Match.when("OTP_EXPIRED", () => new OtpCodeExpiredError()),

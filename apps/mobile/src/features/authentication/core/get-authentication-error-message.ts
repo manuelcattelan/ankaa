@@ -5,6 +5,7 @@ import { GooglePlayServicesMissingError } from "#/features/authentication/errors
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 import { AccountNotLinkedError } from "#/shared/errors/account-not-linked-error.ts";
 import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
+import { DeleteAccountTokenInvalidError } from "#/shared/errors/delete-account-token-invalid-error.ts";
 import { EmailInvalidError } from "#/shared/errors/email-invalid-error.ts";
 import { EmailNotSharedError } from "#/shared/errors/email-not-shared-error.ts";
 import { OtpCodeAttemptsExceededError } from "#/shared/errors/otp-code-attempts-exceeded-error.ts";
@@ -16,6 +17,7 @@ import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 const authenticationErrorSchema = Schema.Union([
   AccountNotLinkedError,
   AuthenticationClientError,
+  DeleteAccountTokenInvalidError,
   EmailInvalidError,
   EmailNotSharedError,
   GooglePlayServicesMissingError,
@@ -38,6 +40,8 @@ export function getAuthenticationErrorMessage(error: unknown) {
   return Match.valueTags(error, {
     AccountNotLinkedError: () => AUTHENTICATION_MESSAGES.accountNotLinkedError,
     AuthenticationClientError: () => SHARED_MESSAGES.serverUnreachableError,
+    DeleteAccountTokenInvalidError: () =>
+      AUTHENTICATION_MESSAGES.deleteAccountTokenInvalidError,
     EmailInvalidError: () => AUTHENTICATION_MESSAGES.emailInvalidError,
     EmailNotSharedError: () => AUTHENTICATION_MESSAGES.emailNotSharedError,
     GooglePlayServicesMissingError: () =>

@@ -10,15 +10,20 @@ import { STATUS_CODES } from "node:http";
 
 import { authenticationRoute } from "#/routes/authentication-route.ts";
 import { trpcRoute } from "#/routes/trpc-route.ts";
+import { wellKnownRoute } from "#/routes/well-known-route.ts";
 
 export type ApplicationPluginOptions = {
+  androidAppPackageName: string;
+  androidAppSha256CertificateFingerprints: readonly string[];
+  appleAppBundleIdentifier: string;
+  appleTeamIdentifier: string;
   runtime: ApplicationRuntime;
 };
 
 const HTTP_STATUS_NOT_FOUND = 404;
 
 export const applicationPlugin = fastifyPlugin<ApplicationPluginOptions>(
-  async (server, { runtime }) => {
+  async (server, { runtime, ...wellKnownFileSettings }) => {
     await server.register(helmet);
     await server.register(rateLimit);
     await server.register(underPressure, { exposeStatusRoute: "/health" });
@@ -62,5 +67,9 @@ export const applicationPlugin = fastifyPlugin<ApplicationPluginOptions>(
       runtime,
     });
     await server.register(trpcRoute, { prefix: "/trpc", runtime });
+    await server.register(wellKnownRoute, {
+      ...wellKnownFileSettings,
+      prefix: "/.well-known",
+    });
   },
 );

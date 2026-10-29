@@ -30,4 +30,4 @@ export const trpcRoute = (async (server, { runtime }) => {
       router: appRouter,
     } satisfies FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],
   });
-}) satisfies FastifyPluginAsync<ApplicationPluginOptions>;
+}) satisfies FastifyPluginAsync<Pick<ApplicationPluginOptions, "runtime">>;

@@ -2,6 +2,7 @@ import { getAuthenticationErrorMessage } from "#/features/authentication/core/ge
 import { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
 import { AccountNotLinkedError } from "#/shared/errors/account-not-linked-error.ts";
 import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
+import { DeleteAccountTokenInvalidError } from "#/shared/errors/delete-account-token-invalid-error.ts";
 import { EmailInvalidError } from "#/shared/errors/email-invalid-error.ts";
 import { EmailNotSharedError } from "#/shared/errors/email-not-shared-error.ts";
 import { OtpCodeAttemptsExceededError } from "#/shared/errors/otp-code-attempts-exceeded-error.ts";
@@ -55,6 +56,14 @@ describe("getAuthenticationErrorMessage", () => {
       getAuthenticationErrorMessage(new OtpCodeAttemptsExceededError()),
     ).toBe(
       "Too many incorrect attempts: resend the verification code and try again.",
+    );
+  });
+
+  it("returns the dead link message, which says to tap Delete account for a new link, for a DeleteAccountTokenInvalidError", () => {
+    expect(
+      getAuthenticationErrorMessage(new DeleteAccountTokenInvalidError()),
+    ).toBe(
+      "This link has expired or was already used. Tap Delete account to get a new one.",
     );
   });
 

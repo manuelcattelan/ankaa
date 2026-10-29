@@ -31,6 +31,15 @@ const positiveIntegerSchema = Schema.Trim.pipe(
 
 const serverConfiguration = await Effect.runPromise(
   Config.all({
+    androidAppPackageName: Config.NonEmptyString("ANDROID_APP_PACKAGE_NAME"),
+    androidAppSha256CertificateFingerprints: Config.Array(
+      Schema.NonEmptyString,
+      "ANDROID_APP_SHA256_CERTIFICATE_FINGERPRINTS",
+    ),
+    appleAppBundleIdentifier: Config.NonEmptyString(
+      "APPLE_APP_BUNDLE_IDENTIFIER",
+    ),
+    appleTeamIdentifier: Config.NonEmptyString("APPLE_TEAM_IDENTIFIER"),
     closeGraceDelayMilliseconds: Config.schema(
       positiveIntegerSchema,
       "CLOSE_GRACE_DELAY_MILLISECONDS",
@@ -62,7 +71,14 @@ try {
   await exitAfterStartFailure(error);
 }
 
-await server.register(applicationPlugin, { runtime });
+await server.register(applicationPlugin, {
+  androidAppPackageName: serverConfiguration.androidAppPackageName,
+  androidAppSha256CertificateFingerprints:
+    serverConfiguration.androidAppSha256CertificateFingerprints,
+  appleAppBundleIdentifier: serverConfiguration.appleAppBundleIdentifier,
+  appleTeamIdentifier: serverConfiguration.appleTeamIdentifier,
+  runtime,
+});
 
 server.addHook("onClose", async () => {
   await runtime.dispose();

@@ -14,6 +14,25 @@ import { signedInSession } from "#/shared/testing/signed-in-session.ts";
 import { renderScreen } from "#/testing/render-screen.tsx";
 
 describe("RoutineScreen", () => {
+  it("opens the Routine of a link to it for a signed-in User, not the home screen", async () => {
+    renderScreen({
+      initialUrl: `/routines/${pushDayRoutine.id}`,
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => [],
+            "routine.list": () => [pushDayRoutine],
+          },
+        }),
+      },
+    });
+
+    expect(
+      await screen.findByRole("button", { name: "Delete routine" }),
+    ).toBeOnTheScreen();
+  });
+
   it("Saves the edits that the User makes to the Routine, keeping its ids", async () => {
     const user = userEvent.setup();
     const savedInputs: RoutineSaveInput[] = [];

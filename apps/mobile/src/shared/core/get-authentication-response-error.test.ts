@@ -1,5 +1,6 @@
 import { getAuthenticationResponseError } from "#/shared/core/get-authentication-response-error.ts";
 import { AccountNotLinkedError } from "#/shared/errors/account-not-linked-error.ts";
+import { DeleteAccountTokenInvalidError } from "#/shared/errors/delete-account-token-invalid-error.ts";
 import { EmailInvalidError } from "#/shared/errors/email-invalid-error.ts";
 import { EmailNotSharedError } from "#/shared/errors/email-not-shared-error.ts";
 import { OtpCodeAttemptsExceededError } from "#/shared/errors/otp-code-attempts-exceeded-error.ts";
@@ -46,6 +47,16 @@ describe("getAuthenticationResponseError", () => {
         status: 400,
       }),
     ).toStrictEqual(new OtpCodeInvalidError());
+  });
+
+  it("returns a DeleteAccountTokenInvalidError for the code INVALID_TOKEN of an Account deletion link that has expired, was used or belongs to another User", () => {
+    expect(
+      getAuthenticationResponseError({
+        code: "INVALID_TOKEN",
+        retryAfterHeader: null,
+        status: 404,
+      }),
+    ).toStrictEqual(new DeleteAccountTokenInvalidError());
   });
 
   it("returns an OtpCodeExpiredError for the code OTP_EXPIRED", () => {

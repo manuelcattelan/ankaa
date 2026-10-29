@@ -17,7 +17,11 @@ import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
 const APPLE_BUTTON_CORNER_RADIUS = 8;
 
-export function SignInScreen() {
+export function SignInScreen({
+  isAccountDeleted,
+}: {
+  isAccountDeleted: boolean;
+}) {
   const runtime = useRuntime();
 
   const session = useAuthenticationSession();
@@ -31,9 +35,12 @@ export function SignInScreen() {
   const isSignInPending = signInApple.isPending || signInGoogle.isPending;
   const sessionErrorMessage = getSessionErrorMessage(session);
   const signInError = signInApple.error ?? signInGoogle.error;
-  const signInErrorMessage =
+  const accountDeletedMessage = isAccountDeleted
+    ? AUTHENTICATION_MESSAGES.accountDeletedMessage
+    : null;
+  const statusMessage =
     signInError === null
-      ? sessionErrorMessage
+      ? (sessionErrorMessage ?? accountDeletedMessage)
       : getAuthenticationErrorMessage(signInError);
 
   function handleSignInApple() {
@@ -58,7 +65,7 @@ export function SignInScreen() {
 
   return (
     <ScrollView>
-      <StatusMessage message={signInErrorMessage} />
+      <StatusMessage message={statusMessage} />
       {Platform.OS === "ios" ? (
         <ExpoAppleAuthentication.AppleAuthenticationButton
           buttonStyle={

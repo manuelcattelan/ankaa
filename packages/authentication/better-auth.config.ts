@@ -11,6 +11,7 @@ export default betterAuth(
     googleWebClientId: "google-web-client-id",
     nodeEnvironment: "development",
     secret: "better-auth-secret-placeholder-of-32-characters",
+    sendAccountDeletionLink: () => Promise.resolve(),
     sendVerificationOtpCode: () => Promise.resolve(),
   }),
 );

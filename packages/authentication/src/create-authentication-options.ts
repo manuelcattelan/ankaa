@@ -8,6 +8,8 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { expo } from "@better-auth/expo";
 import { emailOTP } from "better-auth/plugins";
 
+const ACCOUNT_DELETION_PATH = "/delete-account";
+
 const DEVELOPMENT_TRUSTED_ORIGINS = [
   "exp://",
   "exp://**",
@@ -22,6 +24,7 @@ export function createAuthenticationOptions({
   googleWebClientId,
   nodeEnvironment,
   secret,
+  sendAccountDeletionLink,
   sendVerificationOtpCode,
 }: {
   appleBundleId: string;
@@ -31,6 +34,10 @@ export function createAuthenticationOptions({
   googleWebClientId: string;
   nodeEnvironment: NodeEnvironment;
   secret: string;
+  sendAccountDeletionLink: (options: {
+    email: string;
+    url: string;
+  }) => Promise<void>;
   sendVerificationOtpCode: (options: {
     email: string;
     otpCode: string;
@@ -66,5 +73,34 @@ export function createAuthenticationOptions({
       "ankaa://",
       ...(nodeEnvironment === "development" ? DEVELOPMENT_TRUSTED_ORIGINS : []),
     ],
+    user: {
+      deleteUser: {
+        enabled: true,
+        // The email links to the app's own /delete-account route on the API
+        // host instead of better-auth's `url`, because the Expo plugin
+        // rewrites only its own callback paths for the app, never
+        // /delete-user/callback
+        // (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/expo/src/index.ts).
+        sendDeleteAccountVerification: ({ token, user }) =>
+          sendAccountDeletionLink({
+            email: user.email,
+            url: buildAccountDeletionUrl({ baseUrl, token }),
+          }),
+      },
+    },
   } satisfies BetterAuthOptions;
+}
+
+function buildAccountDeletionUrl({
+  baseUrl,
+  token,
+}: {
+  baseUrl: string;
+  token: string;
+}) {
+  const accountDeletionUrl = new URL(ACCOUNT_DELETION_PATH, baseUrl);
+
+  accountDeletionUrl.searchParams.set("token", token);
+
+  return accountDeletionUrl.toString();
 }

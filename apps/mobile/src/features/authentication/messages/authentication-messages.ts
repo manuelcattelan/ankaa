@@ -1,9 +1,15 @@
 import { formatCount } from "#/shared/core/format-count.ts";
 
 export const AUTHENTICATION_MESSAGES = {
+  accountDeletedMessage: "Your account has been deleted.",
+  accountDeletionRequestedMessage:
+    "Check your email to confirm deleting your account.",
   accountNotLinkedError:
     "This account can't be linked with the selected provider: try another sign-in method.",
   continueWithEmailButton: "Continue with email address",
+  deleteAccountButton: "Delete account",
+  deleteAccountTokenInvalidError:
+    "This link has expired or was already used. Tap Delete account to get a new one.",
   emailInvalidError:
     "This email address isn't valid: enter an address like name@example.com.",
   emailLabel: "Email address",

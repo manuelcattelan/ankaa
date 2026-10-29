@@ -7,6 +7,7 @@ import * as Layer from "effect/Layer";
 import type { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
 import type { AccountNotLinkedError } from "#/shared/errors/account-not-linked-error.ts";
 import type { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
+import type { DeleteAccountTokenInvalidError } from "#/shared/errors/delete-account-token-invalid-error.ts";
 import type { EmailInvalidError } from "#/shared/errors/email-invalid-error.ts";
 import type { EmailNotSharedError } from "#/shared/errors/email-not-shared-error.ts";
 import type { OtpCodeAttemptsExceededError } from "#/shared/errors/otp-code-attempts-exceeded-error.ts";
@@ -22,6 +23,18 @@ import { Crypto } from "#/shared/services/crypto.ts";
 export class AuthenticationApplicationService extends Context.Service<
   AuthenticationApplicationService,
   {
+    readonly deleteAccount: (options: {
+      token: string;
+    }) => Effect.Effect<
+      void,
+      | AuthenticationClientError
+      | DeleteAccountTokenInvalidError
+      | RateLimitedError
+    >;
+    readonly requestAccountDeletion: () => Effect.Effect<
+      void,
+      AuthenticationClientError | RateLimitedError
+    >;
     readonly requestOtpCode: (options: {
       email: string;
     }) => Effect.Effect<
@@ -65,6 +78,28 @@ export class AuthenticationApplicationService extends Context.Service<
       const crypto = yield* Crypto;
       const googleSignIn = yield* GoogleSignIn;
 
+      const requestAccountDeletion = Effect.fn(
+        "AuthenticationApplicationService.requestAccountDeletion",
+      )(
+        function* () {
+          yield* authenticationClient.request(({ authClient, fetchOptions }) =>
+            authClient.deleteUser({ fetchOptions }),
+          );
+        },
+        Effect.catchTag(
+          [
+            "AccountNotLinkedError",
+            "DeleteAccountTokenInvalidError",
+            "EmailInvalidError",
+            "EmailNotSharedError",
+            "OtpCodeAttemptsExceededError",
+            "OtpCodeExpiredError",
+            "OtpCodeInvalidError",
+          ],
+          Effect.die,
+        ),
+      );
+
       const requestOtpCode = Effect.fn(
         "AuthenticationApplicationService.requestOtpCode",
       )(
@@ -79,6 +114,7 @@ export class AuthenticationApplicationService extends Context.Service<
         Effect.catchTag(
           [
             "AccountNotLinkedError",
+            "DeleteAccountTokenInvalidError",
             "EmailNotSharedError",
             "OtpCodeAttemptsExceededError",
             "OtpCodeExpiredError",
@@ -122,6 +158,7 @@ export class AuthenticationApplicationService extends Context.Service<
         Effect.catchTag("AppleSignInCanceledError", () => Effect.void),
         Effect.catchTag(
           [
+            "DeleteAccountTokenInvalidError",
             "EmailInvalidError",
             "OtpCodeAttemptsExceededError",
             "OtpCodeExpiredError",
@@ -161,6 +198,7 @@ export class AuthenticationApplicationService extends Context.Service<
         Effect.catchTag("GoogleSignInInProgressError", () => Effect.void),
         Effect.catchTag(
           [
+            "DeleteAccountTokenInvalidError",
             "EmailInvalidError",
             "OtpCodeAttemptsExceededError",
             "OtpCodeExpiredError",
@@ -179,7 +217,12 @@ export class AuthenticationApplicationService extends Context.Service<
           );
         },
         Effect.catchTag(
-          ["AccountNotLinkedError", "EmailInvalidError", "EmailNotSharedError"],
+          [
+            "AccountNotLinkedError",
+            "DeleteAccountTokenInvalidError",
+            "EmailInvalidError",
+            "EmailNotSharedError",
+          ],
           Effect.die,
         ),
       );
@@ -195,6 +238,7 @@ export class AuthenticationApplicationService extends Context.Service<
         Effect.catchTag(
           [
             "AccountNotLinkedError",
+            "DeleteAccountTokenInvalidError",
             "EmailInvalidError",
             "EmailNotSharedError",
             "OtpCodeAttemptsExceededError",
@@ -206,7 +250,39 @@ export class AuthenticationApplicationService extends Context.Service<
         ),
       );
 
+      const deleteAccount = Effect.fn(
+        "AuthenticationApplicationService.deleteAccount",
+      )(
+        function* ({ token }: { token: string }) {
+          yield* authenticationClient.request(({ authClient, fetchOptions }) =>
+            authClient.deleteUser({ fetchOptions, token }),
+          );
+
+          // better-auth deletes the Account through an inner call whose
+          // cookie-clearing headers never reach the response
+          // (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/better-auth/src/api/routes/update-user.ts),
+          // and the Expo client clears the cookie and the session it stores
+          // only on sign-out
+          // (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/expo/src/client.ts),
+          // so signing out is what removes the User's data from the device.
+          yield* signOut();
+        },
+        Effect.catchTag(
+          [
+            "AccountNotLinkedError",
+            "EmailInvalidError",
+            "EmailNotSharedError",
+            "OtpCodeAttemptsExceededError",
+            "OtpCodeExpiredError",
+            "OtpCodeInvalidError",
+          ],
+          Effect.die,
+        ),
+      );
+
       return AuthenticationApplicationService.of({
+        deleteAccount,
+        requestAccountDeletion,
         requestOtpCode,
         signInWithApple,
         signInWithGoogle,

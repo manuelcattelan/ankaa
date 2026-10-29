@@ -1,5 +1,7 @@
 import type { ExpoConfig } from "expo/config";
 
+const ACCOUNT_DELETION_PATH = "/delete-account";
+
 const APPLICATION_ID = "app.ankaa";
 const APPLICATION_SLUG = "ankaa";
 
@@ -19,6 +21,17 @@ if (googleIosClientId === undefined) {
 
 const iosUrlScheme = `com.googleusercontent.apps.${googleIosClientId}`;
 
+// Account deletion links open the app through Universal Links and App Links on
+// the API's own host, which in development is the ngrok domain that
+// EXPO_PUBLIC_API_URL points to. `?mode=developer` lets a development build
+// associate with that domain without Apple's CDN, once Developer Mode and
+// Associated Domains Development are on in the device's settings
+// (https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.associated-domains),
+// and Android verifies the domain against the debug key's fingerprint in the
+// server's assetlinks.json
+// (https://developer.android.com/training/app-links/verify-android-applinks).
+const apiHost = new URL(process.env.EXPO_PUBLIC_API_URL ?? "").host;
+
 const configuration: ExpoConfig = {
   android: {
     adaptiveIcon: {
@@ -27,6 +40,16 @@ const configuration: ExpoConfig = {
       foregroundImage: "./assets/images/android-icon-foreground.png",
       monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
+    intentFilters: [
+      {
+        action: "VIEW",
+        autoVerify: true,
+        category: ["BROWSABLE", "DEFAULT"],
+        data: [
+          { host: apiHost, pathPrefix: ACCOUNT_DELETION_PATH, scheme: "https" },
+        ],
+      },
+    ],
     package: APPLICATION_ID,
     predictiveBackGestureEnabled: false,
   },
@@ -36,6 +59,7 @@ const configuration: ExpoConfig = {
   },
   icon: "./assets/images/icon.png",
   ios: {
+    associatedDomains: [`applinks:${apiHost}?mode=developer`],
     bundleIdentifier: APPLICATION_ID,
     icon: "./assets/expo.icon",
     usesAppleSignIn: true,

@@ -67,6 +67,41 @@ describe("HomeScreen", () => {
     ).toBeOnTheScreen();
   });
 
+  it("sends the request to delete the Account when the User taps Delete account, with the button disabled until it's answered, then tells them to check their email", async () => {
+    const user = userEvent.setup();
+    const deleteUserResponse = Promise.withResolvers<Response>();
+    renderScreen({
+      initialUrl: "/",
+      testRuntimeLayers: {
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/delete-user": () => deleteUserResponse.promise,
+          "/get-session": () => Response.json(signedInSession),
+        }),
+      },
+    });
+
+    await user.press(
+      await screen.findByRole("button", { name: "Delete account" }),
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Delete account" }),
+    ).toBeDisabled();
+
+    deleteUserResponse.resolve(
+      Response.json({ message: "Verification email sent", success: true }),
+    );
+
+    expect(
+      await screen.findByText(
+        "Check your email to confirm deleting your account.",
+      ),
+    ).toBeOnTheScreen();
+    expect(
+      screen.getByRole("button", { name: "Delete account" }),
+    ).toBeEnabled();
+  });
+
   it("signs the User out of Google too when they sign out, so they can choose another Google account", async () => {
     const googleSignInCalls: string[] = [];
     const user = userEvent.setup();

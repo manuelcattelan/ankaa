@@ -1,4 +1,5 @@
 import type { applicationLayer } from "@ankaa/api/application-layer";
+import type { TestRuntime } from "@ankaa/api/shared/testing/create-test-runtime";
 import type { SendEmailOptions } from "@ankaa/email/email";
 import type { FastifyInstance } from "fastify";
 
@@ -10,6 +11,7 @@ import { AuthenticationTestHelpers } from "@ankaa/authentication/testing/authent
 import { createTestUser } from "@ankaa/authentication/testing/create-test-user";
 import { Database } from "@ankaa/database/database";
 import { verification } from "@ankaa/database/schema/authentication";
+import { routine, routineDay } from "@ankaa/database/schema/routine";
 import { fakeEmailLayer } from "@ankaa/email/testing/fake-email-layer";
 import { fakeStalledEmailLayer } from "@ankaa/email/testing/fake-stalled-email-layer";
 import * as Cause from "effect/Cause";
@@ -26,14 +28,30 @@ type SignInResponseBody = {
   user: { id: string };
 };
 
+const DELETE_ACCOUNT_LINK_PATTERN =
+  /http:\/\/localhost:3000\/delete-account\?token=[\da-z]{32}(?:\s|$)/;
+
 const OTP_CODE_PATTERN = /^\d{6}$/;
 
 const RATE_LIMIT_MAXIMUM_REQUEST_COUNT = 1000;
+
+const DELETED_ROUTINE_ID = "019a0000-0000-7000-8000-000000000011";
+
+const KEPT_ROUTINE_ID = "019a0000-0000-7000-8000-000000000012";
 
 const REQUEST_ID = "request-1";
 
 const UUID_V7_PATTERN =
   /^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/;
+
+const WELL_KNOWN_FILE_SETTINGS = {
+  androidAppPackageName: "app.ankaa.test",
+  androidAppSha256CertificateFingerprints: [
+    "14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5",
+  ],
+  appleAppBundleIdentifier: "app.ankaa.test",
+  appleTeamIdentifier: "ABCDE12345",
+};
 
 const session = {
   session: {
@@ -82,7 +100,10 @@ async function createLoggingServer({
     await runtime.dispose();
   });
 
-  await server.register(applicationPlugin, { runtime });
+  await server.register(applicationPlugin, {
+    ...WELL_KNOWN_FILE_SETTINGS,
+    runtime,
+  });
 
   return server;
 }
@@ -94,6 +115,58 @@ function createUnsignedIdToken(claims: Record<string, unknown>) {
   const payload = Buffer.from(JSON.stringify(claims)).toString("base64url");
 
   return `${header}.${payload}.`;
+}
+
+function insertRoutine({
+  routineId,
+  runtime,
+  userId,
+}: {
+  routineId: string;
+  runtime: TestRuntime;
+  userId: string;
+}) {
+  return runtime.runPromise(
+    Effect.gen(function* () {
+      const database = yield* Database;
+
+      yield* database
+        .insert(routine)
+        .values({ id: routineId, name: "Push day", userId });
+      yield* database
+        .insert(routineDay)
+        .values({ dayOfWeek: "monday", routineId });
+    }),
+  );
+}
+
+function listRowsOwnedBy({
+  routineId,
+  runtime,
+  userId,
+}: {
+  routineId: string;
+  runtime: TestRuntime;
+  userId: string;
+}) {
+  return runtime.runPromise(
+    Effect.gen(function* () {
+      const database = yield* Database;
+
+      return {
+        routineDays: yield* database.query.routineDay.findMany({
+          where: { routineId },
+        }),
+        routines: yield* database.query.routine.findMany({
+          where: { userId },
+        }),
+        sessions: yield* database.query.session.findMany({
+          where: { userId },
+        }),
+        users: yield* database.query.user.findMany({ where: { id: userId } }),
+      };
+    }),
+  );
 }
 
 function sendOtpCodeRequests({
@@ -139,7 +212,10 @@ describe("applicationPlugin", () => {
   beforeEach(async () => {
     server = fastify();
 
-    await server.register(applicationPlugin, { runtime });
+    await server.register(applicationPlugin, {
+      ...WELL_KNOWN_FILE_SETTINGS,
+      runtime,
+    });
   });
 
   afterEach(async () => {
@@ -261,6 +337,7 @@ describe("applicationPlugin", () => {
     );
     const stalledEmailServer = fastify();
     await stalledEmailServer.register(applicationPlugin, {
+      ...WELL_KNOWN_FILE_SETTINGS,
       runtime: stalledEmailRuntime,
     });
 
@@ -498,6 +575,106 @@ describe("applicationPlugin", () => {
     expect(response.json()).toMatchObject({ code: "OAUTH_LINK_ERROR" });
   });
 
+  it("emails a /delete-account link on the API host, and deletes nothing, when /api/auth/delete-user is requested without a token", async () => {
+    const testUser = await createTestUser(runtime);
+
+    await server.inject({
+      headers: Object.fromEntries(testUser.headers),
+      method: "POST",
+      payload: {},
+      url: "/api/auth/delete-user",
+    });
+
+    const response = await server.inject({
+      headers: Object.fromEntries(testUser.headers),
+      method: "GET",
+      url: "/api/auth/get-session",
+    });
+
+    expect(sentEmails.at(-1)).toMatchObject({
+      subject: "Confirm deleting your Ankaa account",
+      to: testUser.user.email,
+    });
+    expect(sentEmails.at(-1)?.text).toMatch(DELETE_ACCOUNT_LINK_PATTERN);
+    expect(response.json()).toMatchObject({ user: { id: testUser.user.id } });
+  });
+
+  it("deletes the User and every row they own when /api/auth/delete-user is requested with the token of the emailed link", async () => {
+    const testUser = await createTestUser(runtime);
+    await insertRoutine({
+      routineId: DELETED_ROUTINE_ID,
+      runtime,
+      userId: testUser.user.id,
+    });
+    await server.inject({
+      headers: Object.fromEntries(testUser.headers),
+      method: "POST",
+      payload: {},
+      url: "/api/auth/delete-user",
+    });
+    const token = /token=([\da-z]+)/.exec(String(sentEmails.at(-1)?.text))?.[1];
+
+    const response = await server.inject({
+      headers: Object.fromEntries(testUser.headers),
+      method: "POST",
+      payload: { token },
+      url: "/api/auth/delete-user",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(
+      await listRowsOwnedBy({
+        routineId: DELETED_ROUTINE_ID,
+        runtime,
+        userId: testUser.user.id,
+      }),
+    ).toStrictEqual({
+      routineDays: [],
+      routines: [],
+      sessions: [],
+      users: [],
+    });
+  });
+
+  it("rejects the token of another User's emailed link with 404 and the code INVALID_TOKEN, and keeps that User and every row they own", async () => {
+    const linkOwner = await createTestUser(runtime);
+    const otherUser = await createTestUser(runtime);
+    await insertRoutine({
+      routineId: KEPT_ROUTINE_ID,
+      runtime,
+      userId: linkOwner.user.id,
+    });
+    await server.inject({
+      headers: Object.fromEntries(linkOwner.headers),
+      method: "POST",
+      payload: {},
+      url: "/api/auth/delete-user",
+    });
+    const token = /token=([\da-z]+)/.exec(String(sentEmails.at(-1)?.text))?.[1];
+
+    const response = await server.inject({
+      headers: Object.fromEntries(otherUser.headers),
+      method: "POST",
+      payload: { token },
+      url: "/api/auth/delete-user",
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toMatchObject({ code: "INVALID_TOKEN" });
+    expect(
+      await listRowsOwnedBy({
+        routineId: KEPT_ROUTINE_ID,
+        runtime,
+        userId: linkOwner.user.id,
+      }),
+    ).toMatchObject({
+      routineDays: [{ dayOfWeek: "monday", routineId: KEPT_ROUTINE_ID }],
+      routines: [{ id: KEPT_ROUTINE_ID, userId: linkOwner.user.id }],
+      sessions: [{ userId: linkOwner.user.id }],
+      users: [{ id: linkOwner.user.id }],
+    });
+  });
+
   it("answers a tRPC procedure called by a signed-in User whose session cookie the request carries with its data", async () => {
     const testUser = await createTestUser(runtime);
 
@@ -601,7 +778,10 @@ describe("applicationPlugin", () => {
         },
       },
     });
-    await loggingServer.register(applicationPlugin, { runtime });
+    await loggingServer.register(applicationPlugin, {
+      ...WELL_KNOWN_FILE_SETTINGS,
+      runtime,
+    });
 
     await loggingServer.inject({ method: "GET", url: "/trpc/exercise.list" });
     await loggingServer.close();
@@ -827,6 +1007,48 @@ describe("applicationPlugin", () => {
         userId: "user-1",
       }),
     );
+  });
+
+  it("answers /.well-known/apple-app-site-association with the app of its settings, for /delete-account links only", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/.well-known/apple-app-site-association",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["content-type"]).toMatch(/^application\/json/);
+    expect(response.json()).toStrictEqual({
+      applinks: {
+        details: [
+          {
+            appIDs: ["ABCDE12345.app.ankaa.test"],
+            components: [{ "/": "/delete-account*" }],
+          },
+        ],
+      },
+    });
+  });
+
+  it("answers /.well-known/assetlinks.json with the app and signing certificate fingerprints of its settings", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/.well-known/assetlinks.json",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["content-type"]).toMatch(/^application\/json/);
+    expect(response.json()).toStrictEqual([
+      {
+        relation: ["delegate_permission/common.handle_all_urls"],
+        target: {
+          ["namespace"]: "android_app",
+          ["package_name"]: "app.ankaa.test",
+          ["sha256_cert_fingerprints"]: [
+            "14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5",
+          ],
+        },
+      },
+    ]);
   });
 
   it("answers /health with the status ok", async () => {
