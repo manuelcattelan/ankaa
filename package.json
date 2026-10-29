@@ -5,6 +5,7 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "jiti": "catalog:",
+    "knip": "^6.43.0",
     "prettier": "catalog:",
     "prettier-plugin-sh": "^0.19.0",
     "shellcheck": "^4.1.0",
@@ -33,7 +34,7 @@
     "lint": "turbo run lint lint:root",
     "lint:fix": "turbo run lint:fix lint:fix:root",
     "lint:fix:root": "eslint . --fix",
-    "lint:root": "eslint . && git ls-files -z --cached --others --exclude-standard -- '*.sh' | xargs -0 -r shellcheck",
+    "lint:root": "eslint . && git ls-files -z --cached --others --exclude-standard -- '*.sh' | xargs -0 -r shellcheck && EXPO_PUBLIC_API_URL=https://placeholder.invalid EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=placeholder.apps.googleusercontent.com DATABASE_URL_DIRECT=postgresql://placeholder.invalid/ankaa knip --treat-config-hints-as-errors && EXPO_PUBLIC_API_URL=https://placeholder.invalid EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=placeholder.apps.googleusercontent.com DATABASE_URL_DIRECT=postgresql://placeholder.invalid/ankaa knip --production --strict",
     "test": "turbo run test"
   },
   "type": "module"

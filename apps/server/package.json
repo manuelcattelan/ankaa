@@ -28,6 +28,7 @@
   "imports": {
     "#/*": "./src/*"
   },
+  "main": "src/server.ts",
   "name": "@ankaa/server",
   "private": true,
   "scripts": {

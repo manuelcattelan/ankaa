@@ -23,7 +23,7 @@ export const TEST_FILES = ["**/*.test.{ts,tsx}"];
 
 const FILENAME_MATCH_EXPORT_EXEMPT_FILES = ["**/*.config.*", "**/*.d.ts"];
 
-export const TESTING_FILES = ["**/testing/**"];
+const TESTING_FILES = ["**/testing/**"];
 
 const TESTING_IMPORTING_FILES = [
   ...TEST_FILES,
@@ -209,8 +209,6 @@ const TYPE_WORD_SUFFIX = {
   match: false,
   regex: "(?:Array|Async|List|Promise|String)$",
 };
-
-const GENERATED_FILES_KEPT_RULE_PREFIXES = ["@stylistic/", "perfectionist/"];
 
 const MINIMUM_NAME_LENGTH = 2;
 
@@ -492,31 +490,6 @@ export function createFeatureIsolationZone({
       "Import nothing from another Feature, so each Feature stays isolated. Move what several Features use to shared/.",
     target,
   };
-}
-
-export function createGeneratedFilesConfiguration({
-  configuration,
-  files,
-}: {
-  configuration: Linter.Config[];
-  files: string[];
-}) {
-  const ruleNames = configuration.flatMap((configurationObject) =>
-    Object.keys(configurationObject.rules ?? {}),
-  );
-  const disabledRuleNames = ruleNames.filter(
-    (ruleName) =>
-      !GENERATED_FILES_KEPT_RULE_PREFIXES.some((prefix) =>
-        ruleName.startsWith(prefix),
-      ),
-  );
-
-  return defineConfig({
-    files,
-    rules: Object.fromEntries(
-      disabledRuleNames.map((ruleName) => [ruleName, "off"]),
-    ),
-  });
 }
 
 /**

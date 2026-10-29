@@ -1,0 +1,30 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreBinaries": ["ngrok"],
+  "ignoreDependencies": ["expo-updates", "pino-pretty", "shellcheck"],
+  "workspaces": {
+    "apps/mobile": {
+      "entry": ["src/**/*.test-d.ts"],
+      "project": ["**/*.{ts,tsx}!", "!src/**/testing/**!"]
+    },
+    "packages/*": {
+      "vitest": {
+        "entry": [
+          "src/**/*.test.ts",
+          "src/**/*.test-d.ts",
+          "src/**/testing/**/*.ts"
+        ]
+      }
+    },
+    "packages/authentication": {
+      "entry": ["better-auth.config.ts"],
+      "vitest": {
+        "entry": [
+          "src/**/*.test.ts",
+          "src/**/*.test-d.ts",
+          "src/**/testing/**/*.ts"
+        ]
+      }
+    }
+  }
+}
