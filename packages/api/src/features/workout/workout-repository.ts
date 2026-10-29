@@ -1,22 +1,42 @@
+import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
 import type { Section } from "@ankaa/core/shared/constants/sections";
 import type * as ExerciseDatabaseSchema from "@ankaa/database/schema/exercise";
 import type * as RoutineDatabaseSchema from "@ankaa/database/schema/routine";
 
 import { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
+import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import { Database } from "@ankaa/database/database";
 import {
   workout,
   workoutExercise,
   workoutExerciseGroup,
   workoutExercisePlannedSet,
+  workoutExerciseRecordedSet,
+  workoutExerciseRecordedSetSegment,
 } from "@ankaa/database/schema/workout";
-import { and, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { buildIntensityTechnique } from "#/shared/build-intensity-technique.ts";
 import { isUniqueIndexViolation } from "#/shared/is-unique-index-violation.ts";
+
+type LockedWorkoutExercise = Pick<
+  typeof workoutExercise.$inferSelect,
+  "weightType"
+> & {
+  plannedSets: (Pick<
+    typeof workoutExercisePlannedSet.$inferSelect,
+    "isToFailure" | "tempo" | "type"
+  > & { intensityTechnique: ReturnType<typeof buildIntensityTechnique> })[];
+  recordedSets: Pick<
+    typeof workoutExerciseRecordedSet.$inferSelect,
+    "id" | "position"
+  >[];
+  workout: Pick<typeof workout.$inferSelect, "endedAt" | "userId">;
+};
 
 type PlannedSetColumns = Omit<
   typeof workoutExercisePlannedSet.$inferSelect,
@@ -50,9 +70,21 @@ type StartedRoutineExercise = Pick<
 
 type WorkoutExerciseRow = Pick<
   typeof workoutExercise.$inferSelect,
-  "amountUnit" | "exerciseId" | "id" | "plannedNote" | "weightType"
+  | "amountUnit"
+  | "exerciseId"
+  | "id"
+  | "plannedNote"
+  | "weightType"
+  | "weightUnit"
 > & {
   plannedSets: (PlannedSetColumns & { id: string })[];
+  recordedSets: {
+    id: string;
+    segments: Pick<
+      typeof workoutExerciseRecordedSetSegment.$inferSelect,
+      "amount" | "weight"
+    >[];
+  }[];
 };
 
 const WORKOUT_IN_PROGRESS_INDEX = "workout_in_progress_idx";
@@ -86,12 +118,23 @@ const WORKOUT_EXERCISE_COLUMNS = {
   id: true,
   plannedNote: true,
   weightType: true,
+  weightUnit: true,
 } as const;
 
-const WORKOUT_EXERCISE_PLANNED_SETS = {
+const WORKOUT_EXERCISE_SETS = {
   plannedSets: {
     columns: { ...PLANNED_SET_COLUMNS, id: true },
     orderBy: { position: "asc" },
+  },
+  recordedSets: {
+    columns: { id: true },
+    orderBy: { position: "asc" },
+    with: {
+      segments: {
+        columns: { amount: true, weight: true },
+        orderBy: { position: "asc" },
+      },
+    },
   },
 } as const;
 
@@ -114,6 +157,14 @@ export class WorkoutRepository extends Context.Service<
     readonly findRoutine: (options: {
       id: string;
     }) => Effect.Effect<null | StartedRoutine>;
+    readonly findWorkoutExerciseForUpdate: (options: {
+      id: string;
+    }) => Effect.Effect<LockedWorkoutExercise | null>;
+    readonly removeSet: (options: { id: string }) => Effect.Effect<void>;
+    readonly saveSet: (options: {
+      input: WorkoutSaveSetInput;
+      position: number;
+    }) => Effect.Effect<void, WorkoutNotFoundError>;
     readonly start: (options: {
       id: string;
       routine: StartedRoutine;
@@ -171,11 +222,11 @@ export class WorkoutRepository extends Context.Service<
                       columns: WORKOUT_EXERCISE_COLUMNS,
                       orderBy: { position: "asc" },
                       with: {
-                        ...WORKOUT_EXERCISE_PLANNED_SETS,
+                        ...WORKOUT_EXERCISE_SETS,
                         warmUpExercises: {
                           columns: WORKOUT_EXERCISE_COLUMNS,
                           orderBy: { position: "asc" },
-                          with: WORKOUT_EXERCISE_PLANNED_SETS,
+                          with: WORKOUT_EXERCISE_SETS,
                         },
                       },
                     },
@@ -218,6 +269,156 @@ export class WorkoutRepository extends Context.Service<
           return routineRow ?? null;
         },
       );
+
+      const findWorkoutExerciseForUpdate = Effect.fn(
+        "WorkoutRepository.findWorkoutExerciseForUpdate",
+      )(function* ({ id }: { id: string }) {
+        const warmUpForWorkoutExercise = alias(
+          workoutExercise,
+          "warm_up_for_workout_exercise",
+        );
+
+        const workoutExercises = yield* database
+          .select({
+            endedAt: workout.endedAt,
+            userId: workout.userId,
+            weightType: workoutExercise.weightType,
+          })
+          .from(workoutExercise)
+          .leftJoin(
+            warmUpForWorkoutExercise,
+            eq(
+              warmUpForWorkoutExercise.id,
+              workoutExercise.warmUpForWorkoutExerciseId,
+            ),
+          )
+          .innerJoin(
+            workoutExerciseGroup,
+            eq(
+              workoutExerciseGroup.id,
+              sql`coalesce(${workoutExercise.workoutExerciseGroupId}, ${warmUpForWorkoutExercise.workoutExerciseGroupId})`,
+            ),
+          )
+          .innerJoin(workout, eq(workout.id, workoutExerciseGroup.workoutId))
+          .where(eq(workoutExercise.id, id))
+          .for("update", { of: workoutExercise })
+          .pipe(Effect.orDie);
+        const plannedSets = yield* database
+          .select({
+            intensityTechnique: workoutExercisePlannedSet.intensityTechnique,
+            isToFailure: workoutExercisePlannedSet.isToFailure,
+            pauseSeconds: workoutExercisePlannedSet.pauseSeconds,
+            segmentCount: workoutExercisePlannedSet.segmentCount,
+            tempo: workoutExercisePlannedSet.tempo,
+            type: workoutExercisePlannedSet.type,
+            weightPercentage: workoutExercisePlannedSet.weightPercentage,
+          })
+          .from(workoutExercisePlannedSet)
+          .where(eq(workoutExercisePlannedSet.workoutExerciseId, id))
+          .orderBy(asc(workoutExercisePlannedSet.position))
+          .pipe(Effect.orDie);
+        const recordedSets = yield* database
+          .select({
+            id: workoutExerciseRecordedSet.id,
+            position: workoutExerciseRecordedSet.position,
+          })
+          .from(workoutExerciseRecordedSet)
+          .where(eq(workoutExerciseRecordedSet.workoutExerciseId, id))
+          .orderBy(asc(workoutExerciseRecordedSet.position))
+          .pipe(Effect.orDie);
+
+        const workoutExerciseRow = workoutExercises[0];
+
+        return workoutExerciseRow === undefined
+          ? null
+          : {
+              plannedSets: plannedSets.map((plannedSet) => ({
+                intensityTechnique: buildIntensityTechnique(plannedSet),
+                isToFailure: plannedSet.isToFailure,
+                tempo: plannedSet.tempo,
+                type: plannedSet.type,
+              })),
+              recordedSets,
+              weightType: workoutExerciseRow.weightType,
+              workout: {
+                endedAt: workoutExerciseRow.endedAt,
+                userId: workoutExerciseRow.userId,
+              },
+            };
+      });
+
+      const removeSet = Effect.fn("WorkoutRepository.removeSet")(function* ({
+        id,
+      }: {
+        id: string;
+      }) {
+        yield* database
+          .delete(workoutExerciseRecordedSet)
+          .where(eq(workoutExerciseRecordedSet.id, id))
+          .pipe(Effect.orDie);
+      });
+
+      const saveSet = Effect.fn("WorkoutRepository.saveSet")(function* ({
+        input,
+        position,
+      }: {
+        input: WorkoutSaveSetInput;
+        position: number;
+      }) {
+        yield* database
+          .update(workoutExercise)
+          .set({ weightUnit: input.weightUnit })
+          .where(eq(workoutExercise.id, input.workoutExerciseId))
+          .pipe(Effect.orDie);
+
+        const savedSets = yield* database
+          .insert(workoutExerciseRecordedSet)
+          .values({
+            id: input.id,
+            position,
+            workoutExerciseId: input.workoutExerciseId,
+          })
+          .onConflictDoUpdate({
+            set: { position },
+            // The Core reads only this Workout exercise's Sets, so this WHERE
+            // keeps an id that names a Set elsewhere, such as in another
+            // User's Workout, from moving that Set here: the upsert then
+            // returns no row.
+            setWhere: eq(
+              workoutExerciseRecordedSet.workoutExerciseId,
+              input.workoutExerciseId,
+            ),
+            target: workoutExerciseRecordedSet.id,
+          })
+          .returning({ id: workoutExerciseRecordedSet.id })
+          .pipe(Effect.orDie);
+
+        if (savedSets.length === 0) {
+          return yield* Effect.fail(new WorkoutNotFoundError());
+        }
+
+        yield* database
+          .delete(workoutExerciseRecordedSetSegment)
+          .where(
+            eq(
+              workoutExerciseRecordedSetSegment.workoutExerciseRecordedSetId,
+              input.id,
+            ),
+          )
+          .pipe(Effect.orDie);
+
+        yield* database
+          .insert(workoutExerciseRecordedSetSegment)
+          .values(
+            input.segments.map((segment, segmentPosition) => ({
+              amount: segment.amount,
+              position: segmentPosition,
+              weight: segment.weight,
+              workoutExerciseRecordedSetId: input.id,
+            })),
+          )
+          .pipe(Effect.orDie);
+      });
 
       const start = Effect.fn("WorkoutRepository.start")(function* ({
         id,
@@ -389,6 +590,9 @@ export class WorkoutRepository extends Context.Service<
         findForUpdate,
         findInProgress,
         findRoutine,
+        findWorkoutExerciseForUpdate,
+        removeSet,
+        saveSet,
         start,
         stop,
       });
@@ -459,7 +663,9 @@ function buildWorkoutExercise(workoutExerciseRow: WorkoutExerciseRow) {
       tempo: plannedSet.tempo,
       type: plannedSet.type,
     })),
+    recordedSets: workoutExerciseRow.recordedSets,
     weightType: workoutExerciseRow.weightType,
+    weightUnit: workoutExerciseRow.weightUnit,
   };
 }
 

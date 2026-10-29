@@ -1,11 +1,17 @@
 import type { AppRouter } from "@ankaa/api/trpc/app-router";
+import type { SegmentCountInvalidError } from "@ankaa/core/features/workout/errors/segment-count-invalid-error";
+import type { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
 import type { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
 import type { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
+import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
+import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
 import type { WorkoutStartInput } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
 import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 import type { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 import type { inferRouterOutputs } from "@trpc/server";
 
+import { WORKOUT_REMOVE_SET_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-remove-set-wire-errors";
+import { WORKOUT_SAVE_SET_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-save-set-wire-errors";
 import { WORKOUT_START_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-start-wire-errors";
 import { WORKOUT_STOP_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-stop-wire-errors";
 import * as Context from "effect/Context";
@@ -27,6 +33,18 @@ export class WorkoutApplicationService extends Context.Service<
     readonly findInProgress: () => Effect.Effect<
       null | Workout,
       TrpcClientError
+    >;
+    readonly removeSet: (
+      input: WorkoutRemoveSetInput,
+    ) => Effect.Effect<void, TrpcClientError | WorkoutNotFoundError>;
+    readonly saveSet: (
+      input: WorkoutSaveSetInput,
+    ) => Effect.Effect<
+      void,
+      | SegmentCountInvalidError
+      | SegmentWeightNotAllowedError
+      | TrpcClientError
+      | WorkoutNotFoundError
     >;
     readonly start: (
       input: WorkoutStartInput,
@@ -54,6 +72,26 @@ export class WorkoutApplicationService extends Context.Service<
         });
       });
 
+      const removeSet = Effect.fn("WorkoutApplicationService.removeSet")(
+        function* (input: WorkoutRemoveSetInput) {
+          yield* trpcClient.request({
+            call: ({ signal, trpc }) =>
+              trpc.workout.removeSet.mutate(input, { signal }),
+            errors: WORKOUT_REMOVE_SET_WIRE_ERRORS,
+          });
+        },
+      );
+
+      const saveSet = Effect.fn("WorkoutApplicationService.saveSet")(function* (
+        input: WorkoutSaveSetInput,
+      ) {
+        yield* trpcClient.request({
+          call: ({ signal, trpc }) =>
+            trpc.workout.saveSet.mutate(input, { signal }),
+          errors: WORKOUT_SAVE_SET_WIRE_ERRORS,
+        });
+      });
+
       const start = Effect.fn("WorkoutApplicationService.start")(function* (
         input: WorkoutStartInput,
       ) {
@@ -74,7 +112,13 @@ export class WorkoutApplicationService extends Context.Service<
         });
       });
 
-      return WorkoutApplicationService.of({ findInProgress, start, stop });
+      return WorkoutApplicationService.of({
+        findInProgress,
+        removeSet,
+        saveSet,
+        start,
+        stop,
+      });
     }),
   );
 

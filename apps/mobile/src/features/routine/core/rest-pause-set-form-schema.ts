@@ -4,8 +4,8 @@ import { pauseSecondsFilter } from "@ankaa/core/features/routine/filters/pause-s
 import { segmentCountFilter } from "@ankaa/core/features/routine/filters/segment-count-filter";
 import * as Schema from "effect/Schema";
 
-import { createWholeNumberTextSchema } from "#/features/routine/core/create-whole-number-text-schema.ts";
 import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
+import { createWholeNumberTextSchema } from "#/shared/core/create-whole-number-text-schema.ts";
 
 export type RestPauseSetDraft = typeof restPauseSetFormSchema.Encoded;
 

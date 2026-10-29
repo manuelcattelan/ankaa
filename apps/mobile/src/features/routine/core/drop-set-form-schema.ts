@@ -7,9 +7,9 @@ import { dropSetWeightPercentageFilter } from "@ankaa/core/features/routine/filt
 import { segmentCountFilter } from "@ankaa/core/features/routine/filters/segment-count-filter";
 import * as Schema from "effect/Schema";
 
-import { createNullableTextSchema } from "#/features/routine/core/create-nullable-text-schema.ts";
-import { createWholeNumberTextSchema } from "#/features/routine/core/create-whole-number-text-schema.ts";
 import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
+import { createNullableTextSchema } from "#/shared/core/create-nullable-text-schema.ts";
+import { createWholeNumberTextSchema } from "#/shared/core/create-whole-number-text-schema.ts";
 
 export type DropSetDraft = typeof dropSetFormSchema.Encoded;
 

@@ -1,5 +1,9 @@
+import type { SegmentCountInvalidError } from "@ankaa/core/features/workout/errors/segment-count-invalid-error";
+import type { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
 import type { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
 import type { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
+import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
+import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
 import type { WorkoutStartInput } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
 import type { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 
@@ -9,6 +13,8 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Match from "effect/Match";
 
+import { decideRecordedSetRemove } from "#/features/workout/core/decide-recorded-set-remove.ts";
+import { decideRecordedSetSave } from "#/features/workout/core/decide-recorded-set-save.ts";
 import { decideWorkoutStart } from "#/features/workout/core/decide-workout-start.ts";
 import { decideWorkoutStop } from "#/features/workout/core/decide-workout-stop.ts";
 import { WorkoutRepository } from "#/features/workout/workout-repository.ts";
@@ -17,6 +23,19 @@ export class WorkoutApplicationService extends Context.Service<
   WorkoutApplicationService,
   {
     readonly findInProgress: WorkoutRepository["Service"]["findInProgress"];
+    readonly removeSet: (options: {
+      input: WorkoutRemoveSetInput;
+      userId: string;
+    }) => Effect.Effect<void, WorkoutNotFoundError>;
+    readonly saveSet: (options: {
+      input: WorkoutSaveSetInput;
+      userId: string;
+    }) => Effect.Effect<
+      void,
+      | SegmentCountInvalidError
+      | SegmentWeightNotAllowedError
+      | WorkoutNotFoundError
+    >;
     readonly start: (options: {
       input: WorkoutStartInput;
       userId: string;
@@ -41,6 +60,72 @@ export class WorkoutApplicationService extends Context.Service<
       )(function* ({ userId }: { userId: string }) {
         return yield* workoutRepository.findInProgress({ userId });
       });
+
+      const removeSet = Effect.fn("WorkoutApplicationService.removeSet")(
+        function* ({
+          input,
+          userId,
+        }: {
+          input: WorkoutRemoveSetInput;
+          userId: string;
+        }) {
+          yield* database
+            .transaction(() =>
+              Effect.gen(function* () {
+                const workoutExercise =
+                  yield* workoutRepository.findWorkoutExerciseForUpdate({
+                    id: input.workoutExerciseId,
+                  });
+
+                yield* Match.valueTags(
+                  decideRecordedSetRemove({ userId, workoutExercise }),
+                  {
+                    NoRecordedSetToRemove: () => Effect.void,
+                    RecordedSetRemoveAllowed: (outcome) =>
+                      workoutRepository.removeSet({ id: outcome.id }),
+                    WorkoutNotFoundError: (error) => Effect.fail(error),
+                  },
+                );
+              }),
+            )
+            .pipe(Effect.catchTag("SqlError", (error) => Effect.die(error)));
+        },
+      );
+
+      const saveSet = Effect.fn("WorkoutApplicationService.saveSet")(
+        function* ({
+          input,
+          userId,
+        }: {
+          input: WorkoutSaveSetInput;
+          userId: string;
+        }) {
+          yield* database
+            .transaction(() =>
+              Effect.gen(function* () {
+                const workoutExercise =
+                  yield* workoutRepository.findWorkoutExerciseForUpdate({
+                    id: input.workoutExerciseId,
+                  });
+
+                yield* Match.valueTags(
+                  decideRecordedSetSave({ input, userId, workoutExercise }),
+                  {
+                    RecordedSetSaveAllowed: (outcome) =>
+                      workoutRepository.saveSet({
+                        input,
+                        position: outcome.position,
+                      }),
+                    SegmentCountInvalidError: (error) => Effect.fail(error),
+                    SegmentWeightNotAllowedError: (error) => Effect.fail(error),
+                    WorkoutNotFoundError: (error) => Effect.fail(error),
+                  },
+                );
+              }),
+            )
+            .pipe(Effect.catchTag("SqlError", (error) => Effect.die(error)));
+        },
+      );
 
       const start = Effect.fn("WorkoutApplicationService.start")(function* ({
         input,
@@ -100,7 +185,13 @@ export class WorkoutApplicationService extends Context.Service<
           .pipe(Effect.catchTag("SqlError", (error) => Effect.die(error)));
       });
 
-      return WorkoutApplicationService.of({ findInProgress, start, stop });
+      return WorkoutApplicationService.of({
+        findInProgress,
+        removeSet,
+        saveSet,
+        start,
+        stop,
+      });
     }),
   );
 

@@ -172,6 +172,10 @@ export const relations = defineRelations(
         from: r.workoutExercise.id,
         to: r.workoutExercisePlannedSet.workoutExerciseId,
       }),
+      recordedSets: r.many.workoutExerciseRecordedSet({
+        from: r.workoutExercise.id,
+        to: r.workoutExerciseRecordedSet.workoutExerciseId,
+      }),
       warmUpExercises: r.many.workoutExercise({
         alias: "warmUp",
         from: r.workoutExercise.id,
@@ -185,10 +189,6 @@ export const relations = defineRelations(
       workoutExerciseGroup: r.one.workoutExerciseGroup({
         from: r.workoutExercise.workoutExerciseGroupId,
         to: r.workoutExerciseGroup.id,
-      }),
-      workoutExerciseSets: r.many.workoutExerciseSet({
-        from: r.workoutExercise.id,
-        to: r.workoutExerciseSet.workoutExerciseId,
       }),
     },
     workoutExerciseGroup: {
@@ -209,22 +209,22 @@ export const relations = defineRelations(
         to: r.workoutExercise.id,
       }),
     },
-    workoutExerciseSet: {
+    workoutExerciseRecordedSet: {
+      segments: r.many.workoutExerciseRecordedSetSegment({
+        from: r.workoutExerciseRecordedSet.id,
+        to: r.workoutExerciseRecordedSetSegment.workoutExerciseRecordedSetId,
+      }),
       workoutExercise: r.one.workoutExercise({
-        from: r.workoutExerciseSet.workoutExerciseId,
+        from: r.workoutExerciseRecordedSet.workoutExerciseId,
         optional: false,
         to: r.workoutExercise.id,
       }),
-      workoutExerciseSetSegments: r.many.workoutExerciseSetSegment({
-        from: r.workoutExerciseSet.id,
-        to: r.workoutExerciseSetSegment.workoutExerciseSetId,
-      }),
     },
-    workoutExerciseSetSegment: {
-      workoutExerciseSet: r.one.workoutExerciseSet({
-        from: r.workoutExerciseSetSegment.workoutExerciseSetId,
+    workoutExerciseRecordedSetSegment: {
+      workoutExerciseRecordedSet: r.one.workoutExerciseRecordedSet({
+        from: r.workoutExerciseRecordedSetSegment.workoutExerciseRecordedSetId,
         optional: false,
-        to: r.workoutExerciseSet.id,
+        to: r.workoutExerciseRecordedSet.id,
       }),
     },
   }),

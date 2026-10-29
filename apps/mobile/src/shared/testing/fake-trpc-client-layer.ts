@@ -12,8 +12,12 @@ import { ROUTINE_DELETE_WIRE_ERRORS } from "@ankaa/core/features/routine/errors/
 import { ROUTINE_SAVE_WIRE_ERRORS } from "@ankaa/core/features/routine/errors/routine-save-wire-errors";
 import { routineDeleteInputSchema } from "@ankaa/core/features/routine/schemas/routine-delete-input-schema";
 import { routineSaveInputSchema } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
+import { WORKOUT_REMOVE_SET_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-remove-set-wire-errors";
+import { WORKOUT_SAVE_SET_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-save-set-wire-errors";
 import { WORKOUT_START_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-start-wire-errors";
 import { WORKOUT_STOP_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-stop-wire-errors";
+import { workoutRemoveSetInputSchema } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
+import { workoutSaveSetInputSchema } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
 import { workoutStartInputSchema } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
 import { workoutStopInputSchema } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
@@ -90,6 +94,8 @@ const FAKE_TRPC_WIRE_ERRORS: {
   "routine.list": [],
   "routine.save": ROUTINE_SAVE_WIRE_ERRORS,
   "workout.findInProgress": [],
+  "workout.removeSet": WORKOUT_REMOVE_SET_WIRE_ERRORS,
+  "workout.saveSet": WORKOUT_SAVE_SET_WIRE_ERRORS,
   "workout.start": WORKOUT_START_WIRE_ERRORS,
   "workout.stop": WORKOUT_STOP_WIRE_ERRORS,
 };
@@ -231,6 +237,20 @@ function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
         response: fakeTrpcResponses["workout.findInProgress"],
       }),
     ),
+    "workout.removeSet": t.procedure
+      .input(Schema.toStandardSchemaV1(workoutRemoveSetInputSchema))
+      .mutation(
+        createFakeTrpcResolver({
+          response: fakeTrpcResponses["workout.removeSet"],
+        }),
+      ),
+    "workout.saveSet": t.procedure
+      .input(Schema.toStandardSchemaV1(workoutSaveSetInputSchema))
+      .mutation(
+        createFakeTrpcResolver({
+          response: fakeTrpcResponses["workout.saveSet"],
+        }),
+      ),
     "workout.start": t.procedure
       .input(Schema.toStandardSchemaV1(workoutStartInputSchema))
       .mutation(

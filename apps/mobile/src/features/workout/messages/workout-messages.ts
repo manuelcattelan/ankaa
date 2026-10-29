@@ -1,3 +1,4 @@
+import type { WeightUnit } from "@ankaa/core/features/workout/constants/weight";
 import type { AmountUnit } from "@ankaa/core/shared/constants/amount";
 
 import { formatCount } from "#/shared/core/format-count.ts";
@@ -5,16 +6,17 @@ import { formatCount } from "#/shared/core/format-count.ts";
 const SECONDS_UNIT = { plural: "seconds", singular: "second" };
 
 export const WORKOUT_MESSAGES = {
-  dropSetLabel: ({
-    segmentCount,
-    weightPercentage,
-  }: {
-    segmentCount: number;
-    weightPercentage: null | number;
-  }) =>
+  addSegmentButton: "Add segment",
+  amountInvalidError: (minimum: number) =>
+    `This number isn't valid: enter a whole number of at least ${String(minimum)}.`,
+  amountLabels: {
+    repetition: "Repetitions",
+    second: "Seconds",
+  } satisfies Record<AmountUnit, string>,
+  dropSetLabel: (weightPercentage: null | number) =>
     weightPercentage === null
-      ? `Drop set: ${String(segmentCount)} segments`
-      : `Drop set: ${String(segmentCount)} segments, dropping ${String(weightPercentage)}% of the weight each time`,
+      ? "Drop set"
+      : `Drop set: take off ${String(weightPercentage)}% at each drop`,
   plannedAmountLabels: {
     repetition: (amount: number) =>
       formatCount({
@@ -25,6 +27,10 @@ export const WORKOUT_MESSAGES = {
     second: (amount: number) => formatCount({ count: amount, ...SECONDS_UNIT }),
   } satisfies Record<AmountUnit, (amount: number) => string>,
   plannedNoteLabel: (plannedNote: string) => `Routine note: ${plannedNote}`,
+  recordedSetDraftInvalidError:
+    "Some fields of this set aren't valid: correct the fields marked with an error.",
+  removeSegmentButton: "Remove segment",
+  removeSetButton: "Remove set",
   restLabel: (restSeconds: number) =>
     `Rest: ${formatCount({ count: restSeconds, ...SECONDS_UNIT })}`,
   restPauseSetLabel: ({
@@ -38,13 +44,53 @@ export const WORKOUT_MESSAGES = {
   resumeWorkoutButton: "Resume workout",
   routineNotFoundError:
     "This routine doesn't exist anymore: start another routine.",
+  saveSetButton: "Save set",
+  segmentCountInvalidError:
+    "This set has more segments than planned: remove a segment and save the set again.",
+  segmentLabel: (segmentNumber: number) => `Segment ${String(segmentNumber)}`,
+  segmentWeightNotAllowedError:
+    "This exercise takes no weight: clear the weight and save the set again.",
+  setDraftsUnsavedError: (setLabels: string[]) =>
+    `You haven't saved these sets: ${setLabels.join("; ")}. Save them before you stop the workout.`,
   startWorkoutButton: (routineName: string) => `Start ${routineName}`,
   stopWorkoutButton: "Stop workout",
   tempoDescription:
     "The seconds for lowering, holding at the bottom, lifting and holding at the top. X means lifting as fast as you can.",
   tempoLabel: (tempo: string) => `Tempo ${tempo}`,
   toFailureLabel: "To failure",
+  unsavedSetLabel: ({
+    exerciseName,
+    setNumber,
+  }: {
+    exerciseName: string;
+    setNumber: number;
+  }) => `${exerciseName}, set ${String(setNumber)}`,
   warmUpSetLabel: (setNumber: number) => `Set ${String(setNumber)}, warm-up`,
+  weightInvalidError: ({
+    maximum,
+    minimum,
+  }: {
+    maximum: number;
+    minimum: number;
+  }) =>
+    `This weight isn't valid: enter a number from ${String(minimum)} to ${String(maximum)}, with at most two decimal places.`,
+  weightLabels: {
+    kilogram: "Weight, in kilograms",
+    pound: "Weight, in pounds",
+  } satisfies Record<WeightUnit, string>,
+  weightUnitLabel: "Weight unit",
+  weightUnitLabels: {
+    kilogram: "Kilograms",
+    pound: "Pounds",
+  } satisfies Record<WeightUnit, string>,
+  workingSetCounterStatus: ({
+    doneCount,
+    leftCount,
+  }: {
+    doneCount: number;
+    leftCount: number;
+  }) =>
+    `${formatCount({ count: doneCount, plural: "working sets", singular: "working set" })} done, ${String(leftCount)} left.`,
   workoutInProgressConflictError:
     "You already have a workout in progress: resume it, or stop it before you start another.",
   workoutNotFoundError:

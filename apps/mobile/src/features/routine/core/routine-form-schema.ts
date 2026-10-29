@@ -5,9 +5,9 @@ import { uniqueRoutineIdsFilter } from "@ankaa/core/features/routine/filters/uni
 import { idSchema } from "@ankaa/core/shared/schemas/id-schema";
 import * as Schema from "effect/Schema";
 
-import { createNullableTextSchema } from "#/features/routine/core/create-nullable-text-schema.ts";
 import { routineExerciseSetFormSchema } from "#/features/routine/core/routine-exercise-set-form-schema.ts";
 import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
+import { createNullableTextSchema } from "#/shared/core/create-nullable-text-schema.ts";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 export type RoutineDraft = typeof routineFormSchema.Encoded;

@@ -8,11 +8,11 @@ import { idSchema } from "@ankaa/core/shared/schemas/id-schema";
 import * as Schema from "effect/Schema";
 import * as SchemaTransformation from "effect/SchemaTransformation";
 
-import { createNullableTextSchema } from "#/features/routine/core/create-nullable-text-schema.ts";
-import { createWholeNumberTextSchema } from "#/features/routine/core/create-whole-number-text-schema.ts";
 import { dropSetFormSchema } from "#/features/routine/core/drop-set-form-schema.ts";
 import { restPauseSetFormSchema } from "#/features/routine/core/rest-pause-set-form-schema.ts";
 import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
+import { createNullableTextSchema } from "#/shared/core/create-nullable-text-schema.ts";
+import { createWholeNumberTextSchema } from "#/shared/core/create-whole-number-text-schema.ts";
 
 export type RoutineExerciseSetDraft =
   typeof routineExerciseSetFormSchema.Encoded;

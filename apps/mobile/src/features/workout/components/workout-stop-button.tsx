@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 
 import { getWorkoutStopErrorMessage } from "#/features/workout/core/get-workout-stop-error-message.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
@@ -9,12 +10,24 @@ import { Button } from "#/shared/components/button.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
-export function WorkoutStopButton({ workoutId }: { workoutId: string }) {
+/**
+ * Stops the Workout in progress, and refuses to while any Set has a Draft
+ * left to Save, naming those Sets in `unsavedSetLabels`.
+ */
+export function WorkoutStopButton({
+  unsavedSetLabels,
+  workoutId,
+}: {
+  unsavedSetLabels: readonly string[];
+  workoutId: string;
+}) {
   const router = useRouter();
 
   const queryClient = useQueryClient();
 
   const runtime = useRuntime();
+
+  const [hasRefusedStop, setHasRefusedStop] = useState(false);
 
   const stopWorkout = useMutation({
     ...workoutStopMutationOptions(runtime),
@@ -27,13 +40,28 @@ export function WorkoutStopButton({ workoutId }: { workoutId: string }) {
     },
   });
 
-  const stopWorkoutErrorMessage =
-    stopWorkout.error === null
+  const statusMessage = getStatusMessage();
+
+  function getStatusMessage() {
+    if (hasRefusedStop && unsavedSetLabels.length > 0) {
+      return WORKOUT_MESSAGES.setDraftsUnsavedError([...unsavedSetLabels]);
+    }
+
+    return stopWorkout.error === null
       ? null
       : getWorkoutStopErrorMessage(stopWorkout.error);
+  }
 
   function handleStopWorkout() {
     if (stopWorkout.isPending) {
+      return;
+    }
+
+    stopWorkout.reset();
+
+    if (unsavedSetLabels.length > 0) {
+      setHasRefusedStop(true);
+
       return;
     }
 
@@ -47,7 +75,7 @@ export function WorkoutStopButton({ workoutId }: { workoutId: string }) {
         onPress={handleStopWorkout}
         title={WORKOUT_MESSAGES.stopWorkoutButton}
       />
-      <StatusMessage message={stopWorkoutErrorMessage} />
+      <StatusMessage message={statusMessage} />
     </>
   );
 }
