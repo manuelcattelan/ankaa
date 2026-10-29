@@ -114,6 +114,30 @@ describe("applicationPlugin", () => {
     });
   });
 
+  it("logs a tRPC call that fails with a status below 500 at info level", async () => {
+    const logLines: unknown[] = [];
+    const loggingServer = fastify({
+      logger: {
+        stream: {
+          write: (logLine: string) => {
+            logLines.push(JSON.parse(logLine));
+          },
+        },
+      },
+    });
+    await loggingServer.register(applicationPlugin, { runtime });
+
+    await loggingServer.inject({ method: "GET", url: "/trpc/exercise.list" });
+    await loggingServer.close();
+
+    expect(logLines).toContainEqual(
+      expect.objectContaining({
+        level: 30,
+        msg: 'Failed to handle tRPC request on path "exercise.list"',
+      }),
+    );
+  });
+
   it("answers /health with the status ok", async () => {
     const response = await server.inject({ method: "GET", url: "/health" });
 

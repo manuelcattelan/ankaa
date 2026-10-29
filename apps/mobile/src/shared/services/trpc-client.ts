@@ -1,6 +1,7 @@
 import type { AppRouter } from "@ankaa/api/trpc/router";
 import type { TRPCClient } from "@trpc/client";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
+import type * as Schema from "effect/Schema";
 
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { initTRPC, TRPCError } from "@trpc/server";
@@ -21,9 +22,10 @@ export type TrpcTestResponses = {
   };
 };
 
-type SendTrpcRequest<TData> = (
-  vanillaTrpcClient: TRPCClient<AppRouter>,
-) => Promise<TData>;
+type TrpcRequest<TData> = {
+  call: (vanillaTrpcClient: TRPCClient<AppRouter>) => Promise<TData>;
+  errors: readonly Schema.Top[];
+};
 
 type TrpcRouterInputs = inferRouterInputs<AppRouter>;
 
@@ -112,10 +114,10 @@ export class TrpcClient extends Context.Service<TrpcClient>()(
 }
 
 function createTrpcClientService(vanillaTrpcClient: TRPCClient<AppRouter>) {
-  function request<TData>(sendRequest: SendTrpcRequest<TData>) {
+  function request<TData>({ call }: TrpcRequest<TData>) {
     return Effect.tryPromise({
       catch: (cause) => new TrpcError({ cause }),
-      try: () => sendRequest(vanillaTrpcClient),
+      try: () => call(vanillaTrpcClient),
     });
   }
 

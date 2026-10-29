@@ -1,5 +1,4 @@
 import * as Effect from "effect/Effect";
-import { absurd } from "effect/Function";
 
 import { protectedProcedure, router } from "../../trpc/procedures.ts";
 import { run } from "../../trpc/run.ts";
@@ -14,7 +13,7 @@ export const exerciseRouter = router({
 
         return yield* exerciseApplicationService.list();
       }),
-      getErrorCode: absurd,
+      errors: [],
       signal,
     }),
   ),

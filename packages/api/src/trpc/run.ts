@@ -1,62 +1,68 @@
-import type { TRPC_ERROR_CODE_KEY } from "@trpc/server";
+import type * as Effect from "effect/Effect";
 import type * as Layer from "effect/Layer";
 
-import { CurrentSession } from "@ankaa/authentication/current-session";
 import { TRPCError } from "@trpc/server";
 import * as Cause from "effect/Cause";
-import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
-import * as Result from "effect/Result";
+import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import type { applicationLayer } from "../layer.ts";
 import type { ApplicationRuntime } from "./context.ts";
+import type { WireError } from "./wire-error-schema.ts";
 
-type RunContext = {
-  runtime: ApplicationRuntime;
-  session: CurrentSession["Service"];
-};
+import { getWireErrorCode } from "./get-wire-error-code.ts";
+import { wireErrorSchema } from "./wire-error-schema.ts";
 
-type RunOptions<TSuccess, TError> = {
-  context: RunContext;
+type RunOptions<TSuccess, TWireError extends WireError> = {
+  context: { runtime: ApplicationRuntime };
   effect: Effect.Effect<
     TSuccess,
-    NoInfer<TError>,
-    CurrentSession | Layer.Success<typeof applicationLayer>
+    NoInfer<TWireError>,
+    Layer.Success<typeof applicationLayer>
   >;
-  getErrorCode: (error: TError) => TRPC_ERROR_CODE_KEY;
+  errors: readonly Schema.Schema<TWireError>[];
   signal: AbortSignal | undefined;
 };
 
-export async function run<TSuccess, TError = never>({
+export async function run<TSuccess, TWireError extends WireError>({
   context,
   effect,
-  getErrorCode,
   signal,
-}: RunOptions<TSuccess, TError>) {
-  const exit = await context.runtime.runPromiseExit(
-    effect.pipe(
-      Effect.provideService(CurrentSession, context.session),
-      Effect.result,
-    ),
-    { signal },
-  );
+}: RunOptions<TSuccess, TWireError>) {
+  const exit = await context.runtime.runPromiseExit(effect, { signal });
 
-  if (Exit.isFailure(exit)) {
+  if (Exit.isSuccess(exit)) {
+    return exit.value;
+  }
+
+  // A client that disconnects interrupts the Effect, so the outcome of the
+  // call is unknown: a COMMIT already sent to PostgreSQL can still complete
+  // (https://www.postgresql.org/docs/current/protocol-flow.html#PROTOCOL-FLOW-CANCELING-REQUESTS).
+  if (Cause.hasInterruptsOnly(exit.cause)) {
     throw new TRPCError({
       cause: Cause.squash(exit.cause),
-      code: "INTERNAL_SERVER_ERROR",
+      code: "CLIENT_CLOSED_REQUEST",
     });
   }
 
-  if (Result.isFailure(exit.value)) {
-    const errorCode = getErrorCode(exit.value.failure);
+  const wireError = Option.filter(
+    Cause.findErrorOption(exit.cause),
+    Schema.is(wireErrorSchema),
+  );
+
+  if (Option.isSome(wireError)) {
+    const wireErrorCode = getWireErrorCode(wireError.value);
 
     throw new TRPCError({
-      cause: exit.value.failure,
-      code: errorCode,
-      message: errorCode,
+      cause: wireError.value,
+      code: wireErrorCode,
+      message: wireErrorCode,
     });
   }
 
-  return exit.value.success;
+  throw new TRPCError({
+    cause: Cause.squash(exit.cause),
+    code: "INTERNAL_SERVER_ERROR",
+  });
 }

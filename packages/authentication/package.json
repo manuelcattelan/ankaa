@@ -22,7 +22,6 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./current-session": "./src/current-session.ts",
     "./testing/create-test-authentication": "./src/testing/create-test-authentication.ts"
   },
   "name": "@ankaa/authentication",

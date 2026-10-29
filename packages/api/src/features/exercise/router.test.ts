@@ -27,6 +27,21 @@ describe("exercise.list", () => {
     });
   });
 
+  it("fails with CLIENT_CLOSED_REQUEST when the call is interrupted while it runs", async () => {
+    const abortController = new AbortController();
+    const caller = await createSignedInCaller({
+      runtime,
+      signal: abortController.signal,
+    });
+
+    const exercises = caller.exercise.list();
+    abortController.abort();
+
+    await expect(exercises).rejects.toMatchObject({
+      code: "CLIENT_CLOSED_REQUEST",
+    });
+  });
+
   it("returns every Exercise with its Equipment and Muscle groups, ordered by name, to a signed-in person", async () => {
     await runtime.runPromise(
       Effect.gen(function* () {
@@ -91,7 +106,7 @@ describe("exercise.list", () => {
       }),
     );
 
-    const caller = await createSignedInCaller(runtime);
+    const caller = await createSignedInCaller({ runtime });
 
     const exercises = await caller.exercise.list();
 

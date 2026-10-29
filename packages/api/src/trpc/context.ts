@@ -1,10 +1,10 @@
-import type { CurrentSession } from "@ankaa/authentication/current-session";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
 import type * as Layer from "effect/Layer";
 import type * as ManagedRuntime from "effect/ManagedRuntime";
 
 import { Authentication } from "@ankaa/authentication";
 import { fromNodeHeaders } from "better-auth/node";
+import * as Effect from "effect/Effect";
 
 import type { applicationLayer } from "../layer.ts";
 
@@ -21,7 +21,7 @@ type CreateContextOptions = CreateFastifyContextOptions & {
 
 type CreateInnerContextOptions = {
   runtime: ApplicationRuntime;
-  session: CurrentSession["Service"] | null;
+  session: Effect.Success<ReturnType<Authentication["Service"]["getSession"]>>;
 };
 
 export async function createContext({
@@ -30,9 +30,11 @@ export async function createContext({
   runtime,
 }: CreateContextOptions) {
   const session = await runtime.runPromise(
-    Authentication.use((authentication) =>
-      authentication.getSession(fromNodeHeaders(request.headers)),
-    ),
+    Effect.gen(function* () {
+      const authentication = yield* Authentication;
+
+      return yield* authentication.getSession(fromNodeHeaders(request.headers));
+    }),
   );
 
   return { ...createInnerContext({ runtime, session }), request, response };

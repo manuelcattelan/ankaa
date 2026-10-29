@@ -2,6 +2,7 @@ import type { FastifyPluginCallback } from "fastify";
 
 import { Authentication } from "@ankaa/authentication";
 import { fromNodeHeaders } from "better-auth/node";
+import * as Effect from "effect/Effect";
 
 import type { ApplicationPluginOptions } from "../../../application.ts";
 
@@ -16,9 +17,11 @@ export default ((server, { runtime }, done) => {
       });
 
       const response = await runtime.runPromise(
-        Authentication.use((authentication) =>
-          authentication.handleRequest(webRequest),
-        ),
+        Effect.gen(function* () {
+          const authentication = yield* Authentication;
+
+          return yield* authentication.handleRequest(webRequest);
+        }),
       );
 
       reply.status(response.status);
