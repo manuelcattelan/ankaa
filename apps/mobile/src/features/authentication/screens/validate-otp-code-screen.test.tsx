@@ -3,7 +3,6 @@ import { screen, userEvent, waitFor } from "@testing-library/react-native";
 import { AuthenticationClient } from "@/shared/services/authentication-client";
 import { advanceFakeTime } from "@/shared/testing/advance-fake-time";
 import { createSignInTestResponses } from "@/shared/testing/create-sign-in-test-responses";
-import { emptyHomeScreenTrpcClientLayer } from "@/shared/testing/empty-home-screen-trpc-client-layer";
 import { renderScreen } from "@/shared/testing/render-screen";
 
 const VALIDATE_OTP_CODE_URL =
@@ -35,7 +34,6 @@ describe("ValidateOtpCodeScreen", () => {
         authenticationClientLayer: AuthenticationClient.layerTest(
           createSignInTestResponses("/sign-in/email-otp"),
         ),
-        trpcClientLayer: emptyHomeScreenTrpcClientLayer,
       },
     });
 
@@ -47,7 +45,7 @@ describe("ValidateOtpCodeScreen", () => {
     await user.press(screen.getByRole("button", { name: "Sign in" }));
 
     expect(
-      await screen.findByText("You have no routines yet."),
+      await screen.findByRole("button", { name: "Sign out" }),
     ).toBeOnTheScreen();
   });
 

@@ -91,7 +91,7 @@ describe("applicationPlugin", () => {
     const response = await server.inject({
       headers: Object.fromEntries(testUser.headers),
       method: "GET",
-      url: "/trpc/routine.list",
+      url: "/trpc/exercise.list",
     });
 
     expect(response.statusCode).toBe(200);
@@ -101,51 +101,15 @@ describe("applicationPlugin", () => {
   it("answers a tRPC procedure called without a session with 401 and the UNAUTHORIZED code", async () => {
     const response = await server.inject({
       method: "GET",
-      url: "/trpc/routine.list",
+      url: "/trpc/exercise.list",
     });
 
     expect(response.statusCode).toBe(401);
 
     expect(response.json()).toMatchObject({
       error: {
-        data: { code: "UNAUTHORIZED", httpStatus: 401, path: "routine.list" },
+        data: { code: "UNAUTHORIZED", httpStatus: 401, path: "exercise.list" },
         message: "UNAUTHORIZED",
-      },
-    });
-  });
-
-  it("answers a tRPC procedure that fails with an internal error with 500 and its message hidden", async () => {
-    const testUser = await createTestUser(runtime);
-
-    const response = await server.inject({
-      headers: Object.fromEntries(testUser.headers),
-      method: "POST",
-      payload: {
-        days: [],
-        exercises: [
-          {
-            exerciseId: "019a0000-0000-7000-8000-000000000001",
-            id: "019a0000-0000-7000-8000-000000000002",
-            note: null,
-            position: 0,
-            section: "main",
-            sets: [],
-            superset: null,
-            warmUpForRoutineExerciseId: null,
-          },
-        ],
-        id: "019a0000-0000-7000-8000-000000000003",
-        name: "Push",
-      },
-      url: "/trpc/routine.save",
-    });
-
-    expect(response.statusCode).toBe(500);
-
-    expect(response.json()).toMatchObject({
-      error: {
-        data: { code: "INTERNAL_SERVER_ERROR", httpStatus: 500 },
-        message: "Internal Server Error",
       },
     });
   });

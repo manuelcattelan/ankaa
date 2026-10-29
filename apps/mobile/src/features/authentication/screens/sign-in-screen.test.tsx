@@ -9,7 +9,6 @@ import { Accessibility } from "@/shared/services/accessibility";
 import { AuthenticationClient } from "@/shared/services/authentication-client";
 import { advanceFakeTime } from "@/shared/testing/advance-fake-time";
 import { createSignInTestResponses } from "@/shared/testing/create-sign-in-test-responses";
-import { emptyHomeScreenTrpcClientLayer } from "@/shared/testing/empty-home-screen-trpc-client-layer";
 import { renderScreen } from "@/shared/testing/render-screen";
 
 const APPLE_AUTHENTICATION_CREDENTIAL: ExpoAppleAuthentication.AppleAuthenticationCredential =
@@ -73,14 +72,13 @@ describe("SignInScreen", () => {
         authenticationClientLayer: AuthenticationClient.layerTest(
           createSignInTestResponses("/sign-in/social"),
         ),
-        trpcClientLayer: emptyHomeScreenTrpcClientLayer,
       },
     });
 
     fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
 
     expect(
-      await screen.findByText("You have no routines yet."),
+      await screen.findByRole("button", { name: "Sign out" }),
     ).toBeOnTheScreen();
   });
 
@@ -112,14 +110,13 @@ describe("SignInScreen", () => {
           createSignInTestResponses("/sign-in/social"),
         ),
         googleSignInLayer: GoogleSignIn.layerTest(GOOGLE_SIGN_IN_RESPONSE),
-        trpcClientLayer: emptyHomeScreenTrpcClientLayer,
       },
     });
 
     await user.press(await screen.findByTestId("google-sign-in-button"));
 
     expect(
-      await screen.findByText("You have no routines yet."),
+      await screen.findByRole("button", { name: "Sign out" }),
     ).toBeOnTheScreen();
   });
 

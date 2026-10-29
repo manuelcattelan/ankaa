@@ -5,7 +5,6 @@ import type { ApplicationRuntime } from "@/layer";
 import type { TestRuntimeLayers } from "@/shared/testing/create-test-runtime";
 
 import { registerMutationDefaults } from "@/defaults";
-import { WorkoutDocumentsProvider } from "@/features/workout/providers/workout-documents-provider";
 import { RootNavigator } from "@/root";
 import { RuntimeContext } from "@/shared/providers/runtime-context";
 import { createTestRuntime } from "@/shared/testing/create-test-runtime";
@@ -51,9 +50,7 @@ function createTestRootLayout({
     return (
       <RuntimeContext value={runtime}>
         <QueryClientProvider client={queryClient}>
-          <WorkoutDocumentsProvider>
-            <RootNavigator />
-          </WorkoutDocumentsProvider>
+          <RootNavigator />
         </QueryClientProvider>
       </RuntimeContext>
     );

@@ -11,9 +11,6 @@ import { createGoogleSignInMutationOptions } from "@/features/authentication/mut
 import { createOtpCodeRequestMutationOptions } from "@/features/authentication/mutations/create-otp-code-request-mutation-options";
 import { createOtpCodeSignInMutationOptions } from "@/features/authentication/mutations/create-otp-code-sign-in-mutation-options";
 import { createSignOutMutationOptions } from "@/features/authentication/mutations/create-sign-out-mutation-options";
-import { createRoutineDeleteMutationOptions } from "@/features/routine/mutations/create-routine-delete-mutation-options";
-import { createRoutineSaveMutationOptions } from "@/features/routine/mutations/create-routine-save-mutation-options";
-import { createWorkoutSaveMutationOptions } from "@/features/workout/mutations/create-workout-save-mutation-options";
 
 type MutationDefaultKey = {
   mutationKey: MutationKey;
@@ -55,22 +52,7 @@ export function registerMutationDefaults({
   });
 
   setMutationDefault({
-    mutationOptions: createRoutineDeleteMutationOptions(runtime),
-    queryClient,
-  });
-
-  setMutationDefault({
-    mutationOptions: createRoutineSaveMutationOptions(runtime),
-    queryClient,
-  });
-
-  setMutationDefault({
     mutationOptions: createSignOutMutationOptions(runtime),
-    queryClient,
-  });
-
-  setMutationDefault({
-    mutationOptions: createWorkoutSaveMutationOptions(runtime),
     queryClient,
   });
 }

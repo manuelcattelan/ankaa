@@ -1,6 +1,5 @@
 import { screen, userEvent } from "@testing-library/react-native";
 
-import { emptyHomeScreenTrpcClientLayer } from "@/shared/testing/empty-home-screen-trpc-client-layer";
 import { renderScreen } from "@/shared/testing/render-screen";
 import { signedInAuthenticationClientLayer } from "@/shared/testing/signed-in-authentication-client-layer";
 
@@ -20,7 +19,6 @@ describe("NotFoundScreen", () => {
       initialUrl: "/screen-that-does-not-exist",
       testRuntimeLayers: {
         authenticationClientLayer: signedInAuthenticationClientLayer,
-        trpcClientLayer: emptyHomeScreenTrpcClientLayer,
       },
     });
 
@@ -29,7 +27,7 @@ describe("NotFoundScreen", () => {
     );
 
     expect(
-      await screen.findByText("You have no routines yet."),
+      await screen.findByRole("button", { name: "Sign out" }),
     ).toBeOnTheScreen();
   });
 });

@@ -2,16 +2,12 @@ import type { AppRouter } from "@ankaa/api/trpc/router";
 import type { TRPCClient } from "@trpc/client";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 
-import { routineDeleteInputSchema } from "@ankaa/core/features/routine/schemas/routine-delete-input-schema";
-import { routineSaveInputSchema } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
-import { workoutSaveInputSchema } from "@ankaa/core/features/workout/schemas/workout-save-input-schema";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Schema from "effect/Schema";
 
 import { TrpcError } from "@/shared/errors/trpc-error";
 import { AuthenticationClient } from "@/shared/services/authentication-client";
@@ -149,22 +145,6 @@ function createTrpcTestRouter(trpcTestResponses: TrpcTestResponses) {
       list: trpc.procedure.query(
         createTrpcTestResolver(trpcTestResponses.exercise?.list),
       ),
-    }),
-    routine: trpc.router({
-      delete: trpc.procedure
-        .input(Schema.toStandardSchemaV1(routineDeleteInputSchema))
-        .mutation(createTrpcTestResolver(trpcTestResponses.routine?.delete)),
-      list: trpc.procedure.query(
-        createTrpcTestResolver(trpcTestResponses.routine?.list),
-      ),
-      save: trpc.procedure
-        .input(Schema.toStandardSchemaV1(routineSaveInputSchema))
-        .mutation(createTrpcTestResolver(trpcTestResponses.routine?.save)),
-    }),
-    workout: trpc.router({
-      save: trpc.procedure
-        .input(Schema.toStandardSchemaV1(workoutSaveInputSchema))
-        .mutation(createTrpcTestResolver(trpcTestResponses.workout?.save)),
     }),
   });
 }

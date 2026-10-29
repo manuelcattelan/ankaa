@@ -12,7 +12,6 @@ import {
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import expoConstants from "expo-constants";
 import * as ExpoNetwork from "expo-network";
-import * as ExpoNotifications from "expo-notifications";
 import {
   DarkTheme,
   DefaultTheme,
@@ -27,8 +26,6 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { registerMutationDefaults } from "@/defaults";
-import { requestNotificationPermission } from "@/features/workout/interactors/request-notification-permission";
-import { WorkoutDocumentsProvider } from "@/features/workout/providers/workout-documents-provider";
 import { applicationLayer, createRuntime } from "@/layer";
 import { RootNavigator } from "@/root";
 import { Text } from "@/shared/components/text";
@@ -66,20 +63,6 @@ export default function RootLayout() {
   }, [queryClient, runtime]);
 
   useEffect(() => {
-    ExpoNotifications.setNotificationHandler({
-      handleNotification: () =>
-        Promise.resolve({
-          shouldPlaySound: true,
-          shouldSetBadge: false,
-          shouldShowBanner: true,
-          shouldShowList: true,
-        }),
-    });
-
-    void runtime.runPromise(requestNotificationPermission());
-  }, [runtime]);
-
-  useEffect(() => {
     onlineManager.setEventListener(listenToNetworkState);
   }, []);
 
@@ -113,13 +96,11 @@ export default function RootLayout() {
           }}
         >
           <QueryCacheController queryPersister={queryPersister} />
-          <WorkoutDocumentsProvider>
-            <ThemeProvider value={getNavigationTheme(colorScheme)}>
-              <SplashScreenController />
-              <RootNavigator />
-              <StatusBar style="auto" />
-            </ThemeProvider>
-          </WorkoutDocumentsProvider>
+          <ThemeProvider value={getNavigationTheme(colorScheme)}>
+            <SplashScreenController />
+            <RootNavigator />
+            <StatusBar style="auto" />
+          </ThemeProvider>
         </PersistQueryClientProvider>
       </KeyboardProvider>
     </RuntimeContext>
