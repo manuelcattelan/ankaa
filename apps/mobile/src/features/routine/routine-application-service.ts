@@ -1,7 +1,10 @@
+import type { RoutineNameConflictError } from "@ankaa/core/features/routine/errors/routine-name-conflict-error";
 import type { RoutineDeleteInput } from "@ankaa/core/features/routine/schemas/routine-delete-input-schema";
+import type { RoutineSaveInput } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
 import type { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 
 import { ROUTINE_DELETE_WIRE_ERRORS } from "@ankaa/core/features/routine/errors/routine-delete-wire-errors";
+import { ROUTINE_SAVE_WIRE_ERRORS } from "@ankaa/core/features/routine/errors/routine-save-wire-errors";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import { constUndefined } from "effect/Function";
@@ -19,6 +22,12 @@ export class RoutineApplicationService extends Context.Service<
       input: RoutineDeleteInput,
     ) => Effect.Effect<void, RoutineNotFoundError | TrpcClientError>;
     readonly list: () => Effect.Effect<Routine[], TrpcClientError>;
+    readonly save: (
+      input: RoutineSaveInput,
+    ) => Effect.Effect<
+      void,
+      RoutineNameConflictError | RoutineNotFoundError | TrpcClientError
+    >;
   }
 >()("@ankaa/mobile/features/routine/RoutineApplicationService") {
   static readonly layerNoDeps = Layer.effect(
@@ -44,7 +53,21 @@ export class RoutineApplicationService extends Context.Service<
         });
       });
 
-      return RoutineApplicationService.of({ delete: deleteRoutine, list });
+      const save = Effect.fn("RoutineApplicationService.save")(function* (
+        input: RoutineSaveInput,
+      ) {
+        yield* trpcClient.request({
+          call: ({ signal, trpc }) =>
+            trpc.routine.save.mutate(input, { signal }),
+          errors: ROUTINE_SAVE_WIRE_ERRORS,
+        });
+      });
+
+      return RoutineApplicationService.of({
+        delete: deleteRoutine,
+        list,
+        save,
+      });
     }),
   );
 

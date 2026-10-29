@@ -10,28 +10,41 @@ const formSchema = Schema.Struct({
   ),
 });
 
+const trimmedFormSchema = Schema.Struct({
+  name: Schema.Trim,
+  nickname: Schema.Trim,
+}).check(
+  Schema.makeFilter(({ name, nickname }) => name !== nickname, {
+    message: "Enter a nickname that isn't your name.",
+  }),
+);
+
 describe("decodeForm", () => {
-  it("returns no message for any field and a valid form when every field is valid", () => {
+  it("returns no message for any field, a valid form and its decoded value when every field is valid", () => {
     expect(
       decodeForm({
-        schema: formSchema,
-        values: { name: "Ada", nickname: "ADA" },
+        schema: trimmedFormSchema,
+        values: { name: " Ada ", nickname: "ADA" },
       }),
     ).toEqual({
+      errorMessage: null,
       errorMessages: { name: null, nickname: null },
       isValid: true,
+      value: { name: "Ada", nickname: "ADA" },
     });
   });
 
-  it("returns the message of an invalid field, no message for a valid field and an invalid form", () => {
+  it("returns the message of an invalid field, no message for a valid field, an invalid form and no value", () => {
     expect(
       decodeForm({
         schema: formSchema,
         values: { name: "", nickname: "ADA" },
       }),
     ).toEqual({
+      errorMessage: null,
       errorMessages: { name: "Enter a name.", nickname: null },
       isValid: false,
+      value: null,
     });
   });
 
@@ -42,11 +55,13 @@ describe("decodeForm", () => {
         values: { name: "", nickname: "ADDA" },
       }),
     ).toEqual({
+      errorMessage: null,
       errorMessages: {
         name: "Enter a name.",
         nickname: "Enter at most 3 characters.",
       },
       isValid: false,
+      value: null,
     });
   });
 
@@ -57,8 +72,24 @@ describe("decodeForm", () => {
         values: { name: "Ada", nickname: "adda" },
       }),
     ).toEqual({
+      errorMessage: null,
       errorMessages: { name: null, nickname: "Enter at most 3 characters." },
       isValid: false,
+      value: null,
+    });
+  });
+
+  it("returns the message of a check on the whole form, and no message for its fields", () => {
+    expect(
+      decodeForm({
+        schema: trimmedFormSchema,
+        values: { name: "ADA", nickname: "ADA" },
+      }),
+    ).toEqual({
+      errorMessage: "Enter a nickname that isn't your name.",
+      errorMessages: { name: null, nickname: null },
+      isValid: false,
+      value: null,
     });
   });
 });

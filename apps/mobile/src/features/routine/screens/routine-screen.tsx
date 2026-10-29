@@ -1,57 +1,56 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Stack, useRouter } from "expo-router";
+import type { ComponentProps } from "react";
 
-import { getRoutineDeleteErrorMessage } from "#/features/routine/core/get-routine-delete-error-message.ts";
+import { useQuery } from "@tanstack/react-query";
+import { Stack } from "expo-router";
+import { ActivityIndicator } from "react-native";
+
+import { RoutineDeleteButton } from "#/features/routine/components/routine-delete-button.tsx";
+import { RoutineEditor } from "#/features/routine/components/routine-editor.tsx";
 import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
-import { routineDeleteMutationOptions } from "#/features/routine/mutations/routine-delete-mutation-options.ts";
 import { routineListQueryOptions } from "#/features/routine/queries/routine-list-query-options.ts";
-import { Button } from "#/shared/components/button.tsx";
-import { ScrollView } from "#/shared/components/scroll-view.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
+import { getTrpcErrorMessage } from "#/shared/core/get-trpc-error-message.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
-export function RoutineScreen({ routineId }: { routineId: string }) {
-  const router = useRouter();
-
-  const queryClient = useQueryClient();
-
+export function RoutineScreen({
+  renderExercisePicker,
+  routineId,
+}: Pick<ComponentProps<typeof RoutineEditor>, "renderExercisePicker"> & {
+  routineId: string;
+}) {
   const runtime = useRuntime();
 
-  const deleteRoutine = useMutation({
-    ...routineDeleteMutationOptions(runtime),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: routineListQueryOptions(runtime).queryKey,
-      });
+  const routines = useQuery(routineListQueryOptions(runtime));
 
-      router.dismissTo("/");
-    },
-  });
+  const routine =
+    routines.data?.find((listedRoutine) => listedRoutine.id === routineId) ??
+    null;
+  const statusMessage = getStatusMessage();
 
-  const deleteRoutineErrorMessage =
-    deleteRoutine.error === null
-      ? null
-      : getRoutineDeleteErrorMessage(deleteRoutine.error);
-
-  function handleDeleteRoutine() {
-    if (deleteRoutine.isPending) {
-      return;
+  function getStatusMessage() {
+    if (routines.error !== null) {
+      return getTrpcErrorMessage(routines.error);
     }
 
-    deleteRoutine.mutate({ id: routineId });
+    return routines.isSuccess && routine === null
+      ? ROUTINE_MESSAGES.routineNotFoundError
+      : null;
   }
 
   return (
     <>
       <Stack.Screen options={{ title: ROUTINE_MESSAGES.routineScreenTitle }} />
-      <ScrollView>
-        <Button
-          isBusy={deleteRoutine.isPending}
-          onPress={handleDeleteRoutine}
-          title={ROUTINE_MESSAGES.deleteRoutineButton}
-        />
-        <StatusMessage message={deleteRoutineErrorMessage} />
-      </ScrollView>
+      {routines.isPending ? <ActivityIndicator /> : null}
+      <StatusMessage message={statusMessage} />
+      {routine === null ? null : (
+        <RoutineEditor
+          key={routine.id}
+          renderExercisePicker={renderExercisePicker}
+          routine={routine}
+        >
+          <RoutineDeleteButton routineId={routine.id} />
+        </RoutineEditor>
+      )}
     </>
   );
 }

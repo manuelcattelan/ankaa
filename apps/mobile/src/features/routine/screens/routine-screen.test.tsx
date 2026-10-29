@@ -1,5 +1,7 @@
+import type { RoutineSaveInput } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
+
 import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
-import { screen, userEvent } from "@testing-library/react-native";
+import { screen, userEvent, waitFor } from "@testing-library/react-native";
 import { TRPCError } from "@trpc/server";
 
 import type { Routine } from "#/shared/routine.ts";
@@ -12,6 +14,71 @@ import { signedInSession } from "#/shared/testing/signed-in-session.ts";
 import { renderScreen } from "#/testing/render-screen.tsx";
 
 describe("RoutineScreen", () => {
+  it("Saves the edits that the User makes to the Routine, keeping its ids", async () => {
+    const user = userEvent.setup();
+    const savedInputs: RoutineSaveInput[] = [];
+    renderScreen({
+      initialUrl: "/",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => [],
+            "routine.list": () => [pushDayRoutine],
+            "routine.save": (input) => {
+              savedInputs.push(input);
+            },
+          },
+        }),
+      },
+    });
+
+    await user.press(await screen.findByRole("link", { name: "Push day" }));
+    await user.clear(await screen.findByLabelText("Name"));
+    await user.type(screen.getByLabelText("Name"), "Upper body");
+    await user.clear(screen.getByLabelText("Repetitions or seconds"));
+    await user.type(screen.getByLabelText("Repetitions or seconds"), "10");
+    await user.press(screen.getByRole("button", { name: "Save routine" }));
+
+    await waitFor(() => {
+      expect(savedInputs).toStrictEqual([
+        {
+          days: ["monday"],
+          id: "01900000-0000-7000-8000-000000000004",
+          name: "Upper body",
+          sections: {
+            coolDown: [],
+            main: [
+              {
+                exercises: [
+                  {
+                    exerciseId: "01900000-0000-7000-8000-000000000001",
+                    id: "01900000-0000-7000-8000-000000000002",
+                    note: null,
+                    sets: [
+                      {
+                        amount: 10,
+                        id: "01900000-0000-7000-8000-000000000003",
+                        intensityTechnique: null,
+                        isToFailure: false,
+                        restSeconds: 120,
+                        tempo: null,
+                        type: "working",
+                      },
+                    ],
+                    warmUpExercises: [],
+                  },
+                ],
+                id: "01900000-0000-7000-8000-000000000005",
+              },
+            ],
+            warmUp: [],
+          },
+        },
+      ]);
+    });
+  });
+
   it("takes the User back to their Routines, without the Routine, once they delete it", async () => {
     const user = userEvent.setup();
     let routines: Routine[] = [pushDayRoutine];

@@ -13,7 +13,7 @@ export function CheckboxGroup<TOption extends string>({
   onChangeSelectedOptions: (selectedOptions: TOption[]) => void;
   optionLabels: Record<TOption, string>;
   options: readonly TOption[];
-  selectedOptions: TOption[];
+  selectedOptions: readonly TOption[];
 }) {
   function handleToggleOption(option: TOption) {
     onChangeSelectedOptions(

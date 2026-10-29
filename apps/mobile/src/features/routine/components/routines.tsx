@@ -22,6 +22,10 @@ export function Routines() {
 
   return (
     <>
+      <LinkButton
+        href="/routines/new"
+        title={ROUTINE_MESSAGES.newRoutineButton}
+      />
       {routines.isPending ? <ActivityIndicator /> : null}
       <StatusMessage message={routinesStatusMessage} />
       {routines.data?.map((routine) => (

@@ -1,5 +1,7 @@
 import { ROUTINE_DELETE_WIRE_ERRORS } from "@ankaa/core/features/routine/errors/routine-delete-wire-errors";
+import { ROUTINE_SAVE_WIRE_ERRORS } from "@ankaa/core/features/routine/errors/routine-save-wire-errors";
 import { routineDeleteInputSchema } from "@ankaa/core/features/routine/schemas/routine-delete-input-schema";
+import { routineSaveInputSchema } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
@@ -39,4 +41,21 @@ export const routineRouter = router({
       signal,
     }),
   ),
+  save: protectedProcedure
+    .input(Schema.toStandardSchemaV1(routineSaveInputSchema))
+    .mutation(({ ctx, input, signal }) =>
+      run({
+        context: ctx,
+        effect: Effect.gen(function* () {
+          const routineApplicationService = yield* RoutineApplicationService;
+
+          yield* routineApplicationService.save({
+            input,
+            userId: ctx.session.user.id,
+          });
+        }),
+        errors: ROUTINE_SAVE_WIRE_ERRORS,
+        signal,
+      }),
+    ),
 });

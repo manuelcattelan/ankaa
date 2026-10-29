@@ -9,7 +9,9 @@ import type {
 } from "@trpc/server";
 
 import { ROUTINE_DELETE_WIRE_ERRORS } from "@ankaa/core/features/routine/errors/routine-delete-wire-errors";
+import { ROUTINE_SAVE_WIRE_ERRORS } from "@ankaa/core/features/routine/errors/routine-save-wire-errors";
 import { routineDeleteInputSchema } from "@ankaa/core/features/routine/schemas/routine-delete-input-schema";
+import { routineSaveInputSchema } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
@@ -82,6 +84,7 @@ const FAKE_TRPC_WIRE_ERRORS: {
   "exercise.list": [],
   "routine.delete": ROUTINE_DELETE_WIRE_ERRORS,
   "routine.list": [],
+  "routine.save": ROUTINE_SAVE_WIRE_ERRORS,
 };
 
 /**
@@ -89,17 +92,20 @@ const FAKE_TRPC_WIRE_ERRORS: {
  * with its response in `responses`, and records the path of every procedure
  * the client calls into `receivedPaths`. A procedure with no response fails
  * with `NOT_FOUND`, a response fails by throwing a Wire error of its
- * procedure, and every call fails as on a device with no connection when
- * `isServerReachable` is `false`.
+ * procedure, and a call fails as on a device with no connection when
+ * `isServerReachable` is `false`, or when its path is in `unreachablePaths`,
+ * such as a Save made after the device lost its connection.
  */
 export function fakeTrpcClientLayer({
   isServerReachable = true,
   receivedPaths = [],
   responses = {},
+  unreachablePaths = [],
 }: {
   isServerReachable?: boolean;
   receivedPaths?: string[];
   responses?: FakeTrpcResponses;
+  unreachablePaths?: (keyof FakeTrpcResponses)[];
 }) {
   return Layer.effect(
     TrpcClient,
@@ -120,11 +126,19 @@ export function fakeTrpcClientLayer({
                     signal: options?.signal ?? null,
                   });
 
-                  receivedPaths.push(
-                    ...getFakeTrpcRequestPaths(fakeTrpcRequest),
-                  );
+                  const fakeTrpcRequestPaths =
+                    getFakeTrpcRequestPaths(fakeTrpcRequest);
 
-                  if (!isServerReachable) {
+                  receivedPaths.push(...fakeTrpcRequestPaths);
+
+                  if (
+                    !isServerReachable ||
+                    fakeTrpcRequestPaths.some((path) =>
+                      unreachablePaths.some(
+                        (unreachablePath) => unreachablePath === path,
+                      ),
+                    )
+                  ) {
                     return Promise.reject(
                       new TypeError("Network request failed"),
                     );
@@ -198,6 +212,13 @@ function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
         response: fakeTrpcResponses["routine.list"],
       }),
     ),
+    "routine.save": t.procedure
+      .input(Schema.toStandardSchemaV1(routineSaveInputSchema))
+      .mutation(
+        createFakeTrpcResolver({
+          response: fakeTrpcResponses["routine.save"],
+        }),
+      ),
   };
 
   return t.router(fakeTrpcProcedures);

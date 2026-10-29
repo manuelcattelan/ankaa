@@ -16,7 +16,10 @@ import { PinoLogger } from "#/shared/pino-logger.ts";
 import { getWireErrorCode } from "#/trpc/get-wire-error-code.ts";
 import { wireErrorSchema } from "#/trpc/wire-error-schema.ts";
 
-export async function run<TSuccess, TWireError extends WireError>({
+export async function run<
+  TSuccess,
+  TWireErrors extends readonly Schema.Schema<WireError>[],
+>({
   context,
   effect,
   signal,
@@ -29,10 +32,10 @@ export async function run<TSuccess, TWireError extends WireError>({
   };
   effect: Effect.Effect<
     TSuccess,
-    NoInfer<TWireError>,
+    NoInfer<TWireErrors[number]["Type"]>,
     Layer.Success<typeof applicationLayer>
   >;
-  errors: readonly Schema.Schema<TWireError>[];
+  errors: TWireErrors;
   signal: AbortSignal | undefined;
 }) {
   const exit = await context.runtime.runPromiseExit(
