@@ -6,13 +6,18 @@ const SEGMENT_DRAFT = { amount: "8", weight: "62.5" };
 describe("segmentFormSchema", () => {
   it("decodes a Segment Draft into its Amount and weight", () => {
     expect(
-      decodeForm({ schema: segmentFormSchema, values: SEGMENT_DRAFT }).value,
+      decodeForm({
+        hasSubmitted: true,
+        schema: segmentFormSchema,
+        values: SEGMENT_DRAFT,
+      }).value,
     ).toStrictEqual({ amount: 8, weight: 62.5 });
   });
 
   it("decodes an empty weight into no weight", () => {
     expect(
       decodeForm({
+        hasSubmitted: true,
         schema: segmentFormSchema,
         values: { ...SEGMENT_DRAFT, weight: " " },
       }).value,
@@ -22,6 +27,7 @@ describe("segmentFormSchema", () => {
   it("rejects an empty Amount with its message", () => {
     expect(
       decodeForm({
+        hasSubmitted: true,
         schema: segmentFormSchema,
         values: { ...SEGMENT_DRAFT, amount: "" },
       }).errorMessages,
@@ -34,6 +40,7 @@ describe("segmentFormSchema", () => {
   it("rejects an Amount of 0 with its message", () => {
     expect(
       decodeForm({
+        hasSubmitted: true,
         schema: segmentFormSchema,
         values: { ...SEGMENT_DRAFT, amount: "0" },
       }).errorMessages,
@@ -46,6 +53,7 @@ describe("segmentFormSchema", () => {
   it("rejects a weight above the largest one with its message", () => {
     expect(
       decodeForm({
+        hasSubmitted: true,
         schema: segmentFormSchema,
         values: { ...SEGMENT_DRAFT, weight: "10000" },
       }).errorMessages,
@@ -59,6 +67,7 @@ describe("segmentFormSchema", () => {
   it("rejects a weight with three decimal places with its message", () => {
     expect(
       decodeForm({
+        hasSubmitted: true,
         schema: segmentFormSchema,
         values: { ...SEGMENT_DRAFT, weight: "62.555" },
       }).errorMessages,
@@ -72,6 +81,7 @@ describe("segmentFormSchema", () => {
   it("rejects a weight that isn't a number with its message", () => {
     expect(
       decodeForm({
+        hasSubmitted: true,
         schema: segmentFormSchema,
         values: { ...SEGMENT_DRAFT, weight: "heavy" },
       }).errorMessages,

@@ -8,20 +8,30 @@ const formatIssue = SchemaIssue.makeFormatterStandardSchemaV1();
 /**
  * Decodes a form's values with its Schema into the message of a check on the
  * whole form, each field's message, or `null` when there's none, whether the
- * form is valid, and its decoded value, or `null` when it isn't valid. A field
- * that breaks several checks shows the message of the first one, and a check
- * on the whole form runs only once every field is valid.
+ * form is valid, and its decoded value, or `null` when it isn't valid. Every
+ * message is `null` until the form's first submit, because a form shows its
+ * errors only from then on. A field that breaks several checks shows the
+ * message of the first one, and a check on the whole form runs only once
+ * every field is valid.
  */
 export function decodeForm<
   Value,
   Values extends Readonly<Record<string, unknown>>,
->({ schema, values }: { schema: Schema.Codec<Value, Values>; values: Values }) {
+>({
+  hasSubmitted,
+  schema,
+  values,
+}: {
+  hasSubmitted: boolean;
+  schema: Schema.Codec<Value, Values>;
+  values: Values;
+}) {
   const result = Schema.decodeUnknownResult(schema)(values, { errors: "all" });
 
-  const issues = Result.match(result, {
-    onFailure: (error) => formatIssue(error.issue).issues,
-    onSuccess: () => [],
-  });
+  const issues =
+    hasSubmitted && Result.isFailure(result)
+      ? formatIssue(result.failure.issue).issues
+      : [];
 
   return {
     errorMessage:

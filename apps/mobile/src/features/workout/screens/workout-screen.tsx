@@ -4,30 +4,31 @@ import { useReducer, useState } from "react";
 import { ActivityIndicator } from "react-native";
 
 import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
-import type { RecordedSetDraftEntry } from "#/features/workout/core/recorded-set-drafts-reducer.ts";
-import type { WorkoutExerciseDrafts } from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
+import type { WorkoutDrafts } from "#/features/workout/core/workout-drafts-reducer.ts";
 
 import { WorkoutElapsedTime } from "#/features/workout/components/workout-elapsed-time.tsx";
 import { WorkoutSection } from "#/features/workout/components/workout-section.tsx";
 import { WorkoutStopButton } from "#/features/workout/components/workout-stop-button.tsx";
-import { recordedSetDraftsReducer } from "#/features/workout/core/recorded-set-drafts-reducer.ts";
-import { workoutExerciseDraftsReducer } from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
+import { workoutDraftsReducer } from "#/features/workout/core/workout-drafts-reducer.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { countdownNotificationCancelMutationOptions } from "#/features/workout/mutations/countdown-notification-cancel-mutation-options.ts";
 import { countdownNotificationScheduleMutationOptions } from "#/features/workout/mutations/countdown-notification-schedule-mutation-options.ts";
+import { WorkoutContext } from "#/features/workout/providers/workout-context.ts";
 import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/workout-find-in-progress-query-options.ts";
 import { ScrollView } from "#/shared/components/scroll-view.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
-import { getTrpcErrorMessage } from "#/shared/core/get-trpc-error-message.ts";
+import { getExerciseNames } from "#/shared/core/get-exercise-names.ts";
+import { getTrpcClientErrorMessage } from "#/shared/core/get-trpc-client-error-message.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { exerciseListQueryOptions } from "#/shared/queries/exercise-list-query-options.ts";
 
-const NO_RECORDED_SET_DRAFT_ENTRIES: readonly RecordedSetDraftEntry[] = [];
-
-const NO_WORKOUT_EXERCISE_DRAFTS: WorkoutExerciseDrafts = {
+const NO_WORKOUT_DRAFTS: WorkoutDrafts = {
   notes: [],
+  recordedSets: [],
   skips: [],
 };
+
+const NO_EXERCISE_NAMES: ReadonlyMap<string, string> = new Map();
 
 /**
  * Shows the User's Workout in progress, and keeps the Draft of every Set,
@@ -38,20 +39,19 @@ const NO_WORKOUT_EXERCISE_DRAFTS: WorkoutExerciseDrafts = {
 export function WorkoutScreen() {
   const runtime = useRuntime();
 
-  const [recordedSetDraftEntries, dispatch] = useReducer(
-    recordedSetDraftsReducer,
-    NO_RECORDED_SET_DRAFT_ENTRIES,
-  );
-  const [workoutExerciseDrafts, dispatchWorkoutExerciseDrafts] = useReducer(
-    workoutExerciseDraftsReducer,
-    NO_WORKOUT_EXERCISE_DRAFTS,
+  const [drafts, dispatch] = useReducer(
+    workoutDraftsReducer,
+    NO_WORKOUT_DRAFTS,
   );
   const [countdown, setCountdown] = useState<Countdown | null>(null);
 
   const workoutInProgress = useQuery(
     workoutFindInProgressQueryOptions(runtime),
   );
-  const exerciseLibrary = useQuery(exerciseListQueryOptions(runtime));
+  const exerciseNames = useQuery({
+    ...exerciseListQueryOptions(runtime),
+    select: getExerciseNames,
+  });
   const scheduleCountdownNotification = useMutation(
     countdownNotificationScheduleMutationOptions(runtime),
   );
@@ -60,24 +60,22 @@ export function WorkoutScreen() {
   );
 
   const workout = workoutInProgress.data ?? null;
-  const exerciseNames = new Map(
-    exerciseLibrary.data?.map((exercise) => [exercise.id, exercise.name]),
-  );
+  const exerciseNamesById = exerciseNames.data ?? NO_EXERCISE_NAMES;
   const unsavedDraftLabels = [
-    ...recordedSetDraftEntries.map((entry) =>
+    ...drafts.recordedSets.map((entry) =>
       WORKOUT_MESSAGES.unsavedSetLabel({
-        exerciseName: exerciseNames.get(entry.exerciseId) ?? "",
+        exerciseName: exerciseNamesById.get(entry.exerciseId) ?? "",
         setNumber: entry.position + 1,
       }),
     ),
-    ...workoutExerciseDrafts.notes.map((entry) =>
+    ...drafts.notes.map((entry) =>
       WORKOUT_MESSAGES.unsavedNoteLabel(
-        exerciseNames.get(entry.exerciseId) ?? "",
+        exerciseNamesById.get(entry.exerciseId) ?? "",
       ),
     ),
-    ...workoutExerciseDrafts.skips.map((entry) =>
+    ...drafts.skips.map((entry) =>
       WORKOUT_MESSAGES.unsavedSkipLabel(
-        exerciseNames.get(entry.exerciseId) ?? "",
+        exerciseNamesById.get(entry.exerciseId) ?? "",
       ),
     ),
   ];
@@ -85,7 +83,7 @@ export function WorkoutScreen() {
 
   function getStatusMessage() {
     if (workoutInProgress.error !== null) {
-      return getTrpcErrorMessage(workoutInProgress.error);
+      return getTrpcClientErrorMessage(workoutInProgress.error);
     }
 
     return workoutInProgress.isSuccess && workout === null
@@ -119,52 +117,35 @@ export function WorkoutScreen() {
         {workoutInProgress.isPending ? <ActivityIndicator /> : null}
         <StatusMessage message={statusMessage} />
         {workout === null ? null : (
-          <>
+          <WorkoutContext
+            value={{
+              countdown,
+              dispatch,
+              drafts,
+              exerciseNames: exerciseNamesById,
+              onEndCountdown: handleEndCountdown,
+              onSkipCountdown: handleSkipCountdown,
+              onStartCountdown: handleStartCountdown,
+            }}
+          >
             <WorkoutElapsedTime startedAt={workout.startedAt} />
             <WorkoutSection
-              countdown={countdown}
-              dispatch={dispatch}
-              dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
               exerciseGroups={workout.sections.warmUp}
-              exerciseNames={exerciseNames}
-              onEndCountdown={handleEndCountdown}
-              onSkipCountdown={handleSkipCountdown}
-              onStartCountdown={handleStartCountdown}
-              recordedSetDraftEntries={recordedSetDraftEntries}
               section="warm_up"
-              workoutExerciseDrafts={workoutExerciseDrafts}
             />
             <WorkoutSection
-              countdown={countdown}
-              dispatch={dispatch}
-              dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
               exerciseGroups={workout.sections.main}
-              exerciseNames={exerciseNames}
-              onEndCountdown={handleEndCountdown}
-              onSkipCountdown={handleSkipCountdown}
-              onStartCountdown={handleStartCountdown}
-              recordedSetDraftEntries={recordedSetDraftEntries}
               section="main"
-              workoutExerciseDrafts={workoutExerciseDrafts}
             />
             <WorkoutSection
-              countdown={countdown}
-              dispatch={dispatch}
-              dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
               exerciseGroups={workout.sections.coolDown}
-              exerciseNames={exerciseNames}
-              onEndCountdown={handleEndCountdown}
-              onSkipCountdown={handleSkipCountdown}
-              onStartCountdown={handleStartCountdown}
-              recordedSetDraftEntries={recordedSetDraftEntries}
               section="cool_down"
-              workoutExerciseDrafts={workoutExerciseDrafts}
             />
             <WorkoutStopButton
               unsavedDraftLabels={unsavedDraftLabels}
               workoutId={workout.id}
             />
-          </>
+          </WorkoutContext>
         )}
       </ScrollView>
     </>

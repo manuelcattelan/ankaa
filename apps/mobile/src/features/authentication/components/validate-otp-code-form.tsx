@@ -46,16 +46,14 @@ export function ValidateOtpCodeForm({ email }: { email: string }) {
   });
 
   const otpCodeFormDecoding = decodeForm({
+    hasSubmitted,
     schema: otpCodeFormSchema,
     values: { otpCode },
   });
-  const otpCodeValidationErrorMessage = hasSubmitted
-    ? otpCodeFormDecoding.errorMessages.otpCode
-    : null;
   const authenticationError = validateOtpCode.error ?? resendOtpCode.error;
   const otpCodeErrorMessage =
     authenticationError === null
-      ? otpCodeValidationErrorMessage
+      ? otpCodeFormDecoding.errorMessages.otpCode
       : getAuthenticationErrorMessage(authenticationError);
 
   function handleResendOtpCode() {
@@ -79,9 +77,15 @@ export function ValidateOtpCodeForm({ email }: { email: string }) {
     validateOtpCode.reset();
     resendOtpCode.reset();
 
-    if (!otpCodeFormDecoding.isValid) {
-      if (otpCodeFormDecoding.errorMessages.otpCode !== null) {
-        announceMessage(otpCodeFormDecoding.errorMessages.otpCode);
+    const submittedOtpCodeFormDecoding = decodeForm({
+      hasSubmitted: true,
+      schema: otpCodeFormSchema,
+      values: { otpCode },
+    });
+
+    if (!submittedOtpCodeFormDecoding.isValid) {
+      if (submittedOtpCodeFormDecoding.errorMessages.otpCode !== null) {
+        announceMessage(submittedOtpCodeFormDecoding.errorMessages.otpCode);
       }
 
       return;

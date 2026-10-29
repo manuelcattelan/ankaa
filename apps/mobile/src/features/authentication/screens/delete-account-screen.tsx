@@ -1,8 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
-import { router } from "expo-router";
+import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator } from "react-native";
 
+import { ACCOUNT_DELETED_SEARCH_PARAMETERS } from "#/features/authentication/constants/account-deleted-search-parameters.ts";
 import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 import { accountDeletionMutationOptions } from "#/features/authentication/mutations/account-deletion-mutation-options.ts";
@@ -19,6 +20,8 @@ import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
  * signs in on top of it and comes back to it with the token still in memory.
  */
 export function DeleteAccountScreen({ token }: { token: null | string }) {
+  const router = useRouter();
+
   const runtime = useRuntime();
 
   const session = useAuthenticationSession();
@@ -27,8 +30,9 @@ export function DeleteAccountScreen({ token }: { token: null | string }) {
 
   const hasSession = session.data !== null;
   const isAccountDeleted = deleteAccount.isSuccess && !hasSession;
-  // A deletion request without a token emails a new link instead, so a link
-  // without one deletes nothing and asks for no session.
+  // A deletion request without a token emails a new link instead
+  // (https://www.better-auth.com/docs/concepts/users-accounts#delete-user),
+  // so a link without one deletes nothing and asks for no session.
   const deletionToken = token === "" ? null : token;
   const isTokenAwaitingDeletion =
     deletionToken !== null && !session.isPending && deleteAccount.isIdle;
@@ -38,7 +42,7 @@ export function DeleteAccountScreen({ token }: { token: null | string }) {
     if (isTokenAwaitingDeletion && !hasSession) {
       router.push("/sign-in");
     }
-  }, [hasSession, isTokenAwaitingDeletion]);
+  }, [hasSession, isTokenAwaitingDeletion, router]);
 
   useEffect(() => {
     if (isTokenAwaitingDeletion && hasSession) {
@@ -49,11 +53,11 @@ export function DeleteAccountScreen({ token }: { token: null | string }) {
   useEffect(() => {
     if (isAccountDeleted) {
       router.replace({
-        params: { isAccountDeleted: "true" },
+        params: ACCOUNT_DELETED_SEARCH_PARAMETERS,
         pathname: "/sign-in",
       });
     }
-  }, [isAccountDeleted]);
+  }, [isAccountDeleted, router]);
 
   function getStatusMessage() {
     if (deletionToken === null) {

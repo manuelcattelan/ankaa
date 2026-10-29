@@ -10,7 +10,7 @@ import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.t
 import { routineListQueryOptions } from "#/features/routine/queries/routine-list-query-options.ts";
 import { LinkButton } from "#/shared/components/link-button.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
-import { getTrpcErrorMessage } from "#/shared/core/get-trpc-error-message.ts";
+import { getTrpcClientErrorMessage } from "#/shared/core/get-trpc-client-error-message.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
 /**
@@ -28,7 +28,7 @@ export function Routines({
   const routines = useQuery(routineListQueryOptions(runtime));
 
   const routinesErrorMessage =
-    routines.error === null ? null : getTrpcErrorMessage(routines.error);
+    routines.error === null ? null : getTrpcClientErrorMessage(routines.error);
   const routinesStatusMessage =
     routines.data?.length === 0
       ? ROUTINE_MESSAGES.routineListEmptyStatus

@@ -1,4 +1,5 @@
 import type { DayOfWeek } from "@ankaa/core/features/routine/constants/days-of-week";
+import type { IntensityTechnique } from "@ankaa/core/shared/constants/intensity-techniques";
 import type { SetType } from "@ankaa/core/shared/constants/set-types";
 
 export const ROUTINE_MESSAGES = {
@@ -22,10 +23,9 @@ export const ROUTINE_MESSAGES = {
   exerciseNoteLabel: "Note",
   intensityTechniqueLabel: "Intensity technique",
   intensityTechniqueLabels: {
-    DropSet: "Drop set",
-    none: "None",
-    RestPauseSet: "Rest-pause set",
-  } satisfies Record<"DropSet" | "none" | "RestPauseSet", string>,
+    drop_set: "Drop set",
+    rest_pause_set: "Rest-pause set",
+  } satisfies Record<IntensityTechnique, string>,
   joinSupersetButton: "Superset with next exercise",
   leaveSupersetButton: "Leave superset",
   mainRoutineExerciseMissingError:
@@ -34,6 +34,7 @@ export const ROUTINE_MESSAGES = {
   moveUpButton: "Move up",
   newRoutineButton: "New routine",
   newRoutineScreenTitle: "New routine",
+  noIntensityTechniqueLabel: "None",
   pauseSecondsLabel: "Pause, in seconds",
   removeExerciseButton: "Remove exercise",
   removeSetButton: "Remove set",

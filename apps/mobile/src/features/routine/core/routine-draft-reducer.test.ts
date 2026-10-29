@@ -273,8 +273,8 @@ describe("routineDraftReducer", () => {
   it("moves an Exercise group up", () => {
     expect(
       routineDraftReducer(ROUTINE_DRAFT, {
+        direction: "up",
         exerciseGroupId: "push-up-exercise-group",
-        exerciseGroupMoveDirection: "up",
         section: "main",
         type: "movedExerciseGroup",
       }).sections.main.map((exerciseGroup) => exerciseGroup.id),
@@ -288,8 +288,8 @@ describe("routineDraftReducer", () => {
   it("moves an Exercise group down", () => {
     expect(
       routineDraftReducer(ROUTINE_DRAFT, {
+        direction: "down",
         exerciseGroupId: "push-up-exercise-group",
-        exerciseGroupMoveDirection: "down",
         section: "main",
         type: "movedExerciseGroup",
       }).sections.main.map((exerciseGroup) => exerciseGroup.id),
@@ -303,8 +303,8 @@ describe("routineDraftReducer", () => {
   it("leaves the first Exercise group in place when it moves up", () => {
     expect(
       routineDraftReducer(ROUTINE_DRAFT, {
+        direction: "up",
         exerciseGroupId: "bench-press-exercise-group",
-        exerciseGroupMoveDirection: "up",
         section: "main",
         type: "movedExerciseGroup",
       }),

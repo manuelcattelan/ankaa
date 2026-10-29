@@ -4,15 +4,9 @@ import {
   focusManager,
   QueryClient,
   QueryClientProvider,
-  useQueryClient,
 } from "@tanstack/react-query";
 import * as Context from "effect/Context";
-import {
-  DarkTheme,
-  DefaultTheme,
-  SplashScreen,
-  ThemeProvider,
-} from "expo-router";
+import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { AppState, Platform, useColorScheme } from "react-native";
@@ -20,13 +14,14 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { applicationLayer, createRuntime } from "#/layer.ts";
+import { QueryCacheController } from "#/query-cache-controller.tsx";
 import { RootNavigator } from "#/root-navigator.tsx";
 import { Text } from "#/shared/components/text.tsx";
-import { useAuthenticationSession } from "#/shared/hooks/use-authentication-session.ts";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 import { AuthClientContext } from "#/shared/providers/auth-client-context.ts";
 import { RuntimeContext } from "#/shared/providers/runtime-context.ts";
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
+import { SplashScreenController } from "#/splash-screen-controller.tsx";
 
 export function ErrorBoundary() {
   const colorScheme = useColorScheme();
@@ -95,38 +90,4 @@ function createQueryClient() {
 
 function getNavigationTheme(colorScheme: ColorSchemeName) {
   return colorScheme === "dark" ? DarkTheme : DefaultTheme;
-}
-
-function QueryCacheController() {
-  const queryClient = useQueryClient();
-
-  const session = useAuthenticationSession();
-
-  const hasSession = session.data !== null;
-
-  useEffect(() => {
-    if (session.isPending || hasSession) {
-      return;
-    }
-
-    queryClient.clear();
-  }, [hasSession, queryClient, session.isPending]);
-
-  return null;
-}
-
-function SplashScreenController() {
-  const session = useAuthenticationSession();
-
-  useEffect(() => {
-    void SplashScreen.preventAutoHideAsync();
-  }, []);
-
-  useEffect(() => {
-    if (!session.isPending) {
-      SplashScreen.hide();
-    }
-  }, [session.isPending]);
-
-  return null;
 }

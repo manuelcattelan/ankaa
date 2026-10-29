@@ -15,15 +15,14 @@ export function RoutineEditorRestPauseSet({
   restPauseSet: RestPauseSetDraft;
 }) {
   const restPauseSetFormDecoding = decodeForm({
+    hasSubmitted,
     schema: restPauseSetFormSchema,
     values: restPauseSet,
   });
-  const pauseSecondsErrorMessage = hasSubmitted
-    ? restPauseSetFormDecoding.errorMessages.pauseSeconds
-    : null;
-  const segmentCountErrorMessage = hasSubmitted
-    ? restPauseSetFormDecoding.errorMessages.segmentCount
-    : null;
+  const pauseSecondsErrorMessage =
+    restPauseSetFormDecoding.errorMessages.pauseSeconds;
+  const segmentCountErrorMessage =
+    restPauseSetFormDecoding.errorMessages.segmentCount;
 
   return (
     <>

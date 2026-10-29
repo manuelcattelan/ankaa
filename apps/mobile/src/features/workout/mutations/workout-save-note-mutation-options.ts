@@ -7,7 +7,9 @@ import type { ApplicationRuntime } from "#/layer.ts";
 
 import { WorkoutApplicationService } from "#/features/workout/workout-application-service.ts";
 
-const program = Effect.fn("saveNote")(function* (input: WorkoutSaveNoteInput) {
+const program = Effect.fn("workoutSaveNoteMutation")(function* (
+  input: WorkoutSaveNoteInput,
+) {
   const workoutApplicationService = yield* WorkoutApplicationService;
 
   return yield* workoutApplicationService.saveNote(input);

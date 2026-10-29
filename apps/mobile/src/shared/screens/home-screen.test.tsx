@@ -182,7 +182,7 @@ describe("HomeScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("disables Delete account while the request to delete the Account waits for its answer", async () => {
+  it("shows Delete account as busy while the request to delete the Account waits for its answer", async () => {
     const user = userEvent.setup();
     const deleteUserResponse = Promise.withResolvers<Response>();
     renderScreen({
@@ -199,9 +199,7 @@ describe("HomeScreen", () => {
       await screen.findByRole("button", { name: "Delete account" }),
     );
 
-    expect(
-      screen.getByRole("button", { name: "Delete account" }),
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Delete account" })).toBeBusy();
   });
 
   it("tells the User to check their email once the server answers the request to delete the Account", async () => {
@@ -231,7 +229,7 @@ describe("HomeScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("enables Delete account again once the server answers the request to delete the Account", async () => {
+  it("shows Delete account as no longer busy once the server answers the request to delete the Account", async () => {
     const user = userEvent.setup();
     const deleteUserResponse = Promise.withResolvers<Response>();
     renderScreen({
@@ -254,7 +252,7 @@ describe("HomeScreen", () => {
     await waitFor(() => {
       expect(
         screen.getByRole("button", { name: "Delete account" }),
-      ).toBeEnabled();
+      ).not.toBeBusy();
     });
   });
 });

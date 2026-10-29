@@ -132,6 +132,7 @@ export class WorkoutApplicationService extends Context.Service<
           });
         },
       );
+
       /**
        * Asks for notification permission the first time a countdown starts,
        * and replaces the notification of an earlier countdown with

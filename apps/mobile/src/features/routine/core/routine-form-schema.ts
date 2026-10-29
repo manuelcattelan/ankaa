@@ -27,7 +27,8 @@ const mainRoutineExerciseFormSchema = Schema.Struct({
 });
 
 // Only a bug can leave an Exercise group empty or repeat an id, because the
-// editor creates both, so the User can only try again.
+// editor creates both, so the User can only try again
+// (https://github.com/manuelcattelan/ankaa/issues/108).
 const exerciseGroupFormSchema = Schema.Struct({
   exercises: Schema.Array(routineExerciseFormSchema).check(
     exerciseGroupExercisesFilter.annotate({

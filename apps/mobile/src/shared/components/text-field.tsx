@@ -8,7 +8,20 @@ export function TextField({
   errorMessage,
   label,
   ...rest
-}: TextInputProps & {
+}: Pick<
+  TextInputProps,
+  | "autoCapitalize"
+  | "autoComplete"
+  | "autoCorrect"
+  | "autoFocus"
+  | "enterKeyHint"
+  | "inputMode"
+  | "maxLength"
+  | "multiline"
+  | "onChangeText"
+  | "onSubmitEditing"
+  | "value"
+> & {
   errorMessage: null | string;
   label: string;
 }) {

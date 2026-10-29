@@ -15,15 +15,14 @@ export function RoutineEditorDropSet({
   onChangeDropSet: (dropSet: DropSetDraft) => void;
 }) {
   const dropSetFormDecoding = decodeForm({
+    hasSubmitted,
     schema: dropSetFormSchema,
     values: dropSet,
   });
-  const segmentCountErrorMessage = hasSubmitted
-    ? dropSetFormDecoding.errorMessages.segmentCount
-    : null;
-  const weightPercentageErrorMessage = hasSubmitted
-    ? dropSetFormDecoding.errorMessages.weightPercentage
-    : null;
+  const segmentCountErrorMessage =
+    dropSetFormDecoding.errorMessages.segmentCount;
+  const weightPercentageErrorMessage =
+    dropSetFormDecoding.errorMessages.weightPercentage;
 
   return (
     <>

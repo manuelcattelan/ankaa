@@ -8,6 +8,7 @@
     "**/*.mts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
+    "../../tooling/eslint/eslint-config-expo.d.ts",
     "expo-env.d.ts"
   ]
 }

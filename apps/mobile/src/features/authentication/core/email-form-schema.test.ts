@@ -44,11 +44,9 @@ describe("emailFormSchema", () => {
     );
   });
 
-  it("rejects an address surrounded by spaces", () => {
-    expect(() =>
+  it("trims the spaces around an address", () => {
+    expect(
       decodeEmailForm({ ...EMAIL_FORM, email: " name@example.com " }),
-    ).toThrow(
-      "This email address isn't valid: enter an address like name@example.com.",
-    );
+    ).toEqual({ email: "name@example.com" });
   });
 });

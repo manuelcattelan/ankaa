@@ -1122,7 +1122,7 @@ describe("applicationPlugin", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toStrictEqual({
-      ["result"]: {
+      result: {
         data: [
           {
             amountUnit: "repetition",
@@ -1483,7 +1483,7 @@ describe("applicationPlugin", () => {
       {
         relation: ["delegate_permission/common.handle_all_urls"],
         target: {
-          ["namespace"]: "android_app",
+          namespace: "android_app",
           ["package_name"]: "app.ankaa.test",
           ["sha256_cert_fingerprints"]: [
             "14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5",
@@ -1582,6 +1582,19 @@ describe("applicationPlugin", () => {
 
     expect(response.statusCode).toBe(429);
     expect(response.headers["x-retry-after"]).toBe("60");
+  });
+
+  it("leaves the better-auth route to better-auth's limits, answering it for an IP address over the limit of the other routes", async () => {
+    const remoteAddress = "192.0.2.6";
+    await sendRequestsUpToRateLimit({ remoteAddress, server });
+
+    const response = await server.inject({
+      method: "GET",
+      remoteAddress,
+      url: "/api/auth/get-session",
+    });
+
+    expect(response.statusCode).toBe(200);
   });
 
   it("answers a verification code request from an IP address under its limit while another IP address is over its own", async () => {

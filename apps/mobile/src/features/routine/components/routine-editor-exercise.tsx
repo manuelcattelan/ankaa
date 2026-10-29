@@ -20,14 +20,14 @@ import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 export function RoutineEditorExercise({
   children,
   dispatch,
-  exerciseNames,
+  exerciseName,
   hasSubmitted,
   routineExercise,
   warmUpForExerciseName,
 }: {
   children?: ReactNode;
   dispatch: (action: RoutineDraftAction) => void;
-  exerciseNames: Map<string, string>;
+  exerciseName: string;
   hasSubmitted: boolean;
   routineExercise: RoutineExerciseDraft;
   warmUpForExerciseName?: string;
@@ -44,7 +44,7 @@ export function RoutineEditorExercise({
 
   return (
     <>
-      <Text>{exerciseNames.get(routineExercise.exerciseId)}</Text>
+      <Text>{exerciseName}</Text>
       {warmUpForExerciseName === undefined ? null : (
         <Text>
           {SHARED_MESSAGES.warmUpForExerciseLabel(warmUpForExerciseName)}

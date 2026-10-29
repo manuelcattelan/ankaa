@@ -1,7 +1,8 @@
 import * as Predicate from "effect/Predicate";
 
-import { REQUEST_CANCELED_ERROR_CODE } from "#/features/authentication/constants/request-canceled-error-code.ts";
 import { AppleSignInCanceledError } from "#/features/authentication/errors/apple-sign-in-canceled-error.ts";
+
+const REQUEST_CANCELED_ERROR_CODE = "ERR_REQUEST_CANCELED";
 
 /**
  * Maps a failure of Apple sign-in to the error the sign-in screen acts on, or

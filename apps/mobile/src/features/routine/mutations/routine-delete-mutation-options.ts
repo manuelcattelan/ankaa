@@ -7,7 +7,7 @@ import type { ApplicationRuntime } from "#/layer.ts";
 
 import { RoutineApplicationService } from "#/features/routine/routine-application-service.ts";
 
-const program = Effect.fn("deleteRoutine")(function* (
+const program = Effect.fn("routineDeleteMutation")(function* (
   input: RoutineDeleteInput,
 ) {
   const routineApplicationService = yield* RoutineApplicationService;

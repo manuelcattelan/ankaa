@@ -134,8 +134,8 @@ export const workoutExercise = snakeCase.table(
     note: text(),
     plannedNote: text(),
     position: integer().notNull(),
+    skipNote: text(),
     skipReason: text({ enum: SKIP_REASONS }),
-    skipReasonNote: text(),
     updatedAt: timestamp({ withTimezone: true })
       .notNull()
       .defaultNow()
@@ -186,7 +186,7 @@ export const workoutExercise = snakeCase.table(
     ),
     check(
       "workout_exercise_skip_check",
-      sql`${table.skipReason} is not null or ${table.skipReasonNote} is null`,
+      sql`${table.skipReason} is not null or ${table.skipNote} is null`,
     ),
     check(
       "workout_exercise_parent_check",

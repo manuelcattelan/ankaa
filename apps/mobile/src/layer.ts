@@ -5,33 +5,29 @@ import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 
 import { AuthenticationApplicationService } from "#/features/authentication/authentication-application-service.ts";
-import { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts";
-import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
 import { RoutineApplicationService } from "#/features/routine/routine-application-service.ts";
 import { WorkoutApplicationService } from "#/features/workout/workout-application-service.ts";
 import { ExerciseApplicationService } from "#/shared/exercise-application-service.ts";
 import { Accessibility } from "#/shared/services/accessibility.ts";
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 import { Crypto } from "#/shared/services/crypto.ts";
-import { Notifications } from "#/shared/services/notifications.ts";
-import { TrpcClient } from "#/shared/services/trpc-client.ts";
 
 export type ApplicationRuntime = ManagedRuntime.ManagedRuntime<
   Layer.Success<typeof applicationLayer>,
   Layer.Error<typeof applicationLayer>
 >;
 
+/**
+ * The Layer of the Services that the UI reads, each built with the Services
+ * it depends on.
+ */
 export const applicationLayer = Layer.mergeAll(
   Accessibility.layer,
-  AppleSignIn.layer,
   AuthenticationApplicationService.layer,
   AuthenticationClient.layer,
   Crypto.layer,
   ExerciseApplicationService.layer,
-  GoogleSignIn.layer,
-  Notifications.layer,
   RoutineApplicationService.layer,
-  TrpcClient.layer,
   WorkoutApplicationService.layer,
 ).pipe(
   Layer.provide(

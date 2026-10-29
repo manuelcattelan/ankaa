@@ -6,6 +6,7 @@ import { SegmentCountInvalidError } from "@ankaa/core/features/workout/errors/se
 import { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
 import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import { getMatchingPlannedSet } from "@ankaa/core/features/workout/get-matching-planned-set";
+import { getMaximumSegmentCount } from "@ankaa/core/features/workout/get-maximum-segment-count";
 
 /**
  * Decides whether a Save may write a Set into a Workout exercise, given the
@@ -48,7 +49,7 @@ export function decideRecordedSetSave({
     plannedSets: workoutExercise.plannedSets,
     position,
   });
-  const maximumSegmentCount = plannedSet.intensityTechnique?.segmentCount ?? 1;
+  const maximumSegmentCount = getMaximumSegmentCount(plannedSet);
 
   if (
     input.segments.length === 0 ||

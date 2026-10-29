@@ -36,17 +36,14 @@ export function WorkoutStartButton({
 
   const startWorkout = useMutation({
     ...workoutStartMutationOptions(runtime),
-    onError: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: workoutFindInProgressQueryOptions(runtime).queryKey,
-      });
-    },
-    onSuccess: async () => {
+    onSettled: async (data, error) => {
       await queryClient.invalidateQueries({
         queryKey: workoutFindInProgressQueryOptions(runtime).queryKey,
       });
 
-      router.push("/workout");
+      if (error === null) {
+        router.push("/workout");
+      }
     },
   });
 

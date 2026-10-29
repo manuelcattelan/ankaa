@@ -16,8 +16,8 @@ export type MainRoutineExerciseDraft =
 export type RoutineDraftAction =
   | { days: readonly DayOfWeek[]; type: "changedDays" }
   | {
+      direction: ExerciseGroupMoveDirection;
       exerciseGroupId: string;
-      exerciseGroupMoveDirection: ExerciseGroupMoveDirection;
       section: Section;
       type: "movedExerciseGroup";
     }
@@ -79,12 +79,10 @@ export function routineDraftReducer(
 ) {
   switch (action.type) {
     case "addedExercise": {
-      const routineExerciseDraft = {
+      const routineExerciseDraft = createRoutineExerciseDraft({
         exerciseId: action.exerciseId,
         id: action.routineExerciseId,
-        note: "",
-        sets: [],
-      };
+      });
       const exerciseGroupDraft = {
         exercises: [routineExerciseDraft],
         id: action.exerciseGroupId,
@@ -119,7 +117,7 @@ export function routineDraftReducer(
 
     case "addedSet": {
       return changeRoutineExercise({
-        changeRoutineExercise: (routineExerciseDraft) => ({
+        getChanges: (routineExerciseDraft) => ({
           sets: [
             ...routineExerciseDraft.sets,
             {
@@ -146,12 +144,10 @@ export function routineDraftReducer(
                 ...mainRoutineExerciseDraft,
                 warmUpExercises: [
                   ...mainRoutineExerciseDraft.warmUpExercises,
-                  {
+                  createRoutineExerciseDraft({
                     exerciseId: action.exerciseId,
                     id: action.routineExerciseId,
-                    note: "",
-                    sets: [],
-                  },
+                  }),
                 ],
               }
             : mainRoutineExerciseDraft,
@@ -169,7 +165,7 @@ export function routineDraftReducer(
 
     case "changedExerciseNote": {
       return changeRoutineExercise({
-        changeRoutineExercise: () => ({ note: action.note }),
+        getChanges: () => ({ note: action.note }),
         routineDraft,
         routineExerciseId: action.routineExerciseId,
       });
@@ -181,7 +177,7 @@ export function routineDraftReducer(
 
     case "changedSet": {
       return changeRoutineExercise({
-        changeRoutineExercise: (routineExerciseDraft) => ({
+        getChanges: (routineExerciseDraft) => ({
           sets: routineExerciseDraft.sets.map((set) =>
             set.id === action.set.id ? action.set : set,
           ),
@@ -237,8 +233,8 @@ export function routineDraftReducer(
       return changeSectionExerciseGroups({
         changeExerciseGroups: (exerciseGroups) =>
           moveExerciseGroup({
+            direction: action.direction,
             exerciseGroupId: action.exerciseGroupId,
-            exerciseGroupMoveDirection: action.exerciseGroupMoveDirection,
             exerciseGroups,
           }),
         routineDraft,
@@ -283,7 +279,7 @@ export function routineDraftReducer(
 
     case "removedSet": {
       return changeRoutineExercise({
-        changeRoutineExercise: (routineExerciseDraft) => ({
+        getChanges: (routineExerciseDraft) => ({
           sets: routineExerciseDraft.sets.filter(
             (set) => set.id !== action.setId,
           ),
@@ -320,11 +316,11 @@ function changeMainRoutineExercises({
  * the tree, Warm-up exercises included.
  */
 function changeRoutineExercise({
-  changeRoutineExercise: getRoutineExerciseChanges,
+  getChanges,
   routineDraft,
   routineExerciseId,
 }: {
-  changeRoutineExercise: (
+  getChanges: (
     routineExerciseDraft: RoutineExerciseDraft,
   ) => Partial<RoutineExerciseDraft>;
   routineDraft: RoutineDraft;
@@ -336,7 +332,7 @@ function changeRoutineExercise({
     return routineExerciseDraft.id === routineExerciseId
       ? {
           ...routineExerciseDraft,
-          ...getRoutineExerciseChanges(routineExerciseDraft),
+          ...getChanges(routineExerciseDraft),
         }
       : routineExerciseDraft;
   }
@@ -448,21 +444,19 @@ function joinNextExerciseGroup<
 }
 
 function moveExerciseGroup<TRoutineExerciseDraft extends RoutineExerciseDraft>({
+  direction,
   exerciseGroupId,
-  exerciseGroupMoveDirection,
   exerciseGroups,
 }: {
+  direction: ExerciseGroupMoveDirection;
   exerciseGroupId: string;
-  exerciseGroupMoveDirection: ExerciseGroupMoveDirection;
   exerciseGroups: readonly ExerciseGroupDraftOf<TRoutineExerciseDraft>[];
 }) {
   const exerciseGroupIndex = exerciseGroups.findIndex(
     (exerciseGroup) => exerciseGroup.id === exerciseGroupId,
   );
   const neighborExerciseGroupIndex =
-    exerciseGroupMoveDirection === "up"
-      ? exerciseGroupIndex - 1
-      : exerciseGroupIndex + 1;
+    direction === "up" ? exerciseGroupIndex - 1 : exerciseGroupIndex + 1;
   const exerciseGroup = exerciseGroups[exerciseGroupIndex];
   const neighborExerciseGroup = exerciseGroups[neighborExerciseGroupIndex];
 
@@ -490,4 +484,18 @@ function removeRoutineExercise<
       exercises: exerciseGroup.exercises.filter(isKept),
     }))
     .filter((exerciseGroup) => exerciseGroup.exercises.length > 0);
+}
+
+/**
+ * Creates the Draft of a new Routine exercise of `exerciseId`, with no note
+ * and no Set yet.
+ */
+function createRoutineExerciseDraft({
+  exerciseId,
+  id,
+}: {
+  exerciseId: string;
+  id: string;
+}) {
+  return { exerciseId, id, note: "", sets: [] };
 }

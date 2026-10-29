@@ -1,21 +1,12 @@
 import { Fragment } from "react";
 
-import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
-import type {
-  RecordedSetDraftEntry,
-  RecordedSetDraftsAction,
-} from "#/features/workout/core/recorded-set-drafts-reducer.ts";
-import type {
-  WorkoutExerciseDrafts,
-  WorkoutExerciseDraftsAction,
-} from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
 import type { Workout } from "#/shared/workout.ts";
 
 import { WorkoutExercise } from "#/features/workout/components/workout-exercise.tsx";
+import { useWorkoutContext } from "#/features/workout/hooks/use-workout-context.ts";
 import { Text } from "#/shared/components/text.tsx";
+import { MINIMUM_SUPERSET_EXERCISE_COUNT } from "#/shared/constants/minimum-superset-exercise-count.ts";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
-
-const MINIMUM_SUPERSET_EXERCISE_COUNT = 2;
 
 /**
  * Shows the exercises of an Exercise group, each after its Warm-up exercises.
@@ -23,28 +14,12 @@ const MINIMUM_SUPERSET_EXERCISE_COUNT = 2;
  * exercise offers to start Rest.
  */
 export function WorkoutExerciseGroup({
-  countdown,
-  dispatch,
-  dispatchWorkoutExerciseDrafts,
   exerciseGroup,
-  exerciseNames,
-  onEndCountdown,
-  onSkipCountdown,
-  onStartCountdown,
-  recordedSetDraftEntries,
-  workoutExerciseDrafts,
 }: {
-  countdown: Countdown | null;
-  dispatch: (action: RecordedSetDraftsAction) => void;
-  dispatchWorkoutExerciseDrafts: (action: WorkoutExerciseDraftsAction) => void;
   exerciseGroup: Workout["sections"][keyof Workout["sections"]][number];
-  exerciseNames: Map<string, string>;
-  onEndCountdown: () => void;
-  onSkipCountdown: () => void;
-  onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
-  recordedSetDraftEntries: readonly RecordedSetDraftEntry[];
-  workoutExerciseDrafts: WorkoutExerciseDrafts;
 }) {
+  const workoutContext = useWorkoutContext();
+
   return (
     <>
       {exerciseGroup.exercises.length >= MINIMUM_SUPERSET_EXERCISE_COUNT ? (
@@ -56,35 +31,27 @@ export function WorkoutExerciseGroup({
             ? workoutExercise.warmUpExercises.map((warmUpWorkoutExercise) => (
                 <WorkoutExercise
                   canStartRest
-                  countdown={countdown}
-                  dispatch={dispatch}
-                  dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
-                  exerciseNames={exerciseNames}
+                  exerciseName={
+                    workoutContext.exerciseNames.get(
+                      warmUpWorkoutExercise.exerciseId,
+                    ) ?? ""
+                  }
                   key={warmUpWorkoutExercise.id}
-                  onEndCountdown={onEndCountdown}
-                  onSkipCountdown={onSkipCountdown}
-                  onStartCountdown={onStartCountdown}
-                  recordedSetDraftEntries={recordedSetDraftEntries}
                   warmUpForExerciseName={
-                    exerciseNames.get(workoutExercise.exerciseId) ?? ""
+                    workoutContext.exerciseNames.get(
+                      workoutExercise.exerciseId,
+                    ) ?? ""
                   }
                   workoutExercise={warmUpWorkoutExercise}
-                  workoutExerciseDrafts={workoutExerciseDrafts}
                 />
               ))
             : null}
           <WorkoutExercise
             canStartRest={index === exerciseGroup.exercises.length - 1}
-            countdown={countdown}
-            dispatch={dispatch}
-            dispatchWorkoutExerciseDrafts={dispatchWorkoutExerciseDrafts}
-            exerciseNames={exerciseNames}
-            onEndCountdown={onEndCountdown}
-            onSkipCountdown={onSkipCountdown}
-            onStartCountdown={onStartCountdown}
-            recordedSetDraftEntries={recordedSetDraftEntries}
+            exerciseName={
+              workoutContext.exerciseNames.get(workoutExercise.exerciseId) ?? ""
+            }
             workoutExercise={workoutExercise}
-            workoutExerciseDrafts={workoutExerciseDrafts}
           />
         </Fragment>
       ))}

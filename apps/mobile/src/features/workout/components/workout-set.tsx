@@ -2,13 +2,13 @@ import type { WeightUnit } from "@ankaa/core/features/workout/constants/weight";
 import type { AmountUnit } from "@ankaa/core/shared/constants/amount";
 import type { WeightType } from "@ankaa/core/shared/constants/weight-types";
 
+import { getMaximumSegmentCount } from "@ankaa/core/features/workout/get-maximum-segment-count";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
-import type { RecordedSetDraftsAction } from "#/features/workout/core/recorded-set-drafts-reducer.ts";
 import type { RecordedSetDraft } from "#/features/workout/core/recorded-set-form-schema.ts";
-import type { Workout } from "#/shared/workout.ts";
+import type { PlannedSet, RecordedSet } from "#/shared/workout.ts";
 
 import { WorkoutCountdown } from "#/features/workout/components/workout-countdown.tsx";
 import { WorkoutPlannedSet } from "#/features/workout/components/workout-planned-set.tsx";
@@ -18,6 +18,7 @@ import { getWorkoutRemoveSetErrorMessage } from "#/features/workout/core/get-wor
 import { getWorkoutSaveSetErrorMessage } from "#/features/workout/core/get-workout-save-set-error-message.ts";
 import { isRecordedSetDraftSaved } from "#/features/workout/core/is-recorded-set-draft-saved.ts";
 import { recordedSetFormSchema } from "#/features/workout/core/recorded-set-form-schema.ts";
+import { useWorkoutContext } from "#/features/workout/hooks/use-workout-context.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { workoutRemoveSetMutationOptions } from "#/features/workout/mutations/workout-remove-set-mutation-options.ts";
 import { workoutSaveSetMutationOptions } from "#/features/workout/mutations/workout-save-set-mutation-options.ts";
@@ -28,11 +29,8 @@ import { decodeForm } from "#/shared/core/decode-form.ts";
 import { useCreateId } from "#/shared/hooks/use-create-id.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
-type WorkoutExercise =
-  Workout["sections"]["coolDown"][number]["exercises"][number];
-
 /**
- * Shows one Set of a Workout exercise with what the plan says about it, and
+ * Shows one Set of a Workout exercise with its matching planned Set, and
  * lets the User fill in its Segments and Save it when it's a recorded Set or
  * the next one to record, and remove it when it's a recorded Set. Under it,
  * the User starts the countdown of its planned Rest, whether or not it's
@@ -41,14 +39,9 @@ type WorkoutExercise =
 export function WorkoutSet({
   amountUnit,
   canStartRest,
-  countdown,
-  dispatch,
   draft,
   exerciseId,
   isRecordable,
-  onEndCountdown,
-  onSkipCountdown,
-  onStartCountdown,
   plannedSet,
   position,
   recordedSet,
@@ -58,22 +51,19 @@ export function WorkoutSet({
 }: {
   amountUnit: AmountUnit;
   canStartRest: boolean;
-  countdown: Countdown | null;
-  dispatch: (action: RecordedSetDraftsAction) => void;
   draft: null | RecordedSetDraft;
   exerciseId: string;
   isRecordable: boolean;
-  onEndCountdown: () => void;
-  onSkipCountdown: () => void;
-  onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
-  plannedSet: Omit<WorkoutExercise["plannedSets"][number], "id">;
+  plannedSet: Omit<PlannedSet, "id">;
   position: number;
-  recordedSet: null | WorkoutExercise["recordedSets"][number];
+  recordedSet: null | RecordedSet;
   weightType: WeightType;
   weightUnit: WeightUnit;
   workoutExerciseId: string;
 }) {
   const queryClient = useQueryClient();
+
+  const workoutContext = useWorkoutContext();
 
   const runtime = useRuntime();
 
@@ -88,7 +78,7 @@ export function WorkoutSet({
         queryKey: workoutFindInProgressQueryOptions(runtime).queryKey,
       });
 
-      dispatch({
+      workoutContext.dispatch({
         position,
         type: "clearedRecordedSetDraft",
         workoutExerciseId,
@@ -103,25 +93,30 @@ export function WorkoutSet({
       });
 
       setHasSubmitted(false);
-      dispatch({ position, type: "removedRecordedSet", workoutExerciseId });
+      workoutContext.dispatch({
+        position,
+        type: "removedRecordedSet",
+        workoutExerciseId,
+      });
     },
   });
 
   const recordedSetDraft = draft ?? createRecordedSetDraft(recordedSet);
   const recordedSetFormDecoding = decodeForm({
+    hasSubmitted,
     schema: recordedSetFormSchema,
     values: recordedSetDraft,
   });
-  const maximumSegmentCount = plannedSet.intensityTechnique?.segmentCount ?? 1;
+  const maximumSegmentCount = getMaximumSegmentCount(plannedSet);
   const restSeconds = canStartRest ? plannedSet.restSeconds : null;
   const pauseSeconds =
     plannedSet.intensityTechnique?._tag === "RestPauseSet"
       ? plannedSet.intensityTechnique.pauseSeconds
       : null;
-  const setCountdown =
-    countdown?.workoutExerciseId === workoutExerciseId &&
-    countdown.position === position
-      ? countdown
+  const shownCountdown =
+    workoutContext.countdown?.workoutExerciseId === workoutExerciseId &&
+    workoutContext.countdown.position === position
+      ? workoutContext.countdown
       : null;
   const statusMessage = getStatusMessage();
 
@@ -140,7 +135,7 @@ export function WorkoutSet({
   }
 
   function handleChangeDraft(changedDraft: RecordedSetDraft) {
-    dispatch(
+    workoutContext.dispatch(
       isRecordedSetDraftSaved({ draft: changedDraft, recordedSet })
         ? { position, type: "clearedRecordedSetDraft", workoutExerciseId }
         : {
@@ -162,7 +157,12 @@ export function WorkoutSet({
     kind: Countdown["kind"];
     seconds: number;
   }) {
-    onStartCountdown({ kind, position, seconds, workoutExerciseId });
+    workoutContext.onStartCountdown({
+      kind,
+      position,
+      seconds,
+      workoutExerciseId,
+    });
   }
 
   function handleRemoveSet(removedRecordedSet: { id: string }) {
@@ -189,6 +189,7 @@ export function WorkoutSet({
     handleChangeDraft(savedDraft);
 
     const savedDraftDecoding = decodeForm({
+      hasSubmitted: true,
       schema: recordedSetFormSchema,
       values: savedDraft,
     });
@@ -216,7 +217,8 @@ export function WorkoutSet({
               amountUnit={amountUnit}
               hasSubmitted={hasSubmitted}
               key={segmentPosition}
-              onChangeSegment={(changedSegment) => {
+              number={maximumSegmentCount === 1 ? null : segmentPosition + 1}
+              onChange={(changedSegment) => {
                 handleChangeDraft({
                   ...recordedSetDraft,
                   segments: recordedSetDraft.segments.map(
@@ -228,9 +230,6 @@ export function WorkoutSet({
                 });
               }}
               segment={segment}
-              segmentNumber={
-                maximumSegmentCount === 1 ? null : segmentPosition + 1
-              }
               weightType={weightType}
               weightUnit={weightUnit}
             />
@@ -299,16 +298,16 @@ export function WorkoutSet({
           title={WORKOUT_MESSAGES.startRestButton}
         />
       )}
-      {setCountdown === null ? null : (
+      {shownCountdown === null ? null : (
         <>
           <WorkoutCountdown
-            countdown={setCountdown}
-            key={setCountdown.startTime}
-            onEnd={onEndCountdown}
+            countdown={shownCountdown}
+            key={shownCountdown.startTime}
+            onEnd={workoutContext.onEndCountdown}
           />
-          {setCountdown.kind === "rest" ? (
+          {shownCountdown.kind === "rest" ? (
             <Button
-              onPress={onSkipCountdown}
+              onPress={workoutContext.onSkipCountdown}
               title={WORKOUT_MESSAGES.skipRestButton}
             />
           ) : null}

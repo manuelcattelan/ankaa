@@ -7,7 +7,9 @@ import type { ApplicationRuntime } from "#/layer.ts";
 
 import { RoutineApplicationService } from "#/features/routine/routine-application-service.ts";
 
-const program = Effect.fn("saveRoutine")(function* (input: RoutineSaveInput) {
+const program = Effect.fn("routineSaveMutation")(function* (
+  input: RoutineSaveInput,
+) {
   const routineApplicationService = yield* RoutineApplicationService;
 
   return yield* routineApplicationService.save(input);

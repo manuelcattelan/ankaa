@@ -30,18 +30,15 @@ export function WithEmailScreen() {
     },
   });
 
-  const trimmedEmail = email.trim();
   const emailFormDecoding = decodeForm({
+    hasSubmitted,
     schema: emailFormSchema,
-    values: { email: trimmedEmail },
+    values: { email },
   });
 
-  const emailValidationErrorMessage = hasSubmitted
-    ? emailFormDecoding.errorMessages.email
-    : null;
   const emailErrorMessage =
     sendOtpCode.error === null
-      ? emailValidationErrorMessage
+      ? emailFormDecoding.errorMessages.email
       : getAuthenticationErrorMessage(sendOtpCode.error);
 
   function handleSendOtpCode() {
@@ -52,20 +49,28 @@ export function WithEmailScreen() {
     setHasSubmitted(true);
     sendOtpCode.reset();
 
-    if (!emailFormDecoding.isValid) {
-      if (emailFormDecoding.errorMessages.email !== null) {
-        announceMessage(emailFormDecoding.errorMessages.email);
+    const submittedEmailFormDecoding = decodeForm({
+      hasSubmitted: true,
+      schema: emailFormSchema,
+      values: { email },
+    });
+
+    if (submittedEmailFormDecoding.value === null) {
+      if (submittedEmailFormDecoding.errorMessages.email !== null) {
+        announceMessage(submittedEmailFormDecoding.errorMessages.email);
       }
 
       return;
     }
 
+    const decodedEmail = submittedEmailFormDecoding.value.email;
+
     sendOtpCode.mutate(
-      { email: trimmedEmail },
+      { email: decodedEmail },
       {
         onSuccess: () => {
           router.push({
-            params: { email: trimmedEmail },
+            params: { email: decodedEmail },
             pathname: "/sign-in/with-email/validate-otp-code",
           });
         },

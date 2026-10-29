@@ -44,7 +44,7 @@ export function WorkoutStopButton({
 
   function getStatusMessage() {
     if (hasRefusedStop && unsavedDraftLabels.length > 0) {
-      return WORKOUT_MESSAGES.draftsUnsavedError([...unsavedDraftLabels]);
+      return WORKOUT_MESSAGES.draftsUnsavedError(unsavedDraftLabels);
     }
 
     return stopWorkout.error === null

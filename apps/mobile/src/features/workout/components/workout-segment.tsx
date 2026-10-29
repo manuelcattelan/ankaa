@@ -13,42 +13,39 @@ import { decodeForm } from "#/shared/core/decode-form.ts";
 export function WorkoutSegment({
   amountUnit,
   hasSubmitted,
-  onChangeSegment,
+  number,
+  onChange,
   segment,
-  segmentNumber,
   weightType,
   weightUnit,
 }: {
   amountUnit: AmountUnit;
   hasSubmitted: boolean;
-  onChangeSegment: (segment: SegmentDraft) => void;
+  number: null | number;
+  onChange: (segment: SegmentDraft) => void;
   segment: SegmentDraft;
-  segmentNumber: null | number;
   weightType: WeightType;
   weightUnit: WeightUnit;
 }) {
   const segmentFormDecoding = decodeForm({
+    hasSubmitted,
     schema: segmentFormSchema,
     values: segment,
   });
-  const amountErrorMessage = hasSubmitted
-    ? segmentFormDecoding.errorMessages.amount
-    : null;
-  const weightErrorMessage = hasSubmitted
-    ? segmentFormDecoding.errorMessages.weight
-    : null;
+  const amountErrorMessage = segmentFormDecoding.errorMessages.amount;
+  const weightErrorMessage = segmentFormDecoding.errorMessages.weight;
 
   return (
     <>
-      {segmentNumber === null ? null : (
-        <Text>{WORKOUT_MESSAGES.segmentLabel(segmentNumber)}</Text>
+      {number === null ? null : (
+        <Text>{WORKOUT_MESSAGES.segmentLabel(number)}</Text>
       )}
       <TextField
         errorMessage={amountErrorMessage}
         inputMode="numeric"
         label={WORKOUT_MESSAGES.amountLabels[amountUnit]}
         onChangeText={(amount) => {
-          onChangeSegment({ ...segment, amount });
+          onChange({ ...segment, amount });
         }}
         value={segment.amount}
       />
@@ -58,7 +55,7 @@ export function WorkoutSegment({
           inputMode="decimal"
           label={WORKOUT_MESSAGES.weightLabels[weightUnit]}
           onChangeText={(weight) => {
-            onChangeSegment({ ...segment, weight });
+            onChange({ ...segment, weight });
           }}
           value={segment.weight}
         />

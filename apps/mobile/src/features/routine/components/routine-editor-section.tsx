@@ -1,5 +1,6 @@
 import type { Section } from "@ankaa/core/shared/constants/sections";
 
+import type { ExercisePickerTarget } from "#/features/routine/core/exercise-picker-target.ts";
 import type {
   ExerciseGroupDraft,
   MainExerciseGroupDraft,
@@ -12,14 +13,6 @@ import { Button } from "#/shared/components/button.tsx";
 import { Text } from "#/shared/components/text.tsx";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
-/**
- * Where the exercise that the User picks goes: a new Exercise group at the
- * end of a Section, or a new Warm-up exercise of a main Section's Routine
- * exercise.
- */
-export type ExercisePickerTarget =
-  { section: Section } | { warmUpForRoutineExerciseId: string };
-
 export function RoutineEditorSection({
   dispatch,
   exerciseGroups,
@@ -30,7 +23,7 @@ export function RoutineEditorSection({
 }: {
   dispatch: (action: RoutineDraftAction) => void;
   exerciseGroups: readonly (ExerciseGroupDraft | MainExerciseGroupDraft)[];
-  exerciseNames: Map<string, string>;
+  exerciseNames: ReadonlyMap<string, string>;
   hasSubmitted: boolean;
   onOpenExercisePicker: (exercisePickerTarget: ExercisePickerTarget) => void;
   section: Section;

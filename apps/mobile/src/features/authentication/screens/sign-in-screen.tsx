@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import * as ExpoAppleAuthentication from "expo-apple-authentication";
 import { Platform, StyleSheet, useColorScheme } from "react-native";
 
+import { ACCOUNT_DELETED_SEARCH_PARAMETERS } from "#/features/authentication/constants/account-deleted-search-parameters.ts";
 import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
 import { getSessionErrorMessage } from "#/features/authentication/core/get-session-error-message.ts";
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
@@ -17,10 +18,15 @@ import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
 const APPLE_BUTTON_CORNER_RADIUS = 8;
 
+/**
+ * Signs the User in with Apple or Google, or leads them to sign in with their
+ * email address, and tells them when `isAccountDeletedParameter` says that
+ * their Account has just been deleted.
+ */
 export function SignInScreen({
-  isAccountDeleted,
+  isAccountDeletedParameter,
 }: {
-  isAccountDeleted: boolean;
+  isAccountDeletedParameter: null | string;
 }) {
   const runtime = useRuntime();
 
@@ -28,39 +34,42 @@ export function SignInScreen({
 
   const colorScheme = useColorScheme();
 
-  const signInApple = useMutation(appleSignInMutationOptions(runtime));
+  const signInWithApple = useMutation(appleSignInMutationOptions(runtime));
 
-  const signInGoogle = useMutation(googleSignInMutationOptions(runtime));
+  const signInWithGoogle = useMutation(googleSignInMutationOptions(runtime));
 
-  const isSignInPending = signInApple.isPending || signInGoogle.isPending;
+  const isSignInPending =
+    signInWithApple.isPending || signInWithGoogle.isPending;
   const sessionErrorMessage = getSessionErrorMessage(session);
-  const signInError = signInApple.error ?? signInGoogle.error;
-  const accountDeletedMessage = isAccountDeleted
-    ? AUTHENTICATION_MESSAGES.accountDeletedMessage
-    : null;
+  const signInError = signInWithApple.error ?? signInWithGoogle.error;
+  const accountDeletedStatus =
+    isAccountDeletedParameter ===
+    ACCOUNT_DELETED_SEARCH_PARAMETERS.isAccountDeleted
+      ? AUTHENTICATION_MESSAGES.accountDeletedStatus
+      : null;
   const statusMessage =
     signInError === null
-      ? (sessionErrorMessage ?? accountDeletedMessage)
+      ? (sessionErrorMessage ?? accountDeletedStatus)
       : getAuthenticationErrorMessage(signInError);
 
-  function handleSignInApple() {
+  function handleSignInWithApple() {
     if (isSignInPending) {
       return;
     }
 
-    signInGoogle.reset();
+    signInWithGoogle.reset();
 
-    signInApple.mutate();
+    signInWithApple.mutate();
   }
 
-  function handleSignInGoogle() {
+  function handleSignInWithGoogle() {
     if (isSignInPending) {
       return;
     }
 
-    signInApple.reset();
+    signInWithApple.reset();
 
-    signInGoogle.mutate();
+    signInWithGoogle.mutate();
   }
 
   return (
@@ -77,7 +86,7 @@ export function SignInScreen({
             ExpoAppleAuthentication.AppleAuthenticationButtonType.CONTINUE
           }
           cornerRadius={APPLE_BUTTON_CORNER_RADIUS}
-          onPress={handleSignInApple}
+          onPress={handleSignInWithApple}
           style={styles.appleButton}
           testID="apple-sign-in-button"
         />
@@ -88,8 +97,7 @@ export function SignInScreen({
             ? GoogleSigninButton.Color.Dark
             : GoogleSigninButton.Color.Light
         }
-        disabled={isSignInPending}
-        onPress={handleSignInGoogle}
+        onPress={handleSignInWithGoogle}
         size={GoogleSigninButton.Size.Wide}
         testID="google-sign-in-button"
       />

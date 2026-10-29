@@ -1,12 +1,18 @@
 import { isRecordedSetDraftSaved } from "#/features/workout/core/is-recorded-set-draft-saved.ts";
 
-const RECORDED_SET = { id: "set-1", segments: [{ amount: 8, weight: 62.5 }] };
+const RECORDED_SET = {
+  id: "01900000-0000-7000-8000-000000000301",
+  segments: [{ amount: 8, weight: 62.5 }],
+};
 
 describe("isRecordedSetDraftSaved", () => {
   it("tells that a Draft with the Segments of its recorded Set is Saved", () => {
     expect(
       isRecordedSetDraftSaved({
-        draft: { id: "set-1", segments: [{ amount: "8", weight: "62.5" }] },
+        draft: {
+          id: "01900000-0000-7000-8000-000000000301",
+          segments: [{ amount: "8", weight: "62.5" }],
+        },
         recordedSet: RECORDED_SET,
       }),
     ).toBe(true);
@@ -15,7 +21,10 @@ describe("isRecordedSetDraftSaved", () => {
   it("tells that a Draft with another weight than its recorded Set isn't Saved", () => {
     expect(
       isRecordedSetDraftSaved({
-        draft: { id: "set-1", segments: [{ amount: "8", weight: "65" }] },
+        draft: {
+          id: "01900000-0000-7000-8000-000000000301",
+          segments: [{ amount: "8", weight: "65" }],
+        },
         recordedSet: RECORDED_SET,
       }),
     ).toBe(false);
@@ -25,7 +34,7 @@ describe("isRecordedSetDraftSaved", () => {
     expect(
       isRecordedSetDraftSaved({
         draft: {
-          id: "set-1",
+          id: "01900000-0000-7000-8000-000000000301",
           segments: [
             { amount: "8", weight: "62.5" },
             { amount: "", weight: "" },

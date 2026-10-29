@@ -1,9 +1,9 @@
 import type { RoutineSaveInput } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
-import type { IntensityTechnique } from "@ankaa/core/shared/constants/intensity-techniques";
 import type { Section } from "@ankaa/core/shared/constants/sections";
 
 import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/days-of-week";
 import { RoutineNameConflictError } from "@ankaa/core/features/routine/errors/routine-name-conflict-error";
+import { INTENSITY_TECHNIQUE_VALUES } from "@ankaa/core/shared/constants/intensity-techniques";
 import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 import { Database } from "@ankaa/database/database";
 import {
@@ -34,11 +34,6 @@ type RoutineExerciseSetRow = Omit<
 >;
 
 const ROUTINE_NAME_INDEX = "routine_live_name_idx";
-
-const INTENSITY_TECHNIQUE_COLUMN_VALUES = {
-  DropSet: "drop_set",
-  RestPauseSet: "rest_pause_set",
-} as const satisfies Record<string, IntensityTechnique>;
 
 const ROUTINE_EXERCISE_COLUMNS = {
   exerciseId: true,
@@ -170,6 +165,8 @@ export class RoutineRepository extends Context.Service<
             // The Core decided on no Routine when none had this id yet, so
             // this WHERE keeps a Routine of another User that took the id
             // since from being overwritten: the upsert then returns no row.
+            // It guards a row the Core never read, so it repeats no check
+            // (https://github.com/manuelcattelan/ankaa/issues/86).
             setWhere: eq(routine.userId, userId),
             target: routine.id,
           })
@@ -381,14 +378,14 @@ function buildRoutineRows(input: RoutineSaveInput) {
       }),
     ),
     sets: [...exercises, ...warmUpExercises].flatMap(
-      ({ routineExercise: setsRoutineExercise }) =>
-        setsRoutineExercise.sets.map((set, position) => ({
+      ({ routineExercise: owningRoutineExercise }) =>
+        owningRoutineExercise.sets.map((set, position) => ({
           amount: set.amount,
           id: set.id,
           intensityTechnique:
             set.intensityTechnique === null
               ? null
-              : INTENSITY_TECHNIQUE_COLUMN_VALUES[set.intensityTechnique._tag],
+              : INTENSITY_TECHNIQUE_VALUES[set.intensityTechnique._tag],
           isToFailure: set.isToFailure,
           pauseSeconds:
             set.intensityTechnique?._tag === "RestPauseSet"
@@ -396,7 +393,7 @@ function buildRoutineRows(input: RoutineSaveInput) {
               : null,
           position,
           restSeconds: set.restSeconds,
-          routineExerciseId: setsRoutineExercise.id,
+          routineExerciseId: owningRoutineExercise.id,
           segmentCount: set.intensityTechnique?.segmentCount ?? null,
           tempo: set.tempo,
           type: set.type,

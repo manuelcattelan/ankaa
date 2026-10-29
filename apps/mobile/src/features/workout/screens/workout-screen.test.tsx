@@ -94,8 +94,8 @@ const PUSH_DAY_WORKOUT: Workout = {
               },
             ],
             recordedSets: [],
+            skipNote: null,
             skipReason: null,
-            skipReasonNote: null,
             weightType: "bodyweight",
             weightUnit: "kilogram",
           },
@@ -137,8 +137,8 @@ const PUSH_DAY_WORKOUT: Workout = {
               },
             ],
             recordedSets: [],
+            skipNote: null,
             skipReason: null,
-            skipReasonNote: null,
             warmUpExercises: [
               {
                 amountUnit: "repetition",
@@ -148,8 +148,8 @@ const PUSH_DAY_WORKOUT: Workout = {
                 plannedNote: null,
                 plannedSets: [],
                 recordedSets: [],
+                skipNote: null,
                 skipReason: null,
-                skipReasonNote: null,
                 weightType: "none",
                 weightUnit: "kilogram",
               },
@@ -179,8 +179,8 @@ const PUSH_DAY_WORKOUT: Workout = {
               },
             ],
             recordedSets: [],
+            skipNote: null,
             skipReason: null,
-            skipReasonNote: null,
             warmUpExercises: [],
             weightType: "bodyweight",
             weightUnit: "kilogram",
@@ -214,14 +214,14 @@ function buildBenchPressWorkout({
   note = null,
   plannedSets,
   recordedSets,
+  skipNote = null,
   skipReason = null,
-  skipReasonNote = null,
 }: {
   note?: null | string;
   plannedSets: Workout["sections"]["main"][number]["exercises"][number]["plannedSets"];
   recordedSets: Workout["sections"]["main"][number]["exercises"][number]["recordedSets"];
+  skipNote?: null | string;
   skipReason?: null | SkipReason;
-  skipReasonNote?: null | string;
 }) {
   return {
     id: "01900000-0000-7000-8000-000000000201",
@@ -238,8 +238,8 @@ function buildBenchPressWorkout({
               plannedNote: null,
               plannedSets,
               recordedSets,
+              skipNote,
               skipReason,
-              skipReasonNote,
               warmUpExercises: [],
               weightType: "total",
               weightUnit: "kilogram",
@@ -275,7 +275,7 @@ function getField({ index, label }: { index: number; label: string }) {
 }
 
 describe("WorkoutScreen", () => {
-  it("shows the plan of the User's Workout in progress, with its Sections, Supersets, Warm-up exercises, notes and planned Sets", async () => {
+  it("shows the User's Workout in progress, with its Sections, Supersets, Warm-up exercises, notes and planned Sets", async () => {
     renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
@@ -880,8 +880,8 @@ describe("WorkoutScreen", () => {
               workoutInProgress = buildBenchPressWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                skipNote: "Sore shoulder",
                 skipReason: "pain",
-                skipReasonNote: "Sore shoulder",
               });
             },
           },
@@ -1072,8 +1072,8 @@ describe("WorkoutScreen", () => {
                           { ...WORKING_PLANNED_SET, restSeconds: 90 },
                         ],
                         recordedSets: [],
+                        skipNote: null,
                         skipReason: null,
-                        skipReasonNote: null,
                         warmUpExercises: [],
                         weightType: "total",
                         weightUnit: "kilogram",
@@ -1088,8 +1088,8 @@ describe("WorkoutScreen", () => {
                           { ...WORKING_PLANNED_SET, restSeconds: 60 },
                         ],
                         recordedSets: [],
+                        skipNote: null,
                         skipReason: null,
-                        skipReasonNote: null,
                         warmUpExercises: [],
                         weightType: "bodyweight",
                         weightUnit: "kilogram",

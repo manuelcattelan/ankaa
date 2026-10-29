@@ -7,7 +7,7 @@ import * as Match from "effect/Match";
 import type { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
 
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
-import { getTrpcErrorMessage } from "#/shared/core/get-trpc-error-message.ts";
+import { getTrpcClientErrorMessage } from "#/shared/core/get-trpc-client-error-message.ts";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 export function getWorkoutStartErrorMessage(
@@ -19,7 +19,8 @@ export function getWorkoutStartErrorMessage(
 ) {
   return Match.valueTags(error, {
     RoutineNotFoundError: () => WORKOUT_MESSAGES.routineNotFoundError,
-    TrpcClientError: (trpcClientError) => getTrpcErrorMessage(trpcClientError),
+    TrpcClientError: (trpcClientError) =>
+      getTrpcClientErrorMessage(trpcClientError),
     WorkoutInProgressConflictError: () =>
       WORKOUT_MESSAGES.workoutInProgressConflictError,
     // Only a bug reuses the id of another User's Workout, and a new start

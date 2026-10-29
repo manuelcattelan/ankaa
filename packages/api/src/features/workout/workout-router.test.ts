@@ -275,7 +275,7 @@ describe("workout.start", () => {
     await runtime.dispose();
   });
 
-  it("builds a Workout with a copy of the Routine's plan, which workout.findInProgress returns as a tree", async () => {
+  it("builds a Workout that copies the Routine's tree and planned Sets, which workout.findInProgress returns as a tree", async () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save({
       days: ["monday"],
@@ -415,8 +415,8 @@ describe("workout.start", () => {
                   },
                 ],
                 recordedSets: [],
+                skipNote: null,
                 skipReason: null,
-                skipReasonNote: null,
                 weightType: "bodyweight",
                 weightUnit: "kilogram",
               },
@@ -462,8 +462,8 @@ describe("workout.start", () => {
                   },
                 ],
                 recordedSets: [],
+                skipNote: null,
                 skipReason: null,
-                skipReasonNote: null,
                 warmUpExercises: [
                   {
                     amountUnit: "repetition",
@@ -483,8 +483,8 @@ describe("workout.start", () => {
                       },
                     ],
                     recordedSets: [],
+                    skipNote: null,
                     skipReason: null,
-                    skipReasonNote: null,
                     weightType: "none",
                     weightUnit: "kilogram",
                   },
@@ -500,8 +500,8 @@ describe("workout.start", () => {
                 plannedNote: null,
                 plannedSets: [],
                 recordedSets: [],
+                skipNote: null,
                 skipReason: null,
-                skipReasonNote: null,
                 warmUpExercises: [],
                 weightType: "bodyweight",
                 weightUnit: "kilogram",
@@ -521,8 +521,8 @@ describe("workout.start", () => {
                 plannedNote: "Slowly",
                 plannedSets: [],
                 recordedSets: [],
+                skipNote: null,
                 skipReason: null,
-                skipReasonNote: null,
                 weightType: "none",
                 weightUnit: "kilogram",
               },
@@ -1451,9 +1451,7 @@ describe("workout.skipExercise", () => {
       sections: {
         main: [
           {
-            exercises: [
-              { skipReason: "pain", skipReasonNote: "Sore shoulder" },
-            ],
+            exercises: [{ skipNote: "Sore shoulder", skipReason: "pain" }],
           },
         ],
       },
@@ -1478,7 +1476,7 @@ describe("workout.skipExercise", () => {
       sections: {
         main: [
           {
-            exercises: [{ skipReason: "low_on_time", skipReasonNote: null }],
+            exercises: [{ skipNote: null, skipReason: "low_on_time" }],
           },
         ],
       },
@@ -1502,7 +1500,7 @@ describe("workout.skipExercise", () => {
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     await expect(caller.workout.findInProgress()).resolves.toMatchObject({
       sections: {
-        main: [{ exercises: [{ skipReason: null, skipReasonNote: null }] }],
+        main: [{ exercises: [{ skipNote: null, skipReason: null }] }],
       },
     });
   });

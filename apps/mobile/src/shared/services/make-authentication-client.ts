@@ -4,18 +4,29 @@ import { expoClient } from "@better-auth/expo/client";
 import { emailOTPClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
 
 import { getAuthenticationResponseError } from "#/shared/core/get-authentication-response-error.ts";
 import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
 
 export type AuthClient = ReturnType<typeof buildAuthClient>;
 
-export type SendAuthenticationRequest<TData> = (requestOptions: {
-  authClient: AuthClient;
-  fetchOptions: {
-    onError: (context: { response: Response }) => void;
-  };
-}) => Promise<AuthenticationResponse<TData>>;
+/**
+ * A call to the better-auth client, and the errors its caller acts on, which
+ * it fails with, while any other error that better-auth answers with dies.
+ */
+export type AuthenticationRequest<
+  TData,
+  TErrors extends readonly Schema.Decoder<unknown>[],
+> = {
+  call: (requestOptions: {
+    authClient: AuthClient;
+    fetchOptions: {
+      onError: (context: { response: Response }) => void;
+    };
+  }) => Promise<AuthenticationResponse<TData>>;
+  errors: TErrors;
+};
 
 type AuthenticationFetch = (
   input: Request | string | URL,
@@ -53,13 +64,18 @@ export function makeAuthenticationClient({
 }: MakeAuthenticationClientOptions) {
   const authClient = buildAuthClient({ apiUrl, fetch, storage });
 
-  function request<TData>(sendRequest: SendAuthenticationRequest<TData>) {
+  function request<TData, TErrors extends readonly Schema.Decoder<unknown>[]>({
+    call,
+    errors,
+  }: AuthenticationRequest<TData, TErrors>) {
+    const isListedError = Schema.is(Schema.Union(errors));
+
     return Effect.tryPromise({
       catch: (cause) => new AuthenticationClientError({ cause }),
       try: async () => {
         let retryAfterHeader: null | string = null;
 
-        const response = await sendRequest({
+        const response = await call({
           authClient,
           fetchOptions: {
             onError: (context) => {
@@ -82,14 +98,14 @@ export function makeAuthenticationClient({
           status: response.error.status,
         });
 
-        return responseError === null
-          ? Effect.die(response.error)
-          : Effect.fail(responseError);
+        return isListedError(responseError)
+          ? Effect.fail(responseError)
+          : Effect.die(responseError ?? response.error);
       }),
     );
   }
 
-  return { apiUrl, authClient, request };
+  return { authClient, request };
 }
 
 function buildAuthClient({

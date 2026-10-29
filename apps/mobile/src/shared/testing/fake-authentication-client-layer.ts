@@ -2,12 +2,11 @@ import * as Layer from "effect/Layer";
 
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 import { makeAuthenticationClient } from "#/shared/services/make-authentication-client.ts";
+import { FAKE_API_URL } from "#/shared/testing/fake-api-url.ts";
 
 export type FakeAuthenticationResponses = Partial<
   Record<string, (request: Request) => Promise<Response> | Response>
 >;
-
-const FAKE_API_URL = "https://api.ankaa.test";
 
 const HTTP_STATUS_NOT_FOUND = 404;
 

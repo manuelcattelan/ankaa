@@ -10,5 +10,5 @@ const emailFilter = Schema.isPattern(EMAIL_PATTERN, {
 });
 
 export const emailFormSchema = Schema.Struct({
-  email: Schema.String.check(emailFilter),
+  email: Schema.Trim.check(emailFilter),
 });

@@ -11,7 +11,7 @@ export default function SignInRoute() {
 
   return (
     <SignInScreen
-      isAccountDeleted={searchParameters.isAccountDeleted === "true"}
+      isAccountDeletedParameter={searchParameters.isAccountDeleted ?? null}
     />
   );
 }

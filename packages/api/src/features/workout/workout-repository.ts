@@ -25,7 +25,7 @@ import * as Layer from "effect/Layer";
 import { buildIntensityTechnique } from "#/shared/build-intensity-technique.ts";
 import { isUniqueIndexViolation } from "#/shared/is-unique-index-violation.ts";
 
-type PlannedSetColumns = Omit<
+type PlannedSetRow = Omit<
   typeof workoutExercisePlannedSet.$inferSelect,
   "id" | "position" | "workoutExerciseId"
 >;
@@ -35,7 +35,7 @@ type RecordedSetRow = Pick<
   "id" | "position"
 >;
 
-type StartedRoutine = Pick<
+type StartedRoutineRow = Pick<
   typeof RoutineDatabaseSchema.routine.$inferSelect,
   "deletedAt" | "id" | "userId"
 > & {
@@ -43,13 +43,13 @@ type StartedRoutine = Pick<
     typeof RoutineDatabaseSchema.routineExerciseGroup.$inferSelect,
     "position" | "section"
   > & {
-    exercises: (StartedRoutineExercise & {
-      warmUpExercises: StartedRoutineExercise[];
+    exercises: (StartedRoutineExerciseRow & {
+      warmUpExercises: StartedRoutineExerciseRow[];
     })[];
   })[];
 };
 
-type StartedRoutineExercise = Pick<
+type StartedRoutineExerciseRow = Pick<
   typeof RoutineDatabaseSchema.routineExercise.$inferSelect,
   "exerciseId" | "note" | "position"
 > & {
@@ -57,7 +57,7 @@ type StartedRoutineExercise = Pick<
     typeof ExerciseDatabaseSchema.exercise.$inferSelect,
     "amountUnit" | "weightType"
   >;
-  sets: (PlannedSetColumns & { position: number })[];
+  sets: (PlannedSetRow & { position: number })[];
 };
 
 type WorkoutExerciseRow = Pick<
@@ -67,12 +67,12 @@ type WorkoutExerciseRow = Pick<
   | "id"
   | "note"
   | "plannedNote"
+  | "skipNote"
   | "skipReason"
-  | "skipReasonNote"
   | "weightType"
   | "weightUnit"
 > & {
-  plannedSets: (PlannedSetColumns & { id: string })[];
+  plannedSets: (PlannedSetRow & { id: string })[];
   recordedSets: {
     id: string;
     segments: Pick<
@@ -115,8 +115,8 @@ const WORKOUT_EXERCISE_COLUMNS = {
   id: true,
   note: true,
   plannedNote: true,
+  skipNote: true,
   skipReason: true,
-  skipReasonNote: true,
   weightType: true,
   weightUnit: true,
 } as const;
@@ -152,7 +152,7 @@ export class WorkoutRepository extends Context.Service<
     }) => Effect.Effect<null | ReturnType<typeof buildWorkout>>;
     readonly findRoutine: (options: {
       id: string;
-    }) => Effect.Effect<null | StartedRoutine>;
+    }) => Effect.Effect<null | StartedRoutineRow>;
     readonly findWorkoutExerciseForRecordedSetRemove: (options: {
       id: string;
     }) => Effect.Effect<null | {
@@ -191,7 +191,7 @@ export class WorkoutRepository extends Context.Service<
     }) => Effect.Effect<void>;
     readonly start: (options: {
       id: string;
-      routine: StartedRoutine;
+      routine: StartedRoutineRow;
       userId: string;
     }) => Effect.Effect<void, WorkoutInProgressConflictError>;
     readonly stop: (options: { id: string }) => Effect.Effect<void>;
@@ -520,7 +520,8 @@ export class WorkoutRepository extends Context.Service<
             // The Core reads only this Workout exercise's Sets, so this WHERE
             // keeps an id that names a Set elsewhere, such as in another
             // User's Workout, from moving that Set here: the upsert then
-            // returns no row.
+            // returns no row. It guards a row the Core never read, so it
+            // repeats no check (https://github.com/manuelcattelan/ankaa/issues/86).
             setWhere: eq(
               workoutExerciseRecordedSet.workoutExerciseId,
               input.workoutExerciseId,
@@ -561,7 +562,7 @@ export class WorkoutRepository extends Context.Service<
         function* ({ input }: { input: WorkoutSkipExerciseInput }) {
           yield* database
             .update(workoutExercise)
-            .set({ skipReason: input.reason, skipReasonNote: input.note })
+            .set({ skipNote: input.note, skipReason: input.reason })
             .where(eq(workoutExercise.id, input.workoutExerciseId))
             .pipe(Effect.orDie);
         },
@@ -573,7 +574,7 @@ export class WorkoutRepository extends Context.Service<
         userId,
       }: {
         id: string;
-        routine: StartedRoutine;
+        routine: StartedRoutineRow;
         userId: string;
       }) {
         yield* database
@@ -818,8 +819,8 @@ function buildWorkoutExercise(workoutExerciseRow: WorkoutExerciseRow) {
       type: plannedSet.type,
     })),
     recordedSets: workoutExerciseRow.recordedSets,
+    skipNote: workoutExerciseRow.skipNote,
     skipReason: workoutExerciseRow.skipReason,
-    skipReasonNote: workoutExerciseRow.skipReasonNote,
     weightType: workoutExerciseRow.weightType,
     weightUnit: workoutExerciseRow.weightUnit,
   };
@@ -830,7 +831,9 @@ function buildWorkoutExercise(workoutExerciseRow: WorkoutExerciseRow) {
  * starts from, together with the Weight type and Amount unit that its
  * Exercise has at the start.
  */
-function buildWorkoutExerciseColumns(routineExercise: StartedRoutineExercise) {
+function buildWorkoutExerciseColumns(
+  routineExercise: StartedRoutineExerciseRow,
+) {
   return {
     amountUnit: routineExercise.exercise.amountUnit,
     exerciseId: routineExercise.exerciseId,

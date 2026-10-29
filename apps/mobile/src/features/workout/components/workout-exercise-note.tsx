@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { NoteDraft } from "#/features/workout/core/note-form-schema.ts";
-import type { WorkoutExerciseDraftsAction } from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
 
 import { getWorkoutSaveNoteErrorMessage } from "#/features/workout/core/get-workout-save-note-error-message.ts";
 import { noteFormSchema } from "#/features/workout/core/note-form-schema.ts";
+import { useWorkoutContext } from "#/features/workout/hooks/use-workout-context.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { workoutSaveNoteMutationOptions } from "#/features/workout/mutations/workout-save-note-mutation-options.ts";
 import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/workout-find-in-progress-query-options.ts";
@@ -19,19 +19,19 @@ import { useRuntime } from "#/shared/hooks/use-runtime.ts";
  * own button.
  */
 export function WorkoutExerciseNote({
-  dispatch,
   draft,
   exerciseId,
   note,
   workoutExerciseId,
 }: {
-  dispatch: (action: WorkoutExerciseDraftsAction) => void;
   draft: NoteDraft | null;
   exerciseId: string;
   note: null | string;
   workoutExerciseId: string;
 }) {
   const queryClient = useQueryClient();
+
+  const workoutContext = useWorkoutContext();
 
   const runtime = useRuntime();
 
@@ -42,7 +42,7 @@ export function WorkoutExerciseNote({
         queryKey: workoutFindInProgressQueryOptions(runtime).queryKey,
       });
 
-      dispatch({ type: "clearedNoteDraft", workoutExerciseId });
+      workoutContext.dispatch({ type: "clearedNoteDraft", workoutExerciseId });
     },
   });
 
@@ -54,7 +54,7 @@ export function WorkoutExerciseNote({
       : getWorkoutSaveNoteErrorMessage(saveNote.error);
 
   function handleChangeNote(changedNote: string) {
-    dispatch(
+    workoutContext.dispatch(
       changedNote === savedNoteDraft.note
         ? { type: "clearedNoteDraft", workoutExerciseId }
         : {
@@ -76,6 +76,7 @@ export function WorkoutExerciseNote({
     saveNote.reset();
 
     const noteFormDecoding = decodeForm({
+      hasSubmitted: true,
       schema: noteFormSchema,
       values: noteDraft,
     });

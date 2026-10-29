@@ -1,6 +1,6 @@
 import { TRPCClientError } from "@trpc/client";
 
-import { getTrpcErrorMessage } from "#/shared/core/get-trpc-error-message.ts";
+import { getTrpcClientErrorMessage } from "#/shared/core/get-trpc-client-error-message.ts";
 import { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
 
 const NOT_FOUND_TRPC_ERROR_RESPONSE = {
@@ -11,13 +11,13 @@ const NOT_FOUND_TRPC_ERROR_RESPONSE = {
   },
 };
 
-describe("getTrpcErrorMessage", () => {
+describe("getTrpcClientErrorMessage", () => {
   it("returns the unknown error message for a TrpcClientError caused by an error that the server sent", () => {
     const trpcClientError = new TrpcClientError({
       cause: TRPCClientError.from(NOT_FOUND_TRPC_ERROR_RESPONSE),
     });
 
-    expect(getTrpcErrorMessage(trpcClientError)).toBe(
+    expect(getTrpcClientErrorMessage(trpcClientError)).toBe(
       "Something went wrong: try again.",
     );
   });
@@ -27,19 +27,23 @@ describe("getTrpcErrorMessage", () => {
       cause: TRPCClientError.from(new TypeError("Network request failed")),
     });
 
-    expect(getTrpcErrorMessage(trpcClientError)).toBe(
+    expect(getTrpcClientErrorMessage(trpcClientError)).toBe(
       "Ankaa can't connect: check your internet connection and try again.",
     );
   });
 
   it("returns the unknown error message for an error that the server sent without a TrpcClientError around it", () => {
     expect(
-      getTrpcErrorMessage(TRPCClientError.from(NOT_FOUND_TRPC_ERROR_RESPONSE)),
+      getTrpcClientErrorMessage(
+        TRPCClientError.from(NOT_FOUND_TRPC_ERROR_RESPONSE),
+      ),
     ).toBe("Something went wrong: try again.");
   });
 
   it("returns the server unreachable message for an error that isn't from tRPC", () => {
-    expect(getTrpcErrorMessage(new TypeError("Network request failed"))).toBe(
+    expect(
+      getTrpcClientErrorMessage(new TypeError("Network request failed")),
+    ).toBe(
       "Ankaa can't connect: check your internet connection and try again.",
     );
   });

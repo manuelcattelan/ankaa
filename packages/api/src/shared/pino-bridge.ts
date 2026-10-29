@@ -21,7 +21,8 @@ const PINO_LOG_LEVELS = {
 
 /**
  * The Effect logger that writes every Effect log to the pino logger of the
- * fiber's `PinoLogger`, because Effect ships no pino integration. The
+ * fiber's `PinoLogger`, because Effect ships no pino integration
+ * (https://github.com/manuelcattelan/ankaa/issues/86). The
  * annotations and the spans become fields, the `Error` parts of the message
  * and every error of the cause become `err`, and the other parts become `msg`.
  */

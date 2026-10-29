@@ -7,7 +7,7 @@ import { Button } from "#/shared/components/button.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
-export function DeleteAccountButton() {
+export function AccountDeletionRequestButton() {
   const runtime = useRuntime();
 
   const requestAccountDeletion = useMutation(
@@ -15,10 +15,10 @@ export function DeleteAccountButton() {
   );
 
   const accountDeletionRequestMessage = requestAccountDeletion.isSuccess
-    ? AUTHENTICATION_MESSAGES.accountDeletionRequestedMessage
+    ? AUTHENTICATION_MESSAGES.accountDeletionRequestedStatus
     : null;
 
-  function handleDeleteAccount() {
+  function handleRequestAccountDeletion() {
     if (requestAccountDeletion.isPending) {
       return;
     }
@@ -29,9 +29,8 @@ export function DeleteAccountButton() {
   return (
     <>
       <Button
-        disabled={requestAccountDeletion.isPending}
         isBusy={requestAccountDeletion.isPending}
-        onPress={handleDeleteAccount}
+        onPress={handleRequestAccountDeletion}
         title={AUTHENTICATION_MESSAGES.deleteAccountButton}
       />
       <StatusMessage

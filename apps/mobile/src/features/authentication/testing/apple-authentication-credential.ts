@@ -13,6 +13,6 @@ export const APPLE_AUTHENTICATION_CREDENTIAL: ExpoAppleAuthentication.AppleAuthe
     realUserStatus:
       ExpoAppleAuthentication.AppleAuthenticationUserDetectionStatus
         .LIKELY_REAL,
-    ["state"]: null,
+    state: null,
     user: "apple-user-1",
   };

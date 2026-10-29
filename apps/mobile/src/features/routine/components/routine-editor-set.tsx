@@ -1,3 +1,7 @@
+import {
+  INTENSITY_TECHNIQUE_VALUES,
+  INTENSITY_TECHNIQUES,
+} from "@ankaa/core/shared/constants/intensity-techniques";
 import { SET_TYPES } from "@ankaa/core/shared/constants/set-types";
 import { Host, Switch } from "@expo/ui";
 
@@ -15,16 +19,26 @@ import { Text } from "#/shared/components/text.tsx";
 import { decodeForm } from "#/shared/core/decode-form.ts";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
+const NO_INTENSITY_TECHNIQUE = "none";
+
 const INTENSITY_TECHNIQUE_OPTIONS = [
-  "none",
-  "DropSet",
-  "RestPauseSet",
+  NO_INTENSITY_TECHNIQUE,
+  ...INTENSITY_TECHNIQUES,
 ] as const;
 
+const INTENSITY_TECHNIQUE_OPTION_LABELS = {
+  ...ROUTINE_MESSAGES.intensityTechniqueLabels,
+  [NO_INTENSITY_TECHNIQUE]: ROUTINE_MESSAGES.noIntensityTechniqueLabel,
+};
+
 const EMPTY_INTENSITY_TECHNIQUE_DRAFTS = {
-  DropSet: { _tag: "DropSet", segmentCount: "", weightPercentage: "" },
-  none: null,
-  RestPauseSet: { _tag: "RestPauseSet", pauseSeconds: "", segmentCount: "" },
+  drop_set: { _tag: "DropSet", segmentCount: "", weightPercentage: "" },
+  [NO_INTENSITY_TECHNIQUE]: null,
+  rest_pause_set: {
+    _tag: "RestPauseSet",
+    pauseSeconds: "",
+    segmentCount: "",
+  },
 } satisfies Record<
   (typeof INTENSITY_TECHNIQUE_OPTIONS)[number],
   RoutineExerciseSetDraft["intensityTechnique"]
@@ -44,18 +58,13 @@ export function RoutineEditorSet({
   setNumber: number;
 }) {
   const setFormDecoding = decodeForm({
+    hasSubmitted,
     schema: routineExerciseSetFormSchema,
     values: set,
   });
-  const amountErrorMessage = hasSubmitted
-    ? setFormDecoding.errorMessages.amount
-    : null;
-  const restSecondsErrorMessage = hasSubmitted
-    ? setFormDecoding.errorMessages.restSeconds
-    : null;
-  const tempoErrorMessage = hasSubmitted
-    ? setFormDecoding.errorMessages.tempo
-    : null;
+  const amountErrorMessage = setFormDecoding.errorMessages.amount;
+  const restSecondsErrorMessage = setFormDecoding.errorMessages.restSeconds;
+  const tempoErrorMessage = setFormDecoding.errorMessages.tempo;
 
   function handleChangeSet(setChanges: Partial<RoutineExerciseSetDraft>) {
     dispatch({
@@ -122,9 +131,13 @@ export function RoutineEditorSet({
               EMPTY_INTENSITY_TECHNIQUE_DRAFTS[intensityTechniqueOption],
           });
         }}
-        optionLabels={ROUTINE_MESSAGES.intensityTechniqueLabels}
+        optionLabels={INTENSITY_TECHNIQUE_OPTION_LABELS}
         options={INTENSITY_TECHNIQUE_OPTIONS}
-        selectedOption={set.intensityTechnique?._tag ?? "none"}
+        selectedOption={
+          set.intensityTechnique === null
+            ? NO_INTENSITY_TECHNIQUE
+            : INTENSITY_TECHNIQUE_VALUES[set.intensityTechnique._tag]
+        }
       />
       {set.intensityTechnique?._tag === "DropSet" ? (
         <RoutineEditorDropSet

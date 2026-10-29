@@ -9,7 +9,7 @@ import { RoutineEditor } from "#/features/routine/components/routine-editor.tsx"
 import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
 import { routineListQueryOptions } from "#/features/routine/queries/routine-list-query-options.ts";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
-import { getTrpcErrorMessage } from "#/shared/core/get-trpc-error-message.ts";
+import { getTrpcClientErrorMessage } from "#/shared/core/get-trpc-client-error-message.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
 export function RoutineScreen({
@@ -29,7 +29,7 @@ export function RoutineScreen({
 
   function getStatusMessage() {
     if (routines.error !== null) {
-      return getTrpcErrorMessage(routines.error);
+      return getTrpcClientErrorMessage(routines.error);
     }
 
     return routines.isSuccess && routine === null

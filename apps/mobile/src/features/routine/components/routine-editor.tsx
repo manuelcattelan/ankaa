@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import { useReducer, useState } from "react";
 import { Modal } from "react-native";
 
-import type { ExercisePickerTarget } from "#/features/routine/components/routine-editor-section.tsx";
+import type { ExercisePickerTarget } from "#/features/routine/core/exercise-picker-target.ts";
 import type { Exercise } from "#/shared/exercise-application-service.ts";
 import type { Routine } from "#/shared/routine.ts";
 
@@ -24,9 +24,12 @@ import { ScrollView } from "#/shared/components/scroll-view.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
 import { decodeForm } from "#/shared/core/decode-form.ts";
+import { getExerciseNames } from "#/shared/core/get-exercise-names.ts";
 import { useCreateId } from "#/shared/hooks/use-create-id.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { exerciseListQueryOptions } from "#/shared/queries/exercise-list-query-options.ts";
+
+const NO_EXERCISE_NAMES: ReadonlyMap<string, string> = new Map();
 
 /**
  * Edits the Draft of a Routine, a new one when `routine` is `null`, and
@@ -60,7 +63,10 @@ export function RoutineEditor({
     useState<ExercisePickerTarget | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const exerciseLibrary = useQuery(exerciseListQueryOptions(runtime));
+  const exerciseNames = useQuery({
+    ...exerciseListQueryOptions(runtime),
+    select: getExerciseNames,
+  });
 
   const saveRoutine = useMutation({
     ...routineSaveMutationOptions(runtime),
@@ -74,15 +80,12 @@ export function RoutineEditor({
   });
 
   const routineFormDecoding = decodeForm({
+    hasSubmitted,
     schema: routineFormSchema,
     values: routineDraft,
   });
-  const exerciseNames = new Map(
-    exerciseLibrary.data?.map((exercise) => [exercise.id, exercise.name]),
-  );
-  const nameErrorMessage = hasSubmitted
-    ? routineFormDecoding.errorMessages.name
-    : null;
+  const exerciseNamesById = exerciseNames.data ?? NO_EXERCISE_NAMES;
+  const nameErrorMessage = routineFormDecoding.errorMessages.name;
   const statusMessage = getStatusMessage();
 
   function getStatusMessage() {
@@ -117,6 +120,7 @@ export function RoutineEditor({
     dispatch({ id, type: "assignedId" });
 
     const savedRoutineFormDecoding = decodeForm({
+      hasSubmitted: true,
       schema: routineFormSchema,
       values: { ...routineDraft, id },
     });
@@ -177,7 +181,7 @@ export function RoutineEditor({
         <RoutineEditorSection
           dispatch={dispatch}
           exerciseGroups={routineDraft.sections.warmUp}
-          exerciseNames={exerciseNames}
+          exerciseNames={exerciseNamesById}
           hasSubmitted={hasSubmitted}
           onOpenExercisePicker={setExercisePickerTarget}
           section="warm_up"
@@ -185,7 +189,7 @@ export function RoutineEditor({
         <RoutineEditorSection
           dispatch={dispatch}
           exerciseGroups={routineDraft.sections.main}
-          exerciseNames={exerciseNames}
+          exerciseNames={exerciseNamesById}
           hasSubmitted={hasSubmitted}
           onOpenExercisePicker={setExercisePickerTarget}
           section="main"
@@ -193,7 +197,7 @@ export function RoutineEditor({
         <RoutineEditorSection
           dispatch={dispatch}
           exerciseGroups={routineDraft.sections.coolDown}
-          exerciseNames={exerciseNames}
+          exerciseNames={exerciseNamesById}
           hasSubmitted={hasSubmitted}
           onOpenExercisePicker={setExercisePickerTarget}
           section="cool_down"

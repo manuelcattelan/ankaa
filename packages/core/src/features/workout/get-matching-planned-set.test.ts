@@ -35,7 +35,7 @@ describe("getMatchingPlannedSet", () => {
     });
   });
 
-  it("matches a recorded Set past the end of the plan with the last planned Set", () => {
+  it("matches a recorded Set past the last planned Set with the last planned Set", () => {
     expect(
       getMatchingPlannedSet({
         plannedSets: [WARM_UP_PLANNED_SET, DROP_SET_PLANNED_SET],

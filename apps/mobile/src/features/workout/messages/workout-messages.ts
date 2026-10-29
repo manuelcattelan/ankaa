@@ -31,7 +31,7 @@ export const WORKOUT_MESSAGES = {
     rest: (remainingSeconds: number) =>
       `Rest: ${formatCount({ count: remainingSeconds, ...SECONDS_UNIT })} left`,
   } satisfies Record<Countdown["kind"], (remainingSeconds: number) => string>,
-  draftsUnsavedError: (draftLabels: string[]) =>
+  draftsUnsavedError: (draftLabels: readonly string[]) =>
     `You haven't saved these: ${draftLabels.join("; ")}. Save them before you stop the workout.`,
   dropSetLabel: (weightPercentage: null | number) =>
     weightPercentage === null

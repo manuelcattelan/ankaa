@@ -2,21 +2,13 @@ import { WEIGHT_UNITS } from "@ankaa/core/features/workout/constants/weight";
 import { getMatchingPlannedSet } from "@ankaa/core/features/workout/get-matching-planned-set";
 import { useState } from "react";
 
-import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
-import type {
-  RecordedSetDraftEntry,
-  RecordedSetDraftsAction,
-} from "#/features/workout/core/recorded-set-drafts-reducer.ts";
-import type {
-  WorkoutExerciseDrafts,
-  WorkoutExerciseDraftsAction,
-} from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
-import type { Workout } from "#/shared/workout.ts";
+import type { WorkoutExercise as WorkoutExerciseValue } from "#/shared/workout.ts";
 
 import { WorkoutExerciseNote } from "#/features/workout/components/workout-exercise-note.tsx";
 import { WorkoutExerciseSkip } from "#/features/workout/components/workout-exercise-skip.tsx";
 import { WorkoutSet } from "#/features/workout/components/workout-set.tsx";
 import { getWorkingSetCounts } from "#/features/workout/core/get-working-set-counts.ts";
+import { useWorkoutContext } from "#/features/workout/hooks/use-workout-context.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { PickerField } from "#/shared/components/picker-field.tsx";
 import { Text } from "#/shared/components/text.tsx";
@@ -29,31 +21,17 @@ import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
  */
 export function WorkoutExercise({
   canStartRest,
-  countdown,
-  dispatch,
-  dispatchWorkoutExerciseDrafts,
-  exerciseNames,
-  onEndCountdown,
-  onSkipCountdown,
-  onStartCountdown,
-  recordedSetDraftEntries,
+  exerciseName,
   warmUpForExerciseName,
   workoutExercise,
-  workoutExerciseDrafts,
 }: {
   canStartRest: boolean;
-  countdown: Countdown | null;
-  dispatch: (action: RecordedSetDraftsAction) => void;
-  dispatchWorkoutExerciseDrafts: (action: WorkoutExerciseDraftsAction) => void;
-  exerciseNames: Map<string, string>;
-  onEndCountdown: () => void;
-  onSkipCountdown: () => void;
-  onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
-  recordedSetDraftEntries: readonly RecordedSetDraftEntry[];
+  exerciseName: string;
   warmUpForExerciseName?: string;
-  workoutExercise: Workout["sections"]["coolDown"][number]["exercises"][number];
-  workoutExerciseDrafts: WorkoutExerciseDrafts;
+  workoutExercise: WorkoutExerciseValue;
 }) {
+  const workoutContext = useWorkoutContext();
+
   const [weightUnit, setWeightUnit] = useState(workoutExercise.weightUnit);
 
   const workingSetCounts = getWorkingSetCounts({
@@ -71,7 +49,7 @@ export function WorkoutExercise({
 
   return (
     <>
-      <Text>{exerciseNames.get(workoutExercise.exerciseId)}</Text>
+      <Text>{exerciseName}</Text>
       {warmUpForExerciseName === undefined ? null : (
         <Text>
           {SHARED_MESSAGES.warmUpForExerciseLabel(warmUpForExerciseName)}
@@ -101,10 +79,8 @@ export function WorkoutExercise({
         <WorkoutSet
           amountUnit={workoutExercise.amountUnit}
           canStartRest={canStartRest}
-          countdown={countdown}
-          dispatch={dispatch}
           draft={
-            recordedSetDraftEntries.find(
+            workoutContext.drafts.recordedSets.find(
               (entry) =>
                 entry.workoutExerciseId === workoutExercise.id &&
                 entry.position === position,
@@ -113,9 +89,6 @@ export function WorkoutExercise({
           exerciseId={workoutExercise.exerciseId}
           isRecordable={position <= workoutExercise.recordedSets.length}
           key={position}
-          onEndCountdown={onEndCountdown}
-          onSkipCountdown={onSkipCountdown}
-          onStartCountdown={onStartCountdown}
           plannedSet={{
             ...getMatchingPlannedSet({
               plannedSets: workoutExercise.plannedSets,
@@ -133,9 +106,8 @@ export function WorkoutExercise({
         />
       ))}
       <WorkoutExerciseNote
-        dispatch={dispatchWorkoutExerciseDrafts}
         draft={
-          workoutExerciseDrafts.notes.find(
+          workoutContext.drafts.notes.find(
             (entry) => entry.workoutExerciseId === workoutExercise.id,
           )?.draft ?? null
         }
@@ -144,15 +116,14 @@ export function WorkoutExercise({
         workoutExerciseId={workoutExercise.id}
       />
       <WorkoutExerciseSkip
-        dispatch={dispatchWorkoutExerciseDrafts}
         draft={
-          workoutExerciseDrafts.skips.find(
+          workoutContext.drafts.skips.find(
             (entry) => entry.workoutExerciseId === workoutExercise.id,
           )?.draft ?? null
         }
         exerciseId={workoutExercise.exerciseId}
-        skipReason={workoutExercise.skipReason}
-        skipReasonNote={workoutExercise.skipReasonNote}
+        note={workoutExercise.skipNote}
+        reason={workoutExercise.skipReason}
         workoutExerciseId={workoutExercise.id}
       />
     </>

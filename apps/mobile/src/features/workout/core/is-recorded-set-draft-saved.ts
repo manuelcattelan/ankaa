@@ -1,4 +1,5 @@
 import type { RecordedSetDraft } from "#/features/workout/core/recorded-set-form-schema.ts";
+import type { RecordedSet } from "#/shared/workout.ts";
 
 import { createRecordedSetDraft } from "#/features/workout/core/create-recorded-set-draft.ts";
 
@@ -12,10 +13,7 @@ export function isRecordedSetDraftSaved({
   recordedSet,
 }: {
   draft: RecordedSetDraft;
-  recordedSet: null | {
-    id: string;
-    segments: readonly { amount: number; weight: null | number }[];
-  };
+  recordedSet: null | RecordedSet;
 }) {
   const savedSegments = createRecordedSetDraft(recordedSet).segments;
 

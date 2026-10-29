@@ -150,7 +150,7 @@ describe("NewRoutineScreen", () => {
     await user.press(getButton({ index: 1, name: "Add set" }));
     await user.type(screen.getByLabelText("Repetitions or seconds"), "8");
     fireEvent(screen.getByTestId("Intensity technique"), "selectionChange", {
-      nativeEvent: { selection: "DropSet" },
+      nativeEvent: { selection: "drop_set" },
     });
     await user.type(
       await screen.findByLabelText("Segments, the first included"),

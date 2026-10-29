@@ -4,14 +4,14 @@ describe("createRecordedSetDraft", () => {
   it("creates the Draft of a recorded Set from its Segments", () => {
     expect(
       createRecordedSetDraft({
-        id: "set-1",
+        id: "01900000-0000-7000-8000-000000000301",
         segments: [
           { amount: 8, weight: 62.5 },
           { amount: 6, weight: null },
         ],
       }),
     ).toStrictEqual({
-      id: "set-1",
+      id: "01900000-0000-7000-8000-000000000301",
       segments: [
         { amount: "8", weight: "62.5" },
         { amount: "6", weight: "" },

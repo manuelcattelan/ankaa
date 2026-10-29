@@ -2,7 +2,7 @@ import type { Section } from "@ankaa/core/shared/constants/sections";
 
 import { Fragment } from "react";
 
-import type { ExercisePickerTarget } from "#/features/routine/components/routine-editor-section.tsx";
+import type { ExercisePickerTarget } from "#/features/routine/core/exercise-picker-target.ts";
 import type {
   ExerciseGroupDraft,
   ExerciseGroupMoveDirection,
@@ -14,10 +14,9 @@ import { RoutineEditorExercise } from "#/features/routine/components/routine-edi
 import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
 import { Button } from "#/shared/components/button.tsx";
 import { Text } from "#/shared/components/text.tsx";
+import { MINIMUM_SUPERSET_EXERCISE_COUNT } from "#/shared/constants/minimum-superset-exercise-count.ts";
 import { useCreateId } from "#/shared/hooks/use-create-id.ts";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
-
-const MINIMUM_SUPERSET_EXERCISE_COUNT = 2;
 
 export function RoutineEditorExerciseGroup({
   dispatch,
@@ -31,7 +30,7 @@ export function RoutineEditorExerciseGroup({
 }: {
   dispatch: (action: RoutineDraftAction) => void;
   exerciseGroup: ExerciseGroupDraft | MainExerciseGroupDraft;
-  exerciseNames: Map<string, string>;
+  exerciseNames: ReadonlyMap<string, string>;
   hasSubmitted: boolean;
   isFirst: boolean;
   isLast: boolean;
@@ -43,12 +42,10 @@ export function RoutineEditorExerciseGroup({
   const isSuperset =
     exerciseGroup.exercises.length >= MINIMUM_SUPERSET_EXERCISE_COUNT;
 
-  function handleMoveExerciseGroup(
-    exerciseGroupMoveDirection: ExerciseGroupMoveDirection,
-  ) {
+  function handleMoveExerciseGroup(direction: ExerciseGroupMoveDirection) {
     dispatch({
+      direction,
       exerciseGroupId: exerciseGroup.id,
-      exerciseGroupMoveDirection,
       section,
       type: "movedExerciseGroup",
     });
@@ -72,7 +69,9 @@ export function RoutineEditorExerciseGroup({
             ? routineExercise.warmUpExercises.map((warmUpRoutineExercise) => (
                 <RoutineEditorExercise
                   dispatch={dispatch}
-                  exerciseNames={exerciseNames}
+                  exerciseName={
+                    exerciseNames.get(warmUpRoutineExercise.exerciseId) ?? ""
+                  }
                   hasSubmitted={hasSubmitted}
                   key={warmUpRoutineExercise.id}
                   routineExercise={warmUpRoutineExercise}
@@ -84,7 +83,7 @@ export function RoutineEditorExerciseGroup({
             : null}
           <RoutineEditorExercise
             dispatch={dispatch}
-            exerciseNames={exerciseNames}
+            exerciseName={exerciseNames.get(routineExercise.exerciseId) ?? ""}
             hasSubmitted={hasSubmitted}
             routineExercise={routineExercise}
           >

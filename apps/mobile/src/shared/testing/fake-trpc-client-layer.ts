@@ -8,23 +8,15 @@ import type {
   TRPCQueryProcedure,
 } from "@trpc/server";
 
-import { ROUTINE_DELETE_WIRE_ERRORS } from "@ankaa/core/features/routine/errors/routine-delete-wire-errors";
-import { ROUTINE_SAVE_WIRE_ERRORS } from "@ankaa/core/features/routine/errors/routine-save-wire-errors";
+import { wireErrorSchema } from "@ankaa/api/trpc/wire-error-schema";
 import { routineDeleteInputSchema } from "@ankaa/core/features/routine/schemas/routine-delete-input-schema";
 import { routineSaveInputSchema } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
-import { WORKOUT_REMOVE_SET_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-remove-set-wire-errors";
-import { WORKOUT_SAVE_NOTE_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-save-note-wire-errors";
-import { WORKOUT_SAVE_SET_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-save-set-wire-errors";
-import { WORKOUT_SKIP_EXERCISE_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-skip-exercise-wire-errors";
-import { WORKOUT_START_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-start-wire-errors";
-import { WORKOUT_STOP_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-stop-wire-errors";
 import { workoutRemoveSetInputSchema } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
 import { workoutSaveNoteInputSchema } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import { workoutSaveSetInputSchema } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
 import { workoutSkipExerciseInputSchema } from "@ankaa/core/features/workout/schemas/workout-skip-exercise-input-schema";
 import { workoutStartInputSchema } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
 import { workoutStopInputSchema } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
-import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import * as Effect from "effect/Effect";
@@ -34,6 +26,7 @@ import * as Schema from "effect/Schema";
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 import { makeTrpcClient } from "#/shared/services/make-trpc-client.ts";
 import { TrpcClient } from "#/shared/services/trpc-client.ts";
+import { FAKE_API_URL } from "#/shared/testing/fake-api-url.ts";
 
 /**
  * One fake procedure for each procedure of `AppRouter`, keyed by its path and
@@ -86,27 +79,6 @@ type TrpcProcedures = {
 };
 
 /**
- * The Wire errors of each procedure of `AppRouter`, keyed by its path, with
- * which the fake encodes a Wire error that a response throws, as the server
- * does.
- */
-const FAKE_TRPC_WIRE_ERRORS: {
-  [Path in keyof TrpcProcedures]: readonly Schema.Codec<unknown, unknown>[];
-} = {
-  "exercise.list": [],
-  "routine.delete": ROUTINE_DELETE_WIRE_ERRORS,
-  "routine.list": [],
-  "routine.save": ROUTINE_SAVE_WIRE_ERRORS,
-  "workout.findInProgress": [],
-  "workout.removeSet": WORKOUT_REMOVE_SET_WIRE_ERRORS,
-  "workout.saveNote": WORKOUT_SAVE_NOTE_WIRE_ERRORS,
-  "workout.saveSet": WORKOUT_SAVE_SET_WIRE_ERRORS,
-  "workout.skipExercise": WORKOUT_SKIP_EXERCISE_WIRE_ERRORS,
-  "workout.start": WORKOUT_START_WIRE_ERRORS,
-  "workout.stop": WORKOUT_STOP_WIRE_ERRORS,
-};
-
-/**
  * Serves the real tRPC client from a fake router that answers each procedure
  * with its response in `responses`, and records the path of every procedure
  * the client calls into `receivedPaths`. A procedure with no response fails
@@ -135,44 +107,33 @@ export function fakeTrpcClientLayer({
 
       return TrpcClient.of(
         makeTrpcClient({
+          apiUrl: FAKE_API_URL,
           authClient: authenticationClient.authClient,
-          trpc: createTRPCClient<AppRouter>({
-            links: [
-              httpBatchLink({
-                fetch: (url, options) => {
-                  const fakeTrpcRequest = new Request(url, {
-                    ...options,
-                    signal: options?.signal ?? null,
-                  });
+          fetch: (input, options) => {
+            const fakeTrpcRequest = new Request(input, options);
 
-                  const fakeTrpcRequestPaths =
-                    getFakeTrpcRequestPaths(fakeTrpcRequest);
+            const fakeTrpcRequestPaths =
+              getFakeTrpcRequestPaths(fakeTrpcRequest);
 
-                  receivedPaths.push(...fakeTrpcRequestPaths);
+            receivedPaths.push(...fakeTrpcRequestPaths);
 
-                  if (
-                    !isServerReachable ||
-                    fakeTrpcRequestPaths.some((path) =>
-                      unreachablePaths.some(
-                        (unreachablePath) => unreachablePath === path,
-                      ),
-                    )
-                  ) {
-                    return Promise.reject(
-                      new TypeError("Network request failed"),
-                    );
-                  }
+            if (
+              !isServerReachable ||
+              fakeTrpcRequestPaths.some((path) =>
+                unreachablePaths.some(
+                  (unreachablePath) => unreachablePath === path,
+                ),
+              )
+            ) {
+              return Promise.reject(new TypeError("Network request failed"));
+            }
 
-                  return fetchRequestHandler({
-                    endpoint: "/trpc",
-                    req: fakeTrpcRequest,
-                    router: fakeTrpcRouter,
-                  });
-                },
-                url: `${authenticationClient.apiUrl}/trpc`,
-              }),
-            ],
-          }),
+            return fetchRequestHandler({
+              endpoint: "/trpc",
+              req: fakeTrpcRequest,
+              router: fakeTrpcRouter,
+            });
+          },
         }),
       );
     }),
@@ -204,11 +165,11 @@ function createFakeTrpcResolver<TProcedure extends AnyProcedure>({
 
 function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
   const t = initTRPC.create({
-    errorFormatter: ({ error, path, shape }) => ({
+    errorFormatter: ({ error, shape }) => ({
       ...shape,
       data: {
         ...shape.data,
-        wireError: encodeFakeWireError({ cause: error.cause, path }),
+        wireError: encodeFakeWireError(error.cause),
       },
     }),
   });
@@ -290,19 +251,7 @@ function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
   return t.router(fakeTrpcProcedures);
 }
 
-function encodeFakeWireError({
-  cause,
-  path,
-}: {
-  cause: unknown;
-  path: string | undefined;
-}) {
-  const wireErrorSchema = Schema.Union(
-    Object.entries(FAKE_TRPC_WIRE_ERRORS).find(
-      ([fakeTrpcPath]) => fakeTrpcPath === path,
-    )?.[1] ?? [],
-  );
-
+function encodeFakeWireError(cause: unknown) {
   return Schema.is(wireErrorSchema)(cause)
     ? Schema.encodeUnknownSync(wireErrorSchema)(cause)
     : null;

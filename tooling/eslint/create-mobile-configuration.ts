@@ -144,8 +144,10 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
           { children: "never", props: "never" },
         ],
         "@stylistic/jsx-self-closing-comp": "error",
+        // eslint-config-expo enables the core rule's TypeScript version,
+        // which reports a type and a value of one name, a check that
+        // TypeScript itself makes (https://typescript-eslint.io/rules/no-redeclare/).
         "@typescript-eslint/no-redeclare": "off",
-        "import-x/extensions": "off",
         "import-x/no-restricted-paths": [
           "error",
           { basePath, zones: [...featureIsolationZones, routeZone] },

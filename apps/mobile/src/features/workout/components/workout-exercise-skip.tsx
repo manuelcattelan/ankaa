@@ -5,10 +5,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import type { SkipDraft } from "#/features/workout/core/skip-form-schema.ts";
-import type { WorkoutExerciseDraftsAction } from "#/features/workout/core/workout-exercise-drafts-reducer.ts";
 
 import { getWorkoutSkipExerciseErrorMessage } from "#/features/workout/core/get-workout-skip-exercise-error-message.ts";
 import { skipFormSchema } from "#/features/workout/core/skip-form-schema.ts";
+import { useWorkoutContext } from "#/features/workout/hooks/use-workout-context.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { workoutSkipExerciseMutationOptions } from "#/features/workout/mutations/workout-skip-exercise-mutation-options.ts";
 import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/workout-find-in-progress-query-options.ts";
@@ -33,21 +33,21 @@ const SKIP_REASON_OPTION_LABELS = {
  * optional note, or as not skipped, and Save it through its own button.
  */
 export function WorkoutExerciseSkip({
-  dispatch,
   draft,
   exerciseId,
-  skipReason,
-  skipReasonNote,
+  note,
+  reason,
   workoutExerciseId,
 }: {
-  dispatch: (action: WorkoutExerciseDraftsAction) => void;
   draft: null | SkipDraft;
   exerciseId: string;
-  skipReason: null | SkipReason;
-  skipReasonNote: null | string;
+  note: null | string;
+  reason: null | SkipReason;
   workoutExerciseId: string;
 }) {
   const queryClient = useQueryClient();
+
+  const workoutContext = useWorkoutContext();
 
   const runtime = useRuntime();
 
@@ -60,13 +60,14 @@ export function WorkoutExerciseSkip({
         queryKey: workoutFindInProgressQueryOptions(runtime).queryKey,
       });
 
-      dispatch({ type: "clearedSkipDraft", workoutExerciseId });
+      workoutContext.dispatch({ type: "clearedSkipDraft", workoutExerciseId });
     },
   });
 
-  const savedSkipDraft = { note: skipReasonNote ?? "", reason: skipReason };
+  const savedSkipDraft = { note: note ?? "", reason };
   const skipDraft = draft ?? savedSkipDraft;
   const skipFormDecoding = decodeForm({
+    hasSubmitted,
     schema: skipFormSchema,
     values: skipDraft,
   });
@@ -77,11 +78,11 @@ export function WorkoutExerciseSkip({
       return getWorkoutSkipExerciseErrorMessage(skipExercise.error);
     }
 
-    return hasSubmitted ? skipFormDecoding.errorMessage : null;
+    return skipFormDecoding.errorMessage;
   }
 
   function handleChangeDraft(changedDraft: SkipDraft) {
-    dispatch(
+    workoutContext.dispatch(
       changedDraft.note === savedSkipDraft.note &&
         changedDraft.reason === savedSkipDraft.reason
         ? { type: "clearedSkipDraft", workoutExerciseId }
@@ -122,8 +123,8 @@ export function WorkoutExerciseSkip({
       <TextField
         errorMessage={null}
         label={WORKOUT_MESSAGES.skipNoteLabel}
-        onChangeText={(note) => {
-          handleChangeDraft({ ...skipDraft, note });
+        onChangeText={(changedNote) => {
+          handleChangeDraft({ ...skipDraft, note: changedNote });
         }}
         value={skipDraft.note}
       />

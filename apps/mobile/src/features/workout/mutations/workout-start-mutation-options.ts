@@ -7,7 +7,9 @@ import type { ApplicationRuntime } from "#/layer.ts";
 
 import { WorkoutApplicationService } from "#/features/workout/workout-application-service.ts";
 
-const program = Effect.fn("startWorkout")(function* (input: WorkoutStartInput) {
+const program = Effect.fn("workoutStartMutation")(function* (
+  input: WorkoutStartInput,
+) {
   const workoutApplicationService = yield* WorkoutApplicationService;
 
   return yield* workoutApplicationService.start(input);

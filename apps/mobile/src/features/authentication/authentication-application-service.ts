@@ -3,20 +3,20 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import type { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
-import type { AccountNotLinkedError } from "#/shared/errors/account-not-linked-error.ts";
 import type { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
-import type { DeleteAccountTokenInvalidError } from "#/shared/errors/delete-account-token-invalid-error.ts";
-import type { EmailInvalidError } from "#/shared/errors/email-invalid-error.ts";
-import type { EmailNotSharedError } from "#/shared/errors/email-not-shared-error.ts";
-import type { OtpCodeAttemptsExceededError } from "#/shared/errors/otp-code-attempts-exceeded-error.ts";
-import type { OtpCodeExpiredError } from "#/shared/errors/otp-code-expired-error.ts";
-import type { OtpCodeInvalidError } from "#/shared/errors/otp-code-invalid-error.ts";
-import type { RateLimitedError } from "#/shared/errors/rate-limited-error.ts";
 
 import { addAuthorizationCodeHeader } from "#/features/authentication/core/add-authorization-code-header.ts";
 import { buildAppleIdToken } from "#/features/authentication/core/build-apple-id-token.ts";
 import { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts";
 import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
+import { AccountNotLinkedError } from "#/shared/errors/account-not-linked-error.ts";
+import { DeleteAccountTokenInvalidError } from "#/shared/errors/delete-account-token-invalid-error.ts";
+import { EmailInvalidError } from "#/shared/errors/email-invalid-error.ts";
+import { EmailNotSharedError } from "#/shared/errors/email-not-shared-error.ts";
+import { OtpCodeAttemptsExceededError } from "#/shared/errors/otp-code-attempts-exceeded-error.ts";
+import { OtpCodeExpiredError } from "#/shared/errors/otp-code-expired-error.ts";
+import { OtpCodeInvalidError } from "#/shared/errors/otp-code-invalid-error.ts";
+import { RateLimitedError } from "#/shared/errors/rate-limited-error.ts";
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 import { Crypto } from "#/shared/services/crypto.ts";
 import { Notifications } from "#/shared/services/notifications.ts";
@@ -82,49 +82,26 @@ export class AuthenticationApplicationService extends Context.Service<
 
       const requestAccountDeletion = Effect.fn(
         "AuthenticationApplicationService.requestAccountDeletion",
-      )(
-        function* () {
-          yield* authenticationClient.request(({ authClient, fetchOptions }) =>
+      )(function* () {
+        yield* authenticationClient.request({
+          call: ({ authClient, fetchOptions }) =>
             authClient.deleteUser({ fetchOptions }),
-          );
-        },
-        Effect.catchTag(
-          [
-            "AccountNotLinkedError",
-            "DeleteAccountTokenInvalidError",
-            "EmailInvalidError",
-            "EmailNotSharedError",
-            "OtpCodeAttemptsExceededError",
-            "OtpCodeExpiredError",
-            "OtpCodeInvalidError",
-          ],
-          Effect.die,
-        ),
-      );
+          errors: [RateLimitedError],
+        });
+      });
 
       const requestOtpCode = Effect.fn(
         "AuthenticationApplicationService.requestOtpCode",
-      )(
-        function* ({ email }: { email: string }) {
-          yield* authenticationClient.request(({ authClient, fetchOptions }) =>
+      )(function* ({ email }: { email: string }) {
+        yield* authenticationClient.request({
+          call: ({ authClient, fetchOptions }) =>
             authClient.emailOtp.sendVerificationOtp(
               { email, type: "sign-in" },
               fetchOptions,
             ),
-          );
-        },
-        Effect.catchTag(
-          [
-            "AccountNotLinkedError",
-            "DeleteAccountTokenInvalidError",
-            "EmailNotSharedError",
-            "OtpCodeAttemptsExceededError",
-            "OtpCodeExpiredError",
-            "OtpCodeInvalidError",
-          ],
-          Effect.die,
-        ),
-      );
+          errors: [EmailInvalidError, RateLimitedError],
+        });
+      });
 
       const signInWithApple = Effect.fn(
         "AuthenticationApplicationService.signInWithApple",
@@ -150,27 +127,23 @@ export class AuthenticationApplicationService extends Context.Service<
             nonce,
           });
 
-          yield* authenticationClient.request(({ authClient, fetchOptions }) =>
-            authClient.signIn.social(
-              { idToken: appleIdToken, provider: "apple" },
-              addAuthorizationCodeHeader({
-                authorizationCode: credential.authorizationCode,
-                fetchOptions,
-              }),
-            ),
-          );
+          yield* authenticationClient.request({
+            call: ({ authClient, fetchOptions }) =>
+              authClient.signIn.social(
+                { idToken: appleIdToken, provider: "apple" },
+                addAuthorizationCodeHeader({
+                  authorizationCode: credential.authorizationCode,
+                  fetchOptions,
+                }),
+              ),
+            errors: [
+              AccountNotLinkedError,
+              EmailNotSharedError,
+              RateLimitedError,
+            ],
+          });
         },
         Effect.catchTag("AppleSignInCanceledError", () => Effect.void),
-        Effect.catchTag(
-          [
-            "DeleteAccountTokenInvalidError",
-            "EmailInvalidError",
-            "OtpCodeAttemptsExceededError",
-            "OtpCodeExpiredError",
-            "OtpCodeInvalidError",
-          ],
-          Effect.die,
-        ),
       );
 
       const signInWithGoogle = Effect.fn(
@@ -193,103 +166,74 @@ export class AuthenticationApplicationService extends Context.Service<
             );
           }
 
-          yield* authenticationClient.request(({ authClient, fetchOptions }) =>
-            authClient.signIn.social(
-              { idToken: { token: idToken }, provider: "google" },
-              addAuthorizationCodeHeader({
-                authorizationCode: signInResponse.data.serverAuthCode,
-                fetchOptions,
-              }),
-            ),
-          );
+          yield* authenticationClient.request({
+            call: ({ authClient, fetchOptions }) =>
+              authClient.signIn.social(
+                { idToken: { token: idToken }, provider: "google" },
+                addAuthorizationCodeHeader({
+                  authorizationCode: signInResponse.data.serverAuthCode,
+                  fetchOptions,
+                }),
+              ),
+            errors: [
+              AccountNotLinkedError,
+              EmailNotSharedError,
+              RateLimitedError,
+            ],
+          });
         },
         Effect.catchTag("GoogleSignInInProgressError", () => Effect.void),
-        Effect.catchTag(
-          [
-            "DeleteAccountTokenInvalidError",
-            "EmailInvalidError",
-            "OtpCodeAttemptsExceededError",
-            "OtpCodeExpiredError",
-            "OtpCodeInvalidError",
-          ],
-          Effect.die,
-        ),
       );
 
       const signInWithOtpCode = Effect.fn(
         "AuthenticationApplicationService.signInWithOtpCode",
-      )(
-        function* ({ email, otpCode }: { email: string; otpCode: string }) {
-          yield* authenticationClient.request(({ authClient, fetchOptions }) =>
+      )(function* ({ email, otpCode }: { email: string; otpCode: string }) {
+        yield* authenticationClient.request({
+          call: ({ authClient, fetchOptions }) =>
             authClient.signIn.emailOtp({ email, otp: otpCode }, fetchOptions),
-          );
-        },
-        Effect.catchTag(
-          [
-            "AccountNotLinkedError",
-            "DeleteAccountTokenInvalidError",
-            "EmailInvalidError",
-            "EmailNotSharedError",
+          errors: [
+            OtpCodeAttemptsExceededError,
+            OtpCodeExpiredError,
+            OtpCodeInvalidError,
+            RateLimitedError,
           ],
-          Effect.die,
-        ),
-      );
+        });
+      });
 
       const signOut = Effect.fn("AuthenticationApplicationService.signOut")(
         function* () {
-          yield* authenticationClient.request(({ authClient, fetchOptions }) =>
-            authClient.signOut({ fetchOptions }),
-          );
+          yield* authenticationClient.request({
+            call: ({ authClient, fetchOptions }) =>
+              authClient.signOut({ fetchOptions }),
+            errors: [],
+          });
 
           yield* googleSignIn.signOut();
           // A countdown lives only in the device's memory and ends with the
-          // session, while the Workout stays in progress on the server.
+          // session, while the Workout stays in progress on the server
+          // (https://github.com/manuelcattelan/ankaa/issues/86).
           yield* notifications.cancelAllScheduled();
         },
-        Effect.catchTag(
-          [
-            "AccountNotLinkedError",
-            "DeleteAccountTokenInvalidError",
-            "EmailInvalidError",
-            "EmailNotSharedError",
-            "OtpCodeAttemptsExceededError",
-            "OtpCodeExpiredError",
-            "OtpCodeInvalidError",
-            "RateLimitedError",
-          ],
-          Effect.die,
-        ),
       );
 
       const deleteAccount = Effect.fn(
         "AuthenticationApplicationService.deleteAccount",
-      )(
-        function* ({ token }: { token: string }) {
-          yield* authenticationClient.request(({ authClient, fetchOptions }) =>
+      )(function* ({ token }: { token: string }) {
+        yield* authenticationClient.request({
+          call: ({ authClient, fetchOptions }) =>
             authClient.deleteUser({ fetchOptions, token }),
-          );
+          errors: [DeleteAccountTokenInvalidError, RateLimitedError],
+        });
 
-          // better-auth deletes the Account through an inner call whose
-          // cookie-clearing headers never reach the response
-          // (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/better-auth/src/api/routes/update-user.ts),
-          // and the Expo client clears the cookie and the session it stores
-          // only on sign-out
-          // (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/expo/src/client.ts),
-          // so signing out is what removes the User's data from the device.
-          yield* signOut();
-        },
-        Effect.catchTag(
-          [
-            "AccountNotLinkedError",
-            "EmailInvalidError",
-            "EmailNotSharedError",
-            "OtpCodeAttemptsExceededError",
-            "OtpCodeExpiredError",
-            "OtpCodeInvalidError",
-          ],
-          Effect.die,
-        ),
-      );
+        // better-auth deletes the Account through an inner call whose
+        // cookie-clearing headers never reach the response
+        // (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/better-auth/src/api/routes/update-user.ts),
+        // and the Expo client clears the cookie and the session it stores
+        // only on sign-out
+        // (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/expo/src/client.ts),
+        // so signing out is what removes the User's data from the device.
+        yield* signOut();
+      });
 
       return AuthenticationApplicationService.of({
         deleteAccount,

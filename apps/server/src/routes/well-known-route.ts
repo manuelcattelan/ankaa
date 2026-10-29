@@ -38,7 +38,7 @@ export const wellKnownRoute = ((
       {
         relation: ["delegate_permission/common.handle_all_urls"],
         target: {
-          ["namespace"]: "android_app",
+          namespace: "android_app",
           ["package_name"]: androidAppPackageName,
           ["sha256_cert_fingerprints"]: androidAppSha256CertificateFingerprints,
         },

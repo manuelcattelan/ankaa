@@ -5,7 +5,7 @@ import type { Exercise } from "#/shared/exercise-application-service.ts";
 
 import { ExercisePickerContent } from "#/features/exercise/components/exercise-picker-content.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
-import { getTrpcErrorMessage } from "#/shared/core/get-trpc-error-message.ts";
+import { getTrpcClientErrorMessage } from "#/shared/core/get-trpc-client-error-message.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { exerciseListQueryOptions } from "#/shared/queries/exercise-list-query-options.ts";
 
@@ -24,7 +24,9 @@ export function ExercisePicker({
 
   if (exerciseLibrary.isError) {
     return (
-      <StatusMessage message={getTrpcErrorMessage(exerciseLibrary.error)} />
+      <StatusMessage
+        message={getTrpcClientErrorMessage(exerciseLibrary.error)}
+      />
     );
   }
 

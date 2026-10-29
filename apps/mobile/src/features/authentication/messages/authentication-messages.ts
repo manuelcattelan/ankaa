@@ -1,8 +1,8 @@
 import { formatCount } from "#/shared/core/format-count.ts";
 
 export const AUTHENTICATION_MESSAGES = {
-  accountDeletedMessage: "Your account has been deleted.",
-  accountDeletionRequestedMessage:
+  accountDeletedStatus: "Your account has been deleted.",
+  accountDeletionRequestedStatus:
     "Check your email to confirm deleting your account.",
   accountNotLinkedError:
     "This account can't be linked with the selected provider: try another sign-in method.",
@@ -15,6 +15,8 @@ export const AUTHENTICATION_MESSAGES = {
   emailLabel: "Email address",
   emailNotSharedError:
     "The selected provider didn't share your email address: try another sign-in method.",
+  googlePlayServicesMissingError:
+    "Google Play services aren't installed on this device: try another sign-in method.",
   otpCodeAttemptsExceededError:
     "Too many incorrect attempts: resend the verification code and try again.",
   otpCodeExpiredError:
@@ -24,12 +26,9 @@ export const AUTHENTICATION_MESSAGES = {
   otpCodeInvalidError:
     "This verification code is incorrect: check the verification code in your email and try again.",
   otpCodeLabel: "Verification code",
-  playServicesMissingError:
-    "Google Play services aren't installed on this device: try another sign-in method.",
-  requestsRateLimitedError: (seconds: number) =>
+  rateLimitedError: (seconds: number) =>
     `Too many requests: try again in ${formatCount({ count: seconds, plural: "seconds", singular: "second" })}.`,
-  requestsRateLimitedWithoutDelayError:
-    "Too many requests: try again in a moment.",
+  rateLimitedWithoutDelayError: "Too many requests: try again in a moment.",
   resendOtpCodeButton: "Resend verification code",
   resendOtpCodeHint: "Sends a new verification code to your email address.",
   sendOtpCodeButton: "Continue with email address",

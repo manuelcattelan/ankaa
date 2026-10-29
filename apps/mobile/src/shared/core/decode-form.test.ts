@@ -20,9 +20,25 @@ const trimmedFormSchema = Schema.Struct({
 );
 
 describe("decodeForm", () => {
+  it("returns no message before the first submit, while telling whether the form is valid", () => {
+    expect(
+      decodeForm({
+        hasSubmitted: false,
+        schema: formSchema,
+        values: { name: "", nickname: "ADA" },
+      }),
+    ).toEqual({
+      errorMessage: null,
+      errorMessages: { name: null, nickname: null },
+      isValid: false,
+      value: null,
+    });
+  });
+
   it("returns no message for any field, a valid form and its decoded value when every field is valid", () => {
     expect(
       decodeForm({
+        hasSubmitted: true,
         schema: trimmedFormSchema,
         values: { name: " Ada ", nickname: "ADA" },
       }),
@@ -37,6 +53,7 @@ describe("decodeForm", () => {
   it("returns the message of an invalid field, no message for a valid field, an invalid form and no value", () => {
     expect(
       decodeForm({
+        hasSubmitted: true,
         schema: formSchema,
         values: { name: "", nickname: "ADA" },
       }),
@@ -51,6 +68,7 @@ describe("decodeForm", () => {
   it("returns the message of every invalid field", () => {
     expect(
       decodeForm({
+        hasSubmitted: true,
         schema: formSchema,
         values: { name: "", nickname: "ADDA" },
       }),
@@ -68,6 +86,7 @@ describe("decodeForm", () => {
   it("returns the message of the first check that a field breaks", () => {
     expect(
       decodeForm({
+        hasSubmitted: true,
         schema: formSchema,
         values: { name: "Ada", nickname: "adda" },
       }),
@@ -82,6 +101,7 @@ describe("decodeForm", () => {
   it("returns the message of a check on the whole form, and no message for its fields", () => {
     expect(
       decodeForm({
+        hasSubmitted: true,
         schema: trimmedFormSchema,
         values: { name: "ADA", nickname: "ADA" },
       }),

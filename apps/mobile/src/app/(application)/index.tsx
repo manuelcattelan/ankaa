@@ -1,4 +1,4 @@
-import { DeleteAccountButton } from "#/features/authentication/components/delete-account-button.tsx";
+import { AccountDeletionRequestButton } from "#/features/authentication/components/account-deletion-request-button.tsx";
 import { SignOutButton } from "#/features/authentication/components/sign-out-button.tsx";
 import { Routines } from "#/features/routine/components/routines.tsx";
 import { WorkoutResumeButton } from "#/features/workout/components/workout-resume-button.tsx";
@@ -18,7 +18,7 @@ export default function ApplicationRoute() {
         )}
       />
       <SignOutButton />
-      <DeleteAccountButton />
+      <AccountDeletionRequestButton />
     </HomeScreen>
   );
 }

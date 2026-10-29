@@ -36,7 +36,7 @@ Expo ships breaking changes in every SDK release, so an API you remember may hav
 
 ## Forms and errors
 
-- Check a form with one Effect Schema, built from the Filters and constants of `@ankaa/core`, whose `message` annotations read their text from the Feature's messages object. Decode a form's values with the shared Core function in `shared/core/`, which returns each field's message, or `null` for a valid field, and whether the form is valid, and never handle a Schema issue in a component, so the mapping from issues to fields lives and is tested once.
+- Check a form with one Effect Schema, built from the Filters and constants of `@ankaa/core`, whose `message` annotations read their text from the Feature's messages object. Decode a form's values with the shared Core function in `shared/core/`, which returns the message of a check on the whole form and each field's message, or `null` when there's none or before the first submit, whether the form is valid, and its decoded value, and never handle a Schema issue in a component, so the mapping from issues to fields lives and is tested once.
 - In a nested form, let each component that shows fields decode its own part's value with its part's Schema, and let the form decide whether it can Save by decoding the whole Schema, which is built from those parts, so no path is passed down.
 - Show a form's validation errors only after its first submit, then update them on every change.
 - Map each Wire error of a procedure to the message Users see in one Core function per procedure, with an exhaustive `Match.valueTags`, and never write the mapping inline in a component, so a new Wire error fails to compile until it has a message.

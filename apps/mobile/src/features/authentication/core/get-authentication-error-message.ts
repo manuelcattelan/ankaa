@@ -49,14 +49,14 @@ export function getAuthenticationErrorMessage(
     EmailInvalidError: () => AUTHENTICATION_MESSAGES.emailInvalidError,
     EmailNotSharedError: () => AUTHENTICATION_MESSAGES.emailNotSharedError,
     GooglePlayServicesMissingError: () =>
-      AUTHENTICATION_MESSAGES.playServicesMissingError,
+      AUTHENTICATION_MESSAGES.googlePlayServicesMissingError,
     OtpCodeAttemptsExceededError: () =>
       AUTHENTICATION_MESSAGES.otpCodeAttemptsExceededError,
     OtpCodeExpiredError: () => AUTHENTICATION_MESSAGES.otpCodeExpiredError,
     OtpCodeInvalidError: () => AUTHENTICATION_MESSAGES.otpCodeInvalidError,
     RateLimitedError: ({ retryAfterSeconds }) =>
       retryAfterSeconds === null
-        ? AUTHENTICATION_MESSAGES.requestsRateLimitedWithoutDelayError
-        : AUTHENTICATION_MESSAGES.requestsRateLimitedError(retryAfterSeconds),
+        ? AUTHENTICATION_MESSAGES.rateLimitedWithoutDelayError
+        : AUTHENTICATION_MESSAGES.rateLimitedError(retryAfterSeconds),
   });
 }

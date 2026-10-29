@@ -6,7 +6,7 @@ import * as Match from "effect/Match";
 import type { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
 
 import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
-import { getTrpcErrorMessage } from "#/shared/core/get-trpc-error-message.ts";
+import { getTrpcClientErrorMessage } from "#/shared/core/get-trpc-client-error-message.ts";
 
 export function getRoutineSaveErrorMessage(
   error: RoutineNameConflictError | RoutineNotFoundError | TrpcClientError,
@@ -14,6 +14,7 @@ export function getRoutineSaveErrorMessage(
   return Match.valueTags(error, {
     RoutineNameConflictError: () => ROUTINE_MESSAGES.routineNameTakenError,
     RoutineNotFoundError: () => ROUTINE_MESSAGES.routineNotFoundError,
-    TrpcClientError: (trpcClientError) => getTrpcErrorMessage(trpcClientError),
+    TrpcClientError: (trpcClientError) =>
+      getTrpcClientErrorMessage(trpcClientError),
   });
 }
