@@ -11,14 +11,7 @@ import { POSITION_MINIMUM } from "@ankaa/core/shared/constants/position";
 import { SECTIONS } from "@ankaa/core/shared/constants/section";
 import { SET_TYPES } from "@ankaa/core/shared/constants/set-type";
 import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo";
-import {
-  between,
-  defineRelationsPart,
-  gte,
-  inArray,
-  isNull,
-  sql,
-} from "drizzle-orm";
+import { between, gte, inArray, isNull, sql } from "drizzle-orm";
 import {
   boolean,
   check,
@@ -34,16 +27,22 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "./authentication.ts";
-import { commonColumns } from "./common-columns.ts";
 import { exercise } from "./exercise.ts";
 
 export const routine = snakeCase.table(
   "routine",
   {
-    ...commonColumns,
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp({ withTimezone: true }),
+    id: uuid()
+      .primaryKey()
+      .default(sql`uuidv7()`),
     name: text().notNull(),
-    userId: text()
+    updatedAt: timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
+    userId: uuid()
       .notNull()
       .references(() => user.id, {
         name: "routine_user_id_fkey",
@@ -61,14 +60,21 @@ export const routine = snakeCase.table(
 export const routineDay = snakeCase.table(
   "routine_day",
   {
-    ...commonColumns,
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     dayOfWeek: text({ enum: DAYS_OF_WEEK }).notNull(),
+    id: uuid()
+      .primaryKey()
+      .default(sql`uuidv7()`),
     routineId: uuid()
       .notNull()
       .references(() => routine.id, {
         name: "routine_day_routine_id_fkey",
         onDelete: "cascade",
       }),
+    updatedAt: timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
   },
   (table) => [
     unique("routine_day_routine_id_day_of_week_key").on(
@@ -85,13 +91,16 @@ export const routineDay = snakeCase.table(
 export const routineExercise = snakeCase.table(
   "routine_exercise",
   {
-    ...commonColumns,
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     exerciseId: uuid()
       .notNull()
       .references(() => exercise.id, {
         name: "routine_exercise_exercise_id_fkey",
         onDelete: "restrict",
       }),
+    id: uuid()
+      .primaryKey()
+      .default(sql`uuidv7()`),
     note: text(),
     position: integer().notNull(),
     routineId: uuid()
@@ -102,6 +111,10 @@ export const routineExercise = snakeCase.table(
       }),
     section: text({ enum: SECTIONS }).notNull(),
     superset: integer(),
+    updatedAt: timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
     warmUpForRoutineExerciseId: uuid(),
   },
   (table) => [
@@ -129,10 +142,13 @@ export const routineExercise = snakeCase.table(
 export const routineExerciseSet = snakeCase.table(
   "routine_exercise_set",
   {
-    ...commonColumns,
     amount: integer(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     dropSetSegmentCount: integer(),
     dropSetWeightPercentage: integer(),
+    id: uuid()
+      .primaryKey()
+      .default(sql`uuidv7()`),
     isToFailure: boolean().notNull().default(false),
     position: integer().notNull(),
     restPauseRestSeconds: integer(),
@@ -146,6 +162,10 @@ export const routineExerciseSet = snakeCase.table(
       }),
     setType: text({ enum: SET_TYPES }).notNull(),
     tempo: text(),
+    updatedAt: timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
     variation: text({ enum: VARIATIONS }),
   },
   (table) => [
@@ -206,45 +226,4 @@ export const routineExerciseSet = snakeCase.table(
       sql`case when ${table.variation} = 'drop_set' then ${table.dropSetSegmentCount} is not null else ${table.dropSetSegmentCount} is null and ${table.dropSetWeightPercentage} is null end`,
     ),
   ],
-);
-
-export const routineRelations = defineRelationsPart(
-  { routine, routineDay, routineExercise, routineExerciseSet },
-  (relationsBuilder) => ({
-    routine: {
-      routineDays: relationsBuilder.many.routineDay({
-        from: relationsBuilder.routine.id,
-        to: relationsBuilder.routineDay.routineId,
-      }),
-      routineExercises: relationsBuilder.many.routineExercise({
-        from: relationsBuilder.routine.id,
-        to: relationsBuilder.routineExercise.routineId,
-      }),
-    },
-    routineDay: {
-      routine: relationsBuilder.one.routine({
-        from: relationsBuilder.routineDay.routineId,
-        optional: false,
-        to: relationsBuilder.routine.id,
-      }),
-    },
-    routineExercise: {
-      routine: relationsBuilder.one.routine({
-        from: relationsBuilder.routineExercise.routineId,
-        optional: false,
-        to: relationsBuilder.routine.id,
-      }),
-      routineExerciseSets: relationsBuilder.many.routineExerciseSet({
-        from: relationsBuilder.routineExercise.id,
-        to: relationsBuilder.routineExerciseSet.routineExerciseId,
-      }),
-    },
-    routineExerciseSet: {
-      routineExercise: relationsBuilder.one.routineExercise({
-        from: relationsBuilder.routineExerciseSet.routineExerciseId,
-        optional: false,
-        to: relationsBuilder.routineExercise.id,
-      }),
-    },
-  }),
 );

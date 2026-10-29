@@ -17,10 +17,10 @@ type ListedExercise = Pick<
   typeof exercise.$inferSelect,
   "amountUnit" | "id" | "name" | "weightType"
 > & {
-  exerciseEquipment: Pick<typeof exerciseEquipment.$inferSelect, "equipment">[];
-  exerciseMuscleGroups: Pick<
+  equipment: Pick<typeof exerciseEquipment.$inferSelect, "equipment">[];
+  muscleGroups: Pick<
     typeof exerciseMuscleGroup.$inferSelect,
-    "muscleGroup" | "muscleGroupRole"
+    "muscleGroup" | "role"
   >[];
 };
 
@@ -44,12 +44,12 @@ export class ExerciseRepository extends Context.Service<
             },
             orderBy: { name: "asc" },
             with: {
-              exerciseEquipment: {
+              equipment: {
                 columns: { equipment: true },
                 orderBy: { equipment: "asc" },
               },
-              exerciseMuscleGroups: {
-                columns: { muscleGroup: true, muscleGroupRole: true },
+              muscleGroups: {
+                columns: { muscleGroup: true, role: true },
                 orderBy: { muscleGroup: "asc" },
               },
             },

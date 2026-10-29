@@ -34,11 +34,18 @@ type SendRequestsUpToRateLimitOptions = {
   server: FastifyInstance;
 };
 
+type SignInResponseBody = {
+  user: { id: string };
+};
+
 const OTP_CODE_PATTERN = /^\d{6}$/;
 
 const RATE_LIMIT_MAXIMUM_REQUEST_COUNT = 1_000;
 
 const REQUEST_ID = "request-1";
+
+const UUID_V7_PATTERN =
+  /^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/;
 
 const SESSION = {
   session: {
@@ -147,6 +154,26 @@ describe("applicationPlugin", () => {
     ]);
 
     expect(sentEmails[0]?.text).toMatch(OTP_CODE_PATTERN);
+  });
+
+  it("creates a User with a UUID v7 id when /api/auth/sign-in/email-otp is requested with the verification code sent to a new email address", async () => {
+    await server.inject({
+      method: "POST",
+      payload: { email: "new-user@example.com", type: "sign-in" },
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+
+    const response = await server.inject({
+      method: "POST",
+      payload: { email: "new-user@example.com", otp: sentEmails.at(-1)?.text },
+      url: "/api/auth/sign-in/email-otp",
+    });
+
+    expect(response.statusCode).toBe(200);
+
+    expect(response.json<SignInResponseBody>().user.id).toMatch(
+      UUID_V7_PATTERN,
+    );
   });
 
   it("answers a tRPC procedure called by a signed-in person whose session cookie the request carries with its data", async () => {

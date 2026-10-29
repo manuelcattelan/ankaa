@@ -31,12 +31,12 @@ export function searchExercises({
     );
     const hasMuscleGroupMatch =
       muscleGroupSelection.length === 0 ||
-      exercise.exerciseMuscleGroups.some((exerciseMuscleGroup) =>
+      exercise.muscleGroups.some((exerciseMuscleGroup) =>
         muscleGroupSelection.includes(exerciseMuscleGroup.muscleGroup),
       );
     const hasEquipmentMatch =
       equipmentSelection.length === 0 ||
-      exercise.exerciseEquipment.every((exerciseEquipment) =>
+      exercise.equipment.some((exerciseEquipment) =>
         equipmentSelection.includes(exerciseEquipment.equipment),
       );
 

@@ -13,7 +13,7 @@ import { SECTIONS } from "@ankaa/core/shared/constants/section";
 import { SET_TYPES } from "@ankaa/core/shared/constants/set-type";
 import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo";
 import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-type";
-import { defineRelationsPart, gte, inArray, isNull, sql } from "drizzle-orm";
+import { gte, inArray, isNull, sql } from "drizzle-orm";
 import {
   boolean,
   check,
@@ -30,7 +30,6 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "./authentication.ts";
-import { commonColumns } from "./common-columns.ts";
 import { exercise } from "./exercise.ts";
 import { routine } from "./routine.ts";
 
@@ -41,8 +40,11 @@ const WEIGHT_VALUE_SCALE = 2;
 export const workout = snakeCase.table(
   "workout",
   {
-    ...commonColumns,
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     endedAt: timestamp({ withTimezone: true }),
+    id: uuid()
+      .primaryKey()
+      .default(sql`uuidv7()`),
     routineId: uuid()
       .notNull()
       .references(() => routine.id, {
@@ -50,7 +52,11 @@ export const workout = snakeCase.table(
         onDelete: "restrict",
       }),
     startedAt: timestamp({ withTimezone: true }).notNull(),
-    userId: text()
+    updatedAt: timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
+    userId: uuid()
       .notNull()
       .references(() => user.id, {
         name: "workout_user_id_fkey",
@@ -70,20 +76,27 @@ export const workout = snakeCase.table(
 export const workoutExercise = snakeCase.table(
   "workout_exercise",
   {
-    ...commonColumns,
     amountUnit: text({ enum: AMOUNT_UNITS }).notNull(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     exerciseId: uuid()
       .notNull()
       .references(() => exercise.id, {
         name: "workout_exercise_exercise_id_fkey",
         onDelete: "restrict",
       }),
+    id: uuid()
+      .primaryKey()
+      .default(sql`uuidv7()`),
     note: text(),
     position: integer().notNull(),
     section: text({ enum: SECTIONS }).notNull(),
     skipReason: text({ enum: SKIP_REASONS }),
     skipReasonNote: text(),
     superset: integer(),
+    updatedAt: timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
     warmUpForWorkoutExerciseId: uuid(),
     weightType: text({ enum: WEIGHT_TYPES }).notNull(),
     workoutId: uuid()
@@ -134,11 +147,18 @@ export const workoutExercise = snakeCase.table(
 export const workoutExerciseSet = snakeCase.table(
   "workout_exercise_set",
   {
-    ...commonColumns,
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    id: uuid()
+      .primaryKey()
+      .default(sql`uuidv7()`),
     isToFailure: boolean().notNull(),
     position: integer().notNull(),
     setType: text({ enum: SET_TYPES }).notNull(),
     tempo: text(),
+    updatedAt: timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
     variation: text({ enum: VARIATIONS }),
     workoutExerciseId: uuid()
       .notNull()
@@ -174,9 +194,16 @@ export const workoutExerciseSet = snakeCase.table(
 export const workoutExerciseSetSegment = snakeCase.table(
   "workout_exercise_set_segment",
   {
-    ...commonColumns,
     amount: integer(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    id: uuid()
+      .primaryKey()
+      .default(sql`uuidv7()`),
     position: integer().notNull(),
+    updatedAt: timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
     weightUnit: text({ enum: WEIGHT_UNITS }),
     weightValue: numeric({
       mode: "number",
@@ -216,51 +243,4 @@ export const workoutExerciseSetSegment = snakeCase.table(
       sql`${table.weightValue} is null or ${table.weightUnit} is not null`,
     ),
   ],
-);
-
-export const workoutRelations = defineRelationsPart(
-  {
-    workout,
-    workoutExercise,
-    workoutExerciseSet,
-    workoutExerciseSetSegment,
-  },
-  (relationsBuilder) => ({
-    workout: {
-      workoutExercises: relationsBuilder.many.workoutExercise({
-        from: relationsBuilder.workout.id,
-        to: relationsBuilder.workoutExercise.workoutId,
-      }),
-    },
-    workoutExercise: {
-      workout: relationsBuilder.one.workout({
-        from: relationsBuilder.workoutExercise.workoutId,
-        optional: false,
-        to: relationsBuilder.workout.id,
-      }),
-      workoutExerciseSets: relationsBuilder.many.workoutExerciseSet({
-        from: relationsBuilder.workoutExercise.id,
-        to: relationsBuilder.workoutExerciseSet.workoutExerciseId,
-      }),
-    },
-    workoutExerciseSet: {
-      workoutExercise: relationsBuilder.one.workoutExercise({
-        from: relationsBuilder.workoutExerciseSet.workoutExerciseId,
-        optional: false,
-        to: relationsBuilder.workoutExercise.id,
-      }),
-      workoutExerciseSetSegments:
-        relationsBuilder.many.workoutExerciseSetSegment({
-          from: relationsBuilder.workoutExerciseSet.id,
-          to: relationsBuilder.workoutExerciseSetSegment.workoutExerciseSetId,
-        }),
-    },
-    workoutExerciseSetSegment: {
-      workoutExerciseSet: relationsBuilder.one.workoutExerciseSet({
-        from: relationsBuilder.workoutExerciseSetSegment.workoutExerciseSetId,
-        optional: false,
-        to: relationsBuilder.workoutExerciseSet.id,
-      }),
-    },
-  }),
 );

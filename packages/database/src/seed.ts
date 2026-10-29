@@ -1,5 +1,4 @@
 import * as PgClient from "@effect/sql-pg/PgClient";
-import { sql } from "drizzle-orm";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -15,33 +14,31 @@ type ExerciseSeed = Pick<
   typeof exercise.$inferSelect,
   "amountUnit" | "id" | "name" | "weightType"
 > & {
-  exerciseEquipment: Pick<typeof exerciseEquipment.$inferSelect, "equipment">[];
-  exerciseMuscleGroups: Pick<
+  equipment: Pick<typeof exerciseEquipment.$inferSelect, "equipment">[];
+  muscleGroups: Pick<
     typeof exerciseMuscleGroup.$inferSelect,
-    "muscleGroup" | "muscleGroupRole"
+    "muscleGroup" | "role"
   >[];
 };
 
 const EXERCISE_SEEDS: ExerciseSeed[] = [
   {
     amountUnit: "repetition",
-    exerciseEquipment: [
+    equipment: [
       { equipment: "barbell" },
       { equipment: "bench" },
       { equipment: "rack" },
     ],
-    exerciseMuscleGroups: [
-      { muscleGroup: "chest", muscleGroupRole: "primary" },
-      { muscleGroup: "triceps", muscleGroupRole: "secondary" },
-      { muscleGroup: "front_deltoid", muscleGroupRole: "secondary" },
-    ],
     id: "01a116a3-0b0f-70ce-91c2-03ac50a49f4b",
+    muscleGroups: [
+      { muscleGroup: "chest", role: "primary" },
+      { muscleGroup: "triceps", role: "secondary" },
+      { muscleGroup: "front_deltoid", role: "secondary" },
+    ],
     name: "Bench Press (Barbell)",
     weightType: "total",
   },
 ];
-
-const nowSql = sql`now()`;
 
 const databaseLayer = Database.layerNoDeps.pipe(
   Layer.provide(
@@ -68,13 +65,12 @@ await Effect.runPromise(
               set: {
                 amountUnit: exerciseSeed.amountUnit,
                 name: exerciseSeed.name,
-                updatedAt: nowSql,
                 weightType: exerciseSeed.weightType,
               },
               target: exercise.id,
             });
 
-          for (const exerciseMuscleGroupSeed of exerciseSeed.exerciseMuscleGroups) {
+          for (const exerciseMuscleGroupSeed of exerciseSeed.muscleGroups) {
             yield* tx
               .insert(exerciseMuscleGroup)
               .values({
@@ -82,10 +78,7 @@ await Effect.runPromise(
                 exerciseId: exerciseSeed.id,
               })
               .onConflictDoUpdate({
-                set: {
-                  muscleGroupRole: exerciseMuscleGroupSeed.muscleGroupRole,
-                  updatedAt: nowSql,
-                },
+                set: { role: exerciseMuscleGroupSeed.role },
                 target: [
                   exerciseMuscleGroup.exerciseId,
                   exerciseMuscleGroup.muscleGroup,
@@ -93,17 +86,11 @@ await Effect.runPromise(
               });
           }
 
-          for (const exerciseEquipmentSeed of exerciseSeed.exerciseEquipment) {
+          for (const exerciseEquipmentSeed of exerciseSeed.equipment) {
             yield* tx
               .insert(exerciseEquipment)
               .values({ ...exerciseEquipmentSeed, exerciseId: exerciseSeed.id })
-              .onConflictDoUpdate({
-                set: { updatedAt: nowSql },
-                target: [
-                  exerciseEquipment.exerciseId,
-                  exerciseEquipment.equipment,
-                ],
-              });
+              .onConflictDoNothing();
           }
         }
       }),

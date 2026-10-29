@@ -4,28 +4,28 @@ import { getExerciseSearchOptions } from "@/features/exercise/core/get-exercise-
 
 const BENCH_PRESS_EXERCISE: Exercise = {
   amountUnit: "repetition",
-  exerciseEquipment: [
+  equipment: [
     { equipment: "barbell" },
     { equipment: "bench" },
     { equipment: "rack" },
   ],
-  exerciseMuscleGroups: [
-    { muscleGroup: "chest", muscleGroupRole: "primary" },
-    { muscleGroup: "triceps", muscleGroupRole: "secondary" },
-  ],
   id: "019a0000-0000-7000-8000-000000000001",
+  muscleGroups: [
+    { muscleGroup: "chest", role: "primary" },
+    { muscleGroup: "triceps", role: "secondary" },
+  ],
   name: "Bench Press (Barbell)",
   weightType: "total",
 };
 
 const OVERHEAD_PRESS_EXERCISE: Exercise = {
   ...BENCH_PRESS_EXERCISE,
-  exerciseEquipment: [{ equipment: "barbell" }, { equipment: "rack" }],
-  exerciseMuscleGroups: [
-    { muscleGroup: "front_deltoid", muscleGroupRole: "primary" },
-    { muscleGroup: "triceps", muscleGroupRole: "secondary" },
-  ],
+  equipment: [{ equipment: "barbell" }, { equipment: "rack" }],
   id: "019a0000-0000-7000-8000-000000000003",
+  muscleGroups: [
+    { muscleGroup: "front_deltoid", role: "primary" },
+    { muscleGroup: "triceps", role: "secondary" },
+  ],
   name: "Overhead Press (Barbell)",
 };
 

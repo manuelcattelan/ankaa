@@ -42,11 +42,12 @@ export function createAuthenticationOptions({
   sendVerificationOtpCode,
 }: CreateAuthenticationOptionsOptions) {
   return {
+    advanced: { database: { generateId: "uuid" } },
     baseURL: baseUrl,
     database: drizzleAdapter(database, {
       provider: "pg",
       schema: AuthenticationDatabaseSchema,
-      schemaName: "auth",
+      schemaName: "authentication",
     }),
     plugins: [
       expo(),

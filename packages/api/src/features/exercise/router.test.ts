@@ -83,22 +83,22 @@ describe("exercise.list", () => {
               {
                 exerciseId: "019a0000-0000-7000-8000-000000000001",
                 muscleGroup: "triceps",
-                muscleGroupRole: "secondary",
+                role: "secondary",
               },
               {
                 exerciseId: "019a0000-0000-7000-8000-000000000001",
                 muscleGroup: "chest",
-                muscleGroupRole: "primary",
+                role: "primary",
               },
               {
                 exerciseId: "019a0000-0000-7000-8000-000000000002",
                 muscleGroup: "front_deltoid",
-                muscleGroupRole: "secondary",
+                role: "secondary",
               },
               {
                 exerciseId: "019a0000-0000-7000-8000-000000000002",
                 muscleGroup: "chest",
-                muscleGroupRole: "primary",
+                role: "primary",
               },
             ]);
           }),
@@ -113,27 +113,27 @@ describe("exercise.list", () => {
     expect(exercises).toStrictEqual([
       {
         amountUnit: "repetition",
-        exerciseEquipment: [
+        equipment: [
           { equipment: "barbell" },
           { equipment: "bench" },
           { equipment: "rack" },
         ],
-        exerciseMuscleGroups: [
-          { muscleGroup: "chest", muscleGroupRole: "primary" },
-          { muscleGroup: "front_deltoid", muscleGroupRole: "secondary" },
-        ],
         id: "019a0000-0000-7000-8000-000000000002",
+        muscleGroups: [
+          { muscleGroup: "chest", role: "primary" },
+          { muscleGroup: "front_deltoid", role: "secondary" },
+        ],
         name: "Bench Press (Barbell)",
         weightType: "total",
       },
       {
         amountUnit: "repetition",
-        exerciseEquipment: [],
-        exerciseMuscleGroups: [
-          { muscleGroup: "chest", muscleGroupRole: "primary" },
-          { muscleGroup: "triceps", muscleGroupRole: "secondary" },
-        ],
+        equipment: [],
         id: "019a0000-0000-7000-8000-000000000001",
+        muscleGroups: [
+          { muscleGroup: "chest", role: "primary" },
+          { muscleGroup: "triceps", role: "secondary" },
+        ],
         name: "Push-Up",
         weightType: "bodyweight",
       },

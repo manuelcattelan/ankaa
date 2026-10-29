@@ -5,7 +5,7 @@ export function getExerciseSearchOptions(exercises: Exercise[]) {
     equipmentOptions: [
       ...new Set(
         exercises.flatMap((exercise) =>
-          exercise.exerciseEquipment.map(
+          exercise.equipment.map(
             (exerciseEquipment) => exerciseEquipment.equipment,
           ),
         ),
@@ -14,7 +14,7 @@ export function getExerciseSearchOptions(exercises: Exercise[]) {
     muscleGroupOptions: [
       ...new Set(
         exercises.flatMap((exercise) =>
-          exercise.exerciseMuscleGroups.map(
+          exercise.muscleGroups.map(
             (exerciseMuscleGroup) => exerciseMuscleGroup.muscleGroup,
           ),
         ),
