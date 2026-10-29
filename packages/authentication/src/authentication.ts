@@ -4,8 +4,8 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { AuthenticationError } from "#/authentication-error.ts";
 import { loadAuthenticationOptions } from "#/load-authentication-options.ts";
+import { makeAuthentication } from "#/make-authentication.ts";
 
 export class Authentication extends Context.Service<Authentication>()(
   "@ankaa/authentication/Authentication",
@@ -13,26 +13,7 @@ export class Authentication extends Context.Service<Authentication>()(
     make: Effect.gen(function* () {
       const authenticationOptions = yield* loadAuthenticationOptions();
 
-      const betterAuthentication = betterAuth(authenticationOptions);
-
-      function request<TResponse>(execute: () => Promise<TResponse>) {
-        return Effect.tryPromise({
-          catch: (cause) => new AuthenticationError({ cause }),
-          try: execute,
-        });
-      }
-
-      yield* request(() => betterAuthentication.$context);
-
-      function getSession(headers: Headers) {
-        return request(() => betterAuthentication.api.getSession({ headers }));
-      }
-
-      function handleRequest(webRequest: Request) {
-        return request(() => betterAuthentication.handler(webRequest));
-      }
-
-      return { getSession, handleRequest };
+      return yield* makeAuthentication(betterAuth(authenticationOptions));
     }),
   },
 ) {

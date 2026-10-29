@@ -14,11 +14,10 @@
     "fastify-plugin": "^6.0.0"
   },
   "devDependencies": {
+    "@ankaa/database": "workspace:*",
     "@ankaa/email": "workspace:*",
     "@ankaa/eslint": "workspace:*",
     "@ankaa/typescript": "workspace:*",
-    "@ankaa/vitest": "workspace:*",
-    "@effect/vitest": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "jiti": "catalog:",

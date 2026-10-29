@@ -1,7 +1,6 @@
 import type { Client } from "pg";
 import type { TestProject } from "vitest/node";
 
-import { migrationsFolderPath } from "@ankaa/database/migrations-folder-path";
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -10,13 +9,14 @@ import { createHash } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { escapeIdentifier } from "pg";
 import { lock } from "proper-lockfile";
 
-import { dropDatabase } from "#/drop-database.ts";
-import { getDatabaseUrl } from "#/get-database-url.ts";
-import { queryDatabase } from "#/query-database.ts";
-import "#/provided-context.ts";
+import { dropDatabase } from "#/testing/drop-database.ts";
+import { getDatabaseUrl } from "#/testing/get-database-url.ts";
+import { queryDatabase } from "#/testing/query-database.ts";
+import "#/testing/provided-context.ts";
 
 type BuildTemplateDatabaseOptions = {
   maintenanceClient: Client;
@@ -25,6 +25,10 @@ type BuildTemplateDatabaseOptions = {
 };
 
 const MIGRATIONS_HASH_LENGTH = 16;
+
+const POSTGRES_CONTAINER_IMAGE = "postgres:18.6";
+
+const POSTGRES_CONTAINER_LABELS = { "ankaa.test-database": "true" };
 
 const TEMPLATE_DATABASE_LOCK_KEY = 54_046;
 
@@ -39,6 +43,10 @@ const POSTGRES_CONTAINER_LOCK_RETRY_OPTIONS = {
   minTimeout: POSTGRES_CONTAINER_LOCK_RETRY_MINIMUM_TIMEOUT_MILLISECONDS,
   randomize: true,
 };
+
+const migrationsFolderPath = fileURLToPath(
+  new URL("../../drizzle", import.meta.url),
+);
 
 const postgresContainerLockFolderPath = path.join(homedir(), ".cache", "ankaa");
 
@@ -152,7 +160,10 @@ async function startPostgresContainer() {
   );
 
   try {
-    return await new PostgreSqlContainer("postgres:18").withReuse().start();
+    return await new PostgreSqlContainer(POSTGRES_CONTAINER_IMAGE)
+      .withLabels(POSTGRES_CONTAINER_LABELS)
+      .withReuse()
+      .start();
   } finally {
     await releasePostgresContainerLock();
   }

@@ -25,13 +25,80 @@ type CreateGeneratedFilesConfigurationOptions = {
   files: string[];
 };
 
+type CreateRestrictedImportsConfigurationOptions = {
+  basePath?: string;
+  files: Linter.Config["files"];
+  ignores?: string[];
+  paths?: RestrictedImportPath[];
+  patterns: RestrictedImportPattern[];
+};
+
+type RestrictedImportPath = {
+  importNames?: string[];
+  message: string;
+  name: string;
+};
+
+type RestrictedImportPattern = (typeof RESTRICTED_IMPORT_PATTERNS)[number];
+
 export const JAVASCRIPT_FILES = ["**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"];
 
 export const TEST_FILES = ["**/*.test.{ts,tsx}"];
 
 const FILENAME_MATCH_EXPORT_EXEMPT_FILES = ["**/*.config.*", "**/*.d.ts"];
 
-export const TEST_HELPER_FILES = ["**/src/shared/testing/**"];
+export const TESTING_FILES = ["**/testing/**"];
+
+const TESTING_IMPORTING_FILES = [
+  ...TEST_FILES,
+  ...TESTING_FILES,
+  "**/vitest.config.ts",
+];
+
+const TESTING_IMPORT_PATTERN = {
+  message:
+    "Import a testing/ file only in a test file, another testing/ file or a Vitest configuration, so test code, such as a fake, never ships in an app.",
+  regex: "(?:^|/)testing(?:/|$)",
+};
+
+const TEST_RESTRICTED_SYNTAX = [
+  {
+    message:
+      "Write a test as straight-line code, because a loop repeats the code's logic in the test. Write one test per case.",
+    selector:
+      "ForStatement, ForInStatement, ForOfStatement, WhileStatement, DoWhileStatement",
+  },
+  {
+    message:
+      "Write a test as straight-line code, because forEach repeats the code's logic in the test. Write one test per case.",
+    selector: "CallExpression[callee.property.name='forEach']",
+  },
+  {
+    message:
+      "Write one test per case with literal values, because a table of cases hides which case a test checks and invites computed expectations.",
+    selector:
+      "MemberExpression[property.name='each'][object.name=/^(describe|it|test)$/], MemberExpression[property.name='each'][object.object.name=/^(describe|it|test)$/]",
+  },
+];
+
+const RESTRICTED_VI_METHOD_MESSAGE =
+  "Swap behavior only through a Service's Layers, because a module mock replaces the code a test should run and breaks when the code is refactored.";
+
+const RESTRICTED_CALL_MATCHER_MESSAGE =
+  "Check what the code did through what a fake recorded or what a later call returns, because a call assertion checks how the code works instead of what it does.";
+
+const RESTRICTED_CALL_MATCHERS = [
+  "toBeCalled",
+  "toBeCalledTimes",
+  "toBeCalledWith",
+  "toHaveBeenCalled",
+  "toHaveBeenCalledAfter",
+  "toHaveBeenCalledBefore",
+  "toHaveBeenCalledExactlyOnceWith",
+  "toHaveBeenCalledOnce",
+  "toHaveBeenCalledTimes",
+  "toHaveBeenCalledWith",
+];
 
 export const RESTRICTED_SYNTAX = [
   {
@@ -135,18 +202,6 @@ export const CORE_RESTRICTED_IMPORT_PATTERNS = [
 ];
 
 export const CORE_FILES = ["**/core/**"];
-
-const CORE_PURITY_RULES: Linter.RulesRecord = {
-  "no-restricted-imports": [
-    "error",
-    {
-      patterns: [
-        ...RESTRICTED_IMPORT_PATTERNS,
-        ...CORE_RESTRICTED_IMPORT_PATTERNS,
-      ],
-    },
-  ],
-};
 
 const corePackagePath = path.resolve(
   import.meta.dirname,
@@ -277,10 +332,6 @@ export const rulesConfiguration = defineConfig([
       "no-else-return": ["error", { allowElseIf: false }],
       "no-magic-numbers": "off",
       "no-nested-ternary": "error",
-      "no-restricted-imports": [
-        "error",
-        { patterns: RESTRICTED_IMPORT_PATTERNS },
-      ],
       "no-restricted-syntax": ["error", ...RESTRICTED_SYNTAX],
       "no-shadow": "off",
       "object-shorthand": ["error", "properties"],
@@ -291,15 +342,25 @@ export const rulesConfiguration = defineConfig([
       "unicorn/no-top-level-side-effects": "error",
     },
   },
-  {
+  createRestrictedImportsConfiguration({
+    files: JAVASCRIPT_FILES,
+    patterns: RESTRICTED_IMPORT_PATTERNS,
+  }),
+  createRestrictedImportsConfiguration({
     files: [[...CORE_FILES, ...JAVASCRIPT_FILES]],
-    rules: CORE_PURITY_RULES,
-  },
-  {
+    patterns: [
+      ...RESTRICTED_IMPORT_PATTERNS,
+      ...CORE_RESTRICTED_IMPORT_PATTERNS,
+    ],
+  }),
+  createRestrictedImportsConfiguration({
     basePath: corePackagePath,
     files: JAVASCRIPT_FILES,
-    rules: CORE_PURITY_RULES,
-  },
+    patterns: [
+      ...RESTRICTED_IMPORT_PATTERNS,
+      ...CORE_RESTRICTED_IMPORT_PATTERNS,
+    ],
+  }),
   {
     files: ["**/*.config.{ts,mts}"],
     rules: { "import-x/no-default-export": "off" },
@@ -313,11 +374,11 @@ export const rulesConfiguration = defineConfig([
     rules: { "@typescript-eslint/no-magic-numbers": "off" },
   },
   {
-    files: TEST_HELPER_FILES,
+    files: TESTING_FILES,
     rules: { "@typescript-eslint/no-magic-numbers": "off" },
   },
   {
-    files: ["tooling/vitest/provided-context.ts"],
+    files: ["**/testing/provided-context.ts"],
     rules: { "@typescript-eslint/consistent-type-definitions": "off" },
   },
 ]);
@@ -359,10 +420,32 @@ export const vitestConfiguration = defineConfig({
   extends: [eslintPluginVitest.configs.recommended],
   files: TEST_FILES,
   rules: {
+    "no-restricted-syntax": [
+      "error",
+      ...RESTRICTED_SYNTAX,
+      ...TEST_RESTRICTED_SYNTAX,
+    ],
+    "vitest/max-nested-describe": ["error", { max: 1 }],
     "vitest/no-conditional-in-test": "error",
     "vitest/no-disabled-tests": "error",
+    "vitest/no-restricted-matchers": [
+      "error",
+      Object.fromEntries(
+        RESTRICTED_CALL_MATCHERS.flatMap((matcher) => [
+          [matcher, RESTRICTED_CALL_MATCHER_MESSAGE],
+          [`not.${matcher}`, RESTRICTED_CALL_MATCHER_MESSAGE],
+        ]),
+      ),
+    ],
+    "vitest/no-restricted-vi-methods": [
+      "error",
+      {
+        doMock: RESTRICTED_VI_METHOD_MESSAGE,
+        mock: RESTRICTED_VI_METHOD_MESSAGE,
+      },
+    ],
+    "vitest/require-top-level-describe": "error",
   },
-  settings: { vitest: { vitestImports: ["@effect/vitest"] } },
 });
 
 export function createFeatureIsolationZone({
@@ -398,6 +481,43 @@ export function createGeneratedFilesConfiguration({
       disabledRuleNames.map((ruleName) => [ruleName, "off"]),
     ),
   });
+}
+
+/**
+ * Bans `patterns` and `paths` in `files`, and imports from a testing/ folder
+ * in every one of them that isn't a test file, a testing/ file or a Vitest
+ * configuration. ESLint replaces a rule's options instead of merging them,
+ * so every configuration object that sets `no-restricted-imports` goes
+ * through this function to keep the testing/ ban.
+ */
+export function createRestrictedImportsConfiguration({
+  basePath,
+  files,
+  ignores = [],
+  paths = [],
+  patterns,
+}: CreateRestrictedImportsConfigurationOptions) {
+  const configuration = basePath === undefined ? {} : { basePath };
+
+  return defineConfig([
+    {
+      ...configuration,
+      files,
+      ignores,
+      rules: { "no-restricted-imports": ["error", { paths, patterns }] },
+    },
+    {
+      ...configuration,
+      files,
+      ignores: [...ignores, ...TESTING_IMPORTING_FILES],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          { paths, patterns: [...patterns, TESTING_IMPORT_PATTERN] },
+        ],
+      },
+    },
+  ]);
 }
 
 export function getFeatureNames(basePath: string) {

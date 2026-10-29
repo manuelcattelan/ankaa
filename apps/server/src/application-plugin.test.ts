@@ -3,22 +3,15 @@ import type { SendEmailOptions } from "@ankaa/email/email";
 import type { FastifyInstance } from "fastify";
 
 import { ExerciseApplicationService } from "@ankaa/api/features/exercise/exercise-application-service";
+import { createTestRuntime } from "@ankaa/api/shared/testing/create-test-runtime";
 import { Authentication } from "@ankaa/authentication/authentication";
-import { createTestRuntime } from "@ankaa/vitest/create-test-runtime";
-import { createTestUser } from "@ankaa/vitest/create-test-user";
-import {
-  afterAll,
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from "@effect/vitest";
+import { createTestUser } from "@ankaa/authentication/testing/create-test-user";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import fastify from "fastify";
+import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { applicationPlugin } from "#/application-plugin.ts";
 import { createLoggerLayer } from "#/create-logger-layer.ts";

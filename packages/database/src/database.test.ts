@@ -1,13 +1,15 @@
-import { createTestRuntime } from "@ankaa/vitest/create-test-runtime";
 import { eq } from "drizzle-orm";
 import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Fiber from "effect/Fiber";
+import * as Layer from "effect/Layer";
+import * as ManagedRuntime from "effect/ManagedRuntime";
 import { afterAll, describe, expect, it } from "vitest";
 
 import { Database } from "#/database.ts";
 import { exercise } from "#/schema/exercise.ts";
+import { testDatabaseLayer } from "#/testing/test-database-layer.ts";
 
 const findExerciseIds = Effect.fn("findExerciseIds")(function* (id: string) {
   const database = yield* Database;
@@ -19,7 +21,9 @@ const findExerciseIds = Effect.fn("findExerciseIds")(function* (id: string) {
 });
 
 describe("Database", () => {
-  const runtime = createTestRuntime();
+  const runtime = ManagedRuntime.make(
+    Database.layer.pipe(Layer.provideMerge(testDatabaseLayer)),
+  );
 
   afterAll(async () => {
     await runtime.dispose();

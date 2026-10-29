@@ -1,27 +1,16 @@
-import type { SendEmailOptions } from "@ankaa/email/email";
-
-import { ExerciseApplicationService } from "@ankaa/api/features/exercise/exercise-application-service";
-import { pinoBridge } from "@ankaa/api/shared/pino-bridge";
-import { Authentication } from "@ankaa/authentication/authentication";
-import { Database } from "@ankaa/database/database";
-import { Email } from "@ankaa/email/email";
 import * as ConfigProvider from "effect/ConfigProvider";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Logger from "effect/Logger";
-import * as ManagedRuntime from "effect/ManagedRuntime";
 import { randomUUID } from "node:crypto";
 import { escapeIdentifier } from "pg";
 import { inject } from "vitest";
 
-import { dropDatabase } from "#/drop-database.ts";
-import { getDatabaseUrl } from "#/get-database-url.ts";
-import { queryDatabase } from "#/query-database.ts";
-import "#/provided-context.ts";
+import { dropDatabase } from "#/testing/drop-database.ts";
+import { getDatabaseUrl } from "#/testing/get-database-url.ts";
+import { queryDatabase } from "#/testing/query-database.ts";
+import "#/testing/provided-context.ts";
 
-export type TestRuntime = ReturnType<typeof createTestRuntime>;
-
-const testDatabaseLayer = Layer.unwrap(
+export const testDatabaseLayer = Layer.unwrap(
   Effect.acquireRelease(
     Effect.promise(createTestDatabase),
     (testDatabaseName) =>
@@ -40,19 +29,6 @@ const testDatabaseLayer = Layer.unwrap(
     ),
   ),
 );
-
-export function createTestRuntime(sentEmails: SendEmailOptions[] = []) {
-  return ManagedRuntime.make(
-    Layer.mergeAll(
-      Authentication.layerNoDeps.pipe(
-        Layer.provideMerge(Email.layerTest(sentEmails)),
-      ),
-      Database.layer,
-      ExerciseApplicationService.layer,
-      Logger.layer([pinoBridge]),
-    ).pipe(Layer.provideMerge(testDatabaseLayer)),
-  );
-}
 
 async function createTestDatabase() {
   const testDatabaseName = `ankaa_test_${randomUUID().replaceAll("-", "")}`;

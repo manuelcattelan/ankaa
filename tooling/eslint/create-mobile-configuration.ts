@@ -11,6 +11,7 @@ import {
   CORE_FILES,
   CORE_RESTRICTED_IMPORT_PATTERNS,
   createFeatureIsolationZone,
+  createRestrictedImportsConfiguration,
   FEATURES_PATH,
   getFeatureNames,
   JAVASCRIPT_FILES,
@@ -126,13 +127,6 @@ export function createMobileConfiguration({
           "error",
           { basePath, zones: [...featureIsolationZones, routeZone] },
         ],
-        "no-restricted-imports": [
-          "error",
-          {
-            paths: [WRAPPED_PRIMITIVES_IMPORT],
-            patterns: RESTRICTED_IMPORT_PATTERNS,
-          },
-        ],
         "no-restricted-syntax": [
           "error",
           ...RESTRICTED_SYNTAX,
@@ -159,6 +153,11 @@ export function createMobileConfiguration({
         ],
       },
     },
+    createRestrictedImportsConfiguration({
+      files: JAVASCRIPT_FILES,
+      paths: [WRAPPED_PRIMITIVES_IMPORT],
+      patterns: RESTRICTED_IMPORT_PATTERNS,
+    }),
     {
       files: ["src/app/**"],
       rules: {
@@ -170,46 +169,27 @@ export function createMobileConfiguration({
         ],
       },
     },
-    {
+    createRestrictedImportsConfiguration({
       files: ["src/app/**"],
       ignores: ["src/app/_layout.tsx"],
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          {
-            paths: [WRAPPED_PRIMITIVES_IMPORT],
-            patterns: [
-              ...RESTRICTED_IMPORT_PATTERNS,
-              ROUTE_PACKAGE_IMPORT_PATTERN,
-            ],
-          },
-        ],
-      },
-    },
+      paths: [WRAPPED_PRIMITIVES_IMPORT],
+      patterns: [...RESTRICTED_IMPORT_PATTERNS, ROUTE_PACKAGE_IMPORT_PATTERN],
+    }),
+    createRestrictedImportsConfiguration({
+      files: ["src/shared/components/**"],
+      patterns: RESTRICTED_IMPORT_PATTERNS,
+    }),
     {
       files: ["src/shared/components/**"],
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          { patterns: RESTRICTED_IMPORT_PATTERNS },
-        ],
-        "react/jsx-props-no-spreading": "off",
-      },
+      rules: { "react/jsx-props-no-spreading": "off" },
     },
-    {
+    createRestrictedImportsConfiguration({
       files: [[...CORE_FILES, ...JAVASCRIPT_FILES]],
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          {
-            patterns: [
-              ...RESTRICTED_IMPORT_PATTERNS,
-              ...CORE_RESTRICTED_IMPORT_PATTERNS,
-            ],
-          },
-        ],
-      },
-    },
+      patterns: [
+        ...RESTRICTED_IMPORT_PATTERNS,
+        ...CORE_RESTRICTED_IMPORT_PATTERNS,
+      ],
+    }),
     {
       extends: [eslintPluginJest.configs["flat/recommended"]],
       files: TEST_FILES,

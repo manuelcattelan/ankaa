@@ -6,7 +6,6 @@
     "@ankaa/eslint": "workspace:*",
     "@ankaa/typescript": "workspace:*",
     "@ankaa/vitest": "workspace:*",
-    "@effect/vitest": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "jiti": "catalog:",

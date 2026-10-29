@@ -1,3 +1,3 @@
-import { databaseConfiguration } from "@ankaa/vitest/database-configuration";
+import { databaseConfiguration } from "#/testing/database-configuration.ts";
 
 export default databaseConfiguration;

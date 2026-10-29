@@ -4,12 +4,12 @@ import {
   exerciseEquipment,
   exerciseMuscleGroup,
 } from "@ankaa/database/schema/exercise";
-import { createTestRuntime } from "@ankaa/vitest/create-test-runtime";
-import { afterAll, describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
+import { afterAll, describe, expect, it } from "vitest";
 
 import { createCaller } from "#/shared/testing/create-caller.ts";
 import { createSignedInCaller } from "#/shared/testing/create-signed-in-caller.ts";
+import { createTestRuntime } from "#/shared/testing/create-test-runtime.ts";
 import { createInnerContext } from "#/trpc/context.ts";
 
 describe("exercise.list", () => {
