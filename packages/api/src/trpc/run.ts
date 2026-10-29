@@ -1,8 +1,9 @@
-import type * as Effect from "effect/Effect";
+import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
 import type * as Layer from "effect/Layer";
 
 import { TRPCError } from "@trpc/server";
 import * as Cause from "effect/Cause";
+import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
@@ -11,11 +12,17 @@ import type { applicationLayer } from "../layer.ts";
 import type { ApplicationRuntime } from "./context.ts";
 import type { WireError } from "./wire-error-schema.ts";
 
+import { PinoLogger } from "../shared/pino-logger.ts";
 import { getWireErrorCode } from "./get-wire-error-code.ts";
 import { wireErrorSchema } from "./wire-error-schema.ts";
 
 type RunOptions<TSuccess, TWireError extends WireError> = {
-  context: { runtime: ApplicationRuntime };
+  context: {
+    // Only a procedure called over HTTP has a request, because a caller
+    // takes the inner context (https://trpc.io/docs/server/context#inner-and-outer-context).
+    request?: CreateFastifyContextOptions["req"];
+    runtime: ApplicationRuntime;
+  };
   effect: Effect.Effect<
     TSuccess,
     NoInfer<TWireError>,
@@ -30,7 +37,12 @@ export async function run<TSuccess, TWireError extends WireError>({
   effect,
   signal,
 }: RunOptions<TSuccess, TWireError>) {
-  const exit = await context.runtime.runPromiseExit(effect, { signal });
+  const exit = await context.runtime.runPromiseExit(
+    context.request === undefined
+      ? effect
+      : Effect.provideService(effect, PinoLogger, context.request.log),
+    { signal },
+  );
 
   if (Exit.isSuccess(exit)) {
     return exit.value;

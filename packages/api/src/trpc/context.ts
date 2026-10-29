@@ -8,6 +8,8 @@ import * as Effect from "effect/Effect";
 
 import type { applicationLayer } from "../layer.ts";
 
+import { PinoLogger } from "../shared/pino-logger.ts";
+
 export type ApplicationRuntime = ManagedRuntime.ManagedRuntime<
   Layer.Success<typeof applicationLayer>,
   unknown
@@ -34,7 +36,7 @@ export async function createContext({
       const authentication = yield* Authentication;
 
       return yield* authentication.getSession(fromNodeHeaders(request.headers));
-    }),
+    }).pipe(Effect.provideService(PinoLogger, request.log)),
   );
 
   return { ...createInnerContext({ runtime, session }), request, response };

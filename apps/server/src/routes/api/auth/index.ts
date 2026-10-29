@@ -1,5 +1,6 @@
 import type { FastifyPluginCallback } from "fastify";
 
+import { PinoLogger } from "@ankaa/api/shared/pino-logger";
 import { Authentication } from "@ankaa/authentication";
 import { fromNodeHeaders } from "better-auth/node";
 import * as Effect from "effect/Effect";
@@ -21,7 +22,7 @@ export default ((server, { runtime }, done) => {
           const authentication = yield* Authentication;
 
           return yield* authentication.handleRequest(webRequest);
-        }),
+        }).pipe(Effect.provideService(PinoLogger, request.log)),
       );
 
       reply.status(response.status);

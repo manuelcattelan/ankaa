@@ -1,44 +1,31 @@
-import type * as LogLevel from "effect/LogLevel";
 import type { FastifyBaseLogger } from "fastify";
 
-import * as Cause from "effect/Cause";
-import * as Inspectable from "effect/Inspectable";
+import { pinoBridge } from "@ankaa/api/shared/pino-bridge";
+import { PinoLogger } from "@ankaa/api/shared/pino-logger";
+import * as Layer from "effect/Layer";
 import * as Logger from "effect/Logger";
 import * as References from "effect/References";
+import * as Schema from "effect/Schema";
 
-type PinoLogLevel = Exclude<keyof FastifyBaseLogger, "child" | "level">;
-
-const PINO_LOG_LEVELS = {
-  All: "trace",
-  Debug: "debug",
-  Error: "error",
-  Fatal: "fatal",
-  Info: "info",
-  None: "silent",
-  Trace: "trace",
-  Warn: "warn",
-} as const satisfies Record<LogLevel.LogLevel, PinoLogLevel>;
+const logLevelFromPinoLevelSchema = Schema.Literals([
+  "fatal",
+  "error",
+  "warn",
+  "info",
+  "debug",
+  "trace",
+  "silent",
+]).transform(["Fatal", "Error", "Warn", "Info", "Debug", "Trace", "None"]);
 
 export function createLoggerLayer(serverLogger: FastifyBaseLogger) {
-  return Logger.layer([
-    Logger.make(({ cause, fiber, logLevel, message }) => {
-      const messageParts: unknown[] = Array.isArray(message)
-        ? message
-        : [message];
-
-      serverLogger[PINO_LOG_LEVELS[logLevel]](
-        {
-          ...fiber.getRef(References.CurrentLogAnnotations),
-          ...(cause.reasons.length > 0 ? { err: Cause.squash(cause) } : {}),
-        },
-        messageParts
-          .map((messagePart) =>
-            typeof messagePart === "string"
-              ? messagePart
-              : Inspectable.toStringUnknown(messagePart),
-          )
-          .join(" "),
-      );
-    }),
-  ]);
+  return Layer.mergeAll(
+    Logger.layer([pinoBridge]),
+    Layer.succeed(PinoLogger, serverLogger),
+    Layer.effect(
+      References.MinimumLogLevel,
+      Schema.decodeUnknownEffect(logLevelFromPinoLevelSchema)(
+        serverLogger.level,
+      ),
+    ),
+  );
 }

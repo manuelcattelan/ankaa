@@ -1,12 +1,14 @@
 import type { SendEmailOptions } from "@ankaa/email";
 
 import { ExerciseApplicationService } from "@ankaa/api/features/exercise/exercise-application-service";
+import { pinoBridge } from "@ankaa/api/shared/pino-bridge";
 import { Authentication } from "@ankaa/authentication";
 import { Database } from "@ankaa/database";
 import { Email } from "@ankaa/email";
 import * as ConfigProvider from "effect/ConfigProvider";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Logger from "effect/Logger";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import { randomUUID } from "node:crypto";
 import { escapeIdentifier } from "pg";
@@ -47,6 +49,7 @@ export function createTestRuntime(sentEmails: SendEmailOptions[] = []) {
       ),
       Database.layer,
       ExerciseApplicationService.layer,
+      Logger.layer([pinoBridge]),
     ).pipe(Layer.provideMerge(testDatabaseLayer)),
   );
 }
