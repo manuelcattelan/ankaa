@@ -1,7 +1,7 @@
 import { formatCount } from "#/shared/core/format-count.ts";
 
 export const AUTHENTICATION_MESSAGES = {
-  accountNotConnectedError:
+  accountNotLinkedError:
     "This account can't be linked with the selected provider: try another sign-in method.",
   continueWithEmailButton: "Continue with email address",
   emailInvalidError:
@@ -25,15 +25,11 @@ export const AUTHENTICATION_MESSAGES = {
   requestsRateLimitedWithoutDelayError:
     "Too many requests: try again in a moment.",
   resendOtpCodeButton: "Resend verification code",
-  resendOtpCodeCooldownStatus: (seconds: number) =>
-    `You can resend the verification code in ${formatCount({ count: seconds, plural: "seconds", singular: "second" })}.`,
   resendOtpCodeHint: "Sends a new verification code to your email address.",
-  resendOtpCodeReadyAnnouncement: "You can resend the verification code.",
   sendOtpCodeButton: "Continue with email address",
   signInScreenTitle: "Sign in",
   signOutButton: "Sign out",
   validateOtpCodeButton: "Sign in",
-  validateOtpCodeReadyAnnouncement: "You can try to sign in again.",
   validateOtpCodeScreenTitle: "Enter verification code",
   withEmailScreenTitle: "Continue with email address",
 };

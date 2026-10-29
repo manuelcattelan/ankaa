@@ -1,67 +1,57 @@
-import * as Predicate from "effect/Predicate";
+import * as Match from "effect/Match";
+import * as Schema from "effect/Schema";
 
-import type { AuthenticationClient } from "#/shared/services/authentication-client.ts";
-
-import { isAuthenticationRateLimited } from "#/features/authentication/core/is-authentication-rate-limited.ts";
 import { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
 import { GoogleSignInInProgressError } from "#/features/authentication/errors/google-sign-in-in-progress-error.ts";
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
+import { AccountNotLinkedError } from "#/shared/errors/account-not-linked-error.ts";
 import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
+import { EmailInvalidError } from "#/shared/errors/email-invalid-error.ts";
+import { EmailNotSharedError } from "#/shared/errors/email-not-shared-error.ts";
+import { OtpCodeAttemptsExceededError } from "#/shared/errors/otp-code-attempts-exceeded-error.ts";
+import { OtpCodeExpiredError } from "#/shared/errors/otp-code-expired-error.ts";
+import { OtpCodeInvalidError } from "#/shared/errors/otp-code-invalid-error.ts";
+import { RateLimitedError } from "#/shared/errors/rate-limited-error.ts";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
-type AuthenticationErrorCode =
-  | "EMAIL_NOT_VERIFIED"
-  | "OAUTH_LINK_ERROR"
-  | "USER_EMAIL_NOT_FOUND"
-  | keyof AuthenticationClient["Service"]["authClient"]["$ERROR_CODES"];
+const authenticationErrorSchema = Schema.Union([
+  AccountNotLinkedError,
+  AuthenticationClientError,
+  EmailInvalidError,
+  EmailNotSharedError,
+  GooglePlayServicesMissingError,
+  GoogleSignInInProgressError,
+  OtpCodeAttemptsExceededError,
+  OtpCodeExpiredError,
+  OtpCodeInvalidError,
+  RateLimitedError,
+]);
 
-const AUTHENTICATION_ERROR_CODE_MESSAGES: Record<string, string | undefined> = {
-  EMAIL_NOT_VERIFIED: AUTHENTICATION_MESSAGES.accountNotConnectedError,
-  INVALID_EMAIL: AUTHENTICATION_MESSAGES.emailInvalidError,
-  INVALID_OTP: AUTHENTICATION_MESSAGES.otpCodeInvalidError,
-  OAUTH_LINK_ERROR: AUTHENTICATION_MESSAGES.accountNotConnectedError,
-  OTP_EXPIRED: AUTHENTICATION_MESSAGES.otpCodeExpiredError,
-  TOO_MANY_ATTEMPTS: AUTHENTICATION_MESSAGES.otpCodeAttemptsExceededError,
-  USER_EMAIL_NOT_FOUND: AUTHENTICATION_MESSAGES.emailNotSharedError,
-} satisfies Partial<Record<AuthenticationErrorCode, string>>;
-
+/**
+ * Maps every error that an authentication screen acts on to the message its
+ * User sees. A mutation's error can also be a defect, which gets the unknown
+ * error message.
+ */
 export function getAuthenticationErrorMessage(error: unknown) {
-  if (error instanceof AuthenticationClientError) {
-    return getAuthenticationFailureMessage(error);
+  if (!Schema.is(authenticationErrorSchema)(error)) {
+    return SHARED_MESSAGES.unknownError;
   }
 
-  if (error instanceof GooglePlayServicesMissingError) {
-    return AUTHENTICATION_MESSAGES.playServicesMissingError;
-  }
-
-  if (error instanceof GoogleSignInInProgressError) {
-    return "";
-  }
-
-  return getUnexpectedErrorMessage(error);
-}
-
-function getAuthenticationFailureMessage(error: AuthenticationClientError) {
-  if (error.cause !== null) {
-    return getUnexpectedErrorMessage(error.cause);
-  }
-
-  if (isAuthenticationRateLimited(error)) {
-    return error.retryAfterSeconds !== null && error.retryAfterSeconds > 0
-      ? AUTHENTICATION_MESSAGES.requestsRateLimitedError(
-          error.retryAfterSeconds,
-        )
-      : AUTHENTICATION_MESSAGES.requestsRateLimitedWithoutDelayError;
-  }
-
-  const errorCodeMessage =
-    error.code === null ? null : AUTHENTICATION_ERROR_CODE_MESSAGES[error.code];
-
-  return errorCodeMessage ?? SHARED_MESSAGES.unknownError;
-}
-
-function getUnexpectedErrorMessage(error: unknown) {
-  return Predicate.hasProperty(error, "code")
-    ? SHARED_MESSAGES.unknownError
-    : SHARED_MESSAGES.serverUnreachableError;
+  return Match.valueTags(error, {
+    AccountNotLinkedError: () => AUTHENTICATION_MESSAGES.accountNotLinkedError,
+    AuthenticationClientError: () => SHARED_MESSAGES.serverUnreachableError,
+    EmailInvalidError: () => AUTHENTICATION_MESSAGES.emailInvalidError,
+    EmailNotSharedError: () => AUTHENTICATION_MESSAGES.emailNotSharedError,
+    GooglePlayServicesMissingError: () =>
+      AUTHENTICATION_MESSAGES.playServicesMissingError,
+    GoogleSignInInProgressError: () => "",
+    OtpCodeAttemptsExceededError: () =>
+      AUTHENTICATION_MESSAGES.otpCodeAttemptsExceededError,
+    OtpCodeExpiredError: () => AUTHENTICATION_MESSAGES.otpCodeExpiredError,
+    OtpCodeInvalidError: () => AUTHENTICATION_MESSAGES.otpCodeInvalidError,
+    RateLimitedError: ({ retryAfterSeconds }) =>
+      retryAfterSeconds === null
+        ? AUTHENTICATION_MESSAGES.requestsRateLimitedWithoutDelayError
+        : AUTHENTICATION_MESSAGES.requestsRateLimitedError(retryAfterSeconds),
+  });
 }

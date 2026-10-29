@@ -9,13 +9,20 @@ import type { ApplicationPluginOptions } from "#/application-plugin.ts";
 
 export const authenticationRoute = ((server, { runtime }, done) => {
   server.route({
+    config: { rateLimit: false },
     handler: async (request, reply) => {
       const url = new URL(
         request.url,
         `http://${String(request.headers.host)}`,
       );
       const webRequest = new Request(url.toString(), {
-        headers: fromNodeHeaders(request.headers),
+        // better-auth limits requests per client IP, read from this header
+        // (https://www.better-auth.com/docs/concepts/rate-limit), so it must
+        // hold the address Fastify trusts, never one the client sent.
+        headers: fromNodeHeaders({
+          ...request.headers,
+          "x-forwarded-for": request.ip,
+        }),
         method: request.method,
         ...(request.body === undefined || request.body === null
           ? {}

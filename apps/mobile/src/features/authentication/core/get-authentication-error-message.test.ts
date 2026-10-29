@@ -1,118 +1,79 @@
 import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
 import { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
 import { GoogleSignInInProgressError } from "#/features/authentication/errors/google-sign-in-in-progress-error.ts";
+import { AccountNotLinkedError } from "#/shared/errors/account-not-linked-error.ts";
 import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
+import { EmailInvalidError } from "#/shared/errors/email-invalid-error.ts";
+import { EmailNotSharedError } from "#/shared/errors/email-not-shared-error.ts";
+import { OtpCodeAttemptsExceededError } from "#/shared/errors/otp-code-attempts-exceeded-error.ts";
+import { OtpCodeExpiredError } from "#/shared/errors/otp-code-expired-error.ts";
+import { OtpCodeInvalidError } from "#/shared/errors/otp-code-invalid-error.ts";
+import { RateLimitedError } from "#/shared/errors/rate-limited-error.ts";
 
 describe("getAuthenticationErrorMessage", () => {
-  it("returns the server unreachable message for an AuthenticationClientError caused by a network failure", () => {
-    const authenticationClientError = new AuthenticationClientError({
-      cause: new TypeError("Network request failed"),
-      code: null,
-      message: "Failed to send the authentication request",
-      retryAfterSeconds: null,
-      status: null,
-    });
-
-    expect(getAuthenticationErrorMessage(authenticationClientError)).toBe(
+  it("returns the server unreachable message for an AuthenticationClientError", () => {
+    expect(
+      getAuthenticationErrorMessage(
+        new AuthenticationClientError({
+          cause: new TypeError("Network request failed"),
+        }),
+      ),
+    ).toBe(
       "Ankaa can't connect: check your internet connection and try again.",
     );
   });
 
-  it("returns the unknown error message for an AuthenticationClientError caused by an error with a code", () => {
-    const authenticationClientError = new AuthenticationClientError({
-      cause: { code: "ERR_UNEXPECTED" },
-      code: null,
-      message: "Failed to send the authentication request",
-      retryAfterSeconds: null,
-      status: null,
-    });
-
-    expect(getAuthenticationErrorMessage(authenticationClientError)).toBe(
-      "Something went wrong: try again.",
-    );
+  it("returns the rate limit message with the seconds to wait for a RateLimitedError with seconds", () => {
+    expect(
+      getAuthenticationErrorMessage(
+        new RateLimitedError({ retryAfterSeconds: 30 }),
+      ),
+    ).toBe("Too many requests: try again in 30 seconds.");
   });
 
-  it("returns the rate limit message with the delay for a rate-limited AuthenticationClientError with a delay", () => {
-    const authenticationClientError = new AuthenticationClientError({
-      cause: null,
-      code: null,
-      message: "Authentication failed",
-      retryAfterSeconds: 30,
-      status: 429,
-    });
-
-    expect(getAuthenticationErrorMessage(authenticationClientError)).toBe(
-      "Too many requests: try again in 30 seconds.",
-    );
+  it("returns the rate limit message without a delay for a RateLimitedError without seconds", () => {
+    expect(
+      getAuthenticationErrorMessage(
+        new RateLimitedError({ retryAfterSeconds: null }),
+      ),
+    ).toBe("Too many requests: try again in a moment.");
   });
 
-  it("returns the rate limit message without a delay for a rate-limited AuthenticationClientError without a delay", () => {
-    const authenticationClientError = new AuthenticationClientError({
-      cause: null,
-      code: null,
-      message: "Authentication failed",
-      retryAfterSeconds: null,
-      status: 429,
-    });
-
-    expect(getAuthenticationErrorMessage(authenticationClientError)).toBe(
-      "Too many requests: try again in a moment.",
-    );
-  });
-
-  it("returns the incorrect verification code message for the code INVALID_OTP", () => {
-    const authenticationClientError = new AuthenticationClientError({
-      cause: null,
-      code: "INVALID_OTP",
-      message: "Authentication failed",
-      retryAfterSeconds: null,
-      status: 400,
-    });
-
-    expect(getAuthenticationErrorMessage(authenticationClientError)).toBe(
+  it("returns the incorrect verification code message for an OtpCodeInvalidError", () => {
+    expect(getAuthenticationErrorMessage(new OtpCodeInvalidError())).toBe(
       "This verification code is incorrect: check the verification code in your email and try again.",
     );
   });
 
-  it("returns the account not linked message for the code EMAIL_NOT_VERIFIED", () => {
-    const authenticationClientError = new AuthenticationClientError({
-      cause: null,
-      code: "EMAIL_NOT_VERIFIED",
-      message: "Authentication failed",
-      retryAfterSeconds: null,
-      status: 403,
-    });
+  it("returns the expired verification code message, which says to request a new one, for an OtpCodeExpiredError", () => {
+    expect(getAuthenticationErrorMessage(new OtpCodeExpiredError())).toBe(
+      "This verification code has expired: resend the verification code and try again.",
+    );
+  });
 
-    expect(getAuthenticationErrorMessage(authenticationClientError)).toBe(
+  it("returns the too many attempts message, which says to request a new verification code, for an OtpCodeAttemptsExceededError", () => {
+    expect(
+      getAuthenticationErrorMessage(new OtpCodeAttemptsExceededError()),
+    ).toBe(
+      "Too many incorrect attempts: resend the verification code and try again.",
+    );
+  });
+
+  it("returns the invalid email address message for an EmailInvalidError", () => {
+    expect(getAuthenticationErrorMessage(new EmailInvalidError())).toBe(
+      "This email address isn't valid: enter an address like name@example.com.",
+    );
+  });
+
+  it("returns the account not linked message for an AccountNotLinkedError", () => {
+    expect(getAuthenticationErrorMessage(new AccountNotLinkedError())).toBe(
       "This account can't be linked with the selected provider: try another sign-in method.",
     );
   });
 
-  it("returns the unknown error message for a code without a message", () => {
-    const authenticationClientError = new AuthenticationClientError({
-      cause: null,
-      code: "UNEXPECTED_CODE",
-      message: "Authentication failed",
-      retryAfterSeconds: null,
-      status: 400,
-    });
-
-    expect(getAuthenticationErrorMessage(authenticationClientError)).toBe(
-      "Something went wrong: try again.",
-    );
-  });
-
-  it("returns the unknown error message for an AuthenticationClientError without a code", () => {
-    const authenticationClientError = new AuthenticationClientError({
-      cause: null,
-      code: null,
-      message: "Authentication failed",
-      retryAfterSeconds: null,
-      status: 500,
-    });
-
-    expect(getAuthenticationErrorMessage(authenticationClientError)).toBe(
-      "Something went wrong: try again.",
+  it("returns the email not shared message for an EmailNotSharedError", () => {
+    expect(getAuthenticationErrorMessage(new EmailNotSharedError())).toBe(
+      "The selected provider didn't share your email address: try another sign-in method.",
     );
   });
 
@@ -130,17 +91,12 @@ describe("getAuthenticationErrorMessage", () => {
     ).toBe("");
   });
 
-  it("returns the server unreachable message for another error without a code", () => {
+  it("returns the unknown error message for a defect", () => {
     expect(
-      getAuthenticationErrorMessage(new TypeError("Network request failed")),
-    ).toBe(
-      "Ankaa can't connect: check your internet connection and try again.",
-    );
-  });
-
-  it("returns the unknown error message for another error with a code", () => {
-    expect(getAuthenticationErrorMessage({ code: "ERR_UNEXPECTED" })).toBe(
-      "Something went wrong: try again.",
-    );
+      getAuthenticationErrorMessage({
+        code: "FAILED_TO_CREATE_USER",
+        status: 422,
+      }),
+    ).toBe("Something went wrong: try again.");
   });
 });

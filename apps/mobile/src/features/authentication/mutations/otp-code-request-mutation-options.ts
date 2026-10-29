@@ -1,13 +1,22 @@
 import { mutationOptions } from "@tanstack/react-query";
+import * as Effect from "effect/Effect";
 
-import type { RequestOtpCodeOptions } from "#/features/authentication/interactors/request-otp-code.ts";
 import type { ApplicationRuntime } from "#/layer.ts";
 
-import { requestOtpCode } from "#/features/authentication/interactors/request-otp-code.ts";
+import { AuthenticationApplicationService } from "#/features/authentication/authentication-application-service.ts";
+
+const program = Effect.fn("otpCodeRequestMutation")(function* (variables: {
+  email: string;
+}) {
+  const authenticationApplicationService =
+    yield* AuthenticationApplicationService;
+
+  yield* authenticationApplicationService.requestOtpCode(variables);
+});
 
 export function otpCodeRequestMutationOptions(runtime: ApplicationRuntime) {
   return mutationOptions({
-    mutationFn: (requestOtpCodeOptions: RequestOtpCodeOptions) =>
-      runtime.runPromise(requestOtpCode(requestOtpCodeOptions)),
+    mutationFn: (variables: { email: string }) =>
+      runtime.runPromise(program(variables)),
   });
 }

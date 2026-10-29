@@ -6,7 +6,12 @@ import { ExerciseApplicationService } from "@ankaa/api/features/exercise/exercis
 import { RoutineApplicationService } from "@ankaa/api/features/routine/routine-application-service";
 import { createTestRuntime } from "@ankaa/api/shared/testing/create-test-runtime";
 import { Authentication } from "@ankaa/authentication/authentication";
+import { AuthenticationTestHelpers } from "@ankaa/authentication/testing/authentication-test-helpers";
 import { createTestUser } from "@ankaa/authentication/testing/create-test-user";
+import { Database } from "@ankaa/database/database";
+import { verification } from "@ankaa/database/schema/authentication";
+import { fakeEmailLayer } from "@ankaa/email/testing/fake-email-layer";
+import { fakeStalledEmailLayer } from "@ankaa/email/testing/fake-stalled-email-layer";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -82,6 +87,27 @@ async function createLoggingServer({
   return server;
 }
 
+function sendOtpCodeRequests({
+  count,
+  remoteAddress,
+  server,
+}: {
+  count: number;
+  remoteAddress: string;
+  server: FastifyInstance;
+}) {
+  return Promise.all(
+    Array.from({ length: count }, () =>
+      server.inject({
+        method: "POST",
+        payload: { email: "rate-limited@example.com", type: "sign-in" },
+        remoteAddress,
+        url: "/api/auth/email-otp/send-verification-otp",
+      }),
+    ),
+  );
+}
+
 function sendRequestsUpToRateLimit({
   remoteAddress,
   server,
@@ -98,7 +124,7 @@ function sendRequestsUpToRateLimit({
 
 describe("applicationPlugin", () => {
   const sentEmails: SendEmailOptions[] = [];
-  const runtime = createTestRuntime(sentEmails);
+  const runtime = createTestRuntime(fakeEmailLayer(sentEmails));
   let server: FastifyInstance;
 
   beforeEach(async () => {
@@ -132,6 +158,37 @@ describe("applicationPlugin", () => {
     });
   });
 
+  it("answers /api/auth/get-session with no session once the User is deleted, even with every cookie an earlier answer set", async () => {
+    const testUser = await createTestUser(runtime);
+    const earlierResponse = await server.inject({
+      headers: Object.fromEntries(testUser.headers),
+      method: "GET",
+      url: "/api/auth/get-session",
+    });
+    await runtime.runPromise(
+      Effect.gen(function* () {
+        const test = yield* AuthenticationTestHelpers;
+
+        yield* Effect.promise(() => test.deleteUser(testUser.user.id));
+      }),
+    );
+
+    const response = await server.inject({
+      headers: {
+        cookie: [
+          testUser.headers.get("cookie"),
+          ...earlierResponse.cookies.map(
+            (cookie) => `${cookie.name}=${cookie.value}`,
+          ),
+        ].join("; "),
+      },
+      method: "GET",
+      url: "/api/auth/get-session",
+    });
+
+    expect(response.json()).toBe(null);
+  });
+
   it("sends the verification code by email when /api/auth/email-otp/send-verification-otp is requested", async () => {
     await server.inject({
       method: "POST",
@@ -144,6 +201,119 @@ describe("applicationPlugin", () => {
     ]);
 
     expect(sentEmails[0]?.text).toMatch(OTP_CODE_PATTERN);
+  });
+
+  it("stores the verification code it sends hashed", async () => {
+    await server.inject({
+      method: "POST",
+      payload: { email: "hashed-code@example.com", type: "sign-in" },
+      remoteAddress: "192.0.2.20",
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+
+    const verifications = await runtime.runPromise(
+      Effect.gen(function* () {
+        const database = yield* Database;
+
+        return yield* database
+          .select({ value: verification.value })
+          .from(verification);
+      }),
+    );
+
+    expect(verifications).not.toContainEqual(
+      expect.objectContaining<Record<string, unknown>>({
+        value: expect.stringContaining(String(sentEmails.at(-1)?.text)),
+      }),
+    );
+  });
+
+  it("answers a verification code request without waiting for the email to be sent", async () => {
+    const stalledSentEmails: SendEmailOptions[] = [];
+    const stalledEmailRuntime = createTestRuntime(
+      fakeStalledEmailLayer(stalledSentEmails),
+    );
+    const stalledEmailServer = fastify();
+    await stalledEmailServer.register(applicationPlugin, {
+      runtime: stalledEmailRuntime,
+    });
+
+    const response = await stalledEmailServer.inject({
+      method: "POST",
+      payload: { email: "stalled-email@example.com", type: "sign-in" },
+      remoteAddress: "192.0.2.23",
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+    await stalledEmailServer.close();
+    await stalledEmailRuntime.dispose();
+
+    expect(response.statusCode).toBe(200);
+    expect(stalledSentEmails).toMatchObject([
+      {
+        subject: "Your sign-in verification code",
+        to: "stalled-email@example.com",
+      },
+    ]);
+  });
+
+  it("rejects the previous verification code once a new one is sent", async () => {
+    const remoteAddress = "192.0.2.21";
+
+    await server.inject({
+      method: "POST",
+      payload: { email: "resend@example.com", type: "sign-in" },
+      remoteAddress,
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+    const previousOtpCode = sentEmails.at(-1)?.text;
+    await server.inject({
+      method: "POST",
+      payload: { email: "resend@example.com", type: "sign-in" },
+      remoteAddress,
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+
+    const response = await server.inject({
+      method: "POST",
+      payload: { email: "resend@example.com", otp: previousOtpCode },
+      remoteAddress,
+      url: "/api/auth/sign-in/email-otp",
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ code: "INVALID_OTP" });
+  });
+
+  it("signs the User in with the latest verification code sent", async () => {
+    const remoteAddress = "192.0.2.22";
+
+    await server.inject({
+      method: "POST",
+      payload: { email: "latest-code@example.com", type: "sign-in" },
+      remoteAddress,
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+    await server.inject({
+      method: "POST",
+      payload: { email: "latest-code@example.com", type: "sign-in" },
+      remoteAddress,
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+
+    const response = await server.inject({
+      method: "POST",
+      payload: {
+        email: "latest-code@example.com",
+        otp: sentEmails.at(-1)?.text,
+      },
+      remoteAddress,
+      url: "/api/auth/sign-in/email-otp",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      user: { email: "latest-code@example.com" },
+    });
   });
 
   it("creates a User with a UUID v7 id when /api/auth/sign-in/email-otp is requested with the verification code sent to a new email address", async () => {
@@ -557,6 +727,51 @@ describe("applicationPlugin", () => {
       message: "The request has no name",
       statusCode: 400,
     });
+  });
+
+  it("rejects a verification code request from an IP address that has already sent 3 in the last minute with 429 and the seconds to wait", async () => {
+    const remoteAddress = "192.0.2.2";
+
+    await sendOtpCodeRequests({ count: 3, remoteAddress, server });
+
+    const response = await server.inject({
+      method: "POST",
+      payload: { email: "rate-limited@example.com", type: "sign-in" },
+      remoteAddress,
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+
+    expect(response.statusCode).toBe(429);
+    expect(response.headers["x-retry-after"]).toBe("60");
+  });
+
+  it("answers a verification code request from an IP address under its limit while another IP address is over its own", async () => {
+    await sendOtpCodeRequests({ count: 4, remoteAddress: "192.0.2.4", server });
+
+    const response = await server.inject({
+      method: "POST",
+      payload: { email: "rate-limited@example.com", type: "sign-in" },
+      remoteAddress: "192.0.2.5",
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+
+    expect(response.statusCode).toBe(200);
+  });
+
+  it("rejects a verification code request from an IP address over its limit with 429 whatever X-Forwarded-For header it sends", async () => {
+    const remoteAddress = "192.0.2.3";
+
+    await sendOtpCodeRequests({ count: 3, remoteAddress, server });
+
+    const response = await server.inject({
+      headers: { "x-forwarded-for": "198.51.100.1" },
+      method: "POST",
+      payload: { email: "rate-limited@example.com", type: "sign-in" },
+      remoteAddress,
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+
+    expect(response.statusCode).toBe(429);
   });
 
   it("rejects a request from an IP address that has already sent 1000 requests in the last minute with 429", async () => {

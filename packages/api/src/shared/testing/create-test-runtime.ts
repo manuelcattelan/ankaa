@@ -1,4 +1,4 @@
-import type { SendEmailOptions } from "@ankaa/email/email";
+import type { Email } from "@ankaa/email/email";
 
 import { testAuthenticationLayer } from "@ankaa/authentication/testing/test-authentication-layer";
 import { Database } from "@ankaa/database/database";
@@ -24,12 +24,12 @@ const TEST_SETTINGS = {
   NODE_ENV: "test",
 };
 
-export function createTestRuntime(sentEmails: SendEmailOptions[] = []) {
+export function createTestRuntime(
+  emailLayer: Layer.Layer<Email> = fakeEmailLayer([]),
+) {
   return ManagedRuntime.make(
     Layer.mergeAll(
-      testAuthenticationLayer.pipe(
-        Layer.provideMerge(fakeEmailLayer(sentEmails)),
-      ),
+      testAuthenticationLayer.pipe(Layer.provideMerge(emailLayer)),
       Database.layer,
       ExerciseApplicationService.layer,
       RoutineApplicationService.layer,

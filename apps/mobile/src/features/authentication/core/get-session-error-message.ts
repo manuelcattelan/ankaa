@@ -1,6 +1,6 @@
 import type { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 
-import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
+import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 type AuthenticationSession = ReturnType<
   AuthenticationClient["Service"]["authClient"]["useSession"]
@@ -17,5 +17,5 @@ export function getSessionErrorMessage(
     return null;
   }
 
-  return getAuthenticationErrorMessage(authenticationSession.error);
+  return SHARED_MESSAGES.serverUnreachableError;
 }

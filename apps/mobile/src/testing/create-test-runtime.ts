@@ -5,6 +5,7 @@ import type { Accessibility } from "#/shared/services/accessibility.ts";
 import type { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 import type { TrpcClient } from "#/shared/services/trpc-client.ts";
 
+import { AuthenticationApplicationService } from "#/features/authentication/authentication-application-service.ts";
 import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
 import { fakeAppleSignInLayer } from "#/features/authentication/testing/fake-apple-sign-in-layer.ts";
 import { RoutineApplicationService } from "#/features/routine/routine-application-service.ts";
@@ -36,6 +37,7 @@ export function createTestRuntime(layers: TestRuntimeLayers) {
       layers.appleSignIn ?? fakeAppleSignInLayer({ isAvailable: false }),
       layers.crypto ?? Layer.mock(Crypto, {}),
       layers.googleSignIn ?? Layer.mock(GoogleSignIn, {}),
+      AuthenticationApplicationService.layerNoDeps,
       Layer.mergeAll(
         ExerciseApplicationService.layerNoDeps,
         RoutineApplicationService.layerNoDeps,

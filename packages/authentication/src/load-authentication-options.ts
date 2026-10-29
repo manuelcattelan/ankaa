@@ -5,6 +5,7 @@ import { Email } from "@ankaa/email/email";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
+import * as FiberSet from "effect/FiberSet";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
 import { Pool } from "pg";
@@ -44,20 +45,49 @@ export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
 
     const db = drizzle({ client: pool, relations });
 
-    const context = yield* Effect.context();
+    const run = yield* FiberSet.makeRuntimePromise();
+
+    async function sendOtpCodeEmail({
+      emailAddress,
+      otpCode,
+    }: {
+      emailAddress: string;
+      otpCode: string;
+    }) {
+      try {
+        await run(
+          email
+            .send({
+              subject: "Your sign-in verification code",
+              text: otpCode,
+              to: emailAddress,
+            })
+            .pipe(
+              Effect.catchCause((cause) =>
+                Effect.logError("Failed to send the verification code", cause),
+              ),
+            ),
+        );
+      } catch {
+        // The send logs its own failure, so the runner's promise rejects only
+        // when the Layer closes and interrupts a send still in flight
+        // (https://github.com/Effect-TS/effect/blob/7f524e25cfb49a71ac39b0f44278d08d40dda5de/packages/effect/src/FiberSet.ts),
+        // which leaves nothing to report.
+      }
+    }
 
     return createAuthenticationOptions({
       ...authenticationConfiguration,
       database: db,
       secret: Redacted.value(authenticationConfiguration.secret),
-      sendVerificationOtpCode: ({ email: emailAddress, otpCode }) =>
-        Effect.runPromiseWith(context)(
-          email.send({
-            subject: "Your sign-in verification code",
-            text: otpCode,
-            to: emailAddress,
-          }),
-        ),
+      sendVerificationOtpCode: ({ email: emailAddress, otpCode }) => {
+        // better-auth awaits this callback, and awaiting the email would only
+        // add the provider's latency to the response
+        // (https://www.better-auth.com/docs/plugins/email-otp).
+        void sendOtpCodeEmail({ emailAddress, otpCode });
+
+        return Promise.resolve();
+      },
     });
   },
 );

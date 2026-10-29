@@ -1,12 +1,10 @@
 import * as Schema from "effect/Schema";
 
+/**
+ * The server can't be reached. A failed response maps to an error of its own
+ * through `getAuthenticationResponseError` instead.
+ */
 export class AuthenticationClientError extends Schema.TaggedError<AuthenticationClientError>()(
   "AuthenticationClientError",
-  {
-    cause: Schema.NullOr(Schema.Defect()),
-    code: Schema.NullOr(Schema.String),
-    message: Schema.String,
-    retryAfterSeconds: Schema.NullOr(Schema.Number),
-    status: Schema.NullOr(Schema.Number),
-  },
+  { cause: Schema.Defect() },
 ) {}

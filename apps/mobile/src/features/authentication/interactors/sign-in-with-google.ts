@@ -2,7 +2,6 @@ import * as Effect from "effect/Effect";
 
 import { GoogleSignInCanceledError } from "#/features/authentication/errors/google-sign-in-canceled-error.ts";
 import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
-import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 
 export const signInWithGoogle = Effect.fn("signInWithGoogle")(function* () {
@@ -20,13 +19,9 @@ export const signInWithGoogle = Effect.fn("signInWithGoogle")(function* () {
   const idToken = signInResponse.data.idToken;
 
   if (idToken === null || idToken === "") {
-    return yield* new AuthenticationClientError({
-      cause: null,
-      code: null,
-      message: "Failed to receive an identity token from Google",
-      retryAfterSeconds: null,
-      status: null,
-    });
+    return yield* Effect.die(
+      new Error("Failed to receive an identity token from Google"),
+    );
   }
 
   return yield* authenticationClient.request(({ authClient, fetchOptions }) =>

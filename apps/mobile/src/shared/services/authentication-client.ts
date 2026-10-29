@@ -4,6 +4,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ExpoSecureStore from "expo-secure-store";
 
+import type { getAuthenticationResponseError } from "#/shared/core/get-authentication-response-error.ts";
 import type { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
 import type {
   AuthClient,
@@ -24,7 +25,11 @@ export class AuthenticationClient extends Context.Service<
     readonly authClient: AuthClient;
     readonly request: <TData>(
       sendRequest: SendAuthenticationRequest<TData>,
-    ) => Effect.Effect<TData, AuthenticationClientError>;
+    ) => Effect.Effect<
+      TData,
+      | AuthenticationClientError
+      | NonNullable<ReturnType<typeof getAuthenticationResponseError>>
+    >;
   }
 >()("@ankaa/mobile/shared/services/AuthenticationClient") {
   static readonly layer = Layer.effect(

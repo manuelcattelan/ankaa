@@ -1,6 +1,6 @@
+import { OTP_CODE_LENGTH } from "@ankaa/core/features/authentication/constants/otp-code-length";
 import * as Schema from "effect/Schema";
 
-import { OTP_CODE_LENGTH } from "#/features/authentication/constants/otp-code-length.ts";
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 
 const otpCodeLengthFilter = Schema.isBetweenLength(

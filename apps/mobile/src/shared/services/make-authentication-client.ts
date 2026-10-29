@@ -5,9 +5,7 @@ import { emailOTPClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import * as Effect from "effect/Effect";
 
-import type { AuthenticationResponseError } from "#/shared/core/build-authentication-client-error.ts";
-
-import { buildAuthenticationClientError } from "#/shared/core/build-authentication-client-error.ts";
+import { getAuthenticationResponseError } from "#/shared/core/get-authentication-response-error.ts";
 import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
 
 export type AuthClient = ReturnType<typeof buildAuthClient>;
@@ -27,7 +25,7 @@ type AuthenticationFetch = (
 type AuthenticationResponse<TData> =
   | {
       data: null;
-      error: AuthenticationResponseError;
+      error: { code?: string | undefined; status: number };
     }
   | {
       data: TData;
@@ -57,14 +55,7 @@ export function makeAuthenticationClient({
 
   function request<TData>(sendRequest: SendAuthenticationRequest<TData>) {
     return Effect.tryPromise({
-      catch: (cause) =>
-        new AuthenticationClientError({
-          cause,
-          code: null,
-          message: "Failed to send the authentication request",
-          retryAfterSeconds: null,
-          status: null,
-        }),
+      catch: (cause) => new AuthenticationClientError({ cause }),
       try: async () => {
         let retryAfterHeader: null | string = null;
 
@@ -80,16 +71,21 @@ export function makeAuthenticationClient({
         return { response, retryAfterHeader };
       },
     }).pipe(
-      Effect.flatMap((authenticationRequest) =>
-        authenticationRequest.response.error !== null
-          ? Effect.fail(
-              buildAuthenticationClientError({
-                error: authenticationRequest.response.error,
-                retryAfterHeader: authenticationRequest.retryAfterHeader,
-              }),
-            )
-          : Effect.succeed(authenticationRequest.response.data),
-      ),
+      Effect.flatMap(({ response, retryAfterHeader }) => {
+        if (response.error === null) {
+          return Effect.succeed(response.data);
+        }
+
+        const responseError = getAuthenticationResponseError({
+          code: response.error.code ?? null,
+          retryAfterHeader,
+          status: response.error.status,
+        });
+
+        return responseError === null
+          ? Effect.die(response.error)
+          : Effect.fail(responseError);
+      }),
     );
   }
 
