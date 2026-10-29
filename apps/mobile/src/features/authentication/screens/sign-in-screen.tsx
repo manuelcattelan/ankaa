@@ -14,7 +14,7 @@ import { createAppleSignInAvailabilityQueryOptions } from "#/features/authentica
 import { LinkButton } from "#/shared/components/link-button.tsx";
 import { ScrollView } from "#/shared/components/scroll-view.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
-import { TOUCH_TARGET_SIZE_MINIMUM } from "#/shared/constants/touch-target.ts";
+import { TOUCH_TARGET_SIZE_MINIMUM } from "#/shared/constants/touch-target-size-minimum.ts";
 import { useAuthenticationSession } from "#/shared/hooks/use-authentication-session.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { announceMessage } from "#/shared/interactors/announce-message.ts";

@@ -1,4 +1,4 @@
-import type { AppRouter } from "@ankaa/api/trpc/router";
+import type { AppRouter } from "@ankaa/api/trpc/app-router";
 import type { TRPCClient } from "@trpc/client";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import type * as Schema from "effect/Schema";

@@ -5,9 +5,9 @@ import { Authentication } from "@ankaa/authentication/authentication";
 import { fromNodeHeaders } from "better-auth/node";
 import * as Effect from "effect/Effect";
 
-import type { ApplicationPluginOptions } from "#/application.ts";
+import type { ApplicationPluginOptions } from "#/application-plugin.ts";
 
-export default ((server, { runtime }, done) => {
+export const authenticationRoute = ((server, { runtime }, done) => {
   server.route({
     handler: async (request, reply) => {
       const url = new URL(request.url, `http://${request.headers.host}`);
@@ -25,10 +25,10 @@ export default ((server, { runtime }, done) => {
         }).pipe(Effect.provideService(PinoLogger, request.log)),
       );
 
-      reply.status(response.status);
+      void reply.status(response.status);
 
       for (const [headerName, headerValue] of response.headers) {
-        reply.header(headerName, headerValue);
+        void reply.header(headerName, headerValue);
       }
 
       return reply.send(response.body ? await response.text() : undefined);

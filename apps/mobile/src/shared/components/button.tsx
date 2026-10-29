@@ -2,7 +2,7 @@ import { useTheme } from "expo-router";
 import * as ReactNative from "react-native";
 
 import { Text } from "#/shared/components/text.tsx";
-import { TOUCH_TARGET_SIZE_MINIMUM } from "#/shared/constants/touch-target.ts";
+import { TOUCH_TARGET_SIZE_MINIMUM } from "#/shared/constants/touch-target-size-minimum.ts";
 
 type ButtonProperties = Omit<
   ReactNative.PressableProps,

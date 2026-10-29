@@ -19,7 +19,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { applicationLayer, createRuntime } from "#/layer.ts";
-import { RootNavigator } from "#/root.tsx";
+import { RootNavigator } from "#/root-navigator.tsx";
 import { Text } from "#/shared/components/text.tsx";
 import { useAuthenticationSession } from "#/shared/hooks/use-authentication-session.ts";
 import { errorMessages } from "#/shared/messages/error-messages.ts";

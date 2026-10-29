@@ -1,10 +1,14 @@
 import type { ApplicationRuntime } from "@ankaa/api/trpc/context";
 import type { FastifyError } from "fastify";
 
-import autoload from "@fastify/autoload";
+import helmet from "@fastify/helmet";
+import rateLimit from "@fastify/rate-limit";
+import underPressure from "@fastify/under-pressure";
 import fastifyPlugin from "fastify-plugin";
 import { STATUS_CODES } from "node:http";
-import path from "node:path";
+
+import { authenticationRoute } from "#/routes/authentication-route.ts";
+import { trpcRoute } from "#/routes/trpc-route.ts";
 
 export type ApplicationPluginOptions = {
   runtime: ApplicationRuntime;
@@ -15,10 +19,9 @@ const HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
 
 export const applicationPlugin = fastifyPlugin<ApplicationPluginOptions>(
   async (server, { runtime }) => {
-    await server.register(autoload, {
-      dir: path.join(import.meta.dirname, "plugins"),
-      forceESM: true,
-    });
+    await server.register(helmet);
+    await server.register(rateLimit);
+    await server.register(underPressure, { exposeStatusRoute: "/health" });
 
     server.setErrorHandler<FastifyError>(async (error, request, reply) => {
       const statusCode = error.statusCode ?? HTTP_STATUS_INTERNAL_SERVER_ERROR;
@@ -54,10 +57,10 @@ export const applicationPlugin = fastifyPlugin<ApplicationPluginOptions>(
       },
     );
 
-    await server.register(autoload, {
-      dir: path.join(import.meta.dirname, "routes"),
-      forceESM: true,
-      options: { runtime },
+    await server.register(authenticationRoute, {
+      prefix: "/api/auth",
+      runtime,
     });
+    await server.register(trpcRoute, { prefix: "/trpc", runtime });
   },
 );

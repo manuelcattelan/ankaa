@@ -4,7 +4,7 @@ import { Redirect } from "expo-router";
 import { useState } from "react";
 import { Platform } from "react-native";
 
-import { OTP_CODE_LENGTH } from "#/features/authentication/constants/otp-code.ts";
+import { OTP_CODE_LENGTH } from "#/features/authentication/constants/otp-code-length.ts";
 import { getCooldownDeadline } from "#/features/authentication/core/get-cooldown-deadline.ts";
 import { getOtpCodeCompletenessValidationErrorMessage } from "#/features/authentication/core/get-otp-code-completeness-validation-error-message.ts";
 import { getOtpCodeErrorMessage } from "#/features/authentication/core/get-otp-code-error-message.ts";

@@ -15,8 +15,4 @@ export const serverConfiguration = defineConfig([
     languageOptions: { globals: globals.node },
     rules: { "no-console": "error" },
   },
-  {
-    files: ["src/plugins/**", "src/routes/**"],
-    rules: { "import-x/no-default-export": "off" },
-  },
 ]);

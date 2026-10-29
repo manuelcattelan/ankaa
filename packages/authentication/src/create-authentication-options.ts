@@ -1,4 +1,4 @@
-import type { NodeEnvironment } from "@ankaa/core/shared/constants/node-environment";
+import type { NodeEnvironment } from "@ankaa/core/shared/constants/node-environments";
 import type { DB } from "@better-auth/drizzle-adapter/relations-v2";
 import type { BetterAuthOptions } from "better-auth";
 

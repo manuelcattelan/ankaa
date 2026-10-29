@@ -18,11 +18,10 @@
     "typescript-eslint": "^8.70.0"
   },
   "exports": {
-    "./base": "./base.ts",
-    "./mobile": "./mobile.ts",
-    "./package": "./package.ts",
-    "./server": "./server.ts",
-    "./tooling": "./tooling.ts"
+    "./create-mobile-configuration": "./create-mobile-configuration.ts",
+    "./create-package-configuration": "./create-package-configuration.ts",
+    "./server-configuration": "./server-configuration.ts",
+    "./tooling-configuration": "./tooling-configuration.ts"
   },
   "imports": {
     "#/*": "./*"

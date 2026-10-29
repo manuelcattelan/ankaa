@@ -4,7 +4,7 @@ import {
   MUSCLE_GROUPS,
 } from "@ankaa/core/features/exercise/constants/muscle-group";
 import { AMOUNT_UNITS } from "@ankaa/core/shared/constants/amount";
-import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-type";
+import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-types";
 import { inArray, sql } from "drizzle-orm";
 import {
   check,

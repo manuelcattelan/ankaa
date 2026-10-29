@@ -6,7 +6,7 @@ import { Authentication } from "@ankaa/authentication/authentication";
 import { fromNodeHeaders } from "better-auth/node";
 import * as Effect from "effect/Effect";
 
-import type { applicationLayer } from "#/layer.ts";
+import type { applicationLayer } from "#/application-layer.ts";
 
 import { PinoLogger } from "#/shared/pino-logger.ts";
 

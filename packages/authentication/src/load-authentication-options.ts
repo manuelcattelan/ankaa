@@ -1,4 +1,4 @@
-import { NODE_ENVIRONMENTS } from "@ankaa/core/shared/constants/node-environment";
+import { NODE_ENVIRONMENTS } from "@ankaa/core/shared/constants/node-environments";
 import { urlSchema } from "@ankaa/core/shared/schemas/url-schema";
 import { relations } from "@ankaa/database/relations";
 import { Email } from "@ankaa/email/email";

@@ -16,7 +16,6 @@ import typescriptEslint from "typescript-eslint";
 import { plugin } from "#/plugin.ts";
 
 type CreateFeatureIsolationZoneOptions = {
-  allowedFeaturePaths?: string[];
   featureName: string;
   target: string | string[];
 };
@@ -29,6 +28,8 @@ type CreateGeneratedFilesConfigurationOptions = {
 export const JAVASCRIPT_FILES = ["**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"];
 
 export const TEST_FILES = ["**/*.test.{ts,tsx}"];
+
+const FILENAME_MATCH_EXPORT_EXEMPT_FILES = ["**/*.config.*", "**/*.d.ts"];
 
 export const TEST_HELPER_FILES = ["**/src/shared/testing/**"];
 
@@ -162,6 +163,7 @@ export const rulesConfiguration = defineConfig([
       unicorn: eslintPluginUnicorn,
     },
     rules: {
+      "@ankaa/filename-match-export": "error",
       "@ankaa/naming-convention": [
         "error",
         {
@@ -243,6 +245,10 @@ export const rulesConfiguration = defineConfig([
         "error",
         { fixStyle: "separate-type-imports", prefer: "type-imports" },
       ],
+      "@typescript-eslint/no-floating-promises": [
+        "error",
+        { checkThenables: true },
+      ],
       "@typescript-eslint/no-magic-numbers": [
         "error",
         {
@@ -281,6 +287,8 @@ export const rulesConfiguration = defineConfig([
       "prefer-template": "error",
       "unicorn/catch-error-name": "error",
       "unicorn/filename-case": ["error", { case: "kebabCase" }],
+      "unicorn/no-exports-in-scripts": "error",
+      "unicorn/no-top-level-side-effects": "error",
     },
   },
   {
@@ -295,6 +303,10 @@ export const rulesConfiguration = defineConfig([
   {
     files: ["**/*.config.{ts,mts}"],
     rules: { "import-x/no-default-export": "off" },
+  },
+  {
+    files: [...FILENAME_MATCH_EXPORT_EXEMPT_FILES, ...TEST_FILES],
+    rules: { "@ankaa/filename-match-export": "off" },
   },
   {
     files: TEST_FILES,
@@ -354,15 +366,14 @@ export const vitestConfiguration = defineConfig({
 });
 
 export function createFeatureIsolationZone({
-  allowedFeaturePaths = [],
   featureName,
   target,
 }: CreateFeatureIsolationZoneOptions) {
   return {
-    except: [`./${featureName}`, ...allowedFeaturePaths],
+    except: [`./${featureName}`],
     from: FEATURES_PATH,
     message:
-      "Import nothing from another feature, so each feature stays isolated.",
+      "Import nothing from another Feature, so each Feature stays isolated. Move what several Features use to shared/.",
     target,
   };
 }
@@ -389,8 +400,8 @@ export function createGeneratedFilesConfiguration({
   });
 }
 
-export function getFeatureNames() {
-  const featuresAbsolutePath = path.resolve(FEATURES_PATH);
+export function getFeatureNames(basePath: string) {
+  const featuresAbsolutePath = path.resolve(basePath, FEATURES_PATH);
 
   if (!existsSync(featuresAbsolutePath)) {
     return [];

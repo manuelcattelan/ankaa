@@ -4,7 +4,7 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { AuthenticationError } from "#/error.ts";
+import { AuthenticationError } from "#/authentication-error.ts";
 import { loadAuthenticationOptions } from "#/load-authentication-options.ts";
 
 export class Authentication extends Context.Service<Authentication>()(

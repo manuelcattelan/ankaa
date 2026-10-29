@@ -1,16 +1,16 @@
-import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/day-of-week";
+import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/days-of-week";
 import {
   DROP_SET_WEIGHT_PERCENTAGE_MAXIMUM,
   DROP_SET_WEIGHT_PERCENTAGE_MINIMUM,
 } from "@ankaa/core/features/routine/constants/drop-set";
-import { REST_SECONDS_MINIMUM } from "@ankaa/core/features/routine/constants/rest";
-import { SEGMENT_COUNT_MINIMUM } from "@ankaa/core/features/routine/constants/segment";
+import { REST_SECONDS_MINIMUM } from "@ankaa/core/features/routine/constants/rest-seconds-minimum";
+import { SEGMENT_COUNT_MINIMUM } from "@ankaa/core/features/routine/constants/segment-count-minimum";
 import { AMOUNT_MINIMUM } from "@ankaa/core/shared/constants/amount";
-import { VARIATIONS } from "@ankaa/core/shared/constants/intensity-technique";
-import { POSITION_MINIMUM } from "@ankaa/core/shared/constants/position";
-import { SECTIONS } from "@ankaa/core/shared/constants/section";
-import { SET_TYPES } from "@ankaa/core/shared/constants/set-type";
-import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo";
+import { INTENSITY_TECHNIQUES } from "@ankaa/core/shared/constants/intensity-techniques";
+import { POSITION_MINIMUM } from "@ankaa/core/shared/constants/position-minimum";
+import { SECTIONS } from "@ankaa/core/shared/constants/sections";
+import { SET_TYPES } from "@ankaa/core/shared/constants/set-types";
+import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo-pattern";
 import { between, gte, inArray, isNull, sql } from "drizzle-orm";
 import {
   boolean,
@@ -166,7 +166,7 @@ export const routineExerciseSet = snakeCase.table(
       .notNull()
       .defaultNow()
       .$onUpdate(() => sql`now()`),
-    variation: text({ enum: VARIATIONS }),
+    variation: text({ enum: INTENSITY_TECHNIQUES }),
   },
   (table) => [
     unique("routine_exercise_set_routine_exercise_id_position_key").on(
@@ -179,7 +179,7 @@ export const routineExerciseSet = snakeCase.table(
     ),
     check(
       "routine_exercise_set_variation_check",
-      inArray(table.variation, VARIATIONS),
+      inArray(table.variation, INTENSITY_TECHNIQUES),
     ),
     check(
       "routine_exercise_set_tempo_check",

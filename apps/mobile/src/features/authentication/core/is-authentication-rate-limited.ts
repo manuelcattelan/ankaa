@@ -1,4 +1,4 @@
-import { HTTP_STATUS_TOO_MANY_REQUESTS } from "#/features/authentication/constants/http-status.ts";
+import { HTTP_STATUS_TOO_MANY_REQUESTS } from "#/features/authentication/constants/http-status-too-many-requests.ts";
 import { AuthenticationError } from "#/shared/errors/authentication-error.ts";
 
 type RateLimitedAuthenticationError = AuthenticationError &

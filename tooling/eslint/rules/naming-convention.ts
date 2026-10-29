@@ -3,7 +3,7 @@ import type { TSESTree } from "@typescript-eslint/utils";
 import typescriptEslintPlugin from "@typescript-eslint/eslint-plugin";
 import { AST_NODE_TYPES } from "@typescript-eslint/utils";
 
-import { createRule } from "#/utilities/rule.ts";
+import { createRule } from "#/utilities/create-rule.ts";
 
 type NamingConventionContext = Parameters<
   typeof typescriptNamingConvention.create

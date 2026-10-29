@@ -1,4 +1,4 @@
-import { serverConfiguration } from "@ankaa/eslint/server";
+import { serverConfiguration } from "@ankaa/eslint/server-configuration";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([

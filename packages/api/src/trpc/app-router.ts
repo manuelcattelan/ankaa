@@ -1,4 +1,4 @@
-import { exerciseRouter } from "#/features/exercise/router.ts";
+import { exerciseRouter } from "#/features/exercise/exercise-router.ts";
 import { router } from "#/trpc/procedures.ts";
 
 export type AppRouter = typeof appRouter;

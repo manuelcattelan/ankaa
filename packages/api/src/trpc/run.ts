@@ -8,7 +8,7 @@ import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import type { applicationLayer } from "#/layer.ts";
+import type { applicationLayer } from "#/application-layer.ts";
 import type { ApplicationRuntime } from "#/trpc/context.ts";
 import type { WireError } from "#/trpc/wire-error-schema.ts";
 

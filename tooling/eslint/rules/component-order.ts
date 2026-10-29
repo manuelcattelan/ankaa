@@ -2,8 +2,8 @@ import type { TSESLint, TSESTree } from "@typescript-eslint/utils";
 
 import { AST_NODE_TYPES } from "@typescript-eslint/utils";
 
-import { getHookCall } from "#/utilities/hook.ts";
-import { createRule } from "#/utilities/rule.ts";
+import { createRule } from "#/utilities/create-rule.ts";
+import { getHookCall } from "#/utilities/get-hook-call.ts";
 
 type CheckComponentOrderOptions = {
   context: ComponentOrderContext;

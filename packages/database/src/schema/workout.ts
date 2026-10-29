@@ -1,4 +1,4 @@
-import { SKIP_REASONS } from "@ankaa/core/features/workout/constants/skip-reason";
+import { SKIP_REASONS } from "@ankaa/core/features/workout/constants/skip-reasons";
 import {
   WEIGHT_UNITS,
   WEIGHT_VALUE_MINIMUM,
@@ -7,12 +7,12 @@ import {
   AMOUNT_MINIMUM,
   AMOUNT_UNITS,
 } from "@ankaa/core/shared/constants/amount";
-import { VARIATIONS } from "@ankaa/core/shared/constants/intensity-technique";
-import { POSITION_MINIMUM } from "@ankaa/core/shared/constants/position";
-import { SECTIONS } from "@ankaa/core/shared/constants/section";
-import { SET_TYPES } from "@ankaa/core/shared/constants/set-type";
-import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo";
-import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-type";
+import { INTENSITY_TECHNIQUES } from "@ankaa/core/shared/constants/intensity-techniques";
+import { POSITION_MINIMUM } from "@ankaa/core/shared/constants/position-minimum";
+import { SECTIONS } from "@ankaa/core/shared/constants/sections";
+import { SET_TYPES } from "@ankaa/core/shared/constants/set-types";
+import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo-pattern";
+import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-types";
 import { gte, inArray, isNull, sql } from "drizzle-orm";
 import {
   boolean,
@@ -159,7 +159,7 @@ export const workoutExerciseSet = snakeCase.table(
       .notNull()
       .defaultNow()
       .$onUpdate(() => sql`now()`),
-    variation: text({ enum: VARIATIONS }),
+    variation: text({ enum: INTENSITY_TECHNIQUES }),
     workoutExerciseId: uuid()
       .notNull()
       .references(() => workoutExercise.id, {
@@ -178,7 +178,7 @@ export const workoutExerciseSet = snakeCase.table(
     ),
     check(
       "workout_exercise_set_variation_check",
-      inArray(table.variation, VARIATIONS),
+      inArray(table.variation, INTENSITY_TECHNIQUES),
     ),
     check(
       "workout_exercise_set_tempo_check",

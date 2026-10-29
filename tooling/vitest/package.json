@@ -10,7 +10,7 @@
     "vite": "catalog:"
   },
   "exports": {
-    ".": "./index.ts",
+    "./configuration": "./configuration.ts",
     "./create-test-runtime": "./create-test-runtime.ts",
     "./create-test-user": "./create-test-user.ts",
     "./database-configuration": "./database-configuration.ts"

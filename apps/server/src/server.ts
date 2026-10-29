@@ -1,7 +1,7 @@
-import type { NodeEnvironment } from "@ankaa/core/shared/constants/node-environment";
+import type { NodeEnvironment } from "@ankaa/core/shared/constants/node-environments";
 import type { FastifyServerOptions } from "fastify";
 
-import { NODE_ENVIRONMENTS } from "@ankaa/core/shared/constants/node-environment";
+import { NODE_ENVIRONMENTS } from "@ankaa/core/shared/constants/node-environments";
 import closeWithGrace from "close-with-grace";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
@@ -9,8 +9,8 @@ import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Schema from "effect/Schema";
 import fastify from "fastify";
 
-import { applicationPlugin } from "#/application.ts";
-import { createApplicationLayer } from "#/layer.ts";
+import { applicationPlugin } from "#/application-plugin.ts";
+import { createApplicationLayer } from "#/create-application-layer.ts";
 
 const LOGGER_CONFIGURATIONS = {
   development: {

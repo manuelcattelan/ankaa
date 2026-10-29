@@ -6,7 +6,7 @@ import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
 import { Resend } from "resend";
 
-import { EmailError } from "#/error.ts";
+import { EmailError } from "#/email-error.ts";
 
 export type SendEmailOptions = {
   subject: string;
