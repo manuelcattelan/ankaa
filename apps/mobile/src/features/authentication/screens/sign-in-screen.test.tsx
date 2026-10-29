@@ -1,5 +1,6 @@
 import type { SignInResponse } from "@react-native-google-signin/google-signin";
 
+import { AUTHORIZATION_CODE_HEADER_NAME } from "@ankaa/core/features/authentication/constants/authorization-code-header-name";
 import { fireEvent, screen, userEvent } from "@testing-library/react-native";
 import * as ExpoAppleAuthentication from "expo-apple-authentication";
 
@@ -57,7 +58,7 @@ describe("SignInScreen", () => {
           appleAuthenticationCredential: APPLE_AUTHENTICATION_CREDENTIAL,
         }),
         authenticationClient: fakeAuthenticationClientLayer(
-          createFakeSignInResponses("/sign-in/social"),
+          createFakeSignInResponses({ signInPath: "/sign-in/social" }),
         ),
         crypto: fakeCryptoLayer,
       },
@@ -68,6 +69,38 @@ describe("SignInScreen", () => {
     expect(
       await screen.findByRole("button", { name: "Sign out" }),
     ).toBeOnTheScreen();
+  });
+
+  it("sends the server the authorization code of the Apple sign-in with the sign-in", async () => {
+    const receivedSignInRequests: Request[] = [];
+    renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        appleSignIn: fakeAppleSignInLayer({
+          appleAuthenticationCredential: {
+            ...APPLE_AUTHENTICATION_CREDENTIAL,
+            authorizationCode: "apple-authorization-code",
+          },
+        }),
+        authenticationClient: fakeAuthenticationClientLayer(
+          createFakeSignInResponses({
+            receivedSignInRequests,
+            signInPath: "/sign-in/social",
+          }),
+        ),
+        crypto: fakeCryptoLayer,
+      },
+    });
+
+    fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
+
+    await screen.findByRole("button", { name: "Sign out" });
+
+    expect(
+      receivedSignInRequests.map((receivedSignInRequest) =>
+        receivedSignInRequest.headers.get(AUTHORIZATION_CODE_HEADER_NAME),
+      ),
+    ).toStrictEqual(["apple-authorization-code"]);
   });
 
   it("announces no error when the User cancels Apple sign-in", async () => {
@@ -184,7 +217,7 @@ describe("SignInScreen", () => {
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer(
-          createFakeSignInResponses("/sign-in/social"),
+          createFakeSignInResponses({ signInPath: "/sign-in/social" }),
         ),
         googleSignIn: fakeGoogleSignInLayer({
           signInResponse: GOOGLE_SIGN_IN_RESPONSE,
@@ -197,6 +230,41 @@ describe("SignInScreen", () => {
     expect(
       await screen.findByRole("button", { name: "Sign out" }),
     ).toBeOnTheScreen();
+  });
+
+  it("sends the server the authorization code of the Google sign-in with the sign-in", async () => {
+    const receivedSignInRequests: Request[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        authenticationClient: fakeAuthenticationClientLayer(
+          createFakeSignInResponses({
+            receivedSignInRequests,
+            signInPath: "/sign-in/social",
+          }),
+        ),
+        googleSignIn: fakeGoogleSignInLayer({
+          signInResponse: {
+            ...GOOGLE_SIGN_IN_RESPONSE,
+            data: {
+              ...GOOGLE_SIGN_IN_RESPONSE.data,
+              serverAuthCode: "google-authorization-code",
+            },
+          },
+        }),
+      },
+    });
+
+    await user.press(await screen.findByTestId("google-sign-in-button"));
+
+    await screen.findByRole("button", { name: "Sign out" });
+
+    expect(
+      receivedSignInRequests.map((receivedSignInRequest) =>
+        receivedSignInRequest.headers.get(AUTHORIZATION_CODE_HEADER_NAME),
+      ),
+    ).toStrictEqual(["google-authorization-code"]);
   });
 
   it("shows an error message when the server rejects the Google sign-in", async () => {

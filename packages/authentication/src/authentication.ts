@@ -4,6 +4,7 @@ import { Email } from "@ankaa/email/email";
 import { betterAuth } from "better-auth";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as FetchHttpClient from "effect/http/FetchHttpClient";
 import * as Layer from "effect/Layer";
 
 import type { AuthenticationError } from "#/authentication-error.ts";
@@ -43,6 +44,6 @@ export class Authentication extends Context.Service<
   );
 
   static readonly layer = Authentication.layerNoDeps.pipe(
-    Layer.provide(Email.layer),
+    Layer.provide(Layer.mergeAll(Email.layer, FetchHttpClient.layer)),
   );
 }

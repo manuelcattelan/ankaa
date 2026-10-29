@@ -36,7 +36,13 @@ export class GoogleSignIn extends Context.Service<
         webClientId: Config.NonEmptyString("EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID"),
       });
 
-      GoogleSignin.configure(googleSignInConfiguration);
+      // The server exchanges the sign-in's authorization code for the refresh
+      // token that it revokes when the Account is deleted
+      // (https://react-native-google-signin.github.io/docs/original).
+      GoogleSignin.configure({
+        ...googleSignInConfiguration,
+        offlineAccess: true,
+      });
 
       function checkPlayServices() {
         return Effect.promise(() => GoogleSignin.hasPlayServices()).pipe(

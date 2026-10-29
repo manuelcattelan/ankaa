@@ -68,7 +68,7 @@ describe("ValidateOtpCodeScreen", () => {
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer(
-          createFakeSignInResponses("/sign-in/email-otp"),
+          createFakeSignInResponses({ signInPath: "/sign-in/email-otp" }),
         ),
       },
     });

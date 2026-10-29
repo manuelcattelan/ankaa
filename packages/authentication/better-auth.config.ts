@@ -10,6 +10,8 @@ export default betterAuth(
     googleIosClientId: "google-ios-client-id",
     googleWebClientId: "google-web-client-id",
     nodeEnvironment: "development",
+    requestRefreshToken: () => Promise.resolve(null),
+    revokeRefreshToken: () => Promise.resolve(),
     secret: "better-auth-secret-placeholder-of-32-characters",
     sendAccountDeletionLink: () => Promise.resolve(),
     sendVerificationOtpCode: () => Promise.resolve(),

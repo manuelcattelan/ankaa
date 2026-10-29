@@ -1,5 +1,6 @@
 import type * as ExpoAppleAuthentication from "expo-apple-authentication";
 
+import { AUTHORIZATION_CODE_HEADER_NAME } from "@ankaa/core/features/authentication/constants/authorization-code-header-name";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -151,7 +152,10 @@ export class AuthenticationApplicationService extends Context.Service<
           yield* authenticationClient.request(({ authClient, fetchOptions }) =>
             authClient.signIn.social(
               { idToken: appleIdToken, provider: "apple" },
-              fetchOptions,
+              addAuthorizationCodeHeader({
+                authorizationCode: credential.authorizationCode,
+                fetchOptions,
+              }),
             ),
           );
         },
@@ -191,7 +195,10 @@ export class AuthenticationApplicationService extends Context.Service<
           yield* authenticationClient.request(({ authClient, fetchOptions }) =>
             authClient.signIn.social(
               { idToken: { token: idToken }, provider: "google" },
-              fetchOptions,
+              addAuthorizationCodeHeader({
+                authorizationCode: signInResponse.data.serverAuthCode,
+                fetchOptions,
+              }),
             ),
           );
         },
@@ -302,6 +309,28 @@ export class AuthenticationApplicationService extends Context.Service<
       ),
     ),
   );
+}
+
+/**
+ * Sends the server the authorization code of an Apple or Google sign-in, which
+ * it exchanges for the refresh token that it revokes when the Account is
+ * deleted.
+ */
+function addAuthorizationCodeHeader<TFetchOptions extends object>({
+  authorizationCode,
+  fetchOptions,
+}: {
+  authorizationCode: null | string;
+  fetchOptions: TFetchOptions;
+}) {
+  if (authorizationCode === null || authorizationCode === "") {
+    return fetchOptions;
+  }
+
+  return {
+    ...fetchOptions,
+    headers: { [AUTHORIZATION_CODE_HEADER_NAME]: authorizationCode },
+  };
 }
 
 function buildAppleIdToken({

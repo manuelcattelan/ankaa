@@ -2,11 +2,19 @@ import type { NodeEnvironment } from "@ankaa/core/shared/constants/node-environm
 import type { DB } from "@better-auth/drizzle-adapter/relations-v2";
 import type { BetterAuthOptions } from "better-auth";
 
+import { AUTHORIZATION_CODE_HEADER_NAME } from "@ankaa/core/features/authentication/constants/authorization-code-header-name";
 import { OTP_CODE_LENGTH } from "@ankaa/core/features/authentication/constants/otp-code-length";
 import * as AuthenticationDatabaseSchema from "@ankaa/database/schema/authentication";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { expo } from "@better-auth/expo";
+import { createAuthMiddleware } from "better-auth/api";
 import { emailOTP } from "better-auth/plugins";
+import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
+
+import type { SocialProviderId } from "#/make-social-provider-client.ts";
+
+import { socialProviderIdSchema } from "#/make-social-provider-client.ts";
 
 const ACCOUNT_DELETION_PATH = "/delete-account";
 
@@ -16,6 +24,10 @@ const DEVELOPMENT_TRUSTED_ORIGINS = [
   "exp://192.168.*.*:*/**",
 ];
 
+const signInSocialBodySchema = Schema.Struct({
+  provider: socialProviderIdSchema,
+});
+
 export function createAuthenticationOptions({
   appleBundleId,
   baseUrl,
@@ -23,6 +35,8 @@ export function createAuthenticationOptions({
   googleIosClientId,
   googleWebClientId,
   nodeEnvironment,
+  requestRefreshToken,
+  revokeRefreshToken,
   secret,
   sendAccountDeletionLink,
   sendVerificationOtpCode,
@@ -33,6 +47,14 @@ export function createAuthenticationOptions({
   googleIosClientId: string;
   googleWebClientId: string;
   nodeEnvironment: NodeEnvironment;
+  requestRefreshToken: (options: {
+    authorizationCode: string;
+    providerId: SocialProviderId;
+  }) => Promise<null | string>;
+  revokeRefreshToken: (options: {
+    providerId: SocialProviderId;
+    refreshToken: string;
+  }) => Promise<void>;
   secret: string;
   sendAccountDeletionLink: (options: {
     email: string;
@@ -51,6 +73,75 @@ export function createAuthenticationOptions({
       schema: AuthenticationDatabaseSchema,
       schemaName: "authentication",
     }),
+    databaseHooks: {
+      account: {
+        delete: {
+          // better-auth runs this hook once the Account's rows are deleted,
+          // and a throw here would still fail the deletion's response
+          // (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/better-auth/src/db/with-hooks.ts),
+          // so `revokeRefreshToken` catches its own errors: a failure at Apple
+          // or Google must never block the deletion.
+          after: async ({ providerId, refreshToken }) => {
+            if (
+              refreshToken === null ||
+              refreshToken === undefined ||
+              !Schema.is(socialProviderIdSchema)(providerId)
+            ) {
+              return;
+            }
+
+            await revokeRefreshToken({ providerId, refreshToken });
+          },
+        },
+      },
+    },
+    hooks: {
+      // better-auth stores no refresh token for a sign-in with an id token
+      // (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/better-auth/src/api/routes/sign-in.ts),
+      // so the server exchanges the sign-in's authorization code for one, to
+      // revoke it when the Account is deleted.
+      after: createAuthMiddleware(async (ctx) => {
+        const authorizationCode =
+          ctx.headers?.get(AUTHORIZATION_CODE_HEADER_NAME) ?? null;
+        const newSession = ctx.context.newSession;
+        const body = Schema.decodeUnknownOption(signInSocialBodySchema)(
+          ctx.body,
+        );
+
+        if (
+          ctx.path !== "/sign-in/social" ||
+          newSession === null ||
+          authorizationCode === null ||
+          Option.isNone(body)
+        ) {
+          return;
+        }
+
+        const providerId = body.value.provider;
+
+        const refreshToken = await requestRefreshToken({
+          authorizationCode,
+          providerId,
+        });
+
+        if (refreshToken === null) {
+          return;
+        }
+
+        const accounts = await ctx.context.internalAdapter.findAccounts(
+          newSession.user.id,
+        );
+        const account = accounts.find(
+          (userAccount) => userAccount.providerId === providerId,
+        );
+
+        if (account !== undefined) {
+          await ctx.context.internalAdapter.updateAccount(account.id, {
+            refreshToken,
+          });
+        }
+      }),
+    },
     plugins: [
       expo(),
       emailOTP({

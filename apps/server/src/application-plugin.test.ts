@@ -1,5 +1,9 @@
 import type { applicationLayer } from "@ankaa/api/application-layer";
 import type { TestRuntime } from "@ankaa/api/shared/testing/create-test-runtime";
+import type {
+  FakeSocialProviderResponses,
+  SocialProviderRequest,
+} from "@ankaa/authentication/testing/fake-social-provider-http-client-layer";
 import type { SendEmailOptions } from "@ankaa/email/email";
 import type { FastifyInstance } from "fastify";
 
@@ -10,6 +14,9 @@ import { createTestRuntime } from "@ankaa/api/shared/testing/create-test-runtime
 import { Authentication } from "@ankaa/authentication/authentication";
 import { AuthenticationTestHelpers } from "@ankaa/authentication/testing/authentication-test-helpers";
 import { createTestUser } from "@ankaa/authentication/testing/create-test-user";
+import { fakeSocialProviderHttpClientLayer } from "@ankaa/authentication/testing/fake-social-provider-http-client-layer";
+import { TEST_APPLE_PRIVATE_KEY } from "@ankaa/authentication/testing/test-apple-private-key";
+import { AUTHORIZATION_CODE_HEADER_NAME } from "@ankaa/core/features/authentication/constants/authorization-code-header-name";
 import { Database } from "@ankaa/database/database";
 import { verification } from "@ankaa/database/schema/authentication";
 import { routine, routineDay } from "@ankaa/database/schema/routine";
@@ -21,6 +28,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import fastify from "fastify";
+import { createPublicKey, verify } from "node:crypto";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { applicationPlugin } from "#/application-plugin.ts";
@@ -46,6 +54,30 @@ const DELETED_WORKOUT_ID = "019a0000-0000-7000-8000-000000000021";
 const KEPT_ROUTINE_ID = "019a0000-0000-7000-8000-000000000012";
 
 const REQUEST_ID = "request-1";
+
+const HTTP_STATUS_BAD_REQUEST = 400;
+
+const SOCIAL_PROVIDER_RESPONSES = {
+  "https://appleid.apple.com/auth/revoke": () => new Response(null),
+  "https://appleid.apple.com/auth/token": () =>
+    Response.json({
+      ["access_token"]: "apple-access-token",
+      ["expires_in"]: 3600,
+      ["id_token"]: "apple-id-token",
+      ["refresh_token"]: "apple-refresh-token",
+      ["token_type"]: "Bearer",
+    }),
+  "https://oauth2.googleapis.com/revoke": () => new Response(null),
+  "https://oauth2.googleapis.com/token": () =>
+    Response.json({
+      ["access_token"]: "google-access-token",
+      ["expires_in"]: 3599,
+      ["id_token"]: "google-id-token",
+      ["refresh_token"]: "google-refresh-token",
+      scope: "openid email profile",
+      ["token_type"]: "Bearer",
+    }),
+};
 
 const UUID_V7_PATTERN =
   /^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/;
@@ -114,6 +146,33 @@ async function createLoggingServer({
   return server;
 }
 
+async function createSocialProviderServer({
+  responses,
+  sentEmails,
+}: {
+  responses: FakeSocialProviderResponses;
+  sentEmails: SendEmailOptions[];
+}) {
+  const runtime = createTestRuntime({
+    emailLayer: fakeEmailLayer(sentEmails),
+    socialProviderHttpClientLayer: fakeSocialProviderHttpClientLayer({
+      responses,
+    }),
+  });
+  const server = fastify();
+
+  server.addHook("onClose", async () => {
+    await runtime.dispose();
+  });
+
+  await server.register(applicationPlugin, {
+    ...WELL_KNOWN_FILE_SETTINGS,
+    runtime,
+  });
+
+  return server;
+}
+
 function createUnsignedIdToken(claims: Record<string, unknown>) {
   const header = Buffer.from(JSON.stringify({ alg: "none" })).toString(
     "base64url",
@@ -121,6 +180,56 @@ function createUnsignedIdToken(claims: Record<string, unknown>) {
   const payload = Buffer.from(JSON.stringify(claims)).toString("base64url");
 
   return `${header}.${payload}.`;
+}
+
+function decodeAppleClientSecret(appleClientSecret: string | undefined) {
+  const [header = "", payload = "", signature = ""] =
+    String(appleClientSecret).split(".");
+  const decodedHeader: unknown = JSON.parse(
+    Buffer.from(header, "base64url").toString(),
+  );
+  const decodedPayload: unknown = JSON.parse(
+    Buffer.from(payload, "base64url").toString(),
+  );
+
+  return {
+    header: decodedHeader,
+    isSignatureValid: verify(
+      "sha256",
+      Buffer.from(`${header}.${payload}`),
+      {
+        dsaEncoding: "ieee-p1363",
+        key: createPublicKey(TEST_APPLE_PRIVATE_KEY),
+      },
+      Buffer.from(signature, "base64url"),
+    ),
+    payload: decodedPayload,
+  };
+}
+
+async function deleteAccount({
+  cookies,
+  sentEmails,
+  server,
+}: {
+  cookies: Record<string, string>;
+  sentEmails: SendEmailOptions[];
+  server: FastifyInstance;
+}) {
+  await server.inject({
+    cookies,
+    method: "POST",
+    payload: {},
+    url: "/api/auth/delete-user",
+  });
+  const token = /token=([\da-z]+)/.exec(String(sentEmails.at(-1)?.text))?.[1];
+
+  return server.inject({
+    cookies,
+    method: "POST",
+    payload: { token },
+    url: "/api/auth/delete-user",
+  });
 }
 
 function insertRoutine({
@@ -248,7 +357,14 @@ function sendRequestsUpToRateLimit({
 
 describe("applicationPlugin", () => {
   const sentEmails: SendEmailOptions[] = [];
-  const runtime = createTestRuntime(fakeEmailLayer(sentEmails));
+  const socialProviderRequests: SocialProviderRequest[] = [];
+  const runtime = createTestRuntime({
+    emailLayer: fakeEmailLayer(sentEmails),
+    socialProviderHttpClientLayer: fakeSocialProviderHttpClientLayer({
+      receivedRequests: socialProviderRequests,
+      responses: SOCIAL_PROVIDER_RESPONSES,
+    }),
+  });
   let server: FastifyInstance;
 
   beforeEach(async () => {
@@ -374,9 +490,9 @@ describe("applicationPlugin", () => {
 
   it("answers a verification code request without waiting for the email to be sent", async () => {
     const stalledSentEmails: SendEmailOptions[] = [];
-    const stalledEmailRuntime = createTestRuntime(
-      fakeStalledEmailLayer(stalledSentEmails),
-    );
+    const stalledEmailRuntime = createTestRuntime({
+      emailLayer: fakeStalledEmailLayer(stalledSentEmails),
+    });
     const stalledEmailServer = fastify();
     await stalledEmailServer.register(applicationPlugin, {
       ...WELL_KNOWN_FILE_SETTINGS,
@@ -615,6 +731,241 @@ describe("applicationPlugin", () => {
 
     expect(response.statusCode).toBe(401);
     expect(response.json()).toMatchObject({ code: "OAUTH_LINK_ERROR" });
+  });
+
+  it("exchanges the authorization code that an Apple sign-in carries at Apple's token endpoint, with a client secret signed by the Apple key", async () => {
+    await server.inject({
+      headers: { [AUTHORIZATION_CODE_HEADER_NAME]: "apple-authorization-code" },
+      method: "POST",
+      payload: {
+        idToken: {
+          token: createUnsignedIdToken({
+            email: "apple-exchange@example.com",
+            email_verified: true,
+            sub: "apple-user-3",
+          }),
+        },
+        provider: "apple",
+      },
+      remoteAddress: "192.0.2.40",
+      url: "/api/auth/sign-in/social",
+    });
+
+    const appleTokenRequest = socialProviderRequests.findLast(
+      (socialProviderRequest) =>
+        socialProviderRequest.url === "https://appleid.apple.com/auth/token",
+    );
+
+    expect(appleTokenRequest?.body).toMatchObject({
+      ["client_id"]: "test.apple.app.bundle.identifier",
+      code: "apple-authorization-code",
+      ["grant_type"]: "authorization_code",
+    });
+    expect(
+      decodeAppleClientSecret(appleTokenRequest?.body.client_secret),
+    ).toMatchObject({
+      header: { alg: "ES256", kid: "TESTKEY123" },
+      isSignatureValid: true,
+      payload: {
+        aud: "https://appleid.apple.com",
+        iss: "TESTTEAM12",
+        sub: "test.apple.app.bundle.identifier",
+      },
+    });
+  });
+
+  it("exchanges the authorization code that a Google sign-in carries at Google's token endpoint, with the secret of the web client", async () => {
+    await server.inject({
+      headers: {
+        [AUTHORIZATION_CODE_HEADER_NAME]: "google-authorization-code",
+      },
+      method: "POST",
+      payload: {
+        idToken: {
+          token: createUnsignedIdToken({
+            email: "google-exchange@example.com",
+            email_verified: true,
+            sub: "google-user-4",
+          }),
+        },
+        provider: "google",
+      },
+      remoteAddress: "192.0.2.41",
+      url: "/api/auth/sign-in/social",
+    });
+
+    expect(
+      socialProviderRequests.findLast(
+        (socialProviderRequest) =>
+          socialProviderRequest.url === "https://oauth2.googleapis.com/token",
+      )?.body,
+    ).toStrictEqual({
+      ["client_id"]: "test-google-web-client-id",
+      ["client_secret"]: "test-google-client-secret",
+      code: "google-authorization-code",
+      ["grant_type"]: "authorization_code",
+      ["redirect_uri"]: "",
+    });
+  });
+
+  it("revokes at Apple, when the Account is deleted, the refresh token that Apple's token endpoint returned for the authorization code of its sign-in", async () => {
+    const signInResponse = await server.inject({
+      headers: { [AUTHORIZATION_CODE_HEADER_NAME]: "apple-authorization-code" },
+      method: "POST",
+      payload: {
+        idToken: {
+          token: createUnsignedIdToken({
+            email: "apple-revocation@example.com",
+            email_verified: true,
+            sub: "apple-user-4",
+          }),
+        },
+        provider: "apple",
+      },
+      remoteAddress: "192.0.2.42",
+      url: "/api/auth/sign-in/social",
+    });
+
+    await deleteAccount({
+      cookies: Object.fromEntries(
+        signInResponse.cookies.map((cookie) => [cookie.name, cookie.value]),
+      ),
+      sentEmails,
+      server,
+    });
+
+    expect(
+      socialProviderRequests.findLast(
+        (socialProviderRequest) =>
+          socialProviderRequest.url === "https://appleid.apple.com/auth/revoke",
+      )?.body,
+    ).toMatchObject({
+      ["client_id"]: "test.apple.app.bundle.identifier",
+      token: "apple-refresh-token",
+      ["token_type_hint"]: "refresh_token",
+    });
+  });
+
+  it("revokes at Google, when the Account is deleted, the refresh token that Google's token endpoint returned for the authorization code of its sign-in", async () => {
+    const signInResponse = await server.inject({
+      headers: {
+        [AUTHORIZATION_CODE_HEADER_NAME]: "google-authorization-code",
+      },
+      method: "POST",
+      payload: {
+        idToken: {
+          token: createUnsignedIdToken({
+            email: "google-revocation@example.com",
+            email_verified: true,
+            sub: "google-user-5",
+          }),
+        },
+        provider: "google",
+      },
+      remoteAddress: "192.0.2.43",
+      url: "/api/auth/sign-in/social",
+    });
+
+    await deleteAccount({
+      cookies: Object.fromEntries(
+        signInResponse.cookies.map((cookie) => [cookie.name, cookie.value]),
+      ),
+      sentEmails,
+      server,
+    });
+
+    expect(
+      socialProviderRequests.findLast(
+        (socialProviderRequest) =>
+          socialProviderRequest.url === "https://oauth2.googleapis.com/revoke",
+      )?.body,
+    ).toStrictEqual({ token: "google-refresh-token" });
+  });
+
+  it("signs the User in with an Apple id token when Apple's token endpoint rejects the authorization code that the sign-in carries", async () => {
+    const socialProviderServer = await createSocialProviderServer({
+      responses: {
+        "https://appleid.apple.com/auth/token": () =>
+          Response.json(
+            { error: "invalid_grant" },
+            { status: HTTP_STATUS_BAD_REQUEST },
+          ),
+      },
+      sentEmails: [],
+    });
+
+    const response = await socialProviderServer.inject({
+      headers: { [AUTHORIZATION_CODE_HEADER_NAME]: "apple-authorization-code" },
+      method: "POST",
+      payload: {
+        idToken: {
+          token: createUnsignedIdToken({
+            email: "apple-rejected-code@example.com",
+            email_verified: true,
+            sub: "apple-user-5",
+          }),
+        },
+        provider: "apple",
+      },
+      remoteAddress: "192.0.2.44",
+      url: "/api/auth/sign-in/social",
+    });
+    await socialProviderServer.close();
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      user: { email: "apple-rejected-code@example.com" },
+    });
+  });
+
+  it("deletes the Account when Apple's revocation endpoint rejects its refresh token", async () => {
+    const socialProviderSentEmails: SendEmailOptions[] = [];
+    const socialProviderServer = await createSocialProviderServer({
+      responses: {
+        "https://appleid.apple.com/auth/revoke": () =>
+          Response.json(
+            { error: "invalid_client" },
+            { status: HTTP_STATUS_BAD_REQUEST },
+          ),
+        "https://appleid.apple.com/auth/token":
+          SOCIAL_PROVIDER_RESPONSES["https://appleid.apple.com/auth/token"],
+      },
+      sentEmails: socialProviderSentEmails,
+    });
+    const signInResponse = await socialProviderServer.inject({
+      headers: { [AUTHORIZATION_CODE_HEADER_NAME]: "apple-authorization-code" },
+      method: "POST",
+      payload: {
+        idToken: {
+          token: createUnsignedIdToken({
+            email: "apple-rejected-revocation@example.com",
+            email_verified: true,
+            sub: "apple-user-6",
+          }),
+        },
+        provider: "apple",
+      },
+      remoteAddress: "192.0.2.45",
+      url: "/api/auth/sign-in/social",
+    });
+    const cookies = Object.fromEntries(
+      signInResponse.cookies.map((cookie) => [cookie.name, cookie.value]),
+    );
+
+    const response = await deleteAccount({
+      cookies,
+      sentEmails: socialProviderSentEmails,
+      server: socialProviderServer,
+    });
+    const sessionResponse = await socialProviderServer.inject({
+      cookies,
+      method: "GET",
+      url: "/api/auth/get-session",
+    });
+    await socialProviderServer.close();
+
+    expect(response.statusCode).toBe(200);
+    expect(sessionResponse.json()).toBe(null);
   });
 
   it("emails a /delete-account link on the API host, and deletes nothing, when /api/auth/delete-user is requested without a token", async () => {

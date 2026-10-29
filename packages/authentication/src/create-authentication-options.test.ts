@@ -12,6 +12,8 @@ const models = getAuthTables(
     googleIosClientId: "google-ios-client-id",
     googleWebClientId: "google-web-client-id",
     nodeEnvironment: "test",
+    requestRefreshToken: () => Promise.resolve(null),
+    revokeRefreshToken: () => Promise.resolve(),
     secret: "better-auth-secret-placeholder-of-32-characters",
     sendAccountDeletionLink: () => Promise.resolve(),
     sendVerificationOtpCode: () => Promise.resolve(),
