@@ -1,5 +1,6 @@
 import type { AppRouter } from "@ankaa/api/trpc/app-router";
 import type { TRPCClient } from "@trpc/client";
+import type * as Schema from "effect/Schema";
 
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import * as Context from "effect/Context";
@@ -15,9 +16,12 @@ import { makeTrpcClient } from "#/shared/services/make-trpc-client.ts";
 export class TrpcClient extends Context.Service<
   TrpcClient,
   {
-    readonly request: <TData>(
-      request: TrpcRequest<TData>,
-    ) => Effect.Effect<TData, TrpcClientError>;
+    readonly request: <
+      TData,
+      TWireErrors extends readonly Schema.Decoder<unknown>[],
+    >(
+      request: TrpcRequest<TData, TWireErrors>,
+    ) => Effect.Effect<TData, TrpcClientError | TWireErrors[number]["Type"]>;
     readonly trpc: TRPCClient<AppRouter>;
   }
 >()("@ankaa/mobile/shared/services/TrpcClient") {

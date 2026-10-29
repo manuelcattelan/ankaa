@@ -3,6 +3,7 @@ import type { SendEmailOptions } from "@ankaa/email/email";
 import type { FastifyInstance } from "fastify";
 
 import { ExerciseApplicationService } from "@ankaa/api/features/exercise/exercise-application-service";
+import { RoutineApplicationService } from "@ankaa/api/features/routine/routine-application-service";
 import { createTestRuntime } from "@ankaa/api/shared/testing/create-test-runtime";
 import { Authentication } from "@ankaa/authentication/authentication";
 import { createTestUser } from "@ankaa/authentication/testing/create-test-user";
@@ -194,6 +195,69 @@ describe("applicationPlugin", () => {
     });
   });
 
+  it("answers a tRPC procedure that fails with a Wire error with the status of its code and the Wire error encoded in its data", async () => {
+    const testUser = await createTestUser(runtime);
+
+    const response = await server.inject({
+      headers: Object.fromEntries(testUser.headers),
+      method: "POST",
+      payload: { id: "019a0000-0000-7000-8000-000000000001" },
+      url: "/trpc/routine.delete",
+    });
+
+    expect(response.statusCode).toBe(404);
+
+    expect(response.json()).toMatchObject({
+      error: {
+        data: {
+          code: "NOT_FOUND",
+          httpStatus: 404,
+          path: "routine.delete",
+          wireError: { _tag: "RoutineNotFoundError" },
+        },
+      },
+    });
+  });
+
+  it("answers a tRPC procedure that fails with an internal error with 500, its message hidden and no Wire error", async () => {
+    const failingServer = await createLoggingServer({
+      layer: Layer.mergeAll(
+        Layer.mock(Authentication, {
+          getSession: () => Effect.succeed(session),
+        }),
+        Layer.mock(ExerciseApplicationService, {
+          list: () =>
+            Effect.die(
+              new Error("Failed to connect to the database at 10.0.0.1"),
+            ),
+        }),
+        Layer.mock(RoutineApplicationService, {}),
+      ),
+      level: "silent",
+      logLines: [],
+    });
+
+    const response = await failingServer.inject({
+      method: "GET",
+      url: "/trpc/exercise.list",
+    });
+    await failingServer.close();
+
+    expect(response.statusCode).toBe(500);
+
+    expect(response.json()).toMatchObject({
+      error: {
+        data: {
+          code: "INTERNAL_SERVER_ERROR",
+          httpStatus: 500,
+          path: "exercise.list",
+          wireError: null,
+        },
+        message: "Internal Server Error",
+      },
+    });
+  });
+
   it("logs a tRPC call that fails with a status below 500 at info level", async () => {
     const logLines: unknown[] = [];
     const loggingServer = fastify({
@@ -228,6 +292,7 @@ describe("applicationPlugin", () => {
         Layer.mock(ExerciseApplicationService, {
           list: () => Effect.log("Listing the Exercises").pipe(Effect.as([])),
         }),
+        Layer.mock(RoutineApplicationService, {}),
       ),
       level: "info",
       logLines,
@@ -253,6 +318,7 @@ describe("applicationPlugin", () => {
             Effect.log("Reading the session").pipe(Effect.as(null)),
         }),
         Layer.mock(ExerciseApplicationService, {}),
+        Layer.mock(RoutineApplicationService, {}),
       ),
       level: "info",
       logLines,
@@ -280,6 +346,7 @@ describe("applicationPlugin", () => {
             ),
         }),
         Layer.mock(ExerciseApplicationService, {}),
+        Layer.mock(RoutineApplicationService, {}),
       ),
       level: "info",
       logLines,
@@ -305,6 +372,7 @@ describe("applicationPlugin", () => {
             Effect.logDebug("Reading the session").pipe(Effect.as(null)),
         }),
         Layer.mock(ExerciseApplicationService, {}),
+        Layer.mock(RoutineApplicationService, {}),
       ),
       level: "debug",
       logLines,
@@ -327,6 +395,7 @@ describe("applicationPlugin", () => {
             Effect.logError("Failed to read the session").pipe(Effect.as(null)),
         }),
         Layer.mock(ExerciseApplicationService, {}),
+        Layer.mock(RoutineApplicationService, {}),
       ),
       level: "silent",
       logLines,
@@ -353,6 +422,7 @@ describe("applicationPlugin", () => {
             ).pipe(Effect.as(null)),
         }),
         Layer.mock(ExerciseApplicationService, {}),
+        Layer.mock(RoutineApplicationService, {}),
       ),
       level: "info",
       logLines,
@@ -402,6 +472,7 @@ describe("applicationPlugin", () => {
             ),
         }),
         Layer.mock(ExerciseApplicationService, {}),
+        Layer.mock(RoutineApplicationService, {}),
       ),
       level: "info",
       logLines,

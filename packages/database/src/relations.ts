@@ -53,13 +53,13 @@ export const relations = defineRelations(
       }),
     },
     routine: {
-      routineDays: r.many.routineDay({
+      days: r.many.routineDay({
         from: r.routine.id,
         to: r.routineDay.routineId,
       }),
-      routineExercises: r.many.routineExercise({
+      exerciseGroups: r.many.routineExerciseGroup({
         from: r.routine.id,
-        to: r.routineExercise.routineId,
+        to: r.routineExerciseGroup.routineId,
       }),
       user: r.one.user({
         from: r.routine.userId,
@@ -84,24 +84,34 @@ export const relations = defineRelations(
         optional: false,
         to: r.exercise.id,
       }),
-      routine: r.one.routine({
-        from: r.routineExercise.routineId,
-        optional: false,
-        to: r.routine.id,
+      routineExerciseGroup: r.one.routineExerciseGroup({
+        from: r.routineExercise.routineExerciseGroupId,
+        to: r.routineExerciseGroup.id,
       }),
-      routineExerciseSets: r.many.routineExerciseSet({
+      sets: r.many.routineExerciseSet({
         from: r.routineExercise.id,
         to: r.routineExerciseSet.routineExerciseId,
+      }),
+      warmUpExercises: r.many.routineExercise({
+        alias: "warmUp",
+        from: r.routineExercise.id,
+        to: r.routineExercise.warmUpForRoutineExerciseId,
       }),
       warmUpForRoutineExercise: r.one.routineExercise({
         alias: "warmUp",
         from: r.routineExercise.warmUpForRoutineExerciseId,
         to: r.routineExercise.id,
       }),
-      warmUpRoutineExercises: r.many.routineExercise({
-        alias: "warmUp",
-        from: r.routineExercise.id,
-        to: r.routineExercise.warmUpForRoutineExerciseId,
+    },
+    routineExerciseGroup: {
+      exercises: r.many.routineExercise({
+        from: r.routineExerciseGroup.id,
+        to: r.routineExercise.routineExerciseGroupId,
+      }),
+      routine: r.one.routine({
+        from: r.routineExerciseGroup.routineId,
+        optional: false,
+        to: r.routine.id,
       }),
     },
     routineExerciseSet: {

@@ -4,14 +4,17 @@ import type * as Schema from "effect/Schema";
 
 import * as Effect from "effect/Effect";
 
-import { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
+import { getTrpcRequestError } from "#/shared/core/get-trpc-request-error.ts";
 
-export type TrpcRequest<TData> = {
+export type TrpcRequest<
+  TData,
+  TWireErrors extends readonly Schema.Decoder<unknown>[],
+> = {
   call: (callOptions: {
     signal: AbortSignal;
     trpc: TRPCClient<AppRouter>;
   }) => Promise<TData>;
-  errors: readonly Schema.Top[];
+  errors: TWireErrors;
 };
 
 /**
@@ -20,9 +23,12 @@ export type TrpcRequest<TData> = {
  * same `request` and differ only in the client's link.
  */
 export function makeTrpcClient(trpc: TRPCClient<AppRouter>) {
-  function request<TData>({ call }: TrpcRequest<TData>) {
+  function request<
+    TData,
+    TWireErrors extends readonly Schema.Decoder<unknown>[],
+  >({ call, errors }: TrpcRequest<TData, TWireErrors>) {
     return Effect.tryPromise({
-      catch: (cause) => new TrpcClientError({ cause }),
+      catch: (cause) => getTrpcRequestError({ cause, errors }),
       try: (signal) => call({ signal, trpc }),
     });
   }

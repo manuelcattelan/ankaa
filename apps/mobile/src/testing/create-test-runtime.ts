@@ -7,6 +7,7 @@ import type { TrpcClient } from "#/shared/services/trpc-client.ts";
 
 import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
 import { fakeAppleSignInLayer } from "#/features/authentication/testing/fake-apple-sign-in-layer.ts";
+import { RoutineApplicationService } from "#/features/routine/routine-application-service.ts";
 import { createRuntime } from "#/layer.ts";
 import { ExerciseApplicationService } from "#/shared/exercise-application-service.ts";
 import { Crypto } from "#/shared/services/crypto.ts";
@@ -35,9 +36,10 @@ export function createTestRuntime(layers: TestRuntimeLayers) {
       layers.appleSignIn ?? fakeAppleSignInLayer({ isAvailable: false }),
       layers.crypto ?? Layer.mock(Crypto, {}),
       layers.googleSignIn ?? Layer.mock(GoogleSignIn, {}),
-      ExerciseApplicationService.layerNoDeps.pipe(
-        Layer.provideMerge(layers.trpcClient ?? fakeTrpcClientLayer({})),
-      ),
+      Layer.mergeAll(
+        ExerciseApplicationService.layerNoDeps,
+        RoutineApplicationService.layerNoDeps,
+      ).pipe(Layer.provideMerge(layers.trpcClient ?? fakeTrpcClientLayer({}))),
     ).pipe(
       Layer.provideMerge(
         layers.authenticationClient ?? fakeAuthenticationClientLayer({}),
