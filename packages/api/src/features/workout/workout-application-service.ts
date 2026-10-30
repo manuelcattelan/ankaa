@@ -52,9 +52,7 @@ export class WorkoutApplicationService extends Context.Service<
       userId: string;
     }) => Effect.Effect<
       void,
-      | RoutineNotFoundError
-      | WorkoutInProgressConflictError
-      | WorkoutNotFoundError
+      RoutineNotFoundError | WorkoutInProgressConflictError
     >;
     readonly stop: (options: {
       id: string;
@@ -229,13 +227,13 @@ export class WorkoutApplicationService extends Context.Service<
                 {
                   RoutineNotFoundError: (error) => Effect.fail(error),
                   WorkoutAlreadyStarted: () => Effect.void,
-                  WorkoutNotFoundError: (error) => Effect.fail(error),
                   WorkoutStartAllowed: (outcome) =>
                     workoutRepository.start({
                       id: input.id,
                       routine: outcome.routine,
                       userId,
                     }),
+                  WorkoutStartedByAnotherUser: (outcome) => Effect.die(outcome),
                 },
               );
             }),

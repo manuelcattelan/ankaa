@@ -61,10 +61,7 @@ export class WorkoutApplicationService extends Context.Service<
       input: WorkoutStartInput,
     ) => Effect.Effect<
       void,
-      | RoutineNotFoundError
-      | TrpcClientError
-      | WorkoutInProgressConflictError
-      | WorkoutNotFoundError
+      RoutineNotFoundError | TrpcClientError | WorkoutInProgressConflictError
     >;
     readonly stop: (
       input: WorkoutStopInput,

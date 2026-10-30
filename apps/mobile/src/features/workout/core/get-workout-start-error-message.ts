@@ -1,5 +1,4 @@
 import type { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
-import type { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import type { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 
 import * as Match from "effect/Match";
@@ -8,14 +7,10 @@ import type { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
 
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { getTrpcClientErrorMessage } from "#/shared/core/get-trpc-client-error-message.ts";
-import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 export function getWorkoutStartErrorMessage(
   error:
-    | RoutineNotFoundError
-    | TrpcClientError
-    | WorkoutInProgressConflictError
-    | WorkoutNotFoundError,
+    RoutineNotFoundError | TrpcClientError | WorkoutInProgressConflictError,
 ) {
   return Match.valueTags(error, {
     RoutineNotFoundError: () => WORKOUT_MESSAGES.routineNotFoundError,
@@ -23,8 +18,5 @@ export function getWorkoutStartErrorMessage(
       getTrpcClientErrorMessage(trpcClientError),
     WorkoutInProgressConflictError: () =>
       WORKOUT_MESSAGES.workoutInProgressConflictError,
-    // Only a bug reuses the id of another User's Workout, and a new start
-    // creates a new id, so the User can only try again.
-    WorkoutNotFoundError: () => SHARED_MESSAGES.unknownError,
   });
 }

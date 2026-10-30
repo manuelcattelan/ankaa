@@ -1,5 +1,4 @@
 import { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
-import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 
 import { getWorkoutStartErrorMessage } from "#/features/workout/core/get-workout-start-error-message.ts";
@@ -17,12 +16,6 @@ describe("getWorkoutStartErrorMessage", () => {
       getWorkoutStartErrorMessage(new WorkoutInProgressConflictError()),
     ).toBe(
       "You already have a workout in progress: resume it, or stop it before you start another.",
-    );
-  });
-
-  it("tells the User to try again for WorkoutNotFoundError", () => {
-    expect(getWorkoutStartErrorMessage(new WorkoutNotFoundError())).toBe(
-      "Something went wrong: try again.",
     );
   });
 

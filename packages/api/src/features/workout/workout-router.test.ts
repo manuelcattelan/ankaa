@@ -674,7 +674,7 @@ describe("workout.start", () => {
     ]);
   });
 
-  it("fails with NOT_FOUND and WorkoutNotFoundError for the id of another User's Workout, and leaves it in progress", async () => {
+  it("fails with INTERNAL_SERVER_ERROR for the id of another User's Workout, and leaves it in progress", async () => {
     const otherCaller = await createSignedInCaller({ runtime });
     await otherCaller.routine.save(
       buildRoutineSaveInput({
@@ -703,10 +703,7 @@ describe("workout.start", () => {
         id: "019a0000-0000-7000-8000-000000000543",
         routineId: "019a0000-0000-7000-8000-000000000144",
       }),
-    ).rejects.toMatchObject({
-      cause: { _tag: "WorkoutNotFoundError" },
-      code: "NOT_FOUND",
-    });
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
     await expect(otherCaller.workout.findInProgress()).resolves.toMatchObject({
       id: "019a0000-0000-7000-8000-000000000543",
     });
