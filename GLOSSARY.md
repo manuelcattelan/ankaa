@@ -18,7 +18,7 @@ Removing an [Account](#account) for good, at its [User](#user)'s request, togeth
 
 ### User
 
-Someone who has signed in to Ankaa at least once, to plan [Routines](#routine) and record [Workouts](#workout) of their own.
+Someone who has signed in to Ankaa at least once and whose [Account](#account) hasn't been deleted, to plan [Routines](#routine) and record [Workouts](#workout) of their own.
 
 - **Avoid**: person, lifter, athlete, member, customer
 
@@ -26,10 +26,10 @@ Someone who has signed in to Ankaa at least once, to plan [Routines](#routine) a
 
 ### Application Service
 
-A [Service](#service) that holds the business operations of a [Feature](#feature), such as [Saving](#save) a [Routine](#routine), each carried out by asking the [Core](#core) to decide.
+A [Service](#service) that holds the business operations of a [Feature](#feature), such as [Saving](#save) a [Routine](#routine), and asks the [Core](#core) for every decision they need.
 
 - **Avoid**: use case
-- **Distinct from**: [Repository](#repository): a Repository reads and writes a Feature's data, and an Application Service decides, through the Core, what to write.
+- **Distinct from**: [Repository](#repository): a Repository reads and writes the database for a Feature's operations, and an Application Service decides, through the Core, what to write.
 
 ### Composition root
 
@@ -39,10 +39,16 @@ The one place in each app that builds the [Runtime](#runtime) from every [Layer]
 
 ### Core
 
-The code that makes every decision, in plain TypeScript: given values, it returns values, including an [Outcome](#outcome) for every decision, and it never does I/O, reads the clock or throws.
+The code that makes every decision, in plain TypeScript: given values, it returns values, including an [Outcome](#outcome) for every decision, and it never does I/O, reads the clock, makes a random value or throws.
 
 - **Avoid**: domain, domain layer, business logic, pure layer
 - **Distinct from**: [Shell](#shell): the Shell does the I/O and asks the Core for every decision.
+
+### Fake
+
+A working implementation of a [Service](#service), written by hand for tests, that takes a shortcut the real one can't, such as keeping in memory the emails it would send.
+
+- **Avoid**: stub, test double, in-memory implementation
 
 ### Feature
 
@@ -69,9 +75,15 @@ What builds a [Service](#service) when the [Runtime](#runtime) starts, as Effect
 - **Avoid**: live layer, default layer
 - **Distinct from**: [Service](#service): code uses the Service, and the Layer is how the Runtime builds it.
 
+### Mutation options
+
+The options that tell TanStack Query on the mobile app how to run one change, such as a [Save](#save) or scheduling a notification.
+
+- **Distinct from**: [Query options](#query-options): Query options fetch and cache server data, and Mutation options change something.
+
 ### Outcome
 
-What a decision of the [Core](#core) returns: a success, or the error of the rule it breaks, such as a [Routine](#routine) name that another Routine of the same [User](#user) already has.
+What a decision of the [Core](#core) returns: a success, or the rule it breaks, such as acting on another [User](#user)'s [Routine](#routine).
 
 - **Avoid**: result union, verdict
 
@@ -83,13 +95,13 @@ The options that tell TanStack Query on the mobile app how to fetch and cache on
 
 ### Repository
 
-A [Service](#service) that reads and writes the data of one [Feature](#feature) in the database.
+A [Service](#service) that does the database reads and writes of one [Feature](#feature)'s business operations, such as reading the [Routine](#routine) that a [Workout](#workout) starts from.
 
 - **Avoid**: DAO, data access object
 
 ### Runtime
 
-The Effect runtime that each app builds once from its [Layers](#layer), and that runs every Effect program of that app. The JavaScript engine that runs the code, such as Node or Hermes, isn't a Runtime.
+The Effect runtime that each app builds once from its [Layers](#layer), and that runs every Effect program of that app. A test builds its own Runtime from the same Layers, with some [Services](#service) replaced. The JavaScript engine that runs the code, such as Node or Hermes, isn't a Runtime.
 
 - **Avoid**: container, injector, executor
 
@@ -106,7 +118,7 @@ The code that does every I/O, such as reading the database, calling the server o
 
 ### Wire error
 
-An error that a failed call carries from the server to the mobile app, defined once for both apps, so the mobile app receives the same error the server raised, such as a [Routine](#routine) name that's already taken.
+An error that a server [Application Service](#application-service) or [Repository](#repository) fails with, defined once for both apps, so the mobile app receives the same error the server raised, such as a [Routine](#routine) name that's already taken. A failure of signing in, such as too many attempts, isn't a Wire error.
 
 - **Avoid**: domain error, API error, tRPC error
 
@@ -141,7 +153,7 @@ How the weight entered for an [Exercise](#exercise) is counted: the total lifted
 
 ### Draft
 
-The values a [User](#user) is editing on the device and hasn't [Saved](#save): a [Routine](#routine) open in the editor, or one [Set](#set), note or skip of a [Workout exercise](#workout-exercise). A Draft exists from the moment editing starts, and only on the device.
+The values a [User](#user) is editing on the device and hasn't [Saved](#save): a [Routine](#routine) open in the editor, or one [Set](#set), note or [Skip](#skip) of a [Workout exercise](#workout-exercise). A Draft exists from the moment editing starts, and only on the device.
 
 - **Avoid**: unsaved changes, pending changes, local copy, form state
 
@@ -149,15 +161,19 @@ The values a [User](#user) is editing on the device and hasn't [Saved](#save): a
 
 One or more [Routine exercises](#routine-exercise) or [Workout exercises](#workout-exercise) that take one place in a [Section](#section) and are done together: a single exercise on its own, or a [Superset](#superset). Every exercise of a Section belongs to exactly one Exercise group, except a [Warm-up exercise](#warm-up-exercise), which goes with the exercise it prepares for.
 
-- **Avoid**: group, block, slot, station
+- **Avoid**: group, block, station
 - **Distinct from**: [Superset](#superset): a Superset is an Exercise group of two or more exercises, and an Exercise group can hold just one.
 
 ### Routine
 
-A [User](#user)'s named, reusable plan for one training session: which [Exercises](#exercise) to do, in what order and how, and optionally the days of the week it's meant for.
+A [User](#user)'s named, reusable plan for one [Workout](#workout): which [Exercises](#exercise) to do, in what order and how, and optionally the days of the week it's meant for.
 
 - **Avoid**: plan, template, workout plan, session plan
 - **Distinct from**: [Workout](#workout): a Workout records one time a User followed a Routine.
+
+### Routine deletion
+
+Removing a [Routine](#routine) at its [User](#user)'s request: it can't be [Saved](#save) or started again, and its name is free for another of their Routines. [Workouts](#workout) already started from it don't change.
 
 ### Routine exercise
 
@@ -168,7 +184,7 @@ One place an [Exercise](#exercise) takes in a [Routine](#routine), with its own 
 
 ### Save
 
-To send a [Draft](#draft) to the server when the [User](#user) asks, so the server keeps it: a whole [Routine](#routine) from the editor, or one [Set](#set), note or skip of a [Workout](#workout). Nothing is Saved unless the User asks.
+To send a [Draft](#draft) to the server when the [User](#user) asks, so the server keeps it: a whole [Routine](#routine) from the editor, or one [Set](#set), note or [Skip](#skip) of a [Workout](#workout). Nothing is Saved unless the User asks.
 
 - **Avoid**: sync, upload, persist, submit, autosave
 - **Distinct from**: [Draft](#draft): a Draft is what the User is still editing on the device, and a Save sends it to the server.
@@ -177,13 +193,11 @@ To send a [Draft](#draft) to the server when the [User](#user) asks, so the serv
 
 One of the three parts, done in order, that every [Routine](#routine) and [Workout](#workout) splits its [Exercise groups](#exercise-group) into: warm-up, main and cool-down.
 
-- **Avoid**: phase, part, block, stage
+- **Avoid**: phase, stage
 
-### Skipped exercise
+### Skip
 
-A [Workout exercise](#workout-exercise) the [User](#user) marked as not done as planned, with a reason: low on time, low energy, pain or other, and an optional note. It keeps any [Sets](#set) recorded before it was skipped.
-
-- **Avoid**: missed exercise, dropped exercise, abandoned exercise
+A [User](#user)'s mark that a [Workout exercise](#workout-exercise) wasn't done as planned, with a reason (low on time, low energy, pain or other) and an optional note. The User can [Save](#save), change or clear it. It keeps the [Sets](#set) recorded for the Workout exercise, and the User clears it before recording more.
 
 ### Superset
 
@@ -196,14 +210,14 @@ An [Exercise group](#exercise-group) of two or more [Routine exercises](#routine
 A [Routine exercise](#routine-exercise) or [Workout exercise](#workout-exercise) that uses a different [Exercise](#exercise) to prepare for one exercise of the main [Section](#section), done right before it. It belongs to the exercise it prepares for, outside any [Exercise group](#exercise-group).
 
 - **Avoid**: specific warm-up, activation exercise, primer
-- **Distinct from**: [Section](#section): an exercise in the warm-up Section prepares for the whole session, not for one exercise.
+- **Distinct from**: [Section](#section): an exercise in the warm-up Section prepares for the whole [Workout](#workout), not for one exercise.
 - **Distinct from**: [Warm-up set](#warm-up-set): a Warm-up set is a lighter Set of the exercise itself.
 
 ### Workout
 
-One training session a [User](#user) does, started from a [Routine](#routine) and recorded from the moment they start it until they stop it. A User has at most one Workout in progress at a time, and changing the Routine afterwards doesn't change a Workout already started.
+One time a [User](#user) trains, started from a [Routine](#routine) and recorded from the moment they start it until they stop it. A User has at most one Workout in progress at a time, and changing the Routine afterwards doesn't change a Workout already started.
 
-- **Avoid**: session, training session, workout log, log
+- **Avoid**: training session, workout log, log
 - **Distinct from**: [Routine](#routine): a Routine is the reusable plan, and each Workout records one time a User followed it.
 
 ### Workout exercise
@@ -234,6 +248,10 @@ A way of pushing a [Set](#set) past where it would end, by splitting it into sev
 - **Avoid**: variation, set variation, technique, method
 - **Distinct from**: [To failure](#to-failure): To failure says when a Set ends, with or without an Intensity technique.
 
+### Matching planned set
+
+The planned [Set](#set) that a recorded Set of a [Workout exercise](#workout-exercise) is paired with: the one in the same position, or a plain [Working set](#working-set) when none was planned. It makes the recorded Set a [Warm-up set](#warm-up-set) or a Working set, and gives it its [To failure](#to-failure), [Tempo](#tempo) and [Intensity technique](#intensity-technique).
+
 ### Pause
 
 A stop of a few seconds between two [Segments](#segment) of a [Rest-pause set](#rest-pause-set), planned in seconds by a [Routine](#routine) and counted down during a [Workout](#workout). A Pause belongs to its [Set](#set).
@@ -243,7 +261,7 @@ A stop of a few seconds between two [Segments](#segment) of a [Rest-pause set](#
 
 ### Pyramid
 
-[Working sets](#working-set) of one exercise whose [Amount](#amount) falls from Set to Set, such as 10, 8 and 6 [Repetitions](#repetition), or rises, such as 6, 8 and 10, which is a reverse Pyramid. A [Routine](#routine) plans one by giving each Set its own Amount.
+[Working sets](#working-set) of one exercise whose [Amount](#amount) falls from [Set](#set) to Set, such as 10, 8 and 6 [Repetitions](#repetition), or rises, such as 6, 8 and 10, which is a reverse Pyramid. A [Routine](#routine) plans one by giving each Set its own Amount.
 
 - **Avoid**: pyramid set, ladder
 - **Distinct from**: [Intensity technique](#intensity-technique): an Intensity technique changes one Set, and a Pyramid spans several.
@@ -259,7 +277,7 @@ One full cycle of a movement, such as lowering the bar to the chest and pressing
 The time after a [Set](#set) before the next one, planned in seconds for each planned Set, and counted down during a [Workout](#workout) once the [User](#user) starts it after that Set.
 
 - **Avoid**: rest period, rest interval, break, recovery
-- **Distinct from**: [Pause](#pause): a Pause sits inside a Rest-pause set, and Rest comes after a whole Set.
+- **Distinct from**: [Pause](#pause): a Pause sits inside a [Rest-pause set](#rest-pause-set), and Rest comes after a whole Set.
 
 ### Rest-pause set
 
@@ -287,7 +305,7 @@ The seconds each [Repetition](#repetition) spends lowering, held at the bottom, 
 
 ### To failure
 
-Said of a [Set](#set) done until the [User](#user) can't complete another [Repetition](#repetition).
+Said of a [Set](#set) done until the [User](#user) can't go on: can't complete another [Repetition](#repetition) or, for an [Exercise](#exercise) done for time, can't hold any longer.
 
 - **Avoid**: until failure, AMRAP, max effort
 
@@ -338,6 +356,13 @@ A tRPC procedure, defined with `.query()`, that the mobile app calls to read dat
 - **Distinct from**: [Database query](#database-query): a server function that a Query procedure's [Interactor](#interactor) calls to read the database.
 - **Distinct from**: [Query options](#query-options): what TanStack Query uses on the mobile app to fetch and cache data.
 - **Deprecated**: retired by [#86 Rebuild Ankaa on one Core and Shell architecture, with redesigned Routines, Workouts and Account deletion](https://github.com/manuelcattelan/ankaa/issues/86).
+
+### Skipped exercise
+
+A [Workout exercise](#workout-exercise) the [User](#user) marked as not done as planned, with a reason: low on time, low energy, pain or other, and an optional note. It keeps any [Sets](#set) recorded before it was skipped.
+
+- **Avoid**: missed exercise, dropped exercise, abandoned exercise
+- **Deprecated**: retired by [#122 Bring the root glossary back in line with the code](https://github.com/manuelcattelan/ankaa/issues/122); replaced by [Skip](#skip).
 
 ### Store
 

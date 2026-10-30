@@ -76,7 +76,7 @@ The [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.
 
 ## Architecture
 
-Both apps follow one architecture: the Core makes every decision in plain TypeScript, and the Shell does every I/O in Effect programs, so every decision is tested with no Runtime and no fakes.
+Both apps follow one architecture: the Core makes every decision in plain TypeScript, and the Shell does every I/O in Effect programs, so every decision is tested with no Runtime and no Fakes.
 
 - Pass the current time and every random value, such as a new id, to the Core as parameters, and never read a clock or a random source in it, so the Core stays pure.
 - Make a Core decision return its Outcome, and never throw: its success, or the error of the rule it breaks, so the Shell handles every Outcome in one exhaustive `Match`.
