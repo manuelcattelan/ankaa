@@ -1,53 +1,53 @@
-import type { Exercise } from "@/shared/interactors/list-exercises";
+import type { Exercise } from "#/shared/exercise-application-service.ts";
 
-import { searchExercises } from "@/features/exercise/core/search-exercises";
+import { searchExercises } from "#/features/exercise/core/search-exercises.ts";
 
 const BENCH_PRESS_EXERCISE: Exercise = {
   amountUnit: "repetition",
-  exerciseEquipment: [
+  equipment: [
     { equipment: "barbell" },
     { equipment: "bench" },
     { equipment: "rack" },
   ],
-  exerciseMuscleGroups: [
-    { muscleGroup: "chest", muscleGroupRole: "primary" },
-    { muscleGroup: "front_deltoid", muscleGroupRole: "secondary" },
-    { muscleGroup: "triceps", muscleGroupRole: "secondary" },
-  ],
   id: "019a0000-0000-7000-8000-000000000001",
+  muscleGroups: [
+    { muscleGroup: "chest", role: "primary" },
+    { muscleGroup: "front_deltoid", role: "secondary" },
+    { muscleGroup: "triceps", role: "secondary" },
+  ],
   name: "Bench Press (Barbell)",
   weightType: "total",
 };
 
 const CLOSE_GRIP_BENCH_PRESS_EXERCISE: Exercise = {
   ...BENCH_PRESS_EXERCISE,
-  exerciseMuscleGroups: [
-    { muscleGroup: "chest", muscleGroupRole: "secondary" },
-    { muscleGroup: "triceps", muscleGroupRole: "primary" },
-  ],
   id: "019a0000-0000-7000-8000-000000000002",
+  muscleGroups: [
+    { muscleGroup: "chest", role: "secondary" },
+    { muscleGroup: "triceps", role: "primary" },
+  ],
   name: "Close-Grip Bench Press (Barbell)",
 };
 
 const OVERHEAD_PRESS_EXERCISE: Exercise = {
   ...BENCH_PRESS_EXERCISE,
-  exerciseEquipment: [{ equipment: "barbell" }, { equipment: "rack" }],
-  exerciseMuscleGroups: [
-    { muscleGroup: "front_deltoid", muscleGroupRole: "primary" },
-    { muscleGroup: "triceps", muscleGroupRole: "secondary" },
-  ],
+  equipment: [{ equipment: "barbell" }, { equipment: "rack" }],
   id: "019a0000-0000-7000-8000-000000000003",
+  muscleGroups: [
+    { muscleGroup: "front_deltoid", role: "primary" },
+    { muscleGroup: "triceps", role: "secondary" },
+  ],
   name: "Overhead Press (Barbell)",
 };
 
 const PUSH_UP_EXERCISE: Exercise = {
   ...BENCH_PRESS_EXERCISE,
-  exerciseEquipment: [],
-  exerciseMuscleGroups: [
-    { muscleGroup: "chest", muscleGroupRole: "primary" },
-    { muscleGroup: "triceps", muscleGroupRole: "secondary" },
-  ],
+  equipment: [],
   id: "019a0000-0000-7000-8000-000000000004",
+  muscleGroups: [
+    { muscleGroup: "chest", role: "primary" },
+    { muscleGroup: "triceps", role: "secondary" },
+  ],
   name: "Push-up",
   weightType: "bodyweight",
 };
@@ -61,9 +61,9 @@ const EXERCISES = [
 
 const EXERCISE_SEARCH = {
   equipmentSelection: [],
-  exerciseNameSearchText: "",
   exercises: EXERCISES,
   muscleGroupSelection: [],
+  nameSearchText: "",
 };
 
 describe("searchExercises", () => {
@@ -75,7 +75,7 @@ describe("searchExercises", () => {
     expect(
       searchExercises({
         ...EXERCISE_SEARCH,
-        exerciseNameSearchText: "press BENCH",
+        nameSearchText: "press BENCH",
       }),
     ).toEqual([BENCH_PRESS_EXERCISE, CLOSE_GRIP_BENCH_PRESS_EXERCISE]);
   });
@@ -84,7 +84,7 @@ describe("searchExercises", () => {
     expect(
       searchExercises({
         ...EXERCISE_SEARCH,
-        exerciseNameSearchText: "bench squat",
+        nameSearchText: "bench squat",
       }),
     ).toEqual([]);
   });
@@ -98,22 +98,26 @@ describe("searchExercises", () => {
     ).toEqual([BENCH_PRESS_EXERCISE, OVERHEAD_PRESS_EXERCISE]);
   });
 
-  it("returns the Exercises whose every Equipment is selected, including those that need none", () => {
+  it("returns the Exercises that use any selected Equipment, even when they also use Equipment that isn't selected", () => {
     expect(
       searchExercises({
         ...EXERCISE_SEARCH,
-        equipmentSelection: ["barbell", "rack"],
+        equipmentSelection: ["barbell"],
       }),
-    ).toEqual([OVERHEAD_PRESS_EXERCISE, PUSH_UP_EXERCISE]);
+    ).toEqual([
+      BENCH_PRESS_EXERCISE,
+      CLOSE_GRIP_BENCH_PRESS_EXERCISE,
+      OVERHEAD_PRESS_EXERCISE,
+    ]);
   });
 
   it("returns the Exercises that match the search text, the Muscle groups and the Equipment together", () => {
     expect(
       searchExercises({
         equipmentSelection: ["barbell", "bench", "rack"],
-        exerciseNameSearchText: "press",
         exercises: EXERCISES,
         muscleGroupSelection: ["chest"],
+        nameSearchText: "press",
       }),
     ).toEqual([BENCH_PRESS_EXERCISE, CLOSE_GRIP_BENCH_PRESS_EXERCISE]);
   });

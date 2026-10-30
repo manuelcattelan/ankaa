@@ -1,14 +1,6 @@
 import { Checkbox, Column, Host } from "@expo/ui";
 
-import { Text } from "@/shared/components/text";
-
-type CheckboxGroupProperties<TOption extends string> = {
-  label: string;
-  onChangeSelectedOptions: (selectedOptions: TOption[]) => void;
-  optionLabels: Record<TOption, string>;
-  options: readonly TOption[];
-  selectedOptions: TOption[];
-};
+import { Text } from "#/shared/components/text.tsx";
 
 export function CheckboxGroup<TOption extends string>({
   label,
@@ -16,7 +8,13 @@ export function CheckboxGroup<TOption extends string>({
   optionLabels,
   options,
   selectedOptions,
-}: CheckboxGroupProperties<TOption>) {
+}: {
+  label: string;
+  onChangeSelectedOptions: (selectedOptions: TOption[]) => void;
+  optionLabels: Record<TOption, string>;
+  options: readonly TOption[];
+  selectedOptions: readonly TOption[];
+}) {
   function handleToggleOption(option: TOption) {
     onChangeSelectedOptions(
       selectedOptions.includes(option)

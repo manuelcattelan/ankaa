@@ -2,21 +2,21 @@ import type { ComponentProps } from "react";
 
 import { Stack } from "expo-router";
 
-import { RoutineEditor } from "@/features/routine/components/routine-editor";
-import { newRoutineScreenMessages } from "@/features/routine/messages/new-routine-screen-messages";
-
-type NewRoutineScreenProperties = Pick<
-  ComponentProps<typeof RoutineEditor>,
-  "renderExercisePicker"
->;
+import { RoutineEditor } from "#/features/routine/components/routine-editor.tsx";
+import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
 
 export function NewRoutineScreen({
   renderExercisePicker,
-}: NewRoutineScreenProperties) {
+}: Pick<ComponentProps<typeof RoutineEditor>, "renderExercisePicker">) {
   return (
     <>
-      <Stack.Screen options={{ title: newRoutineScreenMessages.title }} />
-      <RoutineEditor renderExercisePicker={renderExercisePicker} />
+      <Stack.Screen
+        options={{ title: ROUTINE_MESSAGES.newRoutineScreenTitle }}
+      />
+      <RoutineEditor
+        renderExercisePicker={renderExercisePicker}
+        routine={null}
+      />
     </>
   );
 }

@@ -1,104 +1,99 @@
-import { defineRelationsPart } from "drizzle-orm";
-import { boolean, index, pgSchema, text, timestamp } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import {
+  boolean,
+  index,
+  primaryKey,
+  snakeCase,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 
-export const authSchema = pgSchema("auth");
+import { timestamps } from "#/columns/timestamps.ts";
 
-export const user = authSchema.table("user", {
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  email: text("email").notNull().unique(),
-  emailVerified: boolean("email_verified").default(false).notNull(),
-  id: text("id").primaryKey(),
-  image: text("image"),
-  name: text("name").notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
-    .notNull(),
-});
+export const authenticationSchema = snakeCase.schema("authentication");
 
-export const session = authSchema.table(
+export const user = authenticationSchema.table(
+  "user",
+  {
+    ...timestamps,
+    email: text().notNull().unique("user_email_key"),
+    emailVerified: boolean().notNull().default(false),
+    id: uuid()
+      .notNull()
+      .default(sql`uuidv7()`),
+    image: text(),
+    name: text().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.id], name: "user_pkey" })],
+);
+
+export const session = authenticationSchema.table(
   "session",
   {
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    expiresAt: timestamp("expires_at").notNull(),
-    id: text("id").primaryKey(),
-    ipAddress: text("ip_address"),
-    token: text("token").notNull().unique(),
-    updatedAt: timestamp("updated_at")
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
-    userAgent: text("user_agent"),
-    userId: text("user_id")
+    ...timestamps,
+    expiresAt: timestamp({ withTimezone: true }).notNull(),
+    id: uuid()
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+      .default(sql`uuidv7()`),
+    ipAddress: text(),
+    token: text().notNull().unique("session_token_key"),
+    userAgent: text(),
+    userId: uuid()
+      .notNull()
+      .references(() => user.id, {
+        name: "session_user_id_fkey",
+        onDelete: "cascade",
+      }),
   },
-  (table) => [index("session_userId_idx").on(table.userId)],
+  (table) => [
+    primaryKey({ columns: [table.id], name: "session_pkey" }),
+    index("session_user_id_idx").on(table.userId),
+  ],
 );
 
-export const account = authSchema.table(
+export const account = authenticationSchema.table(
   "account",
   {
-    accessToken: text("access_token"),
-    accessTokenExpiresAt: timestamp("access_token_expires_at"),
-    accountId: text("account_id").notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    id: text("id").primaryKey(),
-    idToken: text("id_token"),
-    password: text("password"),
-    providerId: text("provider_id").notNull(),
-    refreshToken: text("refresh_token"),
-    refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
-    scope: text("scope"),
-    updatedAt: timestamp("updated_at")
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
-    userId: text("user_id")
+    ...timestamps,
+    accessToken: text(),
+    accessTokenExpiresAt: timestamp({ withTimezone: true }),
+    accountId: text().notNull(),
+    id: uuid()
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+      .default(sql`uuidv7()`),
+    idToken: text(),
+    password: text(),
+    providerId: text().notNull(),
+    refreshToken: text(),
+    refreshTokenExpiresAt: timestamp({ withTimezone: true }),
+    scope: text(),
+    userId: uuid()
+      .notNull()
+      .references(() => user.id, {
+        name: "account_user_id_fkey",
+        onDelete: "cascade",
+      }),
   },
-  (table) => [index("account_userId_idx").on(table.userId)],
+  (table) => [
+    primaryKey({ columns: [table.id], name: "account_pkey" }),
+    index("account_user_id_idx").on(table.userId),
+  ],
 );
 
-export const verification = authSchema.table(
+export const verification = authenticationSchema.table(
   "verification",
   {
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    expiresAt: timestamp("expires_at").notNull(),
-    id: text("id").primaryKey(),
-    identifier: text("identifier").notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
-    value: text("value").notNull(),
+    ...timestamps,
+    expiresAt: timestamp({ withTimezone: true }).notNull(),
+    id: uuid()
+      .notNull()
+      .default(sql`uuidv7()`),
+    identifier: text().notNull(),
+    value: text().notNull(),
   },
-  (table) => [index("verification_identifier_idx").on(table.identifier)],
-);
-
-export const authRelations = defineRelationsPart(
-  { account, session, user, verification },
-  (r) => ({
-    account: {
-      user: r.one.user({
-        from: r.account.userId,
-        to: r.user.id,
-      }),
-    },
-    session: {
-      user: r.one.user({
-        from: r.session.userId,
-        to: r.user.id,
-      }),
-    },
-    user: {
-      accounts: r.many.account({
-        from: r.user.id,
-        to: r.account.userId,
-      }),
-      sessions: r.many.session({
-        from: r.user.id,
-        to: r.session.userId,
-      }),
-    },
-  }),
+  (table) => [
+    primaryKey({ columns: [table.id], name: "verification_pkey" }),
+    index("verification_identifier_idx").on(table.identifier),
+  ],
 );

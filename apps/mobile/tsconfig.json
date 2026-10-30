@@ -1,9 +1,5 @@
 {
   "compilerOptions": {
-    "paths": {
-      "@/*": ["./src/*"],
-      "@/assets/*": ["./assets/*"]
-    },
     "types": ["jest"]
   },
   "extends": ["@ankaa/typescript/mobile.json", "expo/tsconfig.base"],
@@ -12,6 +8,7 @@
     "**/*.mts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
+    "../../tooling/eslint/eslint-config-expo.d.ts",
     "expo-env.d.ts"
   ]
 }

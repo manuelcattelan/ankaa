@@ -1,27 +1,43 @@
-import type { DayOfWeek } from "@ankaa/core/features/routine/constants/day-of-week";
-import type { Variation } from "@ankaa/core/shared/constants/intensity-technique";
-import type { Section } from "@ankaa/core/shared/constants/section";
-import type { SetType } from "@ankaa/core/shared/constants/set-type";
+import type { DayOfWeek } from "@ankaa/core/features/routine/constants/days-of-week";
+import type { Section } from "@ankaa/core/shared/constants/sections";
 
-import { createRoutineDraftSections } from "@/features/routine/core/create-routine-draft-sections";
-import { joinRoutineDraftBlockWithNextBlock } from "@/features/routine/core/join-routine-draft-block-with-next-block";
-import { moveRoutineDraftBlock } from "@/features/routine/core/move-routine-draft-block";
+import type { RoutineExerciseSetDraft } from "#/features/routine/core/routine-exercise-set-form-schema.ts";
+import type { RoutineDraft } from "#/features/routine/core/routine-form-schema.ts";
 
-export type RoutineDraft = {
-  days: DayOfWeek[];
-  id: string | undefined;
-  name: string;
-  sections: Record<Section, RoutineDraftBlock[]>;
-};
+export type ExerciseGroupDraft = RoutineDraft["sections"]["warmUp"][number];
+
+export type ExerciseGroupMoveDirection = "down" | "up";
+
+export type MainExerciseGroupDraft = RoutineDraft["sections"]["main"][number];
+
+export type MainRoutineExerciseDraft =
+  MainExerciseGroupDraft["exercises"][number];
 
 export type RoutineDraftAction =
-  | { days: DayOfWeek[]; type: "changedDays" }
+  | { days: readonly DayOfWeek[]; type: "changedDays" }
   | {
+      direction: ExerciseGroupMoveDirection;
+      exerciseGroupId: string;
+      section: Section;
+      type: "movedExerciseGroup";
+    }
+  | {
+      exerciseGroupId: string;
       exerciseId: string;
-      routineDraftBlockId: string;
       routineExerciseId: string;
       section: Section;
       type: "addedExercise";
+    }
+  | {
+      exerciseGroupId: string;
+      routineExerciseId: string;
+      section: Section;
+      type: "leftSuperset";
+    }
+  | {
+      exerciseGroupId: string;
+      section: Section;
+      type: "joinedNextExerciseGroup";
     }
   | {
       exerciseId: string;
@@ -31,404 +47,455 @@ export type RoutineDraftAction =
     }
   | { id: string; type: "assignedId" }
   | { name: string; type: "changedName" }
+  | { note: string; routineExerciseId: string; type: "changedExerciseNote" }
   | {
-      note: string;
       routineExerciseId: string;
-      type: "changedExerciseNote";
-    }
-  | {
-      routineDraftBlockId: string;
-      routineDraftBlockMoveDirection: RoutineDraftBlockMoveDirection;
-      section: Section;
-      type: "movedBlock";
-    }
-  | {
-      routineDraftBlockId: string;
-      routineExerciseId: string;
-      section: Section;
-      type: "leftSuperset";
-    }
-  | {
-      routineDraftBlockId: string;
-      section: Section;
-      type: "joinedSupersetWithNextBlock";
-    }
-  | {
-      routineDraftExerciseSet: RoutineDraftExerciseSet;
-      routineExerciseId: string;
+      set: RoutineExerciseSetDraft;
       type: "changedSet";
     }
   | {
       routineExerciseId: string;
-      routineExerciseSetId: string;
+      setId: string;
       type: "addedSet" | "removedSet";
     }
   | { routineExerciseId: string; type: "removedExercise" };
 
-export type RoutineDraftBlock = {
-  exercises: RoutineDraftExercise[];
-  id: string;
-  warmUpExercises: RoutineDraftWarmUpExercise[];
-};
+export type RoutineExerciseDraft = ExerciseGroupDraft["exercises"][number];
 
-export type RoutineDraftBlockMoveDirection = "down" | "up";
+type ExerciseGroupDraftOf<TRoutineExerciseDraft extends RoutineExerciseDraft> =
+  {
+    readonly exercises: readonly TRoutineExerciseDraft[];
+    readonly id: string;
+  };
 
-export type RoutineDraftExercise = {
-  exerciseId: string;
-  id: string;
-  note: string;
-  sets: RoutineDraftExerciseSet[];
-};
-
-export type RoutineDraftExerciseSet = {
-  amount: string;
-  dropSetSegmentCount: string;
-  dropSetWeightPercentage: string;
-  id: string;
-  isToFailure: boolean;
-  restPauseRestSeconds: string;
-  restPauseSegmentCount: string;
-  restSeconds: string;
-  setType: SetType;
-  tempo: string;
-  variation: undefined | Variation;
-};
-
-export type RoutineDraftWarmUpExercise = RoutineDraftExercise & {
-  warmUpForRoutineExerciseId: string;
-};
-
-type ChangeRoutineDraftExerciseOptions = {
-  getRoutineDraftExerciseChanges: (
-    routineDraftExercise: RoutineDraftExercise,
-  ) => Partial<RoutineDraftExercise>;
-  routineDraft: RoutineDraft;
-  routineExerciseId: string;
-};
-
-type ChangeRoutineDraftSectionOptions = {
-  getRoutineDraftBlocks: (
-    routineDraftBlocks: RoutineDraftBlock[],
-  ) => RoutineDraftBlock[];
-  routineDraft: RoutineDraft;
-  section: Section;
-};
-
-type ChangeRoutineDraftSectionsOptions = {
-  getRoutineDraftBlocks: (
-    routineDraftBlocks: RoutineDraftBlock[],
-  ) => RoutineDraftBlock[];
-  routineDraft: RoutineDraft;
-};
-
-type CreateEmptyRoutineDraftExerciseOptions = {
-  exerciseId: string;
-  routineExerciseId: string;
-};
-
+/**
+ * Applies one change that the User makes in the editor to the Draft of a
+ * Routine, keeping it a tree of Sections, Exercise groups and Routine
+ * exercises with Warm-up exercises under the main Section's ones.
+ */
 export function routineDraftReducer(
   routineDraft: RoutineDraft,
-  routineDraftAction: RoutineDraftAction,
+  action: RoutineDraftAction,
 ) {
-  switch (routineDraftAction.type) {
+  switch (action.type) {
     case "addedExercise": {
-      return changeRoutineDraftSection({
-        getRoutineDraftBlocks: (routineDraftBlocks) => [
-          ...routineDraftBlocks,
-          {
-            exercises: [
-              createEmptyRoutineDraftExercise({
-                exerciseId: routineDraftAction.exerciseId,
-                routineExerciseId: routineDraftAction.routineExerciseId,
-              }),
-            ],
-            id: routineDraftAction.routineDraftBlockId,
-            warmUpExercises: [],
-          },
-        ],
+      const routineExerciseDraft = createRoutineExerciseDraft({
+        exerciseId: action.exerciseId,
+        id: action.routineExerciseId,
+      });
+      const exerciseGroupDraft = {
+        exercises: [routineExerciseDraft],
+        id: action.exerciseGroupId,
+      };
+
+      return changeSections({
         routineDraft,
-        section: routineDraftAction.section,
+        sections: {
+          coolDown:
+            action.section === "cool_down"
+              ? [...routineDraft.sections.coolDown, exerciseGroupDraft]
+              : routineDraft.sections.coolDown,
+          main:
+            action.section === "main"
+              ? [
+                  ...routineDraft.sections.main,
+                  {
+                    exercises: [
+                      { ...routineExerciseDraft, warmUpExercises: [] },
+                    ],
+                    id: action.exerciseGroupId,
+                  },
+                ]
+              : routineDraft.sections.main,
+          warmUp:
+            action.section === "warm_up"
+              ? [...routineDraft.sections.warmUp, exerciseGroupDraft]
+              : routineDraft.sections.warmUp,
+        },
       });
     }
 
     case "addedSet": {
-      return changeRoutineDraftExercise({
-        getRoutineDraftExerciseChanges: (routineDraftExercise) => ({
+      return changeRoutineExercise({
+        getChanges: (routineExerciseDraft) => ({
           sets: [
-            ...routineDraftExercise.sets,
-            createEmptyRoutineDraftExerciseSet(
-              routineDraftAction.routineExerciseSetId,
-            ),
+            ...routineExerciseDraft.sets,
+            {
+              amount: "",
+              id: action.setId,
+              intensityTechnique: null,
+              isToFailure: false,
+              restSeconds: "",
+              tempo: "",
+              type: "working",
+            },
           ],
         }),
         routineDraft,
-        routineExerciseId: routineDraftAction.routineExerciseId,
+        routineExerciseId: action.routineExerciseId,
       });
     }
 
     case "addedWarmUpExercise": {
-      return changeRoutineDraftSections({
-        getRoutineDraftBlocks: (routineDraftBlocks) =>
-          routineDraftBlocks.map((routineDraftBlock) =>
-            routineDraftBlock.exercises.some(
-              (routineDraftExercise) =>
-                routineDraftExercise.id ===
-                routineDraftAction.warmUpForRoutineExerciseId,
-            )
-              ? {
-                  ...routineDraftBlock,
-                  warmUpExercises: [
-                    ...routineDraftBlock.warmUpExercises,
-                    {
-                      ...createEmptyRoutineDraftExercise({
-                        exerciseId: routineDraftAction.exerciseId,
-                        routineExerciseId: routineDraftAction.routineExerciseId,
-                      }),
-                      warmUpForRoutineExerciseId:
-                        routineDraftAction.warmUpForRoutineExerciseId,
-                    },
-                  ],
-                }
-              : routineDraftBlock,
-          ),
+      return changeMainRoutineExercises({
+        changeMainRoutineExercise: (mainRoutineExerciseDraft) =>
+          mainRoutineExerciseDraft.id === action.warmUpForRoutineExerciseId
+            ? {
+                ...mainRoutineExerciseDraft,
+                warmUpExercises: [
+                  ...mainRoutineExerciseDraft.warmUpExercises,
+                  createRoutineExerciseDraft({
+                    exerciseId: action.exerciseId,
+                    id: action.routineExerciseId,
+                  }),
+                ],
+              }
+            : mainRoutineExerciseDraft,
         routineDraft,
       });
     }
 
     case "assignedId": {
-      return { ...routineDraft, id: routineDraftAction.id };
+      return { ...routineDraft, id: action.id };
     }
 
     case "changedDays": {
-      return { ...routineDraft, days: routineDraftAction.days };
+      return { ...routineDraft, days: action.days };
     }
 
     case "changedExerciseNote": {
-      return changeRoutineDraftExercise({
-        getRoutineDraftExerciseChanges: () => ({
-          note: routineDraftAction.note,
-        }),
+      return changeRoutineExercise({
+        getChanges: () => ({ note: action.note }),
         routineDraft,
-        routineExerciseId: routineDraftAction.routineExerciseId,
+        routineExerciseId: action.routineExerciseId,
       });
     }
 
     case "changedName": {
-      return { ...routineDraft, name: routineDraftAction.name };
+      return { ...routineDraft, name: action.name };
     }
 
     case "changedSet": {
-      return changeRoutineDraftExercise({
-        getRoutineDraftExerciseChanges: (routineDraftExercise) => ({
-          sets: routineDraftExercise.sets.map((routineDraftExerciseSet) =>
-            routineDraftExerciseSet.id ===
-            routineDraftAction.routineDraftExerciseSet.id
-              ? routineDraftAction.routineDraftExerciseSet
-              : routineDraftExerciseSet,
+      return changeRoutineExercise({
+        getChanges: (routineExerciseDraft) => ({
+          sets: routineExerciseDraft.sets.map((set) =>
+            set.id === action.set.id ? action.set : set,
           ),
         }),
         routineDraft,
-        routineExerciseId: routineDraftAction.routineExerciseId,
+        routineExerciseId: action.routineExerciseId,
       });
     }
 
-    case "joinedSupersetWithNextBlock": {
-      return changeRoutineDraftSection({
-        getRoutineDraftBlocks: (routineDraftBlocks) =>
-          joinRoutineDraftBlockWithNextBlock({
-            routineDraftBlockId: routineDraftAction.routineDraftBlockId,
-            routineDraftBlocks,
+    case "joinedNextExerciseGroup": {
+      return changeSectionExerciseGroups({
+        changeExerciseGroups: (exerciseGroups) =>
+          joinNextExerciseGroup({
+            exerciseGroupId: action.exerciseGroupId,
+            exerciseGroups,
           }),
         routineDraft,
-        section: routineDraftAction.section,
+        section: action.section,
       });
     }
 
     case "leftSuperset": {
-      return changeRoutineDraftSection({
-        getRoutineDraftBlocks: (routineDraftBlocks) =>
-          routineDraftBlocks.flatMap((routineDraftBlock) => {
-            const leavingRoutineDraftExercise =
-              routineDraftBlock.exercises.find(
-                (routineDraftExercise) =>
-                  routineDraftExercise.id ===
-                  routineDraftAction.routineExerciseId,
-              );
+      return changeSectionExerciseGroups({
+        changeExerciseGroups: (exerciseGroups) =>
+          exerciseGroups.flatMap((exerciseGroup) => {
+            const leavingRoutineExercise = exerciseGroup.exercises.find(
+              (routineExerciseDraft) =>
+                routineExerciseDraft.id === action.routineExerciseId,
+            );
 
-            if (!leavingRoutineDraftExercise) {
-              return [routineDraftBlock];
-            }
-
-            return [
-              {
-                exercises: routineDraftBlock.exercises.filter(
-                  (routineDraftExercise) =>
-                    routineDraftExercise !== leavingRoutineDraftExercise,
-                ),
-                id: routineDraftBlock.id,
-                warmUpExercises: routineDraftBlock.warmUpExercises.filter(
-                  (routineDraftWarmUpExercise) =>
-                    routineDraftWarmUpExercise.warmUpForRoutineExerciseId !==
-                    leavingRoutineDraftExercise.id,
-                ),
-              },
-              {
-                exercises: [leavingRoutineDraftExercise],
-                id: routineDraftAction.routineDraftBlockId,
-                warmUpExercises: routineDraftBlock.warmUpExercises.filter(
-                  (routineDraftWarmUpExercise) =>
-                    routineDraftWarmUpExercise.warmUpForRoutineExerciseId ===
-                    leavingRoutineDraftExercise.id,
-                ),
-              },
-            ];
+            return leavingRoutineExercise === undefined
+              ? [exerciseGroup]
+              : [
+                  {
+                    ...exerciseGroup,
+                    exercises: exerciseGroup.exercises.filter(
+                      (routineExerciseDraft) =>
+                        routineExerciseDraft !== leavingRoutineExercise,
+                    ),
+                  },
+                  {
+                    exercises: [leavingRoutineExercise],
+                    id: action.exerciseGroupId,
+                  },
+                ];
           }),
         routineDraft,
-        section: routineDraftAction.section,
+        section: action.section,
       });
     }
 
-    case "movedBlock": {
-      return changeRoutineDraftSection({
-        getRoutineDraftBlocks: (routineDraftBlocks) =>
-          moveRoutineDraftBlock({
-            routineDraftBlockId: routineDraftAction.routineDraftBlockId,
-            routineDraftBlockMoveDirection:
-              routineDraftAction.routineDraftBlockMoveDirection,
-            routineDraftBlocks,
+    case "movedExerciseGroup": {
+      return changeSectionExerciseGroups({
+        changeExerciseGroups: (exerciseGroups) =>
+          moveExerciseGroup({
+            direction: action.direction,
+            exerciseGroupId: action.exerciseGroupId,
+            exerciseGroups,
           }),
         routineDraft,
-        section: routineDraftAction.section,
+        section: action.section,
       });
     }
 
     case "removedExercise": {
-      return changeRoutineDraftSections({
-        getRoutineDraftBlocks: (routineDraftBlocks) =>
-          routineDraftBlocks
-            .map((routineDraftBlock) => ({
-              ...routineDraftBlock,
-              exercises: routineDraftBlock.exercises.filter(
-                (routineDraftExercise) =>
-                  routineDraftExercise.id !==
-                  routineDraftAction.routineExerciseId,
-              ),
-              warmUpExercises: routineDraftBlock.warmUpExercises.filter(
-                (routineDraftWarmUpExercise) =>
-                  routineDraftWarmUpExercise.id !==
-                    routineDraftAction.routineExerciseId &&
-                  routineDraftWarmUpExercise.warmUpForRoutineExerciseId !==
-                    routineDraftAction.routineExerciseId,
-              ),
-            }))
-            .filter(
-              (routineDraftBlock) => routineDraftBlock.exercises.length > 0,
-            ),
+      const removedRoutineExerciseId = action.routineExerciseId;
+
+      function isKept(routineExerciseDraft: RoutineExerciseDraft) {
+        return routineExerciseDraft.id !== removedRoutineExerciseId;
+      }
+
+      return changeSections({
         routineDraft,
+        sections: {
+          coolDown: removeRoutineExercise({
+            exerciseGroups: routineDraft.sections.coolDown,
+            isKept,
+          }),
+          main: removeRoutineExercise({
+            exerciseGroups: routineDraft.sections.main.map((exerciseGroup) => ({
+              ...exerciseGroup,
+              exercises: exerciseGroup.exercises.map(
+                (mainRoutineExerciseDraft) => ({
+                  ...mainRoutineExerciseDraft,
+                  warmUpExercises:
+                    mainRoutineExerciseDraft.warmUpExercises.filter(isKept),
+                }),
+              ),
+            })),
+            isKept,
+          }),
+          warmUp: removeRoutineExercise({
+            exerciseGroups: routineDraft.sections.warmUp,
+            isKept,
+          }),
+        },
       });
     }
 
     case "removedSet": {
-      return changeRoutineDraftExercise({
-        getRoutineDraftExerciseChanges: (routineDraftExercise) => ({
-          sets: routineDraftExercise.sets.filter(
-            (routineDraftExerciseSet) =>
-              routineDraftExerciseSet.id !==
-              routineDraftAction.routineExerciseSetId,
+      return changeRoutineExercise({
+        getChanges: (routineExerciseDraft) => ({
+          sets: routineExerciseDraft.sets.filter(
+            (set) => set.id !== action.setId,
           ),
         }),
         routineDraft,
-        routineExerciseId: routineDraftAction.routineExerciseId,
+        routineExerciseId: action.routineExerciseId,
       });
     }
   }
 }
 
-function changeRoutineDraftExercise({
-  getRoutineDraftExerciseChanges,
+function changeMainRoutineExercises({
+  changeMainRoutineExercise,
   routineDraft,
-  routineExerciseId,
-}: ChangeRoutineDraftExerciseOptions) {
-  return changeRoutineDraftSections({
-    getRoutineDraftBlocks: (routineDraftBlocks) =>
-      routineDraftBlocks.map((routineDraftBlock) => ({
-        ...routineDraftBlock,
-        exercises: routineDraftBlock.exercises.map((routineDraftExercise) =>
-          routineDraftExercise.id === routineExerciseId
-            ? {
-                ...routineDraftExercise,
-                ...getRoutineDraftExerciseChanges(routineDraftExercise),
-              }
-            : routineDraftExercise,
-        ),
-        warmUpExercises: routineDraftBlock.warmUpExercises.map(
-          (routineDraftWarmUpExercise) =>
-            routineDraftWarmUpExercise.id === routineExerciseId
-              ? {
-                  ...routineDraftWarmUpExercise,
-                  ...getRoutineDraftExerciseChanges(routineDraftWarmUpExercise),
-                }
-              : routineDraftWarmUpExercise,
-        ),
-      })),
+}: {
+  changeMainRoutineExercise: (
+    mainRoutineExerciseDraft: MainRoutineExerciseDraft,
+  ) => MainRoutineExerciseDraft;
+  routineDraft: RoutineDraft;
+}) {
+  return changeSections({
     routineDraft,
+    sections: {
+      main: routineDraft.sections.main.map((exerciseGroup) => ({
+        ...exerciseGroup,
+        exercises: exerciseGroup.exercises.map(changeMainRoutineExercise),
+      })),
+    },
   });
 }
 
-function changeRoutineDraftSection({
-  getRoutineDraftBlocks,
+/**
+ * Changes the Routine exercise with `routineExerciseId`, wherever it sits in
+ * the tree, Warm-up exercises included.
+ */
+function changeRoutineExercise({
+  getChanges,
+  routineDraft,
+  routineExerciseId,
+}: {
+  getChanges: (
+    routineExerciseDraft: RoutineExerciseDraft,
+  ) => Partial<RoutineExerciseDraft>;
+  routineDraft: RoutineDraft;
+  routineExerciseId: string;
+}) {
+  function changeMatchingRoutineExercise<
+    TRoutineExerciseDraft extends RoutineExerciseDraft,
+  >(routineExerciseDraft: TRoutineExerciseDraft) {
+    return routineExerciseDraft.id === routineExerciseId
+      ? {
+          ...routineExerciseDraft,
+          ...getChanges(routineExerciseDraft),
+        }
+      : routineExerciseDraft;
+  }
+
+  function changeExerciseGroups(exerciseGroups: readonly ExerciseGroupDraft[]) {
+    return exerciseGroups.map((exerciseGroup) => ({
+      ...exerciseGroup,
+      exercises: exerciseGroup.exercises.map(changeMatchingRoutineExercise),
+    }));
+  }
+
+  return changeSections({
+    routineDraft,
+    sections: {
+      coolDown: changeExerciseGroups(routineDraft.sections.coolDown),
+      main: routineDraft.sections.main.map((exerciseGroup) => ({
+        ...exerciseGroup,
+        exercises: exerciseGroup.exercises.map((mainRoutineExerciseDraft) => ({
+          ...changeMatchingRoutineExercise(mainRoutineExerciseDraft),
+          warmUpExercises: mainRoutineExerciseDraft.warmUpExercises.map(
+            changeMatchingRoutineExercise,
+          ),
+        })),
+      })),
+      warmUp: changeExerciseGroups(routineDraft.sections.warmUp),
+    },
+  });
+}
+
+function changeSectionExerciseGroups({
+  changeExerciseGroups,
   routineDraft,
   section,
-}: ChangeRoutineDraftSectionOptions) {
-  return {
-    ...routineDraft,
+}: {
+  changeExerciseGroups: <TRoutineExerciseDraft extends RoutineExerciseDraft>(
+    exerciseGroups: readonly ExerciseGroupDraftOf<TRoutineExerciseDraft>[],
+  ) => ExerciseGroupDraftOf<TRoutineExerciseDraft>[];
+  routineDraft: RoutineDraft;
+  section: Section;
+}) {
+  return changeSections({
+    routineDraft,
     sections: {
-      ...routineDraft.sections,
-      [section]: getRoutineDraftBlocks(routineDraft.sections[section]),
+      coolDown:
+        section === "cool_down"
+          ? changeExerciseGroups(routineDraft.sections.coolDown)
+          : routineDraft.sections.coolDown,
+      main:
+        section === "main"
+          ? changeExerciseGroups(routineDraft.sections.main)
+          : routineDraft.sections.main,
+      warmUp:
+        section === "warm_up"
+          ? changeExerciseGroups(routineDraft.sections.warmUp)
+          : routineDraft.sections.warmUp,
     },
-  };
+  });
 }
 
-function changeRoutineDraftSections({
-  getRoutineDraftBlocks,
+function changeSections({
   routineDraft,
-}: ChangeRoutineDraftSectionsOptions) {
+  sections,
+}: {
+  routineDraft: RoutineDraft;
+  sections: Partial<RoutineDraft["sections"]>;
+}) {
   return {
     ...routineDraft,
-    sections: createRoutineDraftSections((section) =>
-      getRoutineDraftBlocks(routineDraft.sections[section]),
-    ),
+    sections: { ...routineDraft.sections, ...sections },
   };
 }
 
-function createEmptyRoutineDraftExercise({
+function joinNextExerciseGroup<
+  TRoutineExerciseDraft extends RoutineExerciseDraft,
+>({
+  exerciseGroupId,
+  exerciseGroups,
+}: {
+  exerciseGroupId: string;
+  exerciseGroups: readonly ExerciseGroupDraftOf<TRoutineExerciseDraft>[];
+}) {
+  const exerciseGroupIndex = exerciseGroups.findIndex(
+    (exerciseGroup) => exerciseGroup.id === exerciseGroupId,
+  );
+  const exerciseGroup = exerciseGroups[exerciseGroupIndex];
+  const nextExerciseGroup = exerciseGroups[exerciseGroupIndex + 1];
+
+  if (exerciseGroup === undefined || nextExerciseGroup === undefined) {
+    return [...exerciseGroups];
+  }
+
+  return exerciseGroups.flatMap((otherExerciseGroup) => {
+    if (otherExerciseGroup === nextExerciseGroup) {
+      return [];
+    }
+
+    return otherExerciseGroup === exerciseGroup
+      ? [
+          {
+            ...exerciseGroup,
+            exercises: [
+              ...exerciseGroup.exercises,
+              ...nextExerciseGroup.exercises,
+            ],
+          },
+        ]
+      : [otherExerciseGroup];
+  });
+}
+
+function moveExerciseGroup<TRoutineExerciseDraft extends RoutineExerciseDraft>({
+  direction,
+  exerciseGroupId,
+  exerciseGroups,
+}: {
+  direction: ExerciseGroupMoveDirection;
+  exerciseGroupId: string;
+  exerciseGroups: readonly ExerciseGroupDraftOf<TRoutineExerciseDraft>[];
+}) {
+  const exerciseGroupIndex = exerciseGroups.findIndex(
+    (exerciseGroup) => exerciseGroup.id === exerciseGroupId,
+  );
+  const neighborExerciseGroupIndex =
+    direction === "up" ? exerciseGroupIndex - 1 : exerciseGroupIndex + 1;
+  const exerciseGroup = exerciseGroups[exerciseGroupIndex];
+  const neighborExerciseGroup = exerciseGroups[neighborExerciseGroupIndex];
+
+  if (exerciseGroup === undefined || neighborExerciseGroup === undefined) {
+    return [...exerciseGroups];
+  }
+
+  return exerciseGroups
+    .with(exerciseGroupIndex, neighborExerciseGroup)
+    .with(neighborExerciseGroupIndex, exerciseGroup);
+}
+
+function removeRoutineExercise<
+  TRoutineExerciseDraft extends RoutineExerciseDraft,
+>({
+  exerciseGroups,
+  isKept,
+}: {
+  exerciseGroups: readonly ExerciseGroupDraftOf<TRoutineExerciseDraft>[];
+  isKept: (routineExerciseDraft: RoutineExerciseDraft) => boolean;
+}) {
+  return exerciseGroups
+    .map((exerciseGroup) => ({
+      ...exerciseGroup,
+      exercises: exerciseGroup.exercises.filter(isKept),
+    }))
+    .filter((exerciseGroup) => exerciseGroup.exercises.length > 0);
+}
+
+/**
+ * Creates the Draft of a new Routine exercise of `exerciseId`, with no note
+ * and no Set yet.
+ */
+function createRoutineExerciseDraft({
   exerciseId,
-  routineExerciseId,
-}: CreateEmptyRoutineDraftExerciseOptions) {
-  const routineDraftExercise: RoutineDraftExercise = {
-    exerciseId,
-    id: routineExerciseId,
-    note: "",
-    sets: [],
-  };
-
-  return routineDraftExercise;
-}
-
-function createEmptyRoutineDraftExerciseSet(routineExerciseSetId: string) {
-  const routineDraftExerciseSet: RoutineDraftExerciseSet = {
-    amount: "",
-    dropSetSegmentCount: "",
-    dropSetWeightPercentage: "",
-    id: routineExerciseSetId,
-    isToFailure: false,
-    restPauseRestSeconds: "",
-    restPauseSegmentCount: "",
-    restSeconds: "",
-    setType: "working",
-    tempo: "",
-    variation: undefined,
-  };
-
-  return routineDraftExerciseSet;
+  id,
+}: {
+  exerciseId: string;
+  id: string;
+}) {
+  return { exerciseId, id, note: "", sets: [] };
 }

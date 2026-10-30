@@ -1,4 +1,4 @@
-import { formatElapsedTime } from "@/features/workout/core/format-elapsed-time";
+import { formatElapsedTime } from "#/features/workout/core/format-elapsed-time.ts";
 
 describe("formatElapsedTime", () => {
   it("writes 0 seconds as 0:00:00", () => {
@@ -14,7 +14,7 @@ describe("formatElapsedTime", () => {
   });
 
   it("carries 60 minutes over into an hour", () => {
-    expect(formatElapsedTime(3_661)).toBe("1:01:01");
+    expect(formatElapsedTime(3661)).toBe("1:01:01");
   });
 
   it("writes the hours without padding", () => {

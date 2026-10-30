@@ -1,4 +1,4 @@
-apps
-packages
+apps/mobile/assets/expo.icon
+packages/database/drizzle
 pnpm-lock.yaml
 .claude/worktrees

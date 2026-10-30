@@ -1,24 +1,20 @@
-import type { PickerItemValue } from "@expo/ui";
-
 import { Host, Picker } from "@expo/ui";
 
-import { Text } from "@/shared/components/text";
+import { Text } from "#/shared/components/text.tsx";
 
-type PickerFieldProperties<TOption extends PickerItemValue> = {
-  label: string;
-  onChangeSelectedOption: (selectedOption: TOption) => void;
-  optionLabels: Record<TOption, string>;
-  options: readonly TOption[];
-  selectedOption: TOption;
-};
-
-export function PickerField<TOption extends PickerItemValue>({
+export function PickerField<TOption extends string>({
   label,
   onChangeSelectedOption,
   optionLabels,
   options,
   selectedOption,
-}: PickerFieldProperties<TOption>) {
+}: {
+  label: string;
+  onChangeSelectedOption: (selectedOption: TOption) => void;
+  optionLabels: Record<TOption, string>;
+  options: readonly TOption[];
+  selectedOption: TOption;
+}) {
   return (
     <>
       <Text>{label}</Text>

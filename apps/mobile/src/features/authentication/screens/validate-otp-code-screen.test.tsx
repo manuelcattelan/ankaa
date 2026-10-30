@@ -1,13 +1,12 @@
 import { screen, userEvent, waitFor } from "@testing-library/react-native";
+import { constVoid } from "effect/Function";
 
-import { AuthenticationClient } from "@/shared/services/authentication-client";
-import { advanceFakeTime } from "@/shared/testing/advance-fake-time";
-import { createSignInTestResponses } from "@/shared/testing/create-sign-in-test-responses";
-import { emptyHomeScreenTrpcClientLayer } from "@/shared/testing/empty-home-screen-trpc-client-layer";
-import { renderScreen } from "@/shared/testing/render-screen";
+import { createFakeSignInResponses } from "#/shared/testing/create-fake-sign-in-responses.ts";
+import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";
+import { renderScreen } from "#/testing/render-screen.tsx";
 
 const VALIDATE_OTP_CODE_URL =
-  "/sign-in/with-email/validate-otp-code?email=athlete%40example.com";
+  "/sign-in/with-email/validate-otp-code?email=anna%40example.com";
 
 describe("ValidateOtpCodeScreen", () => {
   it("shows a validation message when the verification code is incomplete", async () => {
@@ -26,16 +25,51 @@ describe("ValidateOtpCodeScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("signs the person in and opens the home screen when the server accepts the verification code", async () => {
+  it("shows no validation message before the first submit", async () => {
+    const user = userEvent.setup();
+
+    renderScreen({ initialUrl: VALIDATE_OTP_CODE_URL });
+
+    await user.type(await screen.findByLabelText("Verification code"), "12345");
+
+    expect(
+      screen.queryByText(
+        "This verification code is incomplete: enter all 6 digits.",
+      ),
+    ).not.toBeOnTheScreen();
+  });
+
+  it("clears the validation message as soon as the User completes the verification code", async () => {
+    const user = userEvent.setup();
+
+    renderScreen({ initialUrl: VALIDATE_OTP_CODE_URL });
+
+    await user.type(await screen.findByLabelText("Verification code"), "12345");
+
+    await user.press(screen.getByRole("button", { name: "Sign in" }));
+
+    await screen.findByText(
+      "This verification code is incomplete: enter all 6 digits.",
+    );
+
+    await user.type(screen.getByLabelText(/^Verification code/), "6");
+
+    expect(
+      screen.queryByText(
+        "This verification code is incomplete: enter all 6 digits.",
+      ),
+    ).not.toBeOnTheScreen();
+  });
+
+  it("signs the User in and opens the home screen when the server accepts the verification code", async () => {
     const user = userEvent.setup();
 
     renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest(
-          createSignInTestResponses("/sign-in/email-otp"),
+        authenticationClient: fakeAuthenticationClientLayer(
+          createFakeSignInResponses({ signInPath: "/sign-in/email-otp" }),
         ),
-        trpcClientLayer: emptyHomeScreenTrpcClientLayer,
       },
     });
 
@@ -47,7 +81,7 @@ describe("ValidateOtpCodeScreen", () => {
     await user.press(screen.getByRole("button", { name: "Sign in" }));
 
     expect(
-      await screen.findByText("You have no routines yet."),
+      await screen.findByRole("button", { name: "Sign out" }),
     ).toBeOnTheScreen();
   });
 
@@ -57,7 +91,7 @@ describe("ValidateOtpCodeScreen", () => {
     renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest({
+        authenticationClient: fakeAuthenticationClientLayer({
           "/sign-in/email-otp": () =>
             Response.json(
               { code: "INVALID_OTP", message: "Invalid OTP" },
@@ -81,42 +115,102 @@ describe("ValidateOtpCodeScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("counts the resend cooldown down as time passes", async () => {
-    renderScreen({ initialUrl: VALIDATE_OTP_CODE_URL });
+  it("shows how many seconds the User must wait when the server rate-limits the sign-in", async () => {
+    const user = userEvent.setup();
 
-    await screen.findByText(
-      "You can resend the verification code in 60 seconds.",
+    renderScreen({
+      initialUrl: VALIDATE_OTP_CODE_URL,
+      testRuntimeLayers: {
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/sign-in/email-otp": () =>
+            Response.json(
+              { message: "Too many requests. Please try again later." },
+              { headers: { "X-Retry-After": "30" }, status: 429 },
+            ),
+        }),
+      },
+    });
+
+    await user.type(
+      await screen.findByLabelText("Verification code"),
+      "123456",
     );
 
-    await advanceFakeTime(1_000);
+    await user.press(screen.getByRole("button", { name: "Sign in" }));
 
     expect(
-      screen.getByText("You can resend the verification code in 59 seconds."),
+      await screen.findByText("Too many requests: try again in 30 seconds."),
     ).toBeOnTheScreen();
   });
 
-  it("lets the person resend the verification code once the resend cooldown ends", async () => {
-    renderScreen({ initialUrl: VALIDATE_OTP_CODE_URL });
+  it("tells the User to request a new verification code when the server rejects it as expired", async () => {
+    const user = userEvent.setup();
 
-    await screen.findByText(
-      "You can resend the verification code in 60 seconds.",
+    renderScreen({
+      initialUrl: VALIDATE_OTP_CODE_URL,
+      testRuntimeLayers: {
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/sign-in/email-otp": () =>
+            Response.json(
+              { code: "OTP_EXPIRED", message: "OTP expired" },
+              { status: 400 },
+            ),
+        }),
+      },
+    });
+
+    await user.type(
+      await screen.findByLabelText("Verification code"),
+      "123456",
     );
 
-    await advanceFakeTime(60_000);
+    await user.press(screen.getByRole("button", { name: "Sign in" }));
 
     expect(
-      screen.getByRole("button", { name: "Resend verification code" }),
-    ).toBeEnabled();
+      await screen.findByText(
+        "This verification code has expired: resend the verification code and try again.",
+      ),
+    ).toBeOnTheScreen();
   });
 
-  it("requests a new verification code when the person resends it once the resend cooldown ends", async () => {
+  it("tells the User to request a new verification code when the server rejects too many attempts", async () => {
+    const user = userEvent.setup();
+
+    renderScreen({
+      initialUrl: VALIDATE_OTP_CODE_URL,
+      testRuntimeLayers: {
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/sign-in/email-otp": () =>
+            Response.json(
+              { code: "TOO_MANY_ATTEMPTS", message: "Too many attempts" },
+              { status: 403 },
+            ),
+        }),
+      },
+    });
+
+    await user.type(
+      await screen.findByLabelText("Verification code"),
+      "123456",
+    );
+
+    await user.press(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(
+      await screen.findByText(
+        "Too many incorrect attempts: resend the verification code and try again.",
+      ),
+    ).toBeOnTheScreen();
+  });
+
+  it("requests a new verification code as soon as the User resends it", async () => {
     const otpCodeRequestBodies: unknown[] = [];
     const user = userEvent.setup();
 
     renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest({
+        authenticationClient: fakeAuthenticationClientLayer({
           "/email-otp/send-verification-otp": async (request) => {
             const otpCodeRequestBody: unknown = await request.json();
 
@@ -128,50 +222,63 @@ describe("ValidateOtpCodeScreen", () => {
       },
     });
 
-    await screen.findByText(
-      "You can resend the verification code in 60 seconds.",
-    );
-
-    await advanceFakeTime(60_000);
-
     await user.press(
-      screen.getByRole("button", { name: "Resend verification code" }),
+      await screen.findByRole("button", { name: "Resend verification code" }),
     );
 
     await waitFor(() => {
       expect(otpCodeRequestBodies).toEqual([
-        { email: "athlete@example.com", type: "sign-in" },
+        { email: "anna@example.com", type: "sign-in" },
       ]);
     });
   });
 
-  it("restarts the resend cooldown once the person resends the verification code", async () => {
+  it("disables resending the verification code while its request is in flight", async () => {
     const user = userEvent.setup();
 
     renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest({
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/email-otp/send-verification-otp": () => new Promise(constVoid),
+        }),
+      },
+    });
+
+    await user.press(
+      await screen.findByRole("button", { name: "Resend verification code" }),
+    );
+
+    expect(
+      await screen.findByRole("button", {
+        busy: true,
+        name: "Resend verification code",
+      }),
+    ).toBeDisabled();
+  });
+
+  it("lets the User resend the verification code again once the previous request is answered", async () => {
+    const user = userEvent.setup();
+
+    renderScreen({
+      initialUrl: VALIDATE_OTP_CODE_URL,
+      testRuntimeLayers: {
+        authenticationClient: fakeAuthenticationClientLayer({
           "/email-otp/send-verification-otp": () =>
             Response.json({ success: true }),
         }),
       },
     });
 
-    await screen.findByText(
-      "You can resend the verification code in 60 seconds.",
-    );
-
-    await advanceFakeTime(60_000);
-
     await user.press(
-      screen.getByRole("button", { name: "Resend verification code" }),
+      await screen.findByRole("button", { name: "Resend verification code" }),
     );
 
     expect(
-      await screen.findByText(
-        "You can resend the verification code in 60 seconds.",
-      ),
-    ).toBeOnTheScreen();
+      await screen.findByRole("button", {
+        busy: false,
+        name: "Resend verification code",
+      }),
+    ).toBeEnabled();
   });
 });

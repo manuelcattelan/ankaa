@@ -1,58 +1,42 @@
-import { describe, expect, it } from "@effect/vitest";
+import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
+import { describe, expect, it } from "vitest";
 
-import { decideRoutineSave } from "./decide-routine-save.ts";
+import { decideRoutineSave } from "#/features/routine/core/decide-routine-save.ts";
 
 describe("decideRoutineSave", () => {
-  it("allows a new Routine whose name the person doesn't use yet", () => {
+  it("allows the Save of a Routine that doesn't exist yet", () => {
     expect(
-      decideRoutineSave({
-        routineWithSameId: undefined,
-        routineWithSameName: undefined,
-        userId: "first-user",
-      }),
-    ).toEqual({ _tag: "RoutineSaveAllowed" });
+      decideRoutineSave({ routine: null, userId: "user-1" }),
+    ).toStrictEqual({ _tag: "RoutineSaveAllowed" });
   });
 
-  it("allows an update of a Routine that the person owns and hasn't deleted", () => {
+  it("allows the Save of a live Routine of the User", () => {
     expect(
       decideRoutineSave({
-        routineWithSameId: { deletedAt: null, userId: "first-user" },
-        routineWithSameName: undefined,
-        userId: "first-user",
+        routine: { deletedAt: null, userId: "user-1" },
+        userId: "user-1",
       }),
-    ).toEqual({ _tag: "RoutineSaveAllowed" });
+    ).toStrictEqual({ _tag: "RoutineSaveAllowed" });
   });
 
-  it("returns RoutineNameConflict when another Routine of the person has the same name", () => {
+  it("fails with RoutineNotFoundError for a Routine of another User", () => {
     expect(
       decideRoutineSave({
-        routineWithSameId: undefined,
-        routineWithSameName: { id: "019a0000-0000-7000-8000-000000000002" },
-        userId: "first-user",
+        routine: { deletedAt: null, userId: "user-2" },
+        userId: "user-1",
       }),
-    ).toEqual({ _tag: "RoutineNameConflict" });
+    ).toStrictEqual(new RoutineNotFoundError());
   });
 
-  it("returns RoutineNotFound when the Routine belongs to another person", () => {
+  it("fails with RoutineNotFoundError for a Routine the User deleted", () => {
     expect(
       decideRoutineSave({
-        routineWithSameId: { deletedAt: null, userId: "second-user" },
-        routineWithSameName: undefined,
-        userId: "first-user",
-      }),
-    ).toEqual({ _tag: "RoutineNotFound" });
-  });
-
-  it("returns RoutineNotFound when the person has deleted the Routine", () => {
-    expect(
-      decideRoutineSave({
-        routineWithSameId: {
-          deletedAt: new Date("2026-10-19T09:00:00.000Z"),
-          userId: "first-user",
+        routine: {
+          deletedAt: new Date("2026-10-29T10:00:00.000Z"),
+          userId: "user-1",
         },
-        routineWithSameName: undefined,
-        userId: "first-user",
+        userId: "user-1",
       }),
-    ).toEqual({ _tag: "RoutineNotFound" });
+    ).toStrictEqual(new RoutineNotFoundError());
   });
 });

@@ -1,29 +1,17 @@
 import type { SignInResponse } from "@react-native-google-signin/google-signin";
 
+import { AUTHORIZATION_CODE_HEADER_NAME } from "@ankaa/core/features/authentication/constants/authorization-code-header-name";
 import { fireEvent, screen, userEvent } from "@testing-library/react-native";
-import * as ExpoAppleAuthentication from "expo-apple-authentication";
 
-import { AppleSignIn } from "@/features/authentication/services/apple-sign-in";
-import { GoogleSignIn } from "@/features/authentication/services/google-sign-in";
-import { Accessibility } from "@/shared/services/accessibility";
-import { AuthenticationClient } from "@/shared/services/authentication-client";
-import { advanceFakeTime } from "@/shared/testing/advance-fake-time";
-import { createSignInTestResponses } from "@/shared/testing/create-sign-in-test-responses";
-import { emptyHomeScreenTrpcClientLayer } from "@/shared/testing/empty-home-screen-trpc-client-layer";
-import { renderScreen } from "@/shared/testing/render-screen";
-
-const APPLE_AUTHENTICATION_CREDENTIAL: ExpoAppleAuthentication.AppleAuthenticationCredential =
-  {
-    authorizationCode: null,
-    email: null,
-    fullName: null,
-    identityToken: "apple-identity-token",
-    realUserStatus:
-      ExpoAppleAuthentication.AppleAuthenticationUserDetectionStatus
-        .LIKELY_REAL,
-    ["state"]: null,
-    user: "apple-user-1",
-  };
+import { APPLE_AUTHENTICATION_CREDENTIAL } from "#/features/authentication/testing/apple-authentication-credential.ts";
+import { fakeAppleSignInLayer } from "#/features/authentication/testing/fake-apple-sign-in-layer.ts";
+import { fakeGoogleSignInLayer } from "#/features/authentication/testing/fake-google-sign-in-layer.ts";
+import { advanceFakeTime } from "#/shared/testing/advance-fake-time.ts";
+import { createFakeSignInResponses } from "#/shared/testing/create-fake-sign-in-responses.ts";
+import { fakeAccessibilityLayer } from "#/shared/testing/fake-accessibility-layer.ts";
+import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";
+import { fakeCryptoLayer } from "#/shared/testing/fake-crypto-layer.ts";
+import { renderScreen } from "#/testing/render-screen.tsx";
 
 const GOOGLE_SIGN_IN_RESPONSE: SignInResponse = {
   data: {
@@ -31,7 +19,7 @@ const GOOGLE_SIGN_IN_RESPONSE: SignInResponse = {
     scopes: [],
     serverAuthCode: null,
     user: {
-      email: "athlete@example.com",
+      email: "anna@example.com",
       familyName: null,
       givenName: null,
       id: "google-user-1",
@@ -43,84 +31,231 @@ const GOOGLE_SIGN_IN_RESPONSE: SignInResponse = {
 };
 
 describe("SignInScreen", () => {
-  it("shows Apple sign-in when the device offers it", async () => {
-    renderScreen({
-      initialUrl: "/sign-in",
-      testRuntimeLayers: {
-        appleSignInLayer: AppleSignIn.layerTest({ isAvailable: true }),
-      },
-    });
+  it("shows Apple sign-in on iOS without asking the device whether it offers it", async () => {
+    renderScreen({ initialUrl: "/sign-in" });
 
     expect(await screen.findByTestId("apple-sign-in-button")).toBeOnTheScreen();
   });
 
-  it("doesn't show Apple sign-in when the device doesn't offer it", async () => {
-    renderScreen({ initialUrl: "/sign-in" });
-
-    await advanceFakeTime(1_000);
-
-    expect(screen.queryByTestId("apple-sign-in-button")).not.toBeOnTheScreen();
-  });
-
-  it("signs the person in with Apple and opens the home screen", async () => {
+  it("signs the User in with Apple and opens the home screen", async () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        appleSignInLayer: AppleSignIn.layerTest({
+        appleSignIn: fakeAppleSignInLayer({
           appleAuthenticationCredential: APPLE_AUTHENTICATION_CREDENTIAL,
-          isAvailable: true,
         }),
-        authenticationClientLayer: AuthenticationClient.layerTest(
-          createSignInTestResponses("/sign-in/social"),
+        authenticationClient: fakeAuthenticationClientLayer(
+          createFakeSignInResponses({ signInPath: "/sign-in/social" }),
         ),
-        trpcClientLayer: emptyHomeScreenTrpcClientLayer,
+        crypto: fakeCryptoLayer,
       },
     });
 
     fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
 
     expect(
-      await screen.findByText("You have no routines yet."),
+      await screen.findByRole("button", { name: "Sign out" }),
     ).toBeOnTheScreen();
   });
 
-  it("announces no error when the person cancels Apple sign-in", async () => {
-    const announcedMessages: string[] = [];
-
+  it("sends the server the authorization code of the Apple sign-in with the sign-in", async () => {
+    const receivedSignInRequests: Request[] = [];
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        accessibilityLayer: Accessibility.layerTest(announcedMessages),
-        appleSignInLayer: AppleSignIn.layerTest({ isAvailable: true }),
+        appleSignIn: fakeAppleSignInLayer({
+          appleAuthenticationCredential: {
+            ...APPLE_AUTHENTICATION_CREDENTIAL,
+            authorizationCode: "apple-authorization-code",
+          },
+        }),
+        authenticationClient: fakeAuthenticationClientLayer(
+          createFakeSignInResponses({
+            receivedSignInRequests,
+            signInPath: "/sign-in/social",
+          }),
+        ),
+        crypto: fakeCryptoLayer,
       },
     });
 
     fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
 
-    await advanceFakeTime(1_000);
+    await screen.findByRole("button", { name: "Sign out" });
+
+    expect(
+      receivedSignInRequests.map((receivedSignInRequest) =>
+        receivedSignInRequest.headers.get(AUTHORIZATION_CODE_HEADER_NAME),
+      ),
+    ).toStrictEqual(["apple-authorization-code"]);
+  });
+
+  it("announces no error when the User cancels Apple sign-in", async () => {
+    const announcedMessages: string[] = [];
+
+    renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        accessibility: fakeAccessibilityLayer(announcedMessages),
+        appleSignIn: fakeAppleSignInLayer({}),
+        crypto: fakeCryptoLayer,
+      },
+    });
+
+    fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
+
+    await advanceFakeTime(1000);
 
     expect(announcedMessages).toEqual([]);
   });
 
-  it("signs the person in with Google and opens the home screen", async () => {
+  it("leaves the sign-in buttons enabled and shows no error when the User cancels Apple sign-in", async () => {
+    renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        appleSignIn: fakeAppleSignInLayer({}),
+        crypto: fakeCryptoLayer,
+      },
+    });
+
+    fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
+    await advanceFakeTime(1000);
+
+    expect(screen.getByTestId("google-sign-in-button")).toBeEnabled();
+    expect(screen.queryByText("Something went wrong: try again.")).toBeNull();
+    expect(
+      screen.queryByText(
+        "Ankaa can't connect: check your internet connection and try again.",
+      ),
+    ).toBeNull();
+  });
+
+  it("tells the User that the account can't be linked when the server can't link the Apple sign-in to the User with the same email address", async () => {
+    renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        appleSignIn: fakeAppleSignInLayer({
+          appleAuthenticationCredential: APPLE_AUTHENTICATION_CREDENTIAL,
+        }),
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/sign-in/social": () =>
+            Response.json(
+              { code: "OAUTH_LINK_ERROR", message: "account not linked" },
+              { status: 401 },
+            ),
+        }),
+        crypto: fakeCryptoLayer,
+      },
+    });
+
+    fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
+
+    expect(
+      await screen.findByText(
+        "This account can't be linked with the selected provider: try another sign-in method.",
+      ),
+    ).toBeOnTheScreen();
+  });
+
+  it("tells the User that something went wrong, not that Ankaa can't connect, when Apple returns no identity token", async () => {
+    renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        appleSignIn: fakeAppleSignInLayer({
+          appleAuthenticationCredential: {
+            ...APPLE_AUTHENTICATION_CREDENTIAL,
+            identityToken: null,
+          },
+        }),
+        crypto: fakeCryptoLayer,
+      },
+    });
+
+    fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
+
+    expect(
+      await screen.findByText("Something went wrong: try again."),
+    ).toBeOnTheScreen();
+  });
+
+  it("leaves the sign-in buttons enabled and shows no error when the User cancels Google sign-in", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        googleSignIn: fakeGoogleSignInLayer({
+          signInResponse: { data: null, type: "cancelled" },
+        }),
+      },
+    });
+
+    await user.press(await screen.findByTestId("google-sign-in-button"));
+    await advanceFakeTime(1000);
+
+    expect(screen.getByTestId("google-sign-in-button")).toBeEnabled();
+    expect(screen.queryByText("Something went wrong: try again.")).toBeNull();
+    expect(
+      screen.queryByText(
+        "Ankaa can't connect: check your internet connection and try again.",
+      ),
+    ).toBeNull();
+  });
+
+  it("signs the User in with Google and opens the home screen", async () => {
     const user = userEvent.setup();
 
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest(
-          createSignInTestResponses("/sign-in/social"),
+        authenticationClient: fakeAuthenticationClientLayer(
+          createFakeSignInResponses({ signInPath: "/sign-in/social" }),
         ),
-        googleSignInLayer: GoogleSignIn.layerTest(GOOGLE_SIGN_IN_RESPONSE),
-        trpcClientLayer: emptyHomeScreenTrpcClientLayer,
+        googleSignIn: fakeGoogleSignInLayer({
+          signInResponse: GOOGLE_SIGN_IN_RESPONSE,
+        }),
       },
     });
 
     await user.press(await screen.findByTestId("google-sign-in-button"));
 
     expect(
-      await screen.findByText("You have no routines yet."),
+      await screen.findByRole("button", { name: "Sign out" }),
     ).toBeOnTheScreen();
+  });
+
+  it("sends the server the authorization code of the Google sign-in with the sign-in", async () => {
+    const receivedSignInRequests: Request[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        authenticationClient: fakeAuthenticationClientLayer(
+          createFakeSignInResponses({
+            receivedSignInRequests,
+            signInPath: "/sign-in/social",
+          }),
+        ),
+        googleSignIn: fakeGoogleSignInLayer({
+          signInResponse: {
+            ...GOOGLE_SIGN_IN_RESPONSE,
+            data: {
+              ...GOOGLE_SIGN_IN_RESPONSE.data,
+              serverAuthCode: "google-authorization-code",
+            },
+          },
+        }),
+      },
+    });
+
+    await user.press(await screen.findByTestId("google-sign-in-button"));
+
+    await screen.findByRole("button", { name: "Sign out" });
+
+    expect(
+      receivedSignInRequests.map((receivedSignInRequest) =>
+        receivedSignInRequest.headers.get(AUTHORIZATION_CODE_HEADER_NAME),
+      ),
+    ).toStrictEqual(["google-authorization-code"]);
   });
 
   it("shows an error message when the server rejects the Google sign-in", async () => {
@@ -129,7 +264,7 @@ describe("SignInScreen", () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest({
+        authenticationClient: fakeAuthenticationClientLayer({
           "/sign-in/social": () =>
             Response.json(
               {
@@ -139,7 +274,9 @@ describe("SignInScreen", () => {
               { status: 400 },
             ),
         }),
-        googleSignInLayer: GoogleSignIn.layerTest(GOOGLE_SIGN_IN_RESPONSE),
+        googleSignIn: fakeGoogleSignInLayer({
+          signInResponse: GOOGLE_SIGN_IN_RESPONSE,
+        }),
       },
     });
 
@@ -152,7 +289,42 @@ describe("SignInScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("opens the email screen when the person continues with an email address", async () => {
+  it("announces the error message once when the server rejects the Google sign-in", async () => {
+    const announcedMessages: string[] = [];
+    const user = userEvent.setup();
+
+    renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        accessibility: fakeAccessibilityLayer(announcedMessages),
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/sign-in/social": () =>
+            Response.json(
+              {
+                code: "USER_EMAIL_NOT_FOUND",
+                message: "User email not found",
+              },
+              { status: 400 },
+            ),
+        }),
+        googleSignIn: fakeGoogleSignInLayer({
+          signInResponse: GOOGLE_SIGN_IN_RESPONSE,
+        }),
+      },
+    });
+
+    await user.press(await screen.findByTestId("google-sign-in-button"));
+
+    await screen.findByText(
+      "The selected provider didn't share your email address: try another sign-in method.",
+    );
+
+    expect(announcedMessages).toEqual([
+      "The selected provider didn't share your email address: try another sign-in method.",
+    ]);
+  });
+
+  it("opens the email screen when the User continues with an email address", async () => {
     const user = userEvent.setup();
 
     renderScreen({ initialUrl: "/sign-in" });
@@ -164,11 +336,11 @@ describe("SignInScreen", () => {
     expect(await screen.findByLabelText("Email address")).toBeOnTheScreen();
   });
 
-  it("tells the person that the server can't be reached when the session can't be loaded", async () => {
+  it("tells the User that Ankaa can't connect when the server can't be reached", async () => {
     renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest({
+        authenticationClient: fakeAuthenticationClientLayer({
           "/get-session": () =>
             Promise.reject(new TypeError("Network request failed")),
         }),
@@ -177,7 +349,7 @@ describe("SignInScreen", () => {
 
     expect(
       await screen.findByText(
-        "The server can't be reached: check your connection and try again.",
+        "Ankaa can't connect: check your internet connection and try again.",
       ),
     ).toBeOnTheScreen();
   });

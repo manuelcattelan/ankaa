@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { apiUrlSchema } from "@/shared/core/api-url-schema";
+import { apiUrlSchema } from "#/shared/core/api-url-schema.ts";
 
 const decodeApiUrl = Schema.decodeUnknownSync(apiUrlSchema);
 

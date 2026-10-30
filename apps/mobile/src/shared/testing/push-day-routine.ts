@@ -1,34 +1,35 @@
-import type { Routine } from "@/shared/interactors/list-routines";
+import type { Routine } from "#/shared/routine.ts";
 
-export const pushDayRoutine: Routine = {
+export const PUSH_DAY_ROUTINE: Routine = {
   days: ["monday"],
-  exercises: [
-    {
-      exerciseId: "01900000-0000-7000-8000-000000000001",
-      id: "01900000-0000-7000-8000-000000000002",
-      note: null,
-      position: 0,
-      section: "main",
-      sets: [
-        {
-          amount: 8,
-          dropSetSegmentCount: null,
-          dropSetWeightPercentage: null,
-          id: "01900000-0000-7000-8000-000000000003",
-          isToFailure: false,
-          position: 0,
-          restPauseRestSeconds: null,
-          restPauseSegmentCount: null,
-          restSeconds: 120,
-          setType: "working",
-          tempo: null,
-          variation: null,
-        },
-      ],
-      superset: null,
-      warmUpForRoutineExerciseId: null,
-    },
-  ],
   id: "01900000-0000-7000-8000-000000000004",
   name: "Push day",
+  sections: {
+    coolDown: [],
+    main: [
+      {
+        exercises: [
+          {
+            exerciseId: "01900000-0000-7000-8000-000000000001",
+            id: "01900000-0000-7000-8000-000000000002",
+            note: null,
+            sets: [
+              {
+                amount: 8,
+                id: "01900000-0000-7000-8000-000000000003",
+                intensityTechnique: null,
+                isToFailure: false,
+                restSeconds: 120,
+                tempo: null,
+                type: "working",
+              },
+            ],
+            warmUpExercises: [],
+          },
+        ],
+        id: "01900000-0000-7000-8000-000000000005",
+      },
+    ],
+    warmUp: [],
+  },
 };

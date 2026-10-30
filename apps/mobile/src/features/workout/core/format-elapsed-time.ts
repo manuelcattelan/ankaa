@@ -1,17 +1,24 @@
 const SECONDS_PER_MINUTE = 60;
+
 const MINUTES_PER_HOUR = 60;
+
 const SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR;
+
 const ELAPSED_TIME_PART_LENGTH = 2;
 
+/**
+ * Writes `elapsedSeconds` as hours, minutes and seconds, such as 1:01:01,
+ * with the minutes and seconds padded to two digits.
+ */
 export function formatElapsedTime(elapsedSeconds: number) {
-  const elapsedHours = Math.floor(elapsedSeconds / SECONDS_PER_HOUR);
-  const elapsedMinutes =
+  const hours = Math.floor(elapsedSeconds / SECONDS_PER_HOUR);
+  const minutes =
     Math.floor(elapsedSeconds / SECONDS_PER_MINUTE) % MINUTES_PER_HOUR;
-  const elapsedSecondsOfMinute = elapsedSeconds % SECONDS_PER_MINUTE;
+  const seconds = elapsedSeconds % SECONDS_PER_MINUTE;
 
-  return `${elapsedHours}:${formatElapsedTimePart(elapsedMinutes)}:${formatElapsedTimePart(elapsedSecondsOfMinute)}`;
+  return `${String(hours)}:${padElapsedTimePart(minutes)}:${padElapsedTimePart(seconds)}`;
 }
 
-function formatElapsedTimePart(elapsedTimePart: number) {
-  return elapsedTimePart.toString().padStart(ELAPSED_TIME_PART_LENGTH, "0");
+function padElapsedTimePart(elapsedTimePart: number) {
+  return String(elapsedTimePart).padStart(ELAPSED_TIME_PART_LENGTH, "0");
 }

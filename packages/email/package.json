@@ -5,25 +5,27 @@
   },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
-    "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
+    "@ankaa/vitest": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "jiti": "catalog:",
-    "prettier": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "exports": {
-    ".": "./src/index.ts"
+    "./*": "./src/*.ts"
+  },
+  "imports": {
+    "#/*": "./src/*"
   },
   "name": "@ankaa/email",
   "private": true,
   "scripts": {
     "check-types": "tsc --noEmit",
-    "format": "prettier --check .",
-    "format:fix": "prettier --write .",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run"
   },
   "type": "module"
 }

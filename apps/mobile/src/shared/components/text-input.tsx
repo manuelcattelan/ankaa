@@ -1,11 +1,11 @@
 import { useTheme } from "expo-router";
 import * as ReactNative from "react-native";
 
-import { TOUCH_TARGET_SIZE_MINIMUM } from "@/shared/constants/touch-target";
+import { MINIMUM_TOUCH_TARGET_SIZE } from "#/shared/constants/minimum-touch-target-size.ts";
 
-type TextInputProperties = ReactNative.TextInputProps;
+type TextInputProps = ReactNative.TextInputProps;
 
-export function TextInput({ style, ...rest }: TextInputProperties) {
+export function TextInput({ style, ...rest }: TextInputProps) {
   const theme = useTheme();
 
   const themeStyle = {
@@ -24,6 +24,6 @@ export function TextInput({ style, ...rest }: TextInputProperties) {
 const styles = ReactNative.StyleSheet.create({
   input: {
     borderWidth: ReactNative.StyleSheet.hairlineWidth,
-    minHeight: TOUCH_TARGET_SIZE_MINIMUM,
+    minHeight: MINIMUM_TOUCH_TARGET_SIZE,
   },
 });

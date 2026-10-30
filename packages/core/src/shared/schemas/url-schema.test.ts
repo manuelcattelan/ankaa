@@ -1,7 +1,7 @@
-import { describe, expect, it } from "@effect/vitest";
 import * as Schema from "effect/Schema";
+import { describe, expect, it } from "vitest";
 
-import { urlSchema } from "./url-schema.ts";
+import { urlSchema } from "#/shared/schemas/url-schema.ts";
 
 const decodeUrl = Schema.decodeUnknownSync(urlSchema);
 

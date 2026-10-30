@@ -1,402 +1,359 @@
-import type {
-  RoutineDraft,
-  RoutineDraftBlock,
-  RoutineDraftExercise,
-  RoutineDraftExerciseSet,
-  RoutineDraftWarmUpExercise,
-} from "@/features/routine/core/routine-draft-reducer";
+import { routineDraftReducer } from "#/features/routine/core/routine-draft-reducer.ts";
 
-import { routineDraftReducer } from "@/features/routine/core/routine-draft-reducer";
-
-const ROUTINE_DRAFT_EXERCISE_SET: RoutineDraftExerciseSet = {
+const SET_DRAFT = {
   amount: "8",
-  dropSetSegmentCount: "",
-  dropSetWeightPercentage: "",
-  id: "019c0000-0000-7000-8000-000000000001",
+  id: "set-1",
+  intensityTechnique: null,
   isToFailure: false,
-  restPauseRestSeconds: "",
-  restPauseSegmentCount: "",
-  restSeconds: "90",
-  setType: "working",
+  restSeconds: "",
   tempo: "",
-  variation: undefined,
+  type: "working" as const,
 };
 
-const SECOND_ROUTINE_DRAFT_EXERCISE_SET: RoutineDraftExerciseSet = {
-  ...ROUTINE_DRAFT_EXERCISE_SET,
-  amount: "6",
-  id: "019c0000-0000-7000-8000-000000000002",
-};
-
-const BENCH_PRESS_ROUTINE_DRAFT_EXERCISE: RoutineDraftExercise = {
-  exerciseId: "019a0000-0000-7000-8000-000000000001",
-  id: "019b0000-0000-7000-8000-000000000001",
+const BENCH_PRESS_ROUTINE_EXERCISE_DRAFT = {
+  exerciseId: "bench-press",
+  id: "bench-press-routine-exercise",
   note: "",
-  sets: [ROUTINE_DRAFT_EXERCISE_SET, SECOND_ROUTINE_DRAFT_EXERCISE_SET],
+  sets: [SET_DRAFT],
+  warmUpExercises: [
+    {
+      exerciseId: "band-pull-apart",
+      id: "band-pull-apart-routine-exercise",
+      note: "",
+      sets: [],
+    },
+  ],
 };
 
-const PULL_UP_ROUTINE_DRAFT_EXERCISE: RoutineDraftExercise = {
-  exerciseId: "019a0000-0000-7000-8000-000000000002",
-  id: "019b0000-0000-7000-8000-000000000002",
-  note: "",
-  sets: [],
-};
-
-const ROW_ROUTINE_DRAFT_EXERCISE: RoutineDraftExercise = {
-  exerciseId: "019a0000-0000-7000-8000-000000000003",
-  id: "019b0000-0000-7000-8000-000000000003",
+const PUSH_UP_ROUTINE_EXERCISE_DRAFT = {
+  exerciseId: "push-up",
+  id: "push-up-routine-exercise",
   note: "",
   sets: [],
+  warmUpExercises: [],
 };
 
-const PUSH_UP_ROUTINE_DRAFT_WARM_UP_EXERCISE: RoutineDraftWarmUpExercise = {
-  exerciseId: "019a0000-0000-7000-8000-000000000004",
-  id: "019b0000-0000-7000-8000-000000000004",
+const DIP_ROUTINE_EXERCISE_DRAFT = {
+  exerciseId: "dip",
+  id: "dip-routine-exercise",
   note: "",
   sets: [],
-  warmUpForRoutineExerciseId: "019b0000-0000-7000-8000-000000000001",
+  warmUpExercises: [],
 };
 
-const SCAPULAR_PULL_UP_ROUTINE_DRAFT_WARM_UP_EXERCISE: RoutineDraftWarmUpExercise =
-  {
-    exerciseId: "019a0000-0000-7000-8000-000000000005",
-    id: "019b0000-0000-7000-8000-000000000005",
-    note: "",
-    sets: [],
-    warmUpForRoutineExerciseId: "019b0000-0000-7000-8000-000000000003",
-  };
-
-const BENCH_PRESS_ROUTINE_DRAFT_BLOCK: RoutineDraftBlock = {
-  exercises: [BENCH_PRESS_ROUTINE_DRAFT_EXERCISE],
-  id: "019b0000-0000-7000-8000-000000000001",
-  warmUpExercises: [PUSH_UP_ROUTINE_DRAFT_WARM_UP_EXERCISE],
-};
-
-const SUPERSET_ROUTINE_DRAFT_BLOCK: RoutineDraftBlock = {
-  exercises: [PULL_UP_ROUTINE_DRAFT_EXERCISE, ROW_ROUTINE_DRAFT_EXERCISE],
-  id: "019b0000-0000-7000-8000-000000000002",
-  warmUpExercises: [SCAPULAR_PULL_UP_ROUTINE_DRAFT_WARM_UP_EXERCISE],
-};
-
-const ROUTINE_DRAFT: RoutineDraft = {
-  days: ["monday"],
-  id: undefined,
-  name: "Upper Body",
+const ROUTINE_DRAFT = {
+  days: [],
+  id: "",
+  name: "",
   sections: {
-    cool_down: [],
-    main: [BENCH_PRESS_ROUTINE_DRAFT_BLOCK, SUPERSET_ROUTINE_DRAFT_BLOCK],
-    warm_up: [],
+    coolDown: [],
+    main: [
+      {
+        exercises: [BENCH_PRESS_ROUTINE_EXERCISE_DRAFT],
+        id: "bench-press-exercise-group",
+      },
+      {
+        exercises: [PUSH_UP_ROUTINE_EXERCISE_DRAFT],
+        id: "push-up-exercise-group",
+      },
+      { exercises: [DIP_ROUTINE_EXERCISE_DRAFT], id: "dip-exercise-group" },
+    ],
+    warmUp: [],
   },
 };
 
 describe("routineDraftReducer", () => {
-  it("adds an exercise without Sets in a block of its own at the end of its Section", () => {
-    expect(
-      routineDraftReducer(ROUTINE_DRAFT, {
-        exerciseId: "019a0000-0000-7000-8000-000000000006",
-        routineDraftBlockId: "019b0000-0000-7000-8000-000000000007",
-        routineExerciseId: "019b0000-0000-7000-8000-000000000006",
-        section: "main",
-        type: "addedExercise",
-      }).sections,
-    ).toEqual({
-      cool_down: [],
-      main: [
-        BENCH_PRESS_ROUTINE_DRAFT_BLOCK,
-        SUPERSET_ROUTINE_DRAFT_BLOCK,
-        {
-          exercises: [
-            {
-              exerciseId: "019a0000-0000-7000-8000-000000000006",
-              id: "019b0000-0000-7000-8000-000000000006",
-              note: "",
-              sets: [],
-            },
-          ],
-          id: "019b0000-0000-7000-8000-000000000007",
-          warmUpExercises: [],
-        },
-      ],
-      warm_up: [],
-    });
-  });
-
-  it("adds a Warm-up exercise without Sets at the end of the Warm-up exercises of the block of the exercise it prepares for", () => {
-    expect(
-      routineDraftReducer(ROUTINE_DRAFT, {
-        exerciseId: "019a0000-0000-7000-8000-000000000006",
-        routineExerciseId: "019b0000-0000-7000-8000-000000000006",
-        type: "addedWarmUpExercise",
-        warmUpForRoutineExerciseId: "019b0000-0000-7000-8000-000000000002",
-      }).sections.main,
-    ).toEqual([
-      BENCH_PRESS_ROUTINE_DRAFT_BLOCK,
-      {
-        ...SUPERSET_ROUTINE_DRAFT_BLOCK,
-        warmUpExercises: [
-          SCAPULAR_PULL_UP_ROUTINE_DRAFT_WARM_UP_EXERCISE,
-          {
-            exerciseId: "019a0000-0000-7000-8000-000000000006",
-            id: "019b0000-0000-7000-8000-000000000006",
-            note: "",
-            sets: [],
-            warmUpForRoutineExerciseId: "019b0000-0000-7000-8000-000000000002",
-          },
-        ],
-      },
-    ]);
-  });
-
-  it("assigns the identifier of the Routine", () => {
-    expect(
-      routineDraftReducer(ROUTINE_DRAFT, {
-        id: "019d0000-0000-7000-8000-000000000001",
-        type: "assignedId",
-      }).id,
-    ).toBe("019d0000-0000-7000-8000-000000000001");
-  });
-
   it("changes the name", () => {
     expect(
       routineDraftReducer(ROUTINE_DRAFT, {
-        name: "Pull Day",
+        name: "Push day",
         type: "changedName",
-      }).name,
-    ).toBe("Pull Day");
+      }),
+    ).toStrictEqual({ ...ROUTINE_DRAFT, name: "Push day" });
   });
 
   it("changes the days", () => {
     expect(
       routineDraftReducer(ROUTINE_DRAFT, {
-        days: ["tuesday", "friday"],
+        days: ["monday", "friday"],
         type: "changedDays",
-      }).days,
-    ).toEqual(["tuesday", "friday"]);
+      }),
+    ).toStrictEqual({ ...ROUTINE_DRAFT, days: ["monday", "friday"] });
   });
 
-  it("changes the note of an exercise", () => {
+  it("assigns the id", () => {
     expect(
       routineDraftReducer(ROUTINE_DRAFT, {
-        note: "Pause at the bottom",
-        routineExerciseId: "019b0000-0000-7000-8000-000000000001",
-        type: "changedExerciseNote",
+        id: "push-day",
+        type: "assignedId",
+      }),
+    ).toStrictEqual({ ...ROUTINE_DRAFT, id: "push-day" });
+  });
+
+  it("adds an exercise in a new Exercise group at the end of the main Section, ready for Warm-up exercises", () => {
+    expect(
+      routineDraftReducer(ROUTINE_DRAFT, {
+        exerciseGroupId: "squat-exercise-group",
+        exerciseId: "squat",
+        routineExerciseId: "squat-routine-exercise",
+        section: "main",
+        type: "addedExercise",
       }).sections.main,
-    ).toEqual([
+    ).toStrictEqual([
+      ...ROUTINE_DRAFT.sections.main,
       {
-        ...BENCH_PRESS_ROUTINE_DRAFT_BLOCK,
         exercises: [
           {
-            ...BENCH_PRESS_ROUTINE_DRAFT_EXERCISE,
-            note: "Pause at the bottom",
+            exerciseId: "squat",
+            id: "squat-routine-exercise",
+            note: "",
+            sets: [],
+            warmUpExercises: [],
           },
         ],
+        id: "squat-exercise-group",
       },
-      SUPERSET_ROUTINE_DRAFT_BLOCK,
+    ]);
+  });
+
+  it("adds an exercise in a new Exercise group of the cool-down Section", () => {
+    expect(
+      routineDraftReducer(ROUTINE_DRAFT, {
+        exerciseGroupId: "stretch-exercise-group",
+        exerciseId: "stretch",
+        routineExerciseId: "stretch-routine-exercise",
+        section: "cool_down",
+        type: "addedExercise",
+      }).sections,
+    ).toStrictEqual({
+      ...ROUTINE_DRAFT.sections,
+      coolDown: [
+        {
+          exercises: [
+            {
+              exerciseId: "stretch",
+              id: "stretch-routine-exercise",
+              note: "",
+              sets: [],
+            },
+          ],
+          id: "stretch-exercise-group",
+        },
+      ],
+    });
+  });
+
+  it("adds a Warm-up exercise after the other Warm-up exercises of a main Section's Routine exercise", () => {
+    expect(
+      routineDraftReducer(ROUTINE_DRAFT, {
+        exerciseId: "push-up",
+        routineExerciseId: "push-up-warm-up-routine-exercise",
+        type: "addedWarmUpExercise",
+        warmUpForRoutineExerciseId: "bench-press-routine-exercise",
+      }).sections.main[0]?.exercises[0]?.warmUpExercises,
+    ).toStrictEqual([
+      {
+        exerciseId: "band-pull-apart",
+        id: "band-pull-apart-routine-exercise",
+        note: "",
+        sets: [],
+      },
+      {
+        exerciseId: "push-up",
+        id: "push-up-warm-up-routine-exercise",
+        note: "",
+        sets: [],
+      },
     ]);
   });
 
   it("changes the note of a Warm-up exercise", () => {
     expect(
       routineDraftReducer(ROUTINE_DRAFT, {
-        note: "Slow and controlled",
-        routineExerciseId: "019b0000-0000-7000-8000-000000000004",
+        note: "Light band",
+        routineExerciseId: "band-pull-apart-routine-exercise",
         type: "changedExerciseNote",
-      }).sections.main,
-    ).toEqual([
+      }).sections.main[0]?.exercises[0]?.warmUpExercises,
+    ).toStrictEqual([
       {
-        ...BENCH_PRESS_ROUTINE_DRAFT_BLOCK,
-        warmUpExercises: [
-          {
-            ...PUSH_UP_ROUTINE_DRAFT_WARM_UP_EXERCISE,
-            note: "Slow and controlled",
-          },
-        ],
+        exerciseId: "band-pull-apart",
+        id: "band-pull-apart-routine-exercise",
+        note: "Light band",
+        sets: [],
       },
-      SUPERSET_ROUTINE_DRAFT_BLOCK,
     ]);
   });
 
-  it("adds an empty working Set at the end of the Sets of an exercise", () => {
+  it("adds an empty working Set after the other Sets of a Routine exercise", () => {
     expect(
       routineDraftReducer(ROUTINE_DRAFT, {
-        routineExerciseId: "019b0000-0000-7000-8000-000000000001",
-        routineExerciseSetId: "019c0000-0000-7000-8000-000000000003",
+        routineExerciseId: "bench-press-routine-exercise",
+        setId: "set-2",
         type: "addedSet",
-      }).sections.main,
-    ).toEqual([
+      }).sections.main[0]?.exercises[0]?.sets,
+    ).toStrictEqual([
+      SET_DRAFT,
       {
-        ...BENCH_PRESS_ROUTINE_DRAFT_BLOCK,
-        exercises: [
-          {
-            ...BENCH_PRESS_ROUTINE_DRAFT_EXERCISE,
-            sets: [
-              ROUTINE_DRAFT_EXERCISE_SET,
-              SECOND_ROUTINE_DRAFT_EXERCISE_SET,
-              {
-                amount: "",
-                dropSetSegmentCount: "",
-                dropSetWeightPercentage: "",
-                id: "019c0000-0000-7000-8000-000000000003",
-                isToFailure: false,
-                restPauseRestSeconds: "",
-                restPauseSegmentCount: "",
-                restSeconds: "",
-                setType: "working",
-                tempo: "",
-                variation: undefined,
-              },
-            ],
-          },
-        ],
+        amount: "",
+        id: "set-2",
+        intensityTechnique: null,
+        isToFailure: false,
+        restSeconds: "",
+        tempo: "",
+        type: "working",
       },
-      SUPERSET_ROUTINE_DRAFT_BLOCK,
     ]);
   });
 
-  it("changes the Set with the identifier of the changed Set", () => {
+  it("changes a Set", () => {
     expect(
       routineDraftReducer(ROUTINE_DRAFT, {
-        routineDraftExerciseSet: {
-          ...SECOND_ROUTINE_DRAFT_EXERCISE_SET,
-          amount: "5",
-          isToFailure: true,
+        routineExerciseId: "bench-press-routine-exercise",
+        set: {
+          ...SET_DRAFT,
+          intensityTechnique: {
+            _tag: "DropSet",
+            segmentCount: "3",
+            weightPercentage: "",
+          },
         },
-        routineExerciseId: "019b0000-0000-7000-8000-000000000001",
         type: "changedSet",
-      }).sections.main,
-    ).toEqual([
+      }).sections.main[0]?.exercises[0]?.sets,
+    ).toStrictEqual([
       {
-        ...BENCH_PRESS_ROUTINE_DRAFT_BLOCK,
-        exercises: [
-          {
-            ...BENCH_PRESS_ROUTINE_DRAFT_EXERCISE,
-            sets: [
-              ROUTINE_DRAFT_EXERCISE_SET,
-              {
-                ...SECOND_ROUTINE_DRAFT_EXERCISE_SET,
-                amount: "5",
-                isToFailure: true,
-              },
-            ],
-          },
-        ],
+        ...SET_DRAFT,
+        intensityTechnique: {
+          _tag: "DropSet",
+          segmentCount: "3",
+          weightPercentage: "",
+        },
       },
-      SUPERSET_ROUTINE_DRAFT_BLOCK,
     ]);
   });
 
-  it("removes a Set from an exercise", () => {
+  it("removes a Set", () => {
     expect(
       routineDraftReducer(ROUTINE_DRAFT, {
-        routineExerciseId: "019b0000-0000-7000-8000-000000000001",
-        routineExerciseSetId: "019c0000-0000-7000-8000-000000000001",
+        routineExerciseId: "bench-press-routine-exercise",
+        setId: "set-1",
         type: "removedSet",
+      }).sections.main[0]?.exercises[0]?.sets,
+    ).toStrictEqual([]);
+  });
+
+  it("removes a Routine exercise together with its Warm-up exercises, and its Exercise group once it's empty", () => {
+    expect(
+      routineDraftReducer(ROUTINE_DRAFT, {
+        routineExerciseId: "bench-press-routine-exercise",
+        type: "removedExercise",
       }).sections.main,
-    ).toEqual([
+    ).toStrictEqual([
       {
-        ...BENCH_PRESS_ROUTINE_DRAFT_BLOCK,
-        exercises: [
-          {
-            ...BENCH_PRESS_ROUTINE_DRAFT_EXERCISE,
-            sets: [SECOND_ROUTINE_DRAFT_EXERCISE_SET],
-          },
-        ],
+        exercises: [PUSH_UP_ROUTINE_EXERCISE_DRAFT],
+        id: "push-up-exercise-group",
       },
-      SUPERSET_ROUTINE_DRAFT_BLOCK,
+      { exercises: [DIP_ROUTINE_EXERCISE_DRAFT], id: "dip-exercise-group" },
     ]);
   });
 
-  it("moves a block of a Section", () => {
+  it("removes a Warm-up exercise and keeps the Routine exercise it prepares for", () => {
     expect(
       routineDraftReducer(ROUTINE_DRAFT, {
-        routineDraftBlockId: "019b0000-0000-7000-8000-000000000002",
-        routineDraftBlockMoveDirection: "up",
-        section: "main",
-        type: "movedBlock",
-      }).sections.main,
-    ).toEqual([SUPERSET_ROUTINE_DRAFT_BLOCK, BENCH_PRESS_ROUTINE_DRAFT_BLOCK]);
+        routineExerciseId: "band-pull-apart-routine-exercise",
+        type: "removedExercise",
+      }).sections.main[0],
+    ).toStrictEqual({
+      exercises: [
+        { ...BENCH_PRESS_ROUTINE_EXERCISE_DRAFT, warmUpExercises: [] },
+      ],
+      id: "bench-press-exercise-group",
+    });
   });
 
-  it("joins a block of a Section with the next block into a Superset", () => {
+  it("moves an Exercise group up", () => {
     expect(
       routineDraftReducer(ROUTINE_DRAFT, {
-        routineDraftBlockId: "019b0000-0000-7000-8000-000000000001",
+        direction: "up",
+        exerciseGroupId: "push-up-exercise-group",
         section: "main",
-        type: "joinedSupersetWithNextBlock",
-      }).sections.main,
-    ).toEqual([
-      {
-        exercises: [
-          BENCH_PRESS_ROUTINE_DRAFT_EXERCISE,
-          PULL_UP_ROUTINE_DRAFT_EXERCISE,
-          ROW_ROUTINE_DRAFT_EXERCISE,
-        ],
-        id: "019b0000-0000-7000-8000-000000000001",
-        warmUpExercises: [
-          PUSH_UP_ROUTINE_DRAFT_WARM_UP_EXERCISE,
-          SCAPULAR_PULL_UP_ROUTINE_DRAFT_WARM_UP_EXERCISE,
-        ],
-      },
+        type: "movedExerciseGroup",
+      }).sections.main.map((exerciseGroup) => exerciseGroup.id),
+    ).toStrictEqual([
+      "push-up-exercise-group",
+      "bench-press-exercise-group",
+      "dip-exercise-group",
     ]);
   });
 
-  it("moves an exercise that leaves its Superset into a new block right after it, with the Warm-up exercises that prepare for it", () => {
+  it("moves an Exercise group down", () => {
     expect(
       routineDraftReducer(ROUTINE_DRAFT, {
-        routineDraftBlockId: "019b0000-0000-7000-8000-000000000007",
-        routineExerciseId: "019b0000-0000-7000-8000-000000000003",
+        direction: "down",
+        exerciseGroupId: "push-up-exercise-group",
+        section: "main",
+        type: "movedExerciseGroup",
+      }).sections.main.map((exerciseGroup) => exerciseGroup.id),
+    ).toStrictEqual([
+      "bench-press-exercise-group",
+      "dip-exercise-group",
+      "push-up-exercise-group",
+    ]);
+  });
+
+  it("leaves the first Exercise group in place when it moves up", () => {
+    expect(
+      routineDraftReducer(ROUTINE_DRAFT, {
+        direction: "up",
+        exerciseGroupId: "bench-press-exercise-group",
+        section: "main",
+        type: "movedExerciseGroup",
+      }),
+    ).toStrictEqual(ROUTINE_DRAFT);
+  });
+
+  it("joins an Exercise group with the next one into a Superset", () => {
+    expect(
+      routineDraftReducer(ROUTINE_DRAFT, {
+        exerciseGroupId: "bench-press-exercise-group",
+        section: "main",
+        type: "joinedNextExerciseGroup",
+      }).sections.main,
+    ).toStrictEqual([
+      {
+        exercises: [
+          BENCH_PRESS_ROUTINE_EXERCISE_DRAFT,
+          PUSH_UP_ROUTINE_EXERCISE_DRAFT,
+        ],
+        id: "bench-press-exercise-group",
+      },
+      { exercises: [DIP_ROUTINE_EXERCISE_DRAFT], id: "dip-exercise-group" },
+    ]);
+  });
+
+  it("moves a Routine exercise that leaves a Superset to a new Exercise group right after it, with its Warm-up exercises", () => {
+    const supersetRoutineDraft = routineDraftReducer(ROUTINE_DRAFT, {
+      exerciseGroupId: "bench-press-exercise-group",
+      section: "main",
+      type: "joinedNextExerciseGroup",
+    });
+
+    expect(
+      routineDraftReducer(supersetRoutineDraft, {
+        exerciseGroupId: "bench-press-alone-exercise-group",
+        routineExerciseId: "bench-press-routine-exercise",
         section: "main",
         type: "leftSuperset",
       }).sections.main,
-    ).toEqual([
-      BENCH_PRESS_ROUTINE_DRAFT_BLOCK,
+    ).toStrictEqual([
       {
-        exercises: [PULL_UP_ROUTINE_DRAFT_EXERCISE],
-        id: "019b0000-0000-7000-8000-000000000002",
-        warmUpExercises: [],
+        exercises: [PUSH_UP_ROUTINE_EXERCISE_DRAFT],
+        id: "bench-press-exercise-group",
       },
       {
-        exercises: [ROW_ROUTINE_DRAFT_EXERCISE],
-        id: "019b0000-0000-7000-8000-000000000007",
-        warmUpExercises: [SCAPULAR_PULL_UP_ROUTINE_DRAFT_WARM_UP_EXERCISE],
+        exercises: [BENCH_PRESS_ROUTINE_EXERCISE_DRAFT],
+        id: "bench-press-alone-exercise-group",
       },
-    ]);
-  });
-
-  it("removes an exercise from its Superset, with the Warm-up exercises that prepare for it", () => {
-    expect(
-      routineDraftReducer(ROUTINE_DRAFT, {
-        routineExerciseId: "019b0000-0000-7000-8000-000000000003",
-        type: "removedExercise",
-      }).sections.main,
-    ).toEqual([
-      BENCH_PRESS_ROUTINE_DRAFT_BLOCK,
-      {
-        exercises: [PULL_UP_ROUTINE_DRAFT_EXERCISE],
-        id: "019b0000-0000-7000-8000-000000000002",
-        warmUpExercises: [],
-      },
-    ]);
-  });
-
-  it("removes the block that a removed exercise leaves empty", () => {
-    expect(
-      routineDraftReducer(ROUTINE_DRAFT, {
-        routineExerciseId: "019b0000-0000-7000-8000-000000000001",
-        type: "removedExercise",
-      }).sections.main,
-    ).toEqual([SUPERSET_ROUTINE_DRAFT_BLOCK]);
-  });
-
-  it("removes a Warm-up exercise", () => {
-    expect(
-      routineDraftReducer(ROUTINE_DRAFT, {
-        routineExerciseId: "019b0000-0000-7000-8000-000000000004",
-        type: "removedExercise",
-      }).sections.main,
-    ).toEqual([
-      { ...BENCH_PRESS_ROUTINE_DRAFT_BLOCK, warmUpExercises: [] },
-      SUPERSET_ROUTINE_DRAFT_BLOCK,
+      { exercises: [DIP_ROUTINE_EXERCISE_DRAFT], id: "dip-exercise-group" },
     ]);
   });
 });

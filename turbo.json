@@ -8,12 +8,6 @@
       "cache": false,
       "persistent": true
     },
-    "//#format:fix:root": {
-      "cache": false
-    },
-    "//#format:root": {
-      "cache": false
-    },
     "//#lint:fix:root": {
       "cache": false
     },
@@ -27,10 +21,6 @@
       "cache": false,
       "persistent": true
     },
-    "format": {},
-    "format:fix": {
-      "cache": false
-    },
     "lint": {
       "dependsOn": ["topo"]
     },
@@ -43,6 +33,7 @@
         "AI_AGENT",
         "CLAUDE_CODE",
         "CLAUDECODE",
+        "DOCKER_HOST",
         "RYUK_CONTAINER_IMAGE",
         "TESTCONTAINERS_*"
       ]

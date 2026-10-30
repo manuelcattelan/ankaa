@@ -1,11 +1,6 @@
-import { packageConfiguration } from "@ankaa/eslint/package";
+import { createPackageConfiguration } from "@ankaa/eslint/create-package-configuration";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
-  packageConfiguration,
-  {
-    languageOptions: {
-      parserOptions: { tsconfigRootDir: import.meta.dirname },
-    },
-  },
+  createPackageConfiguration({ basePath: import.meta.dirname }),
 ]);

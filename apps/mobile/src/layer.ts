@@ -4,29 +4,31 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 
-import { AppleSignIn } from "@/features/authentication/services/apple-sign-in";
-import { GoogleSignIn } from "@/features/authentication/services/google-sign-in";
-import { Notifications } from "@/features/workout/services/notifications";
-import { WorkoutDocumentStorage } from "@/features/workout/services/workout-document-storage";
-import { Accessibility } from "@/shared/services/accessibility";
-import { AuthenticationClient } from "@/shared/services/authentication-client";
-import { Crypto } from "@/shared/services/crypto";
-import { TrpcClient } from "@/shared/services/trpc-client";
+import { AuthenticationApplicationService } from "#/features/authentication/authentication-application-service.ts";
+import { RoutineApplicationService } from "#/features/routine/routine-application-service.ts";
+import { WorkoutApplicationService } from "#/features/workout/workout-application-service.ts";
+import { ExerciseApplicationService } from "#/shared/exercise-application-service.ts";
+import { Accessibility } from "#/shared/services/accessibility.ts";
+import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
+import { Crypto } from "#/shared/services/crypto.ts";
 
 export type ApplicationRuntime = ManagedRuntime.ManagedRuntime<
   Layer.Success<typeof applicationLayer>,
   Layer.Error<typeof applicationLayer>
 >;
 
+/**
+ * The Layer of the Services that the UI reads, each built with the Services
+ * it depends on.
+ */
 export const applicationLayer = Layer.mergeAll(
   Accessibility.layer,
-  AppleSignIn.layer,
+  AuthenticationApplicationService.layer,
   AuthenticationClient.layer,
   Crypto.layer,
-  GoogleSignIn.layer,
-  Notifications.layer,
-  TrpcClient.layer,
-  WorkoutDocumentStorage.layer,
+  ExerciseApplicationService.layer,
+  RoutineApplicationService.layer,
+  WorkoutApplicationService.layer,
 ).pipe(
   Layer.provide(
     ConfigProvider.layer(
@@ -41,6 +43,11 @@ export const applicationLayer = Layer.mergeAll(
   ),
 );
 
+/**
+ * Builds the Runtime from `layer` at once, and gives it with the Context of
+ * the Services it built, so the Composition root reads a Service's value,
+ * such as the better-auth client, without running Effect during render.
+ */
 export function createRuntime<TServices, TError>(
   layer: Layer.Layer<TServices, TError>,
 ) {
@@ -52,5 +59,5 @@ export function createRuntime<TServices, TError>(
     throw new Error(Cause.pretty(runtimeContextExit.cause));
   }
 
-  return runtime;
+  return { context: runtimeContextExit.value, runtime };
 }

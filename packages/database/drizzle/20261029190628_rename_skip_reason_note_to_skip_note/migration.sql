@@ -1,0 +1,2 @@
+ALTER TABLE "workout_exercise" RENAME COLUMN "skip_reason_note" TO "skip_note";--> statement-breakpoint
+ALTER TABLE "workout_exercise" DROP CONSTRAINT "workout_exercise_skip_check", ADD CONSTRAINT "workout_exercise_skip_check" CHECK ("skip_reason" is not null or "skip_note" is null);

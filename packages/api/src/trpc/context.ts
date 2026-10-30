@@ -1,44 +1,46 @@
-import type { CurrentSession } from "@ankaa/authentication/current-session";
-import type { Database } from "@ankaa/database";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
+import type * as Layer from "effect/Layer";
 import type * as ManagedRuntime from "effect/ManagedRuntime";
 
-import { Authentication } from "@ankaa/authentication";
+import { Authentication } from "@ankaa/authentication/authentication";
 import { fromNodeHeaders } from "better-auth/node";
+import * as Effect from "effect/Effect";
+
+import type { applicationLayer } from "#/application-layer.ts";
+
+import { PinoLogger } from "#/shared/pino-logger.ts";
 
 export type ApplicationRuntime = ManagedRuntime.ManagedRuntime<
-  Authentication | Database,
+  Layer.Success<typeof applicationLayer>,
   unknown
 >;
 
 export type Context = ReturnType<typeof createInnerContext>;
 
-type CreateContextOptions = CreateFastifyContextOptions & {
-  runtime: ApplicationRuntime;
-};
-
-type CreateInnerContextOptions = {
-  runtime: ApplicationRuntime;
-  session: CurrentSession["Service"] | null;
-};
-
 export async function createContext({
-  req: request,
-  res: response,
+  req,
+  res,
   runtime,
-}: CreateContextOptions) {
+}: CreateFastifyContextOptions & {
+  runtime: ApplicationRuntime;
+}) {
   const session = await runtime.runPromise(
-    Authentication.use((authentication) =>
-      authentication.getSession(fromNodeHeaders(request.headers)),
-    ),
+    Effect.gen(function* () {
+      const authentication = yield* Authentication;
+
+      return yield* authentication.getSession(fromNodeHeaders(req.headers));
+    }).pipe(Effect.provideService(PinoLogger, req.log)),
   );
 
-  return { ...createInnerContext({ runtime, session }), request, response };
+  return { ...createInnerContext({ runtime, session }), req, res };
 }
 
 export function createInnerContext({
   runtime,
   session,
-}: CreateInnerContextOptions) {
+}: {
+  runtime: ApplicationRuntime;
+  session: Effect.Success<ReturnType<Authentication["Service"]["getSession"]>>;
+}) {
   return { runtime, session };
 }

@@ -1,1 +1,0 @@
-export const TOUCH_TARGET_SIZE_MINIMUM = 48;

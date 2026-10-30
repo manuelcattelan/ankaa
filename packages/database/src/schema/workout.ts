@@ -1,26 +1,28 @@
-import { SKIP_REASONS } from "@ankaa/core/features/workout/constants/skip-reason";
+import {} from "@ankaa/core/features/routine/constants/drop-set";
+import { SKIP_REASONS } from "@ankaa/core/features/workout/constants/skip-reasons";
 import {
+  MAXIMUM_WEIGHT,
+  MINIMUM_WEIGHT,
+  WEIGHT_PRECISION,
+  WEIGHT_SCALE,
   WEIGHT_UNITS,
-  WEIGHT_VALUE_MINIMUM,
 } from "@ankaa/core/features/workout/constants/weight";
 import {
-  AMOUNT_MINIMUM,
   AMOUNT_UNITS,
+  MINIMUM_AMOUNT,
 } from "@ankaa/core/shared/constants/amount";
-import { VARIATIONS } from "@ankaa/core/shared/constants/intensity-technique";
-import { POSITION_MINIMUM } from "@ankaa/core/shared/constants/position";
-import { SECTIONS } from "@ankaa/core/shared/constants/section";
-import { SET_TYPES } from "@ankaa/core/shared/constants/set-type";
-import { TEMPO_PATTERN } from "@ankaa/core/shared/constants/tempo";
-import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-type";
-import { defineRelationsPart, gte, inArray, isNull, sql } from "drizzle-orm";
+import {} from "@ankaa/core/shared/constants/intensity-techniques";
+import { MINIMUM_POSITION } from "@ankaa/core/shared/constants/minimum-position";
+import { SECTIONS } from "@ankaa/core/shared/constants/sections";
+import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-types";
+import { between, gte, inArray, isNull, sql } from "drizzle-orm";
 import {
-  boolean,
   check,
   foreignKey,
   index,
   integer,
   numeric,
+  primaryKey,
   snakeCase,
   text,
   timestamp,
@@ -29,36 +31,35 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { user } from "./authentication.ts";
-import { commonColumns } from "./common-columns.ts";
-import { exercise } from "./exercise.ts";
-import { routine } from "./routine.ts";
-
-const WEIGHT_VALUE_PRECISION = 6;
-
-const WEIGHT_VALUE_SCALE = 2;
+import { buildPlannedSetChecks } from "#/columns/build-planned-set-checks.ts";
+import { plannedSetColumns } from "#/columns/planned-set-columns.ts";
+import { timestamps } from "#/columns/timestamps.ts";
+import { user } from "#/schema/authentication.ts";
+import { exercise } from "#/schema/exercise.ts";
+import { routine } from "#/schema/routine.ts";
 
 export const workout = snakeCase.table(
   "workout",
   {
-    ...commonColumns,
+    ...timestamps,
     endedAt: timestamp({ withTimezone: true }),
+    id: uuid().notNull(),
     routineId: uuid()
       .notNull()
       .references(() => routine.id, {
         name: "workout_routine_id_fkey",
         onDelete: "restrict",
       }),
-    startedAt: timestamp({ withTimezone: true }).notNull(),
-    userId: text()
+    startedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    userId: uuid()
       .notNull()
       .references(() => user.id, {
         name: "workout_user_id_fkey",
         onDelete: "cascade",
       }),
-    version: integer().notNull(),
   },
   (table) => [
+    primaryKey({ columns: [table.id], name: "workout_pkey" }),
     uniqueIndex("workout_in_progress_idx")
       .on(table.userId)
       .where(isNull(table.endedAt)),
@@ -67,10 +68,43 @@ export const workout = snakeCase.table(
   ],
 );
 
+export const workoutExerciseGroup = snakeCase.table(
+  "workout_exercise_group",
+  {
+    id: uuid()
+      .notNull()
+      .default(sql`uuidv7()`),
+    position: integer().notNull(),
+    section: text({ enum: SECTIONS }).notNull(),
+    workoutId: uuid()
+      .notNull()
+      .references(() => workout.id, {
+        name: "workout_exercise_group_workout_id_fkey",
+        onDelete: "cascade",
+      }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.id], name: "workout_exercise_group_pkey" }),
+    unique("workout_exercise_group_workout_id_section_position_key").on(
+      table.workoutId,
+      table.section,
+      table.position,
+    ),
+    check(
+      "workout_exercise_group_section_check",
+      inArray(table.section, SECTIONS),
+    ),
+    check(
+      "workout_exercise_group_position_check",
+      gte(table.position, MINIMUM_POSITION),
+    ),
+  ],
+);
+
 export const workoutExercise = snakeCase.table(
   "workout_exercise",
   {
-    ...commonColumns,
+    ...timestamps,
     amountUnit: text({ enum: AMOUNT_UNITS }).notNull(),
     exerciseId: uuid()
       .notNull()
@@ -78,35 +112,38 @@ export const workoutExercise = snakeCase.table(
         name: "workout_exercise_exercise_id_fkey",
         onDelete: "restrict",
       }),
+    id: uuid()
+      .notNull()
+      .default(sql`uuidv7()`),
     note: text(),
+    plannedNote: text(),
     position: integer().notNull(),
-    section: text({ enum: SECTIONS }).notNull(),
+    skipNote: text(),
     skipReason: text({ enum: SKIP_REASONS }),
-    skipReasonNote: text(),
-    superset: integer(),
     warmUpForWorkoutExerciseId: uuid(),
     weightType: text({ enum: WEIGHT_TYPES }).notNull(),
-    workoutId: uuid()
-      .notNull()
-      .references(() => workout.id, {
-        name: "workout_exercise_workout_id_fkey",
-        onDelete: "cascade",
-      }),
+    weightUnit: text({ enum: WEIGHT_UNITS }).notNull().default("kilogram"),
+    workoutExerciseGroupId: uuid().references(() => workoutExerciseGroup.id, {
+      name: "workout_exercise_workout_exercise_group_id_fkey",
+      onDelete: "cascade",
+    }),
   },
   (table) => [
+    primaryKey({ columns: [table.id], name: "workout_exercise_pkey" }),
     foreignKey({
       columns: [table.warmUpForWorkoutExerciseId],
       foreignColumns: [table.id],
       name: "workout_exercise_warm_up_for_workout_exercise_id_fkey",
     }).onDelete("cascade"),
-    unique("workout_exercise_workout_id_position_key").on(
-      table.workoutId,
+    unique("workout_exercise_workout_exercise_group_id_position_key").on(
+      table.workoutExerciseGroupId,
+      table.position,
+    ),
+    unique("workout_exercise_warm_up_for_workout_exercise_id_position_key").on(
+      table.warmUpForWorkoutExerciseId,
       table.position,
     ),
     index("workout_exercise_exercise_id_idx").on(table.exerciseId),
-    index("workout_exercise_warm_up_for_workout_exercise_id_idx").on(
-      table.warmUpForWorkoutExerciseId,
-    ),
     check(
       "workout_exercise_amount_unit_check",
       inArray(table.amountUnit, AMOUNT_UNITS),
@@ -115,152 +152,123 @@ export const workoutExercise = snakeCase.table(
       "workout_exercise_weight_type_check",
       inArray(table.weightType, WEIGHT_TYPES),
     ),
-    check("workout_exercise_section_check", inArray(table.section, SECTIONS)),
+    check(
+      "workout_exercise_weight_unit_check",
+      inArray(table.weightUnit, WEIGHT_UNITS),
+    ),
     check(
       "workout_exercise_skip_reason_check",
       inArray(table.skipReason, SKIP_REASONS),
     ),
     check(
       "workout_exercise_position_check",
-      gte(table.position, POSITION_MINIMUM),
+      gte(table.position, MINIMUM_POSITION),
     ),
     check(
       "workout_exercise_skip_check",
-      sql`${table.skipReason} is not null or ${table.skipReasonNote} is null`,
+      sql`${table.skipReason} is not null or ${table.skipNote} is null`,
+    ),
+    check(
+      "workout_exercise_parent_check",
+      sql`num_nonnulls(${table.workoutExerciseGroupId}, ${table.warmUpForWorkoutExerciseId}) = 1`,
     ),
   ],
 );
 
-export const workoutExerciseSet = snakeCase.table(
-  "workout_exercise_set",
+export const workoutExercisePlannedSet = snakeCase.table(
+  "workout_exercise_planned_set",
   {
-    ...commonColumns,
-    isToFailure: boolean().notNull(),
+    ...plannedSetColumns,
+    id: uuid()
+      .notNull()
+      .default(sql`uuidv7()`),
     position: integer().notNull(),
-    setType: text({ enum: SET_TYPES }).notNull(),
-    tempo: text(),
-    variation: text({ enum: VARIATIONS }),
     workoutExerciseId: uuid()
       .notNull()
       .references(() => workoutExercise.id, {
-        name: "workout_exercise_set_workout_exercise_id_fkey",
+        name: "workout_exercise_planned_set_workout_exercise_id_fkey",
         onDelete: "cascade",
       }),
   },
   (table) => [
-    unique("workout_exercise_set_workout_exercise_id_position_key").on(
+    primaryKey({
+      columns: [table.id],
+      name: "workout_exercise_planned_set_pkey",
+    }),
+    unique("workout_exercise_planned_set_workout_exercise_id_position_key").on(
       table.workoutExerciseId,
       table.position,
     ),
     check(
-      "workout_exercise_set_set_type_check",
-      inArray(table.setType, SET_TYPES),
+      "workout_exercise_planned_set_position_check",
+      gte(table.position, MINIMUM_POSITION),
     ),
-    check(
-      "workout_exercise_set_variation_check",
-      inArray(table.variation, VARIATIONS),
-    ),
-    check(
-      "workout_exercise_set_tempo_check",
-      sql`${table.tempo} ~ ${TEMPO_PATTERN.source}`,
-    ),
-    check(
-      "workout_exercise_set_position_check",
-      gte(table.position, POSITION_MINIMUM),
-    ),
+    ...buildPlannedSetChecks({ name: "workout_exercise_planned_set", table }),
   ],
 );
 
-export const workoutExerciseSetSegment = snakeCase.table(
-  "workout_exercise_set_segment",
+export const workoutExerciseRecordedSet = snakeCase.table(
+  "workout_exercise_recorded_set",
   {
-    ...commonColumns,
-    amount: integer(),
+    ...timestamps,
+    id: uuid().notNull(),
     position: integer().notNull(),
-    weightUnit: text({ enum: WEIGHT_UNITS }),
-    weightValue: numeric({
-      mode: "number",
-      precision: WEIGHT_VALUE_PRECISION,
-      scale: WEIGHT_VALUE_SCALE,
-    }),
-    workoutExerciseSetId: uuid()
+    workoutExerciseId: uuid()
       .notNull()
-      .references(() => workoutExerciseSet.id, {
-        name: "workout_exercise_set_segment_workout_exercise_set_id_fkey",
+      .references(() => workoutExercise.id, {
+        name: "workout_exercise_recorded_set_workout_exercise_id_fkey",
         onDelete: "cascade",
       }),
   },
   (table) => [
-    unique("workout_exercise_set_segment_position_key").on(
-      table.workoutExerciseSetId,
+    primaryKey({
+      columns: [table.id],
+      name: "workout_exercise_recorded_set_pkey",
+    }),
+    unique("workout_exercise_recorded_set_workout_exercise_id_position_key").on(
+      table.workoutExerciseId,
       table.position,
     ),
     check(
-      "workout_exercise_set_segment_weight_unit_check",
-      inArray(table.weightUnit, WEIGHT_UNITS),
-    ),
-    check(
-      "workout_exercise_set_segment_position_check",
-      gte(table.position, POSITION_MINIMUM),
-    ),
-    check(
-      "workout_exercise_set_segment_amount_check",
-      gte(table.amount, AMOUNT_MINIMUM),
-    ),
-    check(
-      "workout_exercise_set_segment_weight_value_check",
-      gte(table.weightValue, WEIGHT_VALUE_MINIMUM),
-    ),
-    check(
-      "workout_exercise_set_segment_weight_check",
-      sql`${table.weightValue} is null or ${table.weightUnit} is not null`,
+      "workout_exercise_recorded_set_position_check",
+      gte(table.position, MINIMUM_POSITION),
     ),
   ],
 );
 
-export const workoutRelations = defineRelationsPart(
+export const workoutExerciseRecordedSetSegment = snakeCase.table(
+  "workout_exercise_recorded_set_segment",
   {
-    workout,
-    workoutExercise,
-    workoutExerciseSet,
-    workoutExerciseSetSegment,
+    amount: integer().notNull(),
+    position: integer().notNull(),
+    weight: numeric({
+      mode: "number",
+      precision: WEIGHT_PRECISION,
+      scale: WEIGHT_SCALE,
+    }),
+    workoutExerciseRecordedSetId: uuid()
+      .notNull()
+      .references(() => workoutExerciseRecordedSet.id, {
+        name: "workout_exercise_recorded_set_segment_recorded_set_id_fkey",
+        onDelete: "cascade",
+      }),
   },
-  (relationsBuilder) => ({
-    workout: {
-      workoutExercises: relationsBuilder.many.workoutExercise({
-        from: relationsBuilder.workout.id,
-        to: relationsBuilder.workoutExercise.workoutId,
-      }),
-    },
-    workoutExercise: {
-      workout: relationsBuilder.one.workout({
-        from: relationsBuilder.workoutExercise.workoutId,
-        optional: false,
-        to: relationsBuilder.workout.id,
-      }),
-      workoutExerciseSets: relationsBuilder.many.workoutExerciseSet({
-        from: relationsBuilder.workoutExercise.id,
-        to: relationsBuilder.workoutExerciseSet.workoutExerciseId,
-      }),
-    },
-    workoutExerciseSet: {
-      workoutExercise: relationsBuilder.one.workoutExercise({
-        from: relationsBuilder.workoutExerciseSet.workoutExerciseId,
-        optional: false,
-        to: relationsBuilder.workoutExercise.id,
-      }),
-      workoutExerciseSetSegments:
-        relationsBuilder.many.workoutExerciseSetSegment({
-          from: relationsBuilder.workoutExerciseSet.id,
-          to: relationsBuilder.workoutExerciseSetSegment.workoutExerciseSetId,
-        }),
-    },
-    workoutExerciseSetSegment: {
-      workoutExerciseSet: relationsBuilder.one.workoutExerciseSet({
-        from: relationsBuilder.workoutExerciseSetSegment.workoutExerciseSetId,
-        optional: false,
-        to: relationsBuilder.workoutExerciseSet.id,
-      }),
-    },
-  }),
+  (table) => [
+    primaryKey({
+      columns: [table.workoutExerciseRecordedSetId, table.position],
+      name: "workout_exercise_recorded_set_segment_pkey",
+    }),
+    check(
+      "workout_exercise_recorded_set_segment_position_check",
+      gte(table.position, MINIMUM_POSITION),
+    ),
+    check(
+      "workout_exercise_recorded_set_segment_amount_check",
+      gte(table.amount, MINIMUM_AMOUNT),
+    ),
+    check(
+      "workout_exercise_recorded_set_segment_weight_check",
+      between(table.weight, MINIMUM_WEIGHT, MAXIMUM_WEIGHT),
+    ),
+  ],
 );

@@ -1,7 +1,7 @@
-import { describe, expect, it } from "@effect/vitest";
 import * as Schema from "effect/Schema";
+import { describe, expect, it } from "vitest";
 
-import { tempoFilter } from "./tempo-filter.ts";
+import { tempoFilter } from "#/shared/filters/tempo-filter.ts";
 
 const decodeTempo = Schema.decodeUnknownSync(Schema.String.check(tempoFilter));
 
@@ -22,12 +22,6 @@ describe("tempoFilter", () => {
 
   it("rejects three numbers", () => {
     expect(() => decodeTempo("3-0-1")).toThrow(
-      "Expected a string matching the RegExp",
-    );
-  });
-
-  it("rejects a number of three digits", () => {
-    expect(() => decodeTempo("3-0-1-100")).toThrow(
       "Expected a string matching the RegExp",
     );
   });

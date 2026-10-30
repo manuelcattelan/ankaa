@@ -1,44 +1,24 @@
-import * as Data from "effect/Data";
+import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 
-type DecideRoutineSaveOptions = {
-  routineWithSameId: RoutineWithSameId | undefined;
-  routineWithSameName: RoutineWithSameName | undefined;
-  userId: string;
-};
-
-type RoutineSaveOutcome = Data.TaggedEnum<{
-  RoutineNameConflict: object;
-  RoutineNotFound: object;
-  RoutineSaveAllowed: object;
-}>;
-
-type RoutineWithSameId = {
-  readonly deletedAt: Date | null;
-  readonly userId: string;
-};
-
-type RoutineWithSameName = {
-  readonly id: string;
-};
-
-const RoutineSaveOutcome = Data.taggedEnum<RoutineSaveOutcome>();
-
+/**
+ * Decides whether a Save may write the Routine, given the Routine with the
+ * Saved id, or `null` when none has it yet. A Save creates the Routine or
+ * updates the User's live one, and never revives a Routine the User deleted.
+ */
 export function decideRoutineSave({
-  routineWithSameId,
-  routineWithSameName,
+  routine,
   userId,
-}: DecideRoutineSaveOptions) {
-  if (routineWithSameName !== undefined) {
-    return RoutineSaveOutcome.RoutineNameConflict();
+}: {
+  routine: null | { deletedAt: Date | null; userId: string };
+  userId: string;
+}) {
+  if (routine === null) {
+    return { _tag: "RoutineSaveAllowed" as const };
   }
 
-  if (
-    routineWithSameId !== undefined &&
-    (routineWithSameId.userId !== userId ||
-      routineWithSameId.deletedAt instanceof Date)
-  ) {
-    return RoutineSaveOutcome.RoutineNotFound();
+  if (routine.userId !== userId || routine.deletedAt !== null) {
+    return new RoutineNotFoundError();
   }
 
-  return RoutineSaveOutcome.RoutineSaveAllowed();
+  return { _tag: "RoutineSaveAllowed" as const };
 }

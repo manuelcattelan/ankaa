@@ -1,19 +1,42 @@
-import { describe, expect, it } from "@effect/vitest";
+import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
+import { describe, expect, it } from "vitest";
 
-import { decideRoutineDelete } from "./decide-routine-delete.ts";
+import { decideRoutineDelete } from "#/features/routine/core/decide-routine-delete.ts";
 
 describe("decideRoutineDelete", () => {
-  it("allows the delete of a Routine that the person owns and hasn't deleted", () => {
+  it("allows the delete of a live Routine of the User", () => {
     expect(
       decideRoutineDelete({
-        routine: { id: "019a0000-0000-7000-8000-000000000001" },
+        routine: { deletedAt: null, userId: "user-1" },
+        userId: "user-1",
       }),
-    ).toEqual({ _tag: "RoutineDeleteAllowed" });
+    ).toStrictEqual({ _tag: "RoutineDeleteAllowed" });
   });
 
-  it("returns RoutineNotFound when the person has no such Routine", () => {
-    expect(decideRoutineDelete({ routine: undefined })).toEqual({
-      _tag: "RoutineNotFound",
-    });
+  it("decides that a Routine the User already deleted needs no delete", () => {
+    expect(
+      decideRoutineDelete({
+        routine: {
+          deletedAt: new Date("2026-10-29T10:00:00.000Z"),
+          userId: "user-1",
+        },
+        userId: "user-1",
+      }),
+    ).toStrictEqual({ _tag: "RoutineAlreadyDeleted" });
+  });
+
+  it("fails with RoutineNotFoundError for a Routine that doesn't exist", () => {
+    expect(
+      decideRoutineDelete({ routine: null, userId: "user-1" }),
+    ).toStrictEqual(new RoutineNotFoundError());
+  });
+
+  it("fails with RoutineNotFoundError for a Routine of another User", () => {
+    expect(
+      decideRoutineDelete({
+        routine: { deletedAt: null, userId: "user-2" },
+        userId: "user-1",
+      }),
+    ).toStrictEqual(new RoutineNotFoundError());
   });
 });

@@ -1,611 +1,306 @@
-import { describe, expect, it } from "@effect/vitest";
 import * as Schema from "effect/Schema";
+import { describe, expect, it } from "vitest";
 
-import { routineSaveInputSchema } from "./routine-save-input-schema.ts";
+import { routineSaveInputSchema } from "#/features/routine/schemas/routine-save-input-schema.ts";
 
-const ROUTINE_EXERCISE_SET = {
-  amount: 1,
-  dropSetSegmentCount: null,
-  dropSetWeightPercentage: null,
-  id: "019a0000-0000-7000-8000-000000000031",
+const SET = {
+  amount: 8,
+  id: "019a0000-0000-7000-8000-000000000401",
+  intensityTechnique: null,
   isToFailure: false,
-  position: 0,
-  restPauseRestSeconds: null,
-  restPauseSegmentCount: null,
-  restSeconds: 1,
-  setType: "working",
+  restSeconds: 120,
   tempo: "3-0-1-2",
-  variation: null,
+  type: "working",
+};
+
+const DROP_SET = {
+  _tag: "DropSet",
+  segmentCount: 3,
+  weightPercentage: 20,
+};
+
+const REST_PAUSE_SET = {
+  _tag: "RestPauseSet",
+  pauseSeconds: 15,
+  segmentCount: 3,
 };
 
 const ROUTINE_EXERCISE = {
-  exerciseId: "019a0000-0000-7000-8000-000000000021",
-  id: "019a0000-0000-7000-8000-000000000011",
+  exerciseId: "019a0000-0000-7000-8000-000000000001",
+  id: "019a0000-0000-7000-8000-000000000301",
   note: null,
-  position: 0,
-  section: "main",
-  sets: [ROUTINE_EXERCISE_SET],
-  superset: null,
-  warmUpForRoutineExerciseId: null,
-};
-
-const SECOND_ROUTINE_EXERCISE = {
-  ...ROUTINE_EXERCISE,
-  exerciseId: "019a0000-0000-7000-8000-000000000022",
-  id: "019a0000-0000-7000-8000-000000000012",
-  position: 1,
-  sets: [
-    { ...ROUTINE_EXERCISE_SET, id: "019a0000-0000-7000-8000-000000000032" },
-  ],
+  sets: [SET],
+  warmUpExercises: [],
 };
 
 const ROUTINE_SAVE_INPUT = {
   days: ["monday", "thursday"],
-  exercises: [ROUTINE_EXERCISE],
-  id: "019a0000-0000-7000-8000-000000000001",
-  name: "Push",
+  id: "019a0000-0000-7000-8000-000000000101",
+  name: "Push day",
+  sections: {
+    coolDown: [],
+    main: [
+      {
+        exercises: [ROUTINE_EXERCISE],
+        id: "019a0000-0000-7000-8000-000000000201",
+      },
+    ],
+    warmUp: [],
+  },
 };
 
 const decodeRoutineSaveInput = Schema.decodeUnknownSync(routineSaveInputSchema);
 
+function withSet(set: Record<string, unknown>) {
+  return {
+    ...ROUTINE_SAVE_INPUT,
+    sections: {
+      ...ROUTINE_SAVE_INPUT.sections,
+      main: [
+        {
+          exercises: [{ ...ROUTINE_EXERCISE, sets: [{ ...SET, ...set }] }],
+          id: "019a0000-0000-7000-8000-000000000201",
+        },
+      ],
+    },
+  };
+}
+
 describe("routineSaveInputSchema", () => {
-  it("accepts a valid Routine", () => {
-    expect(decodeRoutineSaveInput(ROUTINE_SAVE_INPUT)).toStrictEqual(
-      ROUTINE_SAVE_INPUT,
+  it("accepts a Routine with a Superset, a Warm-up exercise, a Drop set and a Rest-pause set in every Section", () => {
+    const routineSaveInput = {
+      ...ROUTINE_SAVE_INPUT,
+      sections: {
+        coolDown: [
+          {
+            exercises: [
+              {
+                exerciseId: "019a0000-0000-7000-8000-000000000003",
+                id: "019a0000-0000-7000-8000-000000000305",
+                note: "Slowly",
+                sets: [
+                  {
+                    ...SET,
+                    id: "019a0000-0000-7000-8000-000000000405",
+                    restSeconds: null,
+                    tempo: null,
+                  },
+                ],
+              },
+            ],
+            id: "019a0000-0000-7000-8000-000000000203",
+          },
+        ],
+        main: [
+          {
+            exercises: [
+              {
+                ...ROUTINE_EXERCISE,
+                sets: [{ ...SET, intensityTechnique: DROP_SET }],
+                warmUpExercises: [
+                  {
+                    exerciseId: "019a0000-0000-7000-8000-000000000003",
+                    id: "019a0000-0000-7000-8000-000000000302",
+                    note: null,
+                    sets: [
+                      {
+                        ...SET,
+                        amount: null,
+                        id: "019a0000-0000-7000-8000-000000000402",
+                        type: "warm_up",
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                exerciseId: "019a0000-0000-7000-8000-000000000002",
+                id: "019a0000-0000-7000-8000-000000000303",
+                note: null,
+                sets: [
+                  {
+                    ...SET,
+                    id: "019a0000-0000-7000-8000-000000000403",
+                    intensityTechnique: REST_PAUSE_SET,
+                    isToFailure: true,
+                  },
+                ],
+                warmUpExercises: [],
+              },
+            ],
+            id: "019a0000-0000-7000-8000-000000000201",
+          },
+        ],
+        warmUp: [
+          {
+            exercises: [
+              {
+                exerciseId: "019a0000-0000-7000-8000-000000000003",
+                id: "019a0000-0000-7000-8000-000000000304",
+                note: null,
+                sets: [],
+              },
+            ],
+            id: "019a0000-0000-7000-8000-000000000202",
+          },
+        ],
+      },
+    };
+
+    expect(decodeRoutineSaveInput(routineSaveInput)).toStrictEqual(
+      routineSaveInput,
     );
   });
 
-  it("accepts a name surrounded by spaces and trims them", () => {
-    const routineSaveInput = { ...ROUTINE_SAVE_INPUT, name: "  Push  " };
-
-    expect(decodeRoutineSaveInput(routineSaveInput)).toStrictEqual({
-      ...ROUTINE_SAVE_INPUT,
-      name: "Push",
-    });
+  it("trims the name", () => {
+    expect(
+      decodeRoutineSaveInput({ ...ROUTINE_SAVE_INPUT, name: "  Push day  " }),
+    ).toMatchObject({ name: "Push day" });
   });
 
   it("rejects a name made only of spaces", () => {
-    const routineSaveInput = { ...ROUTINE_SAVE_INPUT, name: "   " };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Expected a value with a length of at least 1\n  at ["name"]',
-    );
+    expect(() =>
+      decodeRoutineSaveInput({ ...ROUTINE_SAVE_INPUT, name: "   " }),
+    ).toThrow("Expected a value with a length of at least 1");
   });
 
   it("rejects a day listed twice", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      days: ["monday", "thursday", "monday"],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Expected an array with unique items\n  at ["days"]',
-    );
+    expect(() =>
+      decodeRoutineSaveInput({
+        ...ROUTINE_SAVE_INPUT,
+        days: ["monday", "monday"],
+      }),
+    ).toThrow("Expected an array with unique items");
   });
 
-  it("rejects two Routine exercises with the same id", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        ROUTINE_EXERCISE,
-        { ...SECOND_ROUTINE_EXERCISE, id: ROUTINE_EXERCISE.id },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Must be unique\n  at ["exercises"]',
-    );
+  it("rejects two nodes of the tree with the same id", () => {
+    expect(() =>
+      decodeRoutineSaveInput(
+        withSet({ id: "019a0000-0000-7000-8000-000000000301" }),
+      ),
+    ).toThrow("Expected ids that are unique across the Routine");
   });
 
-  it("rejects two Routine exercises at the same position", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        ROUTINE_EXERCISE,
-        { ...SECOND_ROUTINE_EXERCISE, position: 0 },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Must be unique\n  at ["exercises"]',
-    );
+  it("rejects a Routine with no Routine exercise in the main Section", () => {
+    expect(() =>
+      decodeRoutineSaveInput({
+        ...ROUTINE_SAVE_INPUT,
+        sections: { ...ROUTINE_SAVE_INPUT.sections, main: [] },
+      }),
+    ).toThrow("Expected a Routine exercise in the main Section");
   });
 
-  it("rejects two Sets with the same id in different Routine exercises", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        ROUTINE_EXERCISE,
-        { ...SECOND_ROUTINE_EXERCISE, sets: [ROUTINE_EXERCISE_SET] },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Must be unique\n  at ["exercises"]',
-    );
-  });
-
-  it("accepts a Warm-up exercise that points to another main exercise", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          warmUpForRoutineExerciseId: SECOND_ROUTINE_EXERCISE.id,
-        },
-        SECOND_ROUTINE_EXERCISE,
-      ],
-    };
-
-    expect(decodeRoutineSaveInput(routineSaveInput)).toStrictEqual(
-      routineSaveInput,
-    );
-  });
-
-  it("rejects a Warm-up exercise that points to an exercise of another Section", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          warmUpForRoutineExerciseId: SECOND_ROUTINE_EXERCISE.id,
-        },
-        { ...SECOND_ROUTINE_EXERCISE, section: "cool_down" },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Must point to another main exercise of the same routine or workout\n  at ["exercises"][0]["warmUpForRoutineExerciseId"]',
-    );
-  });
-
-  it("accepts the exercises of a Superset at neighboring positions", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        { ...ROUTINE_EXERCISE, superset: 1 },
-        { ...SECOND_ROUTINE_EXERCISE, superset: 1 },
-      ],
-    };
-
-    expect(decodeRoutineSaveInput(routineSaveInput)).toStrictEqual(
-      routineSaveInput,
-    );
-  });
-
-  it("rejects the exercises of a Superset that aren't neighbors", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        { ...ROUTINE_EXERCISE, superset: 1 },
-        SECOND_ROUTINE_EXERCISE,
-        {
-          ...ROUTINE_EXERCISE,
-          id: "019a0000-0000-7000-8000-000000000013",
-          position: 2,
-          sets: [
-            {
-              ...ROUTINE_EXERCISE_SET,
-              id: "019a0000-0000-7000-8000-000000000033",
-            },
-          ],
-          superset: 1,
-        },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'The exercises of a superset must be neighbors\n  at ["exercises"]',
-    );
-  });
-
-  it("rejects a Routine exercise at position -1", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [{ ...ROUTINE_EXERCISE, position: -1 }],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Expected a value greater than or equal to 0\n  at ["exercises"][0]["position"]',
-    );
-  });
-
-  it("rejects two Sets of a Routine exercise at the same position", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [
-            ROUTINE_EXERCISE_SET,
-            {
-              ...ROUTINE_EXERCISE_SET,
-              id: "019a0000-0000-7000-8000-000000000032",
-            },
+  it("rejects an Exercise group with no Routine exercise", () => {
+    expect(() =>
+      decodeRoutineSaveInput({
+        ...ROUTINE_SAVE_INPUT,
+        sections: {
+          ...ROUTINE_SAVE_INPUT.sections,
+          coolDown: [
+            { exercises: [], id: "019a0000-0000-7000-8000-000000000202" },
           ],
         },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Must be unique\n  at ["exercises"][0]["sets"]',
-    );
+      }),
+    ).toThrow("Expected a value with a length of at least 1");
   });
 
   it("rejects a Set with an Amount of 0", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [{ ...ROUTINE_EXERCISE_SET, amount: 0 }],
-        },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Expected a value greater than or equal to 1\n  at ["exercises"][0]["sets"][0]["amount"]',
+    expect(() => decodeRoutineSaveInput(withSet({ amount: 0 }))).toThrow(
+      "Expected a value greater than or equal to 1",
     );
   });
 
-  it("rejects a Set at position -1", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [{ ...ROUTINE_EXERCISE_SET, position: -1 }],
-        },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Expected a value greater than or equal to 0\n  at ["exercises"][0]["sets"][0]["position"]',
+  it("rejects a Set with an Amount that isn't a whole number", () => {
+    expect(() => decodeRoutineSaveInput(withSet({ amount: 8.5 }))).toThrow(
+      "Expected an integer",
     );
+  });
+
+  it("rejects a Set with an Amount too large for a PostgreSQL integer", () => {
+    expect(() =>
+      decodeRoutineSaveInput(withSet({ amount: 2_147_483_648 })),
+    ).toThrow("Expected a value less than or equal to 2147483647");
   });
 
   it("rejects a Set with a Rest of 0 seconds", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [{ ...ROUTINE_EXERCISE_SET, restSeconds: 0 }],
-        },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Expected a value greater than or equal to 1\n  at ["exercises"][0]["sets"][0]["restSeconds"]',
+    expect(() => decodeRoutineSaveInput(withSet({ restSeconds: 0 }))).toThrow(
+      "Expected a value greater than or equal to 1",
     );
   });
 
   it("rejects a Set with a Tempo of three numbers", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [{ ...ROUTINE_EXERCISE_SET, tempo: "3-0-1" }],
-        },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'at ["exercises"][0]["sets"][0]["tempo"]',
-    );
-  });
-
-  it("accepts a Rest-pause set with pauses of 1 second and 2 Segments", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [
-            {
-              ...ROUTINE_EXERCISE_SET,
-              restPauseRestSeconds: 1,
-              restPauseSegmentCount: 2,
-              variation: "rest_pause",
-            },
-          ],
-        },
-      ],
-    };
-
-    expect(decodeRoutineSaveInput(routineSaveInput)).toStrictEqual(
-      routineSaveInput,
-    );
-  });
-
-  it("rejects a Rest-pause set with pauses of 0 seconds", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [
-            {
-              ...ROUTINE_EXERCISE_SET,
-              restPauseRestSeconds: 0,
-              restPauseSegmentCount: 2,
-              variation: "rest_pause",
-            },
-          ],
-        },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Expected a value greater than or equal to 1\n  at ["exercises"][0]["sets"][0]["restPauseRestSeconds"]',
-    );
-  });
-
-  it("rejects a Rest-pause set with 1 Segment", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [
-            {
-              ...ROUTINE_EXERCISE_SET,
-              restPauseRestSeconds: 1,
-              restPauseSegmentCount: 1,
-              variation: "rest_pause",
-            },
-          ],
-        },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Expected a value greater than or equal to 2\n  at ["exercises"][0]["sets"][0]["restPauseSegmentCount"]',
-    );
-  });
-
-  it("rejects a Rest-pause set without its pause seconds", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [
-            {
-              ...ROUTINE_EXERCISE_SET,
-              restPauseSegmentCount: 2,
-              variation: "rest_pause",
-            },
-          ],
-        },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Must be filled exactly when the variation is rest_pause\n  at ["exercises"][0]["sets"][0]["restPauseRestSeconds"]',
-    );
-  });
-
-  it("rejects a Rest-pause set without its Segment count", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [
-            {
-              ...ROUTINE_EXERCISE_SET,
-              restPauseRestSeconds: 1,
-              variation: "rest_pause",
-            },
-          ],
-        },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Must be filled exactly when the variation is rest_pause\n  at ["exercises"][0]["sets"][0]["restPauseSegmentCount"]',
-    );
-  });
-
-  it("rejects pause seconds on a Set that isn't a Rest-pause set", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [{ ...ROUTINE_EXERCISE_SET, restPauseRestSeconds: 1 }],
-        },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Must be filled exactly when the variation is rest_pause\n  at ["exercises"][0]["sets"][0]["restPauseRestSeconds"]',
-    );
-  });
-
-  it("accepts a Drop set with 2 Segments and no weight percentage", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [
-            {
-              ...ROUTINE_EXERCISE_SET,
-              dropSetSegmentCount: 2,
-              variation: "drop_set",
-            },
-          ],
-        },
-      ],
-    };
-
-    expect(decodeRoutineSaveInput(routineSaveInput)).toStrictEqual(
-      routineSaveInput,
-    );
-  });
-
-  it("accepts a Drop set with a weight percentage of 1", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [
-            {
-              ...ROUTINE_EXERCISE_SET,
-              dropSetSegmentCount: 2,
-              dropSetWeightPercentage: 1,
-              variation: "drop_set",
-            },
-          ],
-        },
-      ],
-    };
-
-    expect(decodeRoutineSaveInput(routineSaveInput)).toStrictEqual(
-      routineSaveInput,
-    );
-  });
-
-  it("accepts a Drop set with a weight percentage of 99", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [
-            {
-              ...ROUTINE_EXERCISE_SET,
-              dropSetSegmentCount: 2,
-              dropSetWeightPercentage: 99,
-              variation: "drop_set",
-            },
-          ],
-        },
-      ],
-    };
-
-    expect(decodeRoutineSaveInput(routineSaveInput)).toStrictEqual(
-      routineSaveInput,
+    expect(() => decodeRoutineSaveInput(withSet({ tempo: "3-0-1" }))).toThrow(
+      "Expected a string matching the RegExp",
     );
   });
 
   it("rejects a Drop set with 1 Segment", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [
-            {
-              ...ROUTINE_EXERCISE_SET,
-              dropSetSegmentCount: 1,
-              variation: "drop_set",
-            },
-          ],
-        },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Expected a value greater than or equal to 2\n  at ["exercises"][0]["sets"][0]["dropSetSegmentCount"]',
-    );
-  });
-
-  it("rejects a Drop set with a weight percentage of 0", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [
-            {
-              ...ROUTINE_EXERCISE_SET,
-              dropSetSegmentCount: 2,
-              dropSetWeightPercentage: 0,
-              variation: "drop_set",
-            },
-          ],
-        },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Expected a value between 1 and 99\n  at ["exercises"][0]["sets"][0]["dropSetWeightPercentage"]',
-    );
+    expect(() =>
+      decodeRoutineSaveInput(
+        withSet({ intensityTechnique: { ...DROP_SET, segmentCount: 1 } }),
+      ),
+    ).toThrow("Expected a value greater than or equal to 2");
   });
 
   it("rejects a Drop set with a weight percentage of 100", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [
-            {
-              ...ROUTINE_EXERCISE_SET,
-              dropSetSegmentCount: 2,
-              dropSetWeightPercentage: 100,
-              variation: "drop_set",
-            },
-          ],
-        },
-      ],
-    };
+    expect(() =>
+      decodeRoutineSaveInput(
+        withSet({
+          intensityTechnique: { ...DROP_SET, weightPercentage: 100 },
+        }),
+      ),
+    ).toThrow("Expected a value between 1 and 99");
+  });
 
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Expected a value between 1 and 99\n  at ["exercises"][0]["sets"][0]["dropSetWeightPercentage"]',
+  it("accepts a Drop set with no weight percentage", () => {
+    expect(
+      decodeRoutineSaveInput(
+        withSet({
+          intensityTechnique: { ...DROP_SET, weightPercentage: null },
+        }),
+      ),
+    ).toMatchObject(
+      withSet({ intensityTechnique: { ...DROP_SET, weightPercentage: null } }),
     );
   });
 
   it("rejects a Drop set without its Segment count", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [{ ...ROUTINE_EXERCISE_SET, variation: "drop_set" }],
-        },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Must be filled exactly when the variation is drop_set\n  at ["exercises"][0]["sets"][0]["dropSetSegmentCount"]',
-    );
+    expect(() =>
+      decodeRoutineSaveInput(
+        withSet({
+          intensityTechnique: { _tag: "DropSet", weightPercentage: 20 },
+        }),
+      ),
+    ).toThrow("Missing key");
   });
 
-  it("rejects a Segment count on a Set that isn't a Drop set", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [{ ...ROUTINE_EXERCISE_SET, dropSetSegmentCount: 2 }],
-        },
-      ],
-    };
-
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Must be filled exactly when the variation is drop_set\n  at ["exercises"][0]["sets"][0]["dropSetSegmentCount"]',
-    );
+  it("rejects a Rest-pause set with 1 Segment", () => {
+    expect(() =>
+      decodeRoutineSaveInput(
+        withSet({
+          intensityTechnique: { ...REST_PAUSE_SET, segmentCount: 1 },
+        }),
+      ),
+    ).toThrow("Expected a value greater than or equal to 2");
   });
 
-  it("rejects a weight percentage on a Set that isn't a Drop set", () => {
-    const routineSaveInput = {
-      ...ROUTINE_SAVE_INPUT,
-      exercises: [
-        {
-          ...ROUTINE_EXERCISE,
-          sets: [{ ...ROUTINE_EXERCISE_SET, dropSetWeightPercentage: 20 }],
-        },
-      ],
-    };
+  it("rejects a Rest-pause set with a Pause of 0 seconds", () => {
+    expect(() =>
+      decodeRoutineSaveInput(
+        withSet({
+          intensityTechnique: { ...REST_PAUSE_SET, pauseSeconds: 0 },
+        }),
+      ),
+    ).toThrow("Expected a value greater than or equal to 1");
+  });
 
-    expect(() => decodeRoutineSaveInput(routineSaveInput)).toThrow(
-      'Must be empty unless the variation is drop_set\n  at ["exercises"][0]["sets"][0]["dropSetWeightPercentage"]',
-    );
+  it("rejects a Rest-pause set without its Pause", () => {
+    expect(() =>
+      decodeRoutineSaveInput(
+        withSet({
+          intensityTechnique: { _tag: "RestPauseSet", segmentCount: 3 },
+        }),
+      ),
+    ).toThrow("Missing key");
   });
 });

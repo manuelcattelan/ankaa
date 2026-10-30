@@ -1,24 +1,22 @@
 import type { Equipment } from "@ankaa/core/features/exercise/constants/equipment";
 import type { MuscleGroup } from "@ankaa/core/features/exercise/constants/muscle-group";
 
-import type { Exercise } from "@/shared/interactors/list-exercises";
-
-type SearchExercisesOptions = {
-  equipmentSelection: Equipment[];
-  exerciseNameSearchText: string;
-  exercises: Exercise[];
-  muscleGroupSelection: MuscleGroup[];
-};
+import type { Exercise } from "#/shared/exercise-application-service.ts";
 
 const EXERCISE_NAME_SEARCH_WORD_SEPARATOR = /\s+/;
 
 export function searchExercises({
   equipmentSelection,
-  exerciseNameSearchText,
   exercises,
   muscleGroupSelection,
-}: SearchExercisesOptions) {
-  const exerciseNameSearchWords = exerciseNameSearchText
+  nameSearchText,
+}: {
+  equipmentSelection: Equipment[];
+  exercises: Exercise[];
+  muscleGroupSelection: MuscleGroup[];
+  nameSearchText: string;
+}) {
+  const exerciseNameSearchWords = nameSearchText
     .trim()
     .toLowerCase()
     .split(EXERCISE_NAME_SEARCH_WORD_SEPARATOR);
@@ -31,12 +29,12 @@ export function searchExercises({
     );
     const hasMuscleGroupMatch =
       muscleGroupSelection.length === 0 ||
-      exercise.exerciseMuscleGroups.some((exerciseMuscleGroup) =>
+      exercise.muscleGroups.some((exerciseMuscleGroup) =>
         muscleGroupSelection.includes(exerciseMuscleGroup.muscleGroup),
       );
     const hasEquipmentMatch =
       equipmentSelection.length === 0 ||
-      exercise.exerciseEquipment.every((exerciseEquipment) =>
+      exercise.equipment.some((exerciseEquipment) =>
         equipmentSelection.includes(exerciseEquipment.equipment),
       );
 

@@ -1,88 +1,79 @@
 import { GoogleSigninButton } from "@react-native-google-signin/google-signin";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import * as ExpoAppleAuthentication from "expo-apple-authentication";
-import { useEffect } from "react";
-import { StyleSheet, useColorScheme } from "react-native";
+import { Platform, StyleSheet, useColorScheme } from "react-native";
 
-import { getAuthenticationErrorMessage } from "@/features/authentication/core/get-authentication-error-message";
-import { getSessionErrorMessage } from "@/features/authentication/core/get-session-error-message";
-import { announceAuthenticationError } from "@/features/authentication/interactors/announce-authentication-error";
-import { signInScreenMessages } from "@/features/authentication/messages/sign-in-screen-messages";
-import { createAppleSignInMutationOptions } from "@/features/authentication/mutations/create-apple-sign-in-mutation-options";
-import { createGoogleSignInMutationOptions } from "@/features/authentication/mutations/create-google-sign-in-mutation-options";
-import { createAppleSignInAvailabilityQueryOptions } from "@/features/authentication/queries/create-apple-sign-in-availability-query-options";
-import { LinkButton } from "@/shared/components/link-button";
-import { ScrollView } from "@/shared/components/scroll-view";
-import { StatusMessage } from "@/shared/components/status-message";
-import { TOUCH_TARGET_SIZE_MINIMUM } from "@/shared/constants/touch-target";
-import { useAuthenticationSession } from "@/shared/hooks/use-authentication-session";
-import { useRuntime } from "@/shared/hooks/use-runtime";
-import { announceMessage } from "@/shared/interactors/announce-message";
+import { ACCOUNT_DELETED_SEARCH_PARAMETERS } from "#/features/authentication/constants/account-deleted-search-parameters.ts";
+import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
+import { getSessionErrorMessage } from "#/features/authentication/core/get-session-error-message.ts";
+import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
+import { appleSignInMutationOptions } from "#/features/authentication/mutations/apple-sign-in-mutation-options.ts";
+import { googleSignInMutationOptions } from "#/features/authentication/mutations/google-sign-in-mutation-options.ts";
+import { LinkButton } from "#/shared/components/link-button.tsx";
+import { ScrollView } from "#/shared/components/scroll-view.tsx";
+import { StatusMessage } from "#/shared/components/status-message.tsx";
+import { MINIMUM_TOUCH_TARGET_SIZE } from "#/shared/constants/minimum-touch-target-size.ts";
+import { useAuthenticationSession } from "#/shared/hooks/use-authentication-session.ts";
+import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
 const APPLE_BUTTON_CORNER_RADIUS = 8;
 
-export function SignInScreen() {
+/**
+ * Signs the User in with Apple or Google, or leads them to sign in with their
+ * email address, and tells them when `isAccountDeletedParameter` says that
+ * their Account has just been deleted.
+ */
+export function SignInScreen({
+  isAccountDeletedParameter,
+}: {
+  isAccountDeletedParameter: null | string;
+}) {
   const runtime = useRuntime();
 
   const session = useAuthenticationSession();
 
   const colorScheme = useColorScheme();
 
-  const signInApple = useMutation({
-    ...createAppleSignInMutationOptions(runtime),
-    onError: (error) => {
-      runtime.runSync(announceAuthenticationError(error));
-    },
-  });
+  const signInWithApple = useMutation(appleSignInMutationOptions(runtime));
 
-  const signInGoogle = useMutation({
-    ...createGoogleSignInMutationOptions(runtime),
-    onError: (error) => {
-      runtime.runSync(announceAuthenticationError(error));
-    },
-  });
+  const signInWithGoogle = useMutation(googleSignInMutationOptions(runtime));
 
-  const appleSignInAvailability = useQuery(
-    createAppleSignInAvailabilityQueryOptions(runtime),
-  );
-
-  const isSignInPending = signInApple.isPending || signInGoogle.isPending;
+  const isSignInPending =
+    signInWithApple.isPending || signInWithGoogle.isPending;
   const sessionErrorMessage = getSessionErrorMessage(session);
-  const signInError = signInApple.error ?? signInGoogle.error;
-  const signInErrorMessage = signInError
-    ? getAuthenticationErrorMessage(signInError)
-    : sessionErrorMessage;
+  const signInError = signInWithApple.error ?? signInWithGoogle.error;
+  const accountDeletedStatus =
+    isAccountDeletedParameter ===
+    ACCOUNT_DELETED_SEARCH_PARAMETERS.isAccountDeleted
+      ? AUTHENTICATION_MESSAGES.accountDeletedStatus
+      : null;
+  const statusMessage =
+    signInError === null
+      ? (sessionErrorMessage ?? accountDeletedStatus)
+      : getAuthenticationErrorMessage(signInError);
 
-  useEffect(() => {
-    if (sessionErrorMessage) {
-      runtime.runSync(announceMessage(sessionErrorMessage));
-    }
-  }, [runtime, sessionErrorMessage]);
-
-  function handleSignInApple() {
+  function handleSignInWithApple() {
+    // Apple's native button takes no disabled state
+    // (https://docs.expo.dev/versions/v57.0.0/sdk/apple-authentication/#appleauthenticationbutton).
     if (isSignInPending) {
       return;
     }
 
-    signInGoogle.reset();
+    signInWithGoogle.reset();
 
-    signInApple.mutate();
+    signInWithApple.mutate();
   }
 
-  function handleSignInGoogle() {
-    if (isSignInPending) {
-      return;
-    }
+  function handleSignInWithGoogle() {
+    signInWithApple.reset();
 
-    signInApple.reset();
-
-    signInGoogle.mutate();
+    signInWithGoogle.mutate();
   }
 
   return (
     <ScrollView>
-      <StatusMessage message={signInErrorMessage} />
-      {appleSignInAvailability.data ? (
+      <StatusMessage message={statusMessage} />
+      {Platform.OS === "ios" ? (
         <ExpoAppleAuthentication.AppleAuthenticationButton
           buttonStyle={
             colorScheme === "dark"
@@ -93,7 +84,7 @@ export function SignInScreen() {
             ExpoAppleAuthentication.AppleAuthenticationButtonType.CONTINUE
           }
           cornerRadius={APPLE_BUTTON_CORNER_RADIUS}
-          onPress={handleSignInApple}
+          onPress={handleSignInWithApple}
           style={styles.appleButton}
           testID="apple-sign-in-button"
         />
@@ -105,18 +96,18 @@ export function SignInScreen() {
             : GoogleSigninButton.Color.Light
         }
         disabled={isSignInPending}
-        onPress={handleSignInGoogle}
+        onPress={handleSignInWithGoogle}
         size={GoogleSigninButton.Size.Wide}
         testID="google-sign-in-button"
       />
       <LinkButton
         href="/sign-in/with-email"
-        title={signInScreenMessages.continueWithEmailButton}
+        title={AUTHENTICATION_MESSAGES.continueWithEmailButton}
       />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  appleButton: { height: TOUCH_TARGET_SIZE_MINIMUM, width: "100%" },
+  appleButton: { height: MINIMUM_TOUCH_TARGET_SIZE, width: "100%" },
 });

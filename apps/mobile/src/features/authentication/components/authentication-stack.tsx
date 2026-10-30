@@ -1,23 +1,21 @@
 import { Stack } from "expo-router";
 
-import { signInScreenMessages } from "@/features/authentication/messages/sign-in-screen-messages";
-import { validateOtpCodeScreenMessages } from "@/features/authentication/messages/validate-otp-code-screen-messages";
-import { withEmailScreenMessages } from "@/features/authentication/messages/with-email-screen-messages";
+import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 
 export function AuthenticationStack() {
   return (
     <Stack>
       <Stack.Screen
         name="sign-in/index"
-        options={{ title: signInScreenMessages.title }}
+        options={{ title: AUTHENTICATION_MESSAGES.signInScreenTitle }}
       />
       <Stack.Screen
         name="sign-in/with-email/index"
-        options={{ title: withEmailScreenMessages.title }}
+        options={{ title: AUTHENTICATION_MESSAGES.withEmailScreenTitle }}
       />
       <Stack.Screen
         name="sign-in/with-email/validate-otp-code"
-        options={{ title: validateOtpCodeScreenMessages.title }}
+        options={{ title: AUTHENTICATION_MESSAGES.validateOtpCodeScreenTitle }}
       />
     </Stack>
   );

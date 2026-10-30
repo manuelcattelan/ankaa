@@ -24,13 +24,22 @@ main() {
   fi
 
   pnpm format:fix &>/dev/null || true
-  pnpm lint:fix &>/dev/null || true
+  pnpm lint:fix --continue &>/dev/null || true
   pnpm format:fix &>/dev/null || true
 
+  local checks=(
+    "lint --continue --output-logs=errors-only"
+    "check-types --continue --output-logs=errors-only"
+    "format"
+    "test --continue --output-logs=errors-only"
+  )
   local failures=()
-  local check output
-  for check in lint check-types format; do
-    if ! output=$(pnpm "${check}" --output-logs=errors-only 2>&1); then
+  local check
+  local arguments
+  local output
+  for check in "${checks[@]}"; do
+    read -ra arguments <<<"${check}"
+    if ! output=$(pnpm "${arguments[@]}" 2>&1); then
       failures+=("${output}")
     fi
   done
@@ -39,12 +48,15 @@ main() {
     exit 0
   fi
 
-  {
-    echo "Fix these problems before you finish. The rules behind them are in AGENTS.md at the repository root and in the AGENTS.md of each workspace:"
+  local reason
+  reason=$(
+    echo "Fix these problems before you finish. The rules behind them are in AGENTS.md at the repository root and in the AGENTS.md of each workspace, and TESTING.md covers the tests."
+    echo "The tests need Docker running. With Colima, set DOCKER_HOST to its socket, such as export DOCKER_HOST=\"unix://\${HOME}/.colima/default/docker.sock\", because Testcontainers doesn't read Docker contexts."
     printf '%s\n' "${failures[@]}" | sed $'s/\e\\[[0-9;]*m//g'
-  } >&2
+  )
 
-  exit 2
+  # Block with JSON on stdout rather than exit 2, because Claude Code doesn't block on an exit 2 whose stderr reads like a missing file, such as a failing test's ENOENT: https://code.claude.com/docs/en/hooks
+  jq -n --arg reason "${reason}" '{decision: "block", reason: $reason}'
 }
 
 main "$@"

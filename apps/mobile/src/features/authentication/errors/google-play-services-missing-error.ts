@@ -1,5 +1,6 @@
-import * as Data from "effect/Data";
+import * as Schema from "effect/Schema";
 
-export class GooglePlayServicesMissingError extends Data.TaggedError(
+export class GooglePlayServicesMissingError extends Schema.TaggedError<GooglePlayServicesMissingError>()(
   "GooglePlayServicesMissingError",
+  {},
 ) {}

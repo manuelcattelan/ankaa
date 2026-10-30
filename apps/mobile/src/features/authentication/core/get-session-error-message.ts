@@ -1,21 +1,21 @@
-import type { AuthenticationClient } from "@/shared/services/authentication-client";
+import type { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 
-import { getAuthenticationErrorMessage } from "@/features/authentication/core/get-authentication-error-message";
+import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 type AuthenticationSession = ReturnType<
-  AuthenticationClient["Service"]["betterAuthenticationClient"]["useSession"]
+  AuthenticationClient["Service"]["authClient"]["useSession"]
 >;
 
 export function getSessionErrorMessage(
   authenticationSession: AuthenticationSession,
 ) {
   if (
-    !authenticationSession.error ||
-    authenticationSession.data ||
+    authenticationSession.error === null ||
+    authenticationSession.data !== null ||
     typeof authenticationSession.error.status === "number"
   ) {
-    return undefined;
+    return null;
   }
 
-  return getAuthenticationErrorMessage(authenticationSession.error);
+  return SHARED_MESSAGES.serverUnreachableError;
 }

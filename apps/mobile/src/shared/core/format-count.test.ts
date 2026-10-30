@@ -1,4 +1,4 @@
-import { formatCount } from "@/shared/core/format-count";
+import { formatCount } from "#/shared/core/format-count.ts";
 
 describe("formatCount", () => {
   it("writes a count of 1 with the singular", () => {

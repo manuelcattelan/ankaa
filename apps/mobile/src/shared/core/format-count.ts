@@ -1,9 +1,11 @@
-type FormatCountOptions = {
+export function formatCount({
+  count,
+  plural,
+  singular,
+}: {
   count: number;
   plural: string;
   singular: string;
-};
-
-export function formatCount({ count, plural, singular }: FormatCountOptions) {
-  return `${count} ${count === 1 ? singular : plural}`;
+}) {
+  return `${String(count)} ${count === 1 ? singular : plural}`;
 }

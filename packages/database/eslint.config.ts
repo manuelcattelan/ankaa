@@ -1,17 +1,7 @@
-import { createGeneratedFilesConfiguration } from "@ankaa/eslint/base";
-import { packageConfiguration } from "@ankaa/eslint/package";
+import { createPackageConfiguration } from "@ankaa/eslint/create-package-configuration";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
-  packageConfiguration,
-  {
-    languageOptions: {
-      parserOptions: { tsconfigRootDir: import.meta.dirname },
-    },
-  },
-  createGeneratedFilesConfiguration({
-    configuration: packageConfiguration,
-    files: ["src/schema/authentication.ts"],
-  }),
+  createPackageConfiguration({ basePath: import.meta.dirname }),
   { ignores: ["drizzle/**"] },
 ]);

@@ -1,7 +1,7 @@
-import { describe, expect, it } from "@effect/vitest";
 import * as Schema from "effect/Schema";
+import { describe, expect, it } from "vitest";
 
-import { routineNameFilter } from "./routine-name-filter.ts";
+import { routineNameFilter } from "#/features/routine/filters/routine-name-filter.ts";
 
 const decodeRoutineName = Schema.decodeUnknownSync(
   Schema.String.check(routineNameFilter),

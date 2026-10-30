@@ -1,0 +1,2 @@
+ALTER INDEX "routine_user_id_name_idx" RENAME TO "routine_live_name_idx";--> statement-breakpoint
+ALTER TABLE "routine" DROP CONSTRAINT "routine_name_check", ADD CONSTRAINT "routine_name_check" CHECK ("name" ~ '^\S(.*\S)?$');

@@ -1,98 +1,99 @@
-import { sql } from "drizzle-orm";
+import * as PgClient from "@effect/sql-pg/PgClient";
+import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 
-import { Database } from "./index.ts";
+import { Database } from "#/database.ts";
 import {
   exercise,
   exerciseEquipment,
   exerciseMuscleGroup,
-} from "./schema/exercise.ts";
+} from "#/schema/exercise.ts";
 
 type ExerciseSeed = Pick<
   typeof exercise.$inferSelect,
   "amountUnit" | "id" | "name" | "weightType"
 > & {
-  exerciseEquipment: Pick<typeof exerciseEquipment.$inferSelect, "equipment">[];
-  exerciseMuscleGroups: Pick<
+  equipment: Pick<typeof exerciseEquipment.$inferSelect, "equipment">[];
+  muscleGroups: Pick<
     typeof exerciseMuscleGroup.$inferSelect,
-    "muscleGroup" | "muscleGroupRole"
+    "muscleGroup" | "role"
   >[];
 };
 
 const EXERCISE_SEEDS: ExerciseSeed[] = [
   {
     amountUnit: "repetition",
-    exerciseEquipment: [
+    equipment: [
       { equipment: "barbell" },
       { equipment: "bench" },
       { equipment: "rack" },
     ],
-    exerciseMuscleGroups: [
-      { muscleGroup: "chest", muscleGroupRole: "primary" },
-      { muscleGroup: "triceps", muscleGroupRole: "secondary" },
-      { muscleGroup: "front_deltoid", muscleGroupRole: "secondary" },
-    ],
     id: "01a116a3-0b0f-70ce-91c2-03ac50a49f4b",
+    muscleGroups: [
+      { muscleGroup: "chest", role: "primary" },
+      { muscleGroup: "triceps", role: "secondary" },
+      { muscleGroup: "front_deltoid", role: "secondary" },
+    ],
     name: "Bench Press (Barbell)",
     weightType: "total",
   },
 ];
 
-const nowSql = sql`now()`;
+const databaseLayer = Database.layerNoDeps.pipe(
+  Layer.provide(
+    PgClient.layerConfig({ url: Config.Redacted("DATABASE_URL_DIRECT") }),
+  ),
+);
 
 await Effect.runPromise(
   Effect.gen(function* () {
     const database = yield* Database;
 
-    yield* database.transaction(async (transaction) => {
-      for (const exerciseSeed of EXERCISE_SEEDS) {
-        await transaction
-          .insert(exercise)
-          .values({
-            amountUnit: exerciseSeed.amountUnit,
-            id: exerciseSeed.id,
-            name: exerciseSeed.name,
-            weightType: exerciseSeed.weightType,
-          })
-          .onConflictDoUpdate({
-            set: {
+    yield* database.transaction((tx) =>
+      Effect.gen(function* () {
+        for (const exerciseSeed of EXERCISE_SEEDS) {
+          yield* tx
+            .insert(exercise)
+            .values({
               amountUnit: exerciseSeed.amountUnit,
+              id: exerciseSeed.id,
               name: exerciseSeed.name,
-              updatedAt: nowSql,
               weightType: exerciseSeed.weightType,
-            },
-            target: exercise.id,
-          });
-
-        for (const exerciseMuscleGroupSeed of exerciseSeed.exerciseMuscleGroups) {
-          await transaction
-            .insert(exerciseMuscleGroup)
-            .values({ ...exerciseMuscleGroupSeed, exerciseId: exerciseSeed.id })
+            })
             .onConflictDoUpdate({
               set: {
-                muscleGroupRole: exerciseMuscleGroupSeed.muscleGroupRole,
-                updatedAt: nowSql,
+                amountUnit: exerciseSeed.amountUnit,
+                name: exerciseSeed.name,
+                weightType: exerciseSeed.weightType,
               },
-              target: [
-                exerciseMuscleGroup.exerciseId,
-                exerciseMuscleGroup.muscleGroup,
-              ],
+              target: exercise.id,
             });
-        }
 
-        for (const exerciseEquipmentSeed of exerciseSeed.exerciseEquipment) {
-          await transaction
-            .insert(exerciseEquipment)
-            .values({ ...exerciseEquipmentSeed, exerciseId: exerciseSeed.id })
-            .onConflictDoUpdate({
-              set: { updatedAt: nowSql },
-              target: [
-                exerciseEquipment.exerciseId,
-                exerciseEquipment.equipment,
-              ],
-            });
+          for (const exerciseMuscleGroupSeed of exerciseSeed.muscleGroups) {
+            yield* tx
+              .insert(exerciseMuscleGroup)
+              .values({
+                ...exerciseMuscleGroupSeed,
+                exerciseId: exerciseSeed.id,
+              })
+              .onConflictDoUpdate({
+                set: { role: exerciseMuscleGroupSeed.role },
+                target: [
+                  exerciseMuscleGroup.exerciseId,
+                  exerciseMuscleGroup.muscleGroup,
+                ],
+              });
+          }
+
+          for (const exerciseEquipmentSeed of exerciseSeed.equipment) {
+            yield* tx
+              .insert(exerciseEquipment)
+              .values({ ...exerciseEquipmentSeed, exerciseId: exerciseSeed.id })
+              .onConflictDoNothing();
+          }
         }
-      }
-    });
-  }).pipe(Effect.provide(Database.layer)),
+      }),
+    );
+  }).pipe(Effect.provide(databaseLayer)),
 );

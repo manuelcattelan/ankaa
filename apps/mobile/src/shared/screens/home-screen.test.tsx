@@ -1,25 +1,37 @@
-import { screen, userEvent, waitFor } from "@testing-library/react-native";
-import { TRPCError } from "@trpc/server";
+import type { WorkoutStartInput } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
 
-import { Accessibility } from "@/shared/services/accessibility";
-import { AuthenticationClient } from "@/shared/services/authentication-client";
-import { TrpcClient } from "@/shared/services/trpc-client";
-import { benchPressExercise } from "@/shared/testing/bench-press-exercise";
-import { emptyHomeScreenTrpcClientLayer } from "@/shared/testing/empty-home-screen-trpc-client-layer";
-import { pushDayRoutine } from "@/shared/testing/push-day-routine";
-import { renderScreen } from "@/shared/testing/render-screen";
-import { signedInAuthenticationClientLayer } from "@/shared/testing/signed-in-authentication-client-layer";
-import { signedInSession } from "@/shared/testing/signed-in-session";
+import { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
+import { screen, userEvent, waitFor } from "@testing-library/react-native";
+
+import type { Exercise } from "#/shared/exercise-application-service.ts";
+import type { Workout } from "#/shared/workout.ts";
+
+import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";
+import { fakeCryptoLayer } from "#/shared/testing/fake-crypto-layer.ts";
+import { fakeSignedInAuthenticationClientLayer } from "#/shared/testing/fake-signed-in-authentication-client-layer.ts";
+import { fakeTrpcClientLayer } from "#/shared/testing/fake-trpc-client-layer.ts";
+import { PUSH_DAY_ROUTINE } from "#/shared/testing/push-day-routine.ts";
+import { PUSH_DAY_WORKOUT } from "#/shared/testing/push-day-workout.ts";
+import { signedInSession } from "#/shared/testing/signed-in-session.ts";
+import { renderScreen } from "#/testing/render-screen.tsx";
+
+const BENCH_PRESS_EXERCISE: Exercise = {
+  amountUnit: "repetition",
+  equipment: [{ equipment: "barbell" }, { equipment: "bench" }],
+  id: "01900000-0000-7000-8000-000000000001",
+  muscleGroups: [{ muscleGroup: "chest", role: "primary" }],
+  name: "Bench Press (Barbell)",
+  weightType: "total",
+};
 
 describe("HomeScreen", () => {
-  it("shows each Routine that the server returns", async () => {
+  it("lists each Routine of the User", async () => {
     renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
-        authenticationClientLayer: signedInAuthenticationClientLayer,
-        trpcClientLayer: TrpcClient.layerTest({
-          exercise: { list: () => [benchPressExercise] },
-          routine: { list: () => [pushDayRoutine] },
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: { "routine.list": () => [PUSH_DAY_ROUTINE] },
         }),
       },
     });
@@ -29,117 +41,224 @@ describe("HomeScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("tells the person that they have no Routines when the server returns none", async () => {
+  it("offers to resume the User's Workout in progress instead of starting a Workout from a Routine", async () => {
     renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
-        authenticationClientLayer: signedInAuthenticationClientLayer,
-        trpcClientLayer: TrpcClient.layerTest({
-          exercise: { list: () => [benchPressExercise] },
-          routine: { list: () => [] },
-        }),
-      },
-    });
-
-    expect(
-      await screen.findByText("You have no routines yet."),
-    ).toBeOnTheScreen();
-  });
-
-  it("shows an error message when the server fails to list the Routines", async () => {
-    renderScreen({
-      initialUrl: "/",
-      testRuntimeLayers: {
-        authenticationClientLayer: signedInAuthenticationClientLayer,
-        trpcClientLayer: TrpcClient.layerTest({
-          exercise: { list: () => [benchPressExercise] },
-          routine: {
-            list: () => {
-              throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-            },
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "routine.list": () => [PUSH_DAY_ROUTINE],
+            "workout.findInProgress": () => PUSH_DAY_WORKOUT,
           },
         }),
       },
     });
 
     expect(
-      await screen.findByText("Something went wrong: try again."),
+      await screen.findByRole("link", { name: "Resume workout" }),
     ).toBeOnTheScreen();
+    expect(
+      screen.queryByRole("button", { name: "Start Push day" }),
+    ).not.toBeOnTheScreen();
   });
 
-  it("announces the error message when the server fails to list the Routines", async () => {
-    const announcedMessages: string[] = [];
-
-    renderScreen({
-      initialUrl: "/",
-      testRuntimeLayers: {
-        accessibilityLayer: Accessibility.layerTest(announcedMessages),
-        authenticationClientLayer: signedInAuthenticationClientLayer,
-        trpcClientLayer: TrpcClient.layerTest({
-          exercise: { list: () => [benchPressExercise] },
-          routine: {
-            list: () => {
-              throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-            },
-          },
-        }),
-      },
-    });
-
-    await waitFor(() => {
-      expect(announcedMessages).toEqual(["Something went wrong: try again."]);
-    });
-  });
-
-  it("opens the Workout screen with the Sets that the Routine plans when the person starts a Workout from it", async () => {
+  it("starts a Workout from the Routine the User picks, with an id the app creates, and shows it", async () => {
+    const startedInputs: WorkoutStartInput[] = [];
+    let workoutInProgress: null | Workout = null;
     const user = userEvent.setup();
-
     renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
-        authenticationClientLayer: signedInAuthenticationClientLayer,
-        trpcClientLayer: TrpcClient.layerTest({
-          exercise: { list: () => [benchPressExercise] },
-          routine: { list: () => [pushDayRoutine] },
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        crypto: fakeCryptoLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => [BENCH_PRESS_EXERCISE],
+            "routine.list": () => [PUSH_DAY_ROUTINE],
+            "workout.findInProgress": () => workoutInProgress,
+            "workout.start": (input) => {
+              startedInputs.push(input);
+              workoutInProgress = PUSH_DAY_WORKOUT;
+            },
+          },
         }),
       },
     });
 
     await user.press(
-      await screen.findByRole("button", {
-        disabled: false,
-        name: "Start Push day",
-      }),
+      await screen.findByRole("button", { name: "Start Push day" }),
     );
 
-    expect(
-      await screen.findByText("0 working sets done, 1 left."),
-    ).toBeOnTheScreen();
+    expect(await screen.findByText("Bench Press (Barbell)")).toBeOnTheScreen();
+    expect(startedInputs).toStrictEqual([
+      {
+        id: "00000000-0000-7000-8000-000000000001",
+        routineId: "01900000-0000-7000-8000-000000000004",
+      },
+    ]);
   });
 
-  it("takes the person to the sign-in screen when they sign out", async () => {
+  it("tells the User that a Workout is already in progress when another device started one first, and offers to resume it", async () => {
+    let workoutInProgress: null | Workout = null;
     const user = userEvent.setup();
-    let currentSession: null | typeof signedInSession = signedInSession;
-
     renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
-        authenticationClientLayer: AuthenticationClient.layerTest({
-          "/get-session": () => Response.json(currentSession),
-          "/sign-out": () => {
-            currentSession = null;
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        crypto: fakeCryptoLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "routine.list": () => [PUSH_DAY_ROUTINE],
+            "workout.findInProgress": () => workoutInProgress,
+            "workout.start": () => {
+              workoutInProgress = PUSH_DAY_WORKOUT;
 
-            return Response.json({ success: true });
+              throw new WorkoutInProgressConflictError();
+            },
           },
         }),
-        trpcClientLayer: emptyHomeScreenTrpcClientLayer,
       },
     });
 
-    await user.press(await screen.findByRole("button", { name: "Sign out" }));
+    await user.press(
+      await screen.findByRole("button", { name: "Start Push day" }),
+    );
 
     expect(
-      await screen.findByRole("link", { name: "Continue with email address" }),
+      await screen.findByText(
+        "You already have a workout in progress: resume it, or stop it before you start another.",
+      ),
     ).toBeOnTheScreen();
+    expect(
+      await screen.findByRole("link", { name: "Resume workout" }),
+    ).toBeOnTheScreen();
+  });
+
+  it("tells the User that Ankaa can't connect when a start can't reach the server, and keeps offering the start", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        crypto: fakeCryptoLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "routine.list": () => [PUSH_DAY_ROUTINE],
+            "workout.findInProgress": () => null,
+          },
+          unreachablePaths: ["workout.start"],
+        }),
+      },
+    });
+
+    await user.press(
+      await screen.findByRole("button", { name: "Start Push day" }),
+    );
+
+    expect(
+      await screen.findByText(
+        "Ankaa can't connect: check your internet connection and try again.",
+      ),
+    ).toBeOnTheScreen();
+    expect(
+      screen.getByRole("button", { name: "Start Push day" }),
+    ).toBeEnabled();
+  });
+
+  it("tells the User that Ankaa can't connect when the server can't be reached", async () => {
+    renderScreen({
+      initialUrl: "/",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({ isServerReachable: false }),
+      },
+    });
+
+    expect(
+      await screen.findByText(
+        "Ankaa can't connect: check your internet connection and try again.",
+      ),
+    ).toBeOnTheScreen();
+  });
+
+  it("disables Delete account, and shows it busy, while the request to delete the Account waits for its answer", async () => {
+    const user = userEvent.setup();
+    const deleteUserResponse = Promise.withResolvers<Response>();
+    renderScreen({
+      initialUrl: "/",
+      testRuntimeLayers: {
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/delete-user": () => deleteUserResponse.promise,
+          "/get-session": () => Response.json(signedInSession),
+        }),
+      },
+    });
+
+    await user.press(
+      await screen.findByRole("button", { name: "Delete account" }),
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Delete account" }),
+    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Delete account" })).toBeBusy();
+  });
+
+  it("tells the User to check their email once the server answers the request to delete the Account", async () => {
+    const user = userEvent.setup();
+    const deleteUserResponse = Promise.withResolvers<Response>();
+    renderScreen({
+      initialUrl: "/",
+      testRuntimeLayers: {
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/delete-user": () => deleteUserResponse.promise,
+          "/get-session": () => Response.json(signedInSession),
+        }),
+      },
+    });
+    await user.press(
+      await screen.findByRole("button", { name: "Delete account" }),
+    );
+
+    deleteUserResponse.resolve(
+      Response.json({ message: "Verification email sent", success: true }),
+    );
+
+    expect(
+      await screen.findByText(
+        "Check your email to confirm deleting your account.",
+      ),
+    ).toBeOnTheScreen();
+  });
+
+  it("enables Delete account again once the server answers the request to delete the Account", async () => {
+    const user = userEvent.setup();
+    const deleteUserResponse = Promise.withResolvers<Response>();
+    renderScreen({
+      initialUrl: "/",
+      testRuntimeLayers: {
+        authenticationClient: fakeAuthenticationClientLayer({
+          "/delete-user": () => deleteUserResponse.promise,
+          "/get-session": () => Response.json(signedInSession),
+        }),
+      },
+    });
+    await user.press(
+      await screen.findByRole("button", { name: "Delete account" }),
+    );
+
+    deleteUserResponse.resolve(
+      Response.json({ message: "Verification email sent", success: true }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Delete account" }),
+      ).toBeEnabled();
+    });
+    expect(
+      screen.getByRole("button", { name: "Delete account" }),
+    ).not.toBeBusy();
   });
 });

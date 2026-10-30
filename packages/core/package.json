@@ -4,26 +4,24 @@
   },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
-    "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
     "@ankaa/vitest": "workspace:*",
-    "@effect/vitest": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "jiti": "catalog:",
-    "prettier": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
   "exports": {
     "./*": "./src/*.ts"
   },
+  "imports": {
+    "#/*": "./src/*"
+  },
   "name": "@ankaa/core",
   "private": true,
   "scripts": {
     "check-types": "tsc --noEmit",
-    "format": "prettier --check .",
-    "format:fix": "prettier --write .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest run"

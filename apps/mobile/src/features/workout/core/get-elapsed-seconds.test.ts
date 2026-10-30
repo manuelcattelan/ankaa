@@ -1,4 +1,4 @@
-import { getElapsedSeconds } from "@/features/workout/core/get-elapsed-seconds";
+import { getElapsedSeconds } from "#/features/workout/core/get-elapsed-seconds.ts";
 
 describe("getElapsedSeconds", () => {
   it("returns the whole seconds since the Workout started", () => {

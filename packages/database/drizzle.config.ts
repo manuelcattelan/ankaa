@@ -1,10 +1,10 @@
+import { urlSchema } from "@ankaa/core/shared/schemas/url-schema";
 import { defineConfig } from "drizzle-kit";
+import * as Schema from "effect/Schema";
 
-const databaseUrl = process.env.DATABASE_URL?.trim() ?? "";
-
-if (!URL.canParse(databaseUrl)) {
-  throw new Error("DATABASE_URL must be a valid URL");
-}
+const databaseUrl = Schema.decodeUnknownSync(urlSchema)(
+  process.env.DATABASE_URL_DIRECT,
+);
 
 export default defineConfig({
   dbCredentials: { url: databaseUrl },

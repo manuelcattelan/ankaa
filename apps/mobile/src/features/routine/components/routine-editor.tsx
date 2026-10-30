@@ -1,721 +1,223 @@
-import type { DayOfWeek } from "@ankaa/core/features/routine/constants/day-of-week";
-import type { Variation } from "@ankaa/core/shared/constants/intensity-technique";
-import type { Section } from "@ankaa/core/shared/constants/section";
-import type { SetType } from "@ankaa/core/shared/constants/set-type";
-import type { SnapPoint } from "@expo/ui";
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 
-import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/day-of-week";
-import { VARIATIONS } from "@ankaa/core/shared/constants/intensity-technique";
-import { SECTIONS } from "@ankaa/core/shared/constants/section";
-import { SET_TYPES } from "@ankaa/core/shared/constants/set-type";
-import { BottomSheet, Host, RNHostView, Switch } from "@expo/ui";
+import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/days-of-week";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useReducer, useState } from "react";
+import { Modal } from "react-native";
 
-import type {
-  RoutineDraftAction,
-  RoutineDraftBlock,
-  RoutineDraftBlockMoveDirection,
-  RoutineDraftExercise,
-  RoutineDraftExerciseSet,
-} from "@/features/routine/core/routine-draft-reducer";
-import type { Exercise } from "@/shared/interactors/list-exercises";
-import type { Routine } from "@/shared/interactors/list-routines";
+import type { ExercisePickerTarget } from "#/features/routine/core/exercise-picker-target.ts";
+import type { Exercise } from "#/shared/exercise-application-service.ts";
+import type { Routine } from "#/shared/routine.ts";
 
-import { SUPERSET_EXERCISE_COUNT_MINIMUM } from "@/features/routine/constants/superset";
-import { buildRoutineSaveInput } from "@/features/routine/core/build-routine-save-input";
-import { createRoutineDraft } from "@/features/routine/core/create-routine-draft";
-import { getRoutineDraftExerciseSetValidationErrorMessages } from "@/features/routine/core/get-routine-draft-exercise-set-validation-error-messages";
-import { getRoutineDraftWarmUpForExerciseName } from "@/features/routine/core/get-routine-draft-warm-up-for-exercise-name";
-import { getRoutineNameValidationErrorMessage } from "@/features/routine/core/get-routine-name-validation-error-message";
-import { getRoutineSaveErrorMessage } from "@/features/routine/core/get-routine-save-error-message";
-import { hasRoutineDraftValidationErrors } from "@/features/routine/core/has-routine-draft-validation-errors";
-import { routineDraftReducer } from "@/features/routine/core/routine-draft-reducer";
-import { validateRoutineDraftExerciseSet } from "@/features/routine/core/validate-routine-draft-exercise-set";
-import { validateRoutineName } from "@/features/routine/core/validate-routine-name";
-import { routineEditorMessages } from "@/features/routine/messages/routine-editor-messages";
-import { createRoutineDeleteMutationOptions } from "@/features/routine/mutations/create-routine-delete-mutation-options";
-import { createRoutineSaveMutationOptions } from "@/features/routine/mutations/create-routine-save-mutation-options";
-import { createRoutineListQueryOptions } from "@/features/routine/queries/create-routine-list-query-options";
-import { Button } from "@/shared/components/button";
-import { CheckboxGroup } from "@/shared/components/checkbox-group";
-import { PickerField } from "@/shared/components/picker-field";
-import { ScrollView } from "@/shared/components/scroll-view";
-import { StatusMessage } from "@/shared/components/status-message";
-import { Text } from "@/shared/components/text";
-import { TextField } from "@/shared/components/text-field";
-import { getExerciseNames } from "@/shared/core/get-exercise-names";
-import { getTrpcErrorMessage } from "@/shared/core/get-trpc-error-message";
-import { useRuntime } from "@/shared/hooks/use-runtime";
-import { announceMessage } from "@/shared/interactors/announce-message";
-import { createIdentifier } from "@/shared/interactors/create-identifier";
-import { createExerciseListQueryOptions } from "@/shared/queries/create-exercise-list-query-options";
+import { RoutineEditorSection } from "#/features/routine/components/routine-editor-section.tsx";
+import { createRoutineDraft } from "#/features/routine/core/create-routine-draft.ts";
+import { getRoutineSaveErrorMessage } from "#/features/routine/core/get-routine-save-error-message.ts";
+import { routineDraftReducer } from "#/features/routine/core/routine-draft-reducer.ts";
+import { routineFormSchema } from "#/features/routine/core/routine-form-schema.ts";
+import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
+import { routineSaveMutationOptions } from "#/features/routine/mutations/routine-save-mutation-options.ts";
+import { routineListQueryOptions } from "#/features/routine/queries/routine-list-query-options.ts";
+import { Button } from "#/shared/components/button.tsx";
+import { CheckboxGroup } from "#/shared/components/checkbox-group.tsx";
+import { ScrollView } from "#/shared/components/scroll-view.tsx";
+import { StatusMessage } from "#/shared/components/status-message.tsx";
+import { TextField } from "#/shared/components/text-field.tsx";
+import { decodeForm } from "#/shared/core/decode-form.ts";
+import { getExerciseNames } from "#/shared/core/get-exercise-names.ts";
+import { useCreateId } from "#/shared/hooks/use-create-id.ts";
+import { useRuntime } from "#/shared/hooks/use-runtime.ts";
+import { exerciseListQueryOptions } from "#/shared/queries/exercise-list-query-options.ts";
 
-type ExercisePickerTarget =
-  { section: Section } | { warmUpForRoutineExerciseId: string };
+const NO_EXERCISE_NAMES: ReadonlyMap<string, string> = new Map();
 
-type RoutineEditorBlockProperties = RoutineEditorSharedProperties & {
-  isFirstRoutineDraftBlock: boolean;
-  isLastRoutineDraftBlock: boolean;
-  routineDraftBlock: RoutineDraftBlock;
-  section: Section;
-};
-
-type RoutineEditorExerciseProperties = RoutineEditorSharedProperties & {
-  onAddWarmUpExercise?: () => void;
-  onLeaveSuperset?: () => void;
-  routineDraftExercise: RoutineDraftExercise;
-  warmUpForExerciseName?: string;
-};
-
-type RoutineEditorProperties = {
+/**
+ * Edits the Draft of a Routine, a new one when `routine` is `null`, and
+ * Saves it.
+ */
+export function RoutineEditor({
+  children,
+  renderExercisePicker,
+  routine,
+}: {
+  children?: ReactNode;
   renderExercisePicker: (
     onSelectExercise: (exercise: Exercise) => void,
   ) => ReactElement;
-  routine?: Routine;
-};
-
-type RoutineEditorSectionProperties = RoutineEditorSharedProperties & {
-  routineDraftBlocks: RoutineDraftBlock[];
-  section: Section;
-};
-
-type RoutineEditorSetProperties = {
-  dispatchRoutineDraftAction: (routineDraftAction: RoutineDraftAction) => void;
-  routineDraftExerciseSet: RoutineDraftExerciseSet;
-  routineExerciseId: string;
-  setNumber: number;
-  shouldShowValidationErrors: boolean;
-};
-
-type RoutineEditorSharedProperties = {
-  dispatchRoutineDraftAction: (routineDraftAction: RoutineDraftAction) => void;
-  exerciseNames: Map<string, string>;
-  onOpenExercisePicker: (exercisePickerTarget: ExercisePickerTarget) => void;
-  shouldShowValidationErrors: boolean;
-};
-
-type VariationPickerOption = typeof NO_VARIATION_PICKER_OPTION | Variation;
-
-const NO_VARIATION_PICKER_OPTION = "none";
-
-const EXERCISE_PICKER_SNAP_POINTS: SnapPoint[] = ["full"];
-
-const DAY_OF_WEEK_LABELS = {
-  friday: routineEditorMessages.fridayDayLabel,
-  monday: routineEditorMessages.mondayDayLabel,
-  saturday: routineEditorMessages.saturdayDayLabel,
-  sunday: routineEditorMessages.sundayDayLabel,
-  thursday: routineEditorMessages.thursdayDayLabel,
-  tuesday: routineEditorMessages.tuesdayDayLabel,
-  wednesday: routineEditorMessages.wednesdayDayLabel,
-} satisfies Record<DayOfWeek, string>;
-
-const SECTION_LABELS = {
-  cool_down: routineEditorMessages.coolDownSectionLabel,
-  main: routineEditorMessages.mainSectionLabel,
-  warm_up: routineEditorMessages.warmUpSectionLabel,
-} satisfies Record<Section, string>;
-
-const SET_TYPE_LABELS = {
-  warm_up: routineEditorMessages.warmUpSetTypeLabel,
-  working: routineEditorMessages.workingSetTypeLabel,
-} satisfies Record<SetType, string>;
-
-const VARIATION_PICKER_LABELS = {
-  drop_set: routineEditorMessages.dropSetVariationLabel,
-  none: routineEditorMessages.noVariationLabel,
-  rest_pause: routineEditorMessages.restPauseVariationLabel,
-} satisfies Record<VariationPickerOption, string>;
-
-const VARIATION_PICKER_OPTIONS: VariationPickerOption[] = [
-  NO_VARIATION_PICKER_OPTION,
-  ...VARIATIONS,
-];
-
-export function RoutineEditor({
-  renderExercisePicker,
-  routine,
-}: RoutineEditorProperties) {
-  const runtime = useRuntime();
-
+  routine: null | Routine;
+}) {
   const router = useRouter();
 
   const queryClient = useQueryClient();
 
-  const [routineDraft, dispatchRoutineDraftAction] = useReducer(
+  const runtime = useRuntime();
+
+  const createId = useCreateId();
+
+  const [routineDraft, dispatch] = useReducer(
     routineDraftReducer,
     routine,
     createRoutineDraft,
   );
-
   const [exercisePickerTarget, setExercisePickerTarget] =
-    useState<ExercisePickerTarget>();
-  const [shouldShowValidationErrors, setShouldShowValidationErrors] =
-    useState(false);
+    useState<ExercisePickerTarget | null>(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const exerciseLibrary = useQuery(createExerciseListQueryOptions(runtime));
+  const exerciseNames = useQuery({
+    ...exerciseListQueryOptions(runtime),
+    select: getExerciseNames,
+  });
 
   const saveRoutine = useMutation({
-    ...createRoutineSaveMutationOptions(runtime),
-    onError: (error) => {
-      runtime.runSync(announceMessage(getRoutineSaveErrorMessage(error)));
+    ...routineSaveMutationOptions(runtime),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: routineListQueryOptions(runtime).queryKey,
+      });
+
+      router.dismissTo("/");
     },
-    onSuccess: showUpdatedRoutineList,
   });
 
-  const deleteRoutine = useMutation({
-    ...createRoutineDeleteMutationOptions(runtime),
-    onError: (error) => {
-      runtime.runSync(announceMessage(getTrpcErrorMessage(error)));
-    },
-    onSuccess: showUpdatedRoutineList,
+  const routineFormDecoding = decodeForm({
+    hasSubmitted,
+    schema: routineFormSchema,
+    values: routineDraft,
   });
+  const exerciseNamesById = exerciseNames.data ?? NO_EXERCISE_NAMES;
+  const nameErrorMessage = routineFormDecoding.errorMessages.name;
+  const statusMessage = getStatusMessage();
 
-  const exerciseNames = getExerciseNames(exerciseLibrary.data);
-  const isRoutineChangePending =
-    saveRoutine.isPending || deleteRoutine.isPending;
-  const isRoutineDraftInvalid =
-    shouldShowValidationErrors && hasRoutineDraftValidationErrors(routineDraft);
-  const routineNameValidationErrorMessage = shouldShowValidationErrors
-    ? getRoutineNameValidationErrorMessage(
-        validateRoutineName(routineDraft.name),
-      )
-    : undefined;
-  const routineChangeErrorMessage = getRoutineChangeErrorMessage();
-
-  function getRoutineChangeErrorMessage() {
-    if (saveRoutine.error) {
+  function getStatusMessage() {
+    if (saveRoutine.error !== null) {
       return getRoutineSaveErrorMessage(saveRoutine.error);
     }
 
-    if (deleteRoutine.error) {
-      return getTrpcErrorMessage(deleteRoutine.error);
+    if (!hasSubmitted || routineFormDecoding.isValid) {
+      return null;
     }
 
-    return isRoutineDraftInvalid
-      ? routineEditorMessages.routineDraftInvalidError
-      : undefined;
-  }
-
-  function handleChangeDays(days: DayOfWeek[]) {
-    dispatchRoutineDraftAction({ days, type: "changedDays" });
-  }
-
-  function handleChangeName(name: string) {
-    dispatchRoutineDraftAction({ name, type: "changedName" });
-  }
-
-  function handleDeleteRoutine() {
-    if (isRoutineChangePending || routineDraft.id === undefined) {
-      return;
-    }
-
-    saveRoutine.reset();
-
-    deleteRoutine.mutate({ id: routineDraft.id });
+    return (
+      routineFormDecoding.errorMessage ??
+      ROUTINE_MESSAGES.routineDraftInvalidError
+    );
   }
 
   function handleDismissExercisePicker() {
-    setExercisePickerTarget(undefined);
+    setExercisePickerTarget(null);
   }
 
   function handleSaveRoutine() {
-    if (isRoutineChangePending) {
+    if (saveRoutine.isPending) {
       return;
     }
 
-    setShouldShowValidationErrors(true);
+    setHasSubmitted(true);
     saveRoutine.reset();
-    deleteRoutine.reset();
 
-    if (hasRoutineDraftValidationErrors(routineDraft)) {
-      runtime.runSync(
-        announceMessage(routineEditorMessages.routineDraftInvalidError),
-      );
+    const id = routineDraft.id === "" ? createId() : routineDraft.id;
 
-      return;
+    dispatch({ id, type: "assignedId" });
+
+    const savedRoutineFormDecoding = decodeForm({
+      hasSubmitted: true,
+      schema: routineFormSchema,
+      values: { ...routineDraft, id },
+    });
+
+    if (savedRoutineFormDecoding.value !== null) {
+      saveRoutine.mutate(savedRoutineFormDecoding.value);
     }
-
-    const routineId = routineDraft.id ?? runtime.runSync(createIdentifier());
-
-    dispatchRoutineDraftAction({ id: routineId, type: "assignedId" });
-
-    saveRoutine.mutate(buildRoutineSaveInput({ routineDraft, routineId }));
   }
 
   function handleSelectExercise(exercise: Exercise) {
-    if (!exercisePickerTarget) {
+    if (exercisePickerTarget === null) {
       return;
     }
 
     if ("section" in exercisePickerTarget) {
-      dispatchRoutineDraftAction({
+      const exerciseGroupId = createId();
+
+      dispatch({
+        exerciseGroupId,
         exerciseId: exercise.id,
-        routineDraftBlockId: runtime.runSync(createIdentifier()),
-        routineExerciseId: runtime.runSync(createIdentifier()),
+        routineExerciseId: createId(),
         section: exercisePickerTarget.section,
         type: "addedExercise",
       });
     } else {
-      dispatchRoutineDraftAction({
+      dispatch({
         exerciseId: exercise.id,
-        routineExerciseId: runtime.runSync(createIdentifier()),
+        routineExerciseId: createId(),
         type: "addedWarmUpExercise",
         warmUpForRoutineExerciseId:
           exercisePickerTarget.warmUpForRoutineExerciseId,
       });
     }
 
-    setExercisePickerTarget(undefined);
-  }
-
-  function showUpdatedRoutineList() {
-    void queryClient.invalidateQueries({
-      queryKey: createRoutineListQueryOptions(runtime).queryKey,
-    });
-
-    router.dismissTo("/");
+    setExercisePickerTarget(null);
   }
 
   return (
     <>
       <ScrollView>
         <TextField
-          errorMessage={routineNameValidationErrorMessage}
-          label={routineEditorMessages.routineNameLabel}
-          onChangeText={handleChangeName}
+          errorMessage={nameErrorMessage}
+          label={ROUTINE_MESSAGES.routineNameLabel}
+          onChangeText={(name) => {
+            dispatch({ name, type: "changedName" });
+          }}
           value={routineDraft.name}
         />
         <CheckboxGroup
-          label={routineEditorMessages.daysLabel}
-          onChangeSelectedOptions={handleChangeDays}
-          optionLabels={DAY_OF_WEEK_LABELS}
+          label={ROUTINE_MESSAGES.daysLabel}
+          onChangeSelectedOptions={(days) => {
+            dispatch({ days, type: "changedDays" });
+          }}
+          optionLabels={ROUTINE_MESSAGES.dayOfWeekLabels}
           options={DAYS_OF_WEEK}
           selectedOptions={routineDraft.days}
         />
-        {SECTIONS.map((section) => (
-          <RoutineEditorSection
-            dispatchRoutineDraftAction={dispatchRoutineDraftAction}
-            exerciseNames={exerciseNames}
-            key={section}
-            onOpenExercisePicker={setExercisePickerTarget}
-            routineDraftBlocks={routineDraft.sections[section]}
-            section={section}
-            shouldShowValidationErrors={shouldShowValidationErrors}
-          />
-        ))}
+        <RoutineEditorSection
+          dispatch={dispatch}
+          exerciseGroups={routineDraft.sections.warmUp}
+          exerciseNames={exerciseNamesById}
+          hasSubmitted={hasSubmitted}
+          onOpenExercisePicker={setExercisePickerTarget}
+          section="warm_up"
+        />
+        <RoutineEditorSection
+          dispatch={dispatch}
+          exerciseGroups={routineDraft.sections.main}
+          exerciseNames={exerciseNamesById}
+          hasSubmitted={hasSubmitted}
+          onOpenExercisePicker={setExercisePickerTarget}
+          section="main"
+        />
+        <RoutineEditorSection
+          dispatch={dispatch}
+          exerciseGroups={routineDraft.sections.coolDown}
+          exerciseNames={exerciseNamesById}
+          hasSubmitted={hasSubmitted}
+          onOpenExercisePicker={setExercisePickerTarget}
+          section="cool_down"
+        />
         <Button
           isBusy={saveRoutine.isPending}
           onPress={handleSaveRoutine}
-          title={routineEditorMessages.saveRoutineButton}
+          title={ROUTINE_MESSAGES.saveRoutineButton}
         />
-        {routine ? (
-          <Button
-            isBusy={deleteRoutine.isPending}
-            onPress={handleDeleteRoutine}
-            title={routineEditorMessages.deleteRoutineButton}
-          />
-        ) : null}
-        <StatusMessage message={routineChangeErrorMessage} />
+        <StatusMessage message={statusMessage} />
+        {children}
       </ScrollView>
-      <BottomSheet
-        isPresented={!!exercisePickerTarget}
-        onDismiss={handleDismissExercisePicker}
-        snapPoints={EXERCISE_PICKER_SNAP_POINTS}
+      <Modal
+        animationType="slide"
+        onRequestClose={handleDismissExercisePicker}
+        presentationStyle="pageSheet"
+        visible={exercisePickerTarget !== null}
       >
-        <RNHostView>{renderExercisePicker(handleSelectExercise)}</RNHostView>
-      </BottomSheet>
-    </>
-  );
-}
-
-function RoutineEditorBlock({
-  dispatchRoutineDraftAction,
-  exerciseNames,
-  isFirstRoutineDraftBlock,
-  isLastRoutineDraftBlock,
-  onOpenExercisePicker,
-  routineDraftBlock,
-  section,
-  shouldShowValidationErrors,
-}: RoutineEditorBlockProperties) {
-  const runtime = useRuntime();
-
-  const isSuperset =
-    routineDraftBlock.exercises.length >= SUPERSET_EXERCISE_COUNT_MINIMUM;
-
-  function handleJoinSupersetWithNextBlock() {
-    dispatchRoutineDraftAction({
-      routineDraftBlockId: routineDraftBlock.id,
-      section,
-      type: "joinedSupersetWithNextBlock",
-    });
-  }
-
-  function handleMoveBlock(
-    routineDraftBlockMoveDirection: RoutineDraftBlockMoveDirection,
-  ) {
-    dispatchRoutineDraftAction({
-      routineDraftBlockId: routineDraftBlock.id,
-      routineDraftBlockMoveDirection,
-      section,
-      type: "movedBlock",
-    });
-  }
-
-  return (
-    <>
-      {isSuperset ? <Text>{routineEditorMessages.supersetLabel}</Text> : null}
-      {routineDraftBlock.warmUpExercises.map((routineDraftWarmUpExercise) => (
-        <RoutineEditorExercise
-          dispatchRoutineDraftAction={dispatchRoutineDraftAction}
-          exerciseNames={exerciseNames}
-          key={routineDraftWarmUpExercise.id}
-          onOpenExercisePicker={onOpenExercisePicker}
-          routineDraftExercise={routineDraftWarmUpExercise}
-          shouldShowValidationErrors={shouldShowValidationErrors}
-          warmUpForExerciseName={getRoutineDraftWarmUpForExerciseName({
-            exerciseNames,
-            routineDraftBlock,
-            routineDraftWarmUpExercise,
-          })}
-        />
-      ))}
-      {routineDraftBlock.exercises.map((routineDraftExercise) => (
-        <RoutineEditorExercise
-          dispatchRoutineDraftAction={dispatchRoutineDraftAction}
-          exerciseNames={exerciseNames}
-          key={routineDraftExercise.id}
-          onAddWarmUpExercise={
-            section === "main"
-              ? () => {
-                  onOpenExercisePicker({
-                    warmUpForRoutineExerciseId: routineDraftExercise.id,
-                  });
-                }
-              : undefined
-          }
-          onLeaveSuperset={
-            isSuperset
-              ? () => {
-                  dispatchRoutineDraftAction({
-                    routineDraftBlockId: runtime.runSync(createIdentifier()),
-                    routineExerciseId: routineDraftExercise.id,
-                    section,
-                    type: "leftSuperset",
-                  });
-                }
-              : undefined
-          }
-          onOpenExercisePicker={onOpenExercisePicker}
-          routineDraftExercise={routineDraftExercise}
-          shouldShowValidationErrors={shouldShowValidationErrors}
-        />
-      ))}
-      <Button
-        disabled={isFirstRoutineDraftBlock}
-        onPress={() => {
-          handleMoveBlock("up");
-        }}
-        title={routineEditorMessages.moveUpButton}
-      />
-      <Button
-        disabled={isLastRoutineDraftBlock}
-        onPress={() => {
-          handleMoveBlock("down");
-        }}
-        title={routineEditorMessages.moveDownButton}
-      />
-      <Button
-        disabled={isLastRoutineDraftBlock}
-        onPress={handleJoinSupersetWithNextBlock}
-        title={routineEditorMessages.joinSupersetButton}
-      />
-    </>
-  );
-}
-
-function RoutineEditorExercise({
-  dispatchRoutineDraftAction,
-  exerciseNames,
-  onAddWarmUpExercise,
-  onLeaveSuperset,
-  routineDraftExercise,
-  shouldShowValidationErrors,
-  warmUpForExerciseName,
-}: RoutineEditorExerciseProperties) {
-  const runtime = useRuntime();
-
-  function handleAddSet() {
-    dispatchRoutineDraftAction({
-      routineExerciseId: routineDraftExercise.id,
-      routineExerciseSetId: runtime.runSync(createIdentifier()),
-      type: "addedSet",
-    });
-  }
-
-  function handleChangeNote(note: string) {
-    dispatchRoutineDraftAction({
-      note,
-      routineExerciseId: routineDraftExercise.id,
-      type: "changedExerciseNote",
-    });
-  }
-
-  function handleRemoveExercise() {
-    dispatchRoutineDraftAction({
-      routineExerciseId: routineDraftExercise.id,
-      type: "removedExercise",
-    });
-  }
-
-  return (
-    <>
-      <Text>{exerciseNames.get(routineDraftExercise.exerciseId)}</Text>
-      {typeof warmUpForExerciseName === "string" ? (
-        <Text>
-          {routineEditorMessages.warmUpForExerciseLabel(warmUpForExerciseName)}
-        </Text>
-      ) : null}
-      <TextField
-        label={routineEditorMessages.exerciseNoteLabel}
-        multiline
-        onChangeText={handleChangeNote}
-        value={routineDraftExercise.note}
-      />
-      {routineDraftExercise.sets.map((routineDraftExerciseSet, setIndex) => (
-        <RoutineEditorSet
-          dispatchRoutineDraftAction={dispatchRoutineDraftAction}
-          key={routineDraftExerciseSet.id}
-          routineDraftExerciseSet={routineDraftExerciseSet}
-          routineExerciseId={routineDraftExercise.id}
-          setNumber={setIndex + 1}
-          shouldShowValidationErrors={shouldShowValidationErrors}
-        />
-      ))}
-      <Button
-        onPress={handleAddSet}
-        title={routineEditorMessages.addSetButton}
-      />
-      {onAddWarmUpExercise ? (
-        <Button
-          onPress={onAddWarmUpExercise}
-          title={routineEditorMessages.addWarmUpExerciseButton}
-        />
-      ) : null}
-      {onLeaveSuperset ? (
-        <Button
-          onPress={onLeaveSuperset}
-          title={routineEditorMessages.leaveSupersetButton}
-        />
-      ) : null}
-      <Button
-        onPress={handleRemoveExercise}
-        title={routineEditorMessages.removeExerciseButton}
-      />
-    </>
-  );
-}
-
-function RoutineEditorSection({
-  dispatchRoutineDraftAction,
-  exerciseNames,
-  onOpenExercisePicker,
-  routineDraftBlocks,
-  section,
-  shouldShowValidationErrors,
-}: RoutineEditorSectionProperties) {
-  return (
-    <>
-      <Text>{SECTION_LABELS[section]}</Text>
-      {routineDraftBlocks.map((routineDraftBlock, routineDraftBlockIndex) => (
-        <RoutineEditorBlock
-          dispatchRoutineDraftAction={dispatchRoutineDraftAction}
-          exerciseNames={exerciseNames}
-          isFirstRoutineDraftBlock={routineDraftBlockIndex === 0}
-          isLastRoutineDraftBlock={
-            routineDraftBlockIndex === routineDraftBlocks.length - 1
-          }
-          key={routineDraftBlock.id}
-          onOpenExercisePicker={onOpenExercisePicker}
-          routineDraftBlock={routineDraftBlock}
-          section={section}
-          shouldShowValidationErrors={shouldShowValidationErrors}
-        />
-      ))}
-      <Button
-        onPress={() => {
-          onOpenExercisePicker({ section });
-        }}
-        title={routineEditorMessages.addExerciseButton}
-      />
-    </>
-  );
-}
-
-function RoutineEditorSet({
-  dispatchRoutineDraftAction,
-  routineDraftExerciseSet,
-  routineExerciseId,
-  setNumber,
-  shouldShowValidationErrors,
-}: RoutineEditorSetProperties) {
-  const routineDraftExerciseSetValidationErrorMessages =
-    shouldShowValidationErrors
-      ? getRoutineDraftExerciseSetValidationErrorMessages(
-          validateRoutineDraftExerciseSet(routineDraftExerciseSet),
-        )
-      : undefined;
-
-  function handleChangeSet(
-    routineDraftExerciseSetChanges: Partial<RoutineDraftExerciseSet>,
-  ) {
-    dispatchRoutineDraftAction({
-      routineDraftExerciseSet: {
-        ...routineDraftExerciseSet,
-        ...routineDraftExerciseSetChanges,
-      },
-      routineExerciseId,
-      type: "changedSet",
-    });
-  }
-
-  function handleChangeVariation(variationPickerOption: VariationPickerOption) {
-    handleChangeSet({
-      variation:
-        variationPickerOption === NO_VARIATION_PICKER_OPTION
-          ? undefined
-          : variationPickerOption,
-    });
-  }
-
-  function handleRemoveSet() {
-    dispatchRoutineDraftAction({
-      routineExerciseId,
-      routineExerciseSetId: routineDraftExerciseSet.id,
-      type: "removedSet",
-    });
-  }
-
-  return (
-    <>
-      <Text>{routineEditorMessages.setLabel(setNumber)}</Text>
-      <PickerField
-        label={routineEditorMessages.setTypeLabel}
-        onChangeSelectedOption={(setType) => {
-          handleChangeSet({ setType });
-        }}
-        optionLabels={SET_TYPE_LABELS}
-        options={SET_TYPES}
-        selectedOption={routineDraftExerciseSet.setType}
-      />
-      <TextField
-        errorMessage={routineDraftExerciseSetValidationErrorMessages?.amount}
-        inputMode="numeric"
-        label={routineEditorMessages.amountLabel}
-        onChangeText={(amount) => {
-          handleChangeSet({ amount });
-        }}
-        value={routineDraftExerciseSet.amount}
-      />
-      <TextField
-        errorMessage={
-          routineDraftExerciseSetValidationErrorMessages?.restSeconds
-        }
-        inputMode="numeric"
-        label={routineEditorMessages.restSecondsLabel}
-        onChangeText={(restSeconds) => {
-          handleChangeSet({ restSeconds });
-        }}
-        value={routineDraftExerciseSet.restSeconds}
-      />
-      <PickerField
-        label={routineEditorMessages.variationLabel}
-        onChangeSelectedOption={handleChangeVariation}
-        optionLabels={VARIATION_PICKER_LABELS}
-        options={VARIATION_PICKER_OPTIONS}
-        selectedOption={
-          routineDraftExerciseSet.variation ?? NO_VARIATION_PICKER_OPTION
-        }
-      />
-      {routineDraftExerciseSet.variation === "rest_pause" ? (
-        <>
-          <TextField
-            errorMessage={
-              routineDraftExerciseSetValidationErrorMessages?.restPauseRestSeconds
-            }
-            inputMode="numeric"
-            label={routineEditorMessages.restPauseRestSecondsLabel}
-            onChangeText={(restPauseRestSeconds) => {
-              handleChangeSet({ restPauseRestSeconds });
-            }}
-            value={routineDraftExerciseSet.restPauseRestSeconds}
-          />
-          <TextField
-            errorMessage={
-              routineDraftExerciseSetValidationErrorMessages?.restPauseSegmentCount
-            }
-            inputMode="numeric"
-            label={routineEditorMessages.restPauseSegmentCountLabel}
-            onChangeText={(restPauseSegmentCount) => {
-              handleChangeSet({ restPauseSegmentCount });
-            }}
-            value={routineDraftExerciseSet.restPauseSegmentCount}
-          />
-        </>
-      ) : null}
-      {routineDraftExerciseSet.variation === "drop_set" ? (
-        <>
-          <TextField
-            errorMessage={
-              routineDraftExerciseSetValidationErrorMessages?.dropSetSegmentCount
-            }
-            inputMode="numeric"
-            label={routineEditorMessages.dropSetSegmentCountLabel}
-            onChangeText={(dropSetSegmentCount) => {
-              handleChangeSet({ dropSetSegmentCount });
-            }}
-            value={routineDraftExerciseSet.dropSetSegmentCount}
-          />
-          <TextField
-            errorMessage={
-              routineDraftExerciseSetValidationErrorMessages?.dropSetWeightPercentage
-            }
-            inputMode="numeric"
-            label={routineEditorMessages.dropSetWeightPercentageLabel}
-            onChangeText={(dropSetWeightPercentage) => {
-              handleChangeSet({ dropSetWeightPercentage });
-            }}
-            value={routineDraftExerciseSet.dropSetWeightPercentage}
-          />
-        </>
-      ) : null}
-      <Host matchContents>
-        <Switch
-          label={routineEditorMessages.toFailureLabel}
-          onValueChange={(isToFailure) => {
-            handleChangeSet({ isToFailure });
-          }}
-          value={routineDraftExerciseSet.isToFailure}
-        />
-      </Host>
-      <TextField
-        autoCapitalize="characters"
-        autoCorrect={false}
-        errorMessage={routineDraftExerciseSetValidationErrorMessages?.tempo}
-        label={routineEditorMessages.tempoLabel}
-        onChangeText={(tempo) => {
-          handleChangeSet({ tempo });
-        }}
-        value={routineDraftExerciseSet.tempo}
-      />
-      <Button
-        onPress={handleRemoveSet}
-        title={routineEditorMessages.removeSetButton}
-      />
+        {renderExercisePicker(handleSelectExercise)}
+      </Modal>
     </>
   );
 }

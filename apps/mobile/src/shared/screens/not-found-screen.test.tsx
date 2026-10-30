@@ -1,11 +1,10 @@
 import { screen, userEvent } from "@testing-library/react-native";
 
-import { emptyHomeScreenTrpcClientLayer } from "@/shared/testing/empty-home-screen-trpc-client-layer";
-import { renderScreen } from "@/shared/testing/render-screen";
-import { signedInAuthenticationClientLayer } from "@/shared/testing/signed-in-authentication-client-layer";
+import { fakeSignedInAuthenticationClientLayer } from "#/shared/testing/fake-signed-in-authentication-client-layer.ts";
+import { renderScreen } from "#/testing/render-screen.tsx";
 
 describe("NotFoundScreen", () => {
-  it("tells the person that the screen they opened doesn't exist", async () => {
+  it("tells the User that the screen they opened doesn't exist", async () => {
     renderScreen({ initialUrl: "/screen-that-does-not-exist" });
 
     expect(
@@ -13,14 +12,13 @@ describe("NotFoundScreen", () => {
     ).toBeOnTheScreen();
   });
 
-  it("takes the person to the home screen when they press the button to go home", async () => {
+  it("takes the User to the home screen when they press the button to go home", async () => {
     const user = userEvent.setup();
 
     renderScreen({
       initialUrl: "/screen-that-does-not-exist",
       testRuntimeLayers: {
-        authenticationClientLayer: signedInAuthenticationClientLayer,
-        trpcClientLayer: emptyHomeScreenTrpcClientLayer,
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
       },
     });
 
@@ -29,7 +27,7 @@ describe("NotFoundScreen", () => {
     );
 
     expect(
-      await screen.findByText("You have no routines yet."),
+      await screen.findByRole("button", { name: "Sign out" }),
     ).toBeOnTheScreen();
   });
 });

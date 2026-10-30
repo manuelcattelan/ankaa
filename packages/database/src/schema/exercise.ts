@@ -4,21 +4,25 @@ import {
   MUSCLE_GROUPS,
 } from "@ankaa/core/features/exercise/constants/muscle-group";
 import { AMOUNT_UNITS } from "@ankaa/core/shared/constants/amount";
-import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-type";
-import { defineRelationsPart, inArray } from "drizzle-orm";
-import { check, snakeCase, text, unique, uuid } from "drizzle-orm/pg-core";
+import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-types";
+import { inArray, sql } from "drizzle-orm";
+import { check, primaryKey, snakeCase, text, uuid } from "drizzle-orm/pg-core";
 
-import { commonColumns } from "./common-columns.ts";
+import { timestamps } from "#/columns/timestamps.ts";
 
 export const exercise = snakeCase.table(
   "exercise",
   {
-    ...commonColumns,
+    ...timestamps,
     amountUnit: text({ enum: AMOUNT_UNITS }).notNull(),
-    name: text().notNull().unique(),
+    id: uuid()
+      .notNull()
+      .default(sql`uuidv7()`),
+    name: text().notNull().unique("exercise_name_key"),
     weightType: text({ enum: WEIGHT_TYPES }).notNull(),
   },
   (table) => [
+    primaryKey({ columns: [table.id], name: "exercise_pkey" }),
     check(
       "exercise_amount_unit_check",
       inArray(table.amountUnit, AMOUNT_UNITS),
@@ -33,7 +37,6 @@ export const exercise = snakeCase.table(
 export const exerciseMuscleGroup = snakeCase.table(
   "exercise_muscle_group",
   {
-    ...commonColumns,
     exerciseId: uuid()
       .notNull()
       .references(() => exercise.id, {
@@ -41,20 +44,20 @@ export const exerciseMuscleGroup = snakeCase.table(
         onDelete: "cascade",
       }),
     muscleGroup: text({ enum: MUSCLE_GROUPS }).notNull(),
-    muscleGroupRole: text({ enum: MUSCLE_GROUP_ROLES }).notNull(),
+    role: text({ enum: MUSCLE_GROUP_ROLES }).notNull(),
   },
   (table) => [
-    unique("exercise_muscle_group_exercise_id_muscle_group_key").on(
-      table.exerciseId,
-      table.muscleGroup,
-    ),
+    primaryKey({
+      columns: [table.exerciseId, table.muscleGroup],
+      name: "exercise_muscle_group_pkey",
+    }),
     check(
       "exercise_muscle_group_muscle_group_check",
       inArray(table.muscleGroup, MUSCLE_GROUPS),
     ),
     check(
-      "exercise_muscle_group_muscle_group_role_check",
-      inArray(table.muscleGroupRole, MUSCLE_GROUP_ROLES),
+      "exercise_muscle_group_role_check",
+      inArray(table.role, MUSCLE_GROUP_ROLES),
     ),
   ],
 );
@@ -62,7 +65,6 @@ export const exerciseMuscleGroup = snakeCase.table(
 export const exerciseEquipment = snakeCase.table(
   "exercise_equipment",
   {
-    ...commonColumns,
     equipment: text({ enum: EQUIPMENT }).notNull(),
     exerciseId: uuid()
       .notNull()
@@ -72,43 +74,13 @@ export const exerciseEquipment = snakeCase.table(
       }),
   },
   (table) => [
-    unique("exercise_equipment_exercise_id_equipment_key").on(
-      table.exerciseId,
-      table.equipment,
-    ),
+    primaryKey({
+      columns: [table.exerciseId, table.equipment],
+      name: "exercise_equipment_pkey",
+    }),
     check(
       "exercise_equipment_equipment_check",
       inArray(table.equipment, EQUIPMENT),
     ),
   ],
-);
-
-export const exerciseRelations = defineRelationsPart(
-  { exercise, exerciseEquipment, exerciseMuscleGroup },
-  (relationsBuilder) => ({
-    exercise: {
-      exerciseEquipment: relationsBuilder.many.exerciseEquipment({
-        from: relationsBuilder.exercise.id,
-        to: relationsBuilder.exerciseEquipment.exerciseId,
-      }),
-      exerciseMuscleGroups: relationsBuilder.many.exerciseMuscleGroup({
-        from: relationsBuilder.exercise.id,
-        to: relationsBuilder.exerciseMuscleGroup.exerciseId,
-      }),
-    },
-    exerciseEquipment: {
-      exercise: relationsBuilder.one.exercise({
-        from: relationsBuilder.exerciseEquipment.exerciseId,
-        optional: false,
-        to: relationsBuilder.exercise.id,
-      }),
-    },
-    exerciseMuscleGroup: {
-      exercise: relationsBuilder.one.exercise({
-        from: relationsBuilder.exerciseMuscleGroup.exerciseId,
-        optional: false,
-        to: relationsBuilder.exercise.id,
-      }),
-    },
-  }),
 );

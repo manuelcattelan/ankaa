@@ -1,22 +1,25 @@
-import * as Data from "effect/Data";
+import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 
-type DecideRoutineDeleteOptions = {
-  routine: Routine | undefined;
-};
+/**
+ * Decides whether deleting a Routine writes, given the Routine with the
+ * deleted id, or `null` when none has it. Deleting a Routine the User already
+ * deleted writes nothing and succeeds, so a delete retried after an unknown
+ * outcome ends where the User meant.
+ */
+export function decideRoutineDelete({
+  routine,
+  userId,
+}: {
+  routine: null | { deletedAt: Date | null; userId: string };
+  userId: string;
+}) {
+  if (routine?.userId !== userId) {
+    return new RoutineNotFoundError();
+  }
 
-type Routine = {
-  readonly id: string;
-};
+  if (routine.deletedAt !== null) {
+    return { _tag: "RoutineAlreadyDeleted" as const };
+  }
 
-type RoutineDeleteOutcome = Data.TaggedEnum<{
-  RoutineDeleteAllowed: object;
-  RoutineNotFound: object;
-}>;
-
-const RoutineDeleteOutcome = Data.taggedEnum<RoutineDeleteOutcome>();
-
-export function decideRoutineDelete({ routine }: DecideRoutineDeleteOptions) {
-  return routine === undefined
-    ? RoutineDeleteOutcome.RoutineNotFound()
-    : RoutineDeleteOutcome.RoutineDeleteAllowed();
+  return { _tag: "RoutineDeleteAllowed" as const };
 }

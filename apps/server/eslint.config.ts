@@ -1,11 +1,6 @@
-import { serverConfiguration } from "@ankaa/eslint/server";
+import { createServerConfiguration } from "@ankaa/eslint/create-server-configuration";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
-  serverConfiguration,
-  {
-    languageOptions: {
-      parserOptions: { tsconfigRootDir: import.meta.dirname },
-    },
-  },
+  createServerConfiguration({ basePath: import.meta.dirname }),
 ]);

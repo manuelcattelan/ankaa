@@ -1,75 +1,75 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 
-import type { Routine } from "@/shared/interactors/list-routines";
+import { getWorkoutStartErrorMessage } from "#/features/workout/core/get-workout-start-error-message.ts";
+import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
+import { workoutStartMutationOptions } from "#/features/workout/mutations/workout-start-mutation-options.ts";
+import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/workout-find-in-progress-query-options.ts";
+import { Button } from "#/shared/components/button.tsx";
+import { StatusMessage } from "#/shared/components/status-message.tsx";
+import { useCreateId } from "#/shared/hooks/use-create-id.ts";
+import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
-import { buildWorkoutDocument } from "@/features/workout/core/build-workout-document";
-import { canStartWorkout } from "@/features/workout/core/can-start-workout";
-import { useWorkoutDocuments } from "@/features/workout/hooks/use-workout-documents";
-import { workoutStartButtonMessages } from "@/features/workout/messages/workout-start-button-messages";
-import { Button } from "@/shared/components/button";
-import { getExerciseNames } from "@/shared/core/get-exercise-names";
-import { useAuthenticationSession } from "@/shared/hooks/use-authentication-session";
-import { useRuntime } from "@/shared/hooks/use-runtime";
-import { createIdentifier } from "@/shared/interactors/create-identifier";
-import { createExerciseListQueryOptions } from "@/shared/queries/create-exercise-list-query-options";
-
-type WorkoutStartButtonProperties = {
-  routine: Routine;
-};
-
-export function WorkoutStartButton({ routine }: WorkoutStartButtonProperties) {
+/**
+ * Starts a Workout from one Routine, and shows its button only while the
+ * User has no Workout in progress. A failed start refetches the Workout in
+ * progress, which another device may have started.
+ */
+export function WorkoutStartButton({
+  routineId,
+  routineName,
+}: {
+  routineId: string;
+  routineName: string;
+}) {
   const router = useRouter();
+
+  const queryClient = useQueryClient();
 
   const runtime = useRuntime();
 
-  const session = useAuthenticationSession();
+  const createId = useCreateId();
 
-  const workoutDocuments = useWorkoutDocuments();
+  const workoutInProgress = useQuery(
+    workoutFindInProgressQueryOptions(runtime),
+  );
 
-  const exerciseLibrary = useQuery(createExerciseListQueryOptions(runtime));
+  const startWorkout = useMutation({
+    ...workoutStartMutationOptions(runtime),
+    onSettled: async (data, error) => {
+      await queryClient.invalidateQueries({
+        queryKey: workoutFindInProgressQueryOptions(runtime).queryKey,
+      });
 
-  const exerciseNames = getExerciseNames(exerciseLibrary.data);
+      if (error === null) {
+        router.push("/workout");
+      }
+    },
+  });
 
-  if (workoutDocuments.workoutDocumentInProgress) {
-    return null;
-  }
+  const startWorkoutErrorMessage =
+    startWorkout.error === null
+      ? null
+      : getWorkoutStartErrorMessage(startWorkout.error);
 
   function handleStartWorkout() {
-    if (
-      !exerciseLibrary.data ||
-      !session.data ||
-      workoutDocuments.workoutDocumentInProgress
-    ) {
+    if (startWorkout.isPending) {
       return;
     }
 
-    const workoutExerciseIds = routine.exercises.map(() =>
-      runtime.runSync(createIdentifier()),
-    );
-    const workoutId = runtime.runSync(createIdentifier());
-    const startedAt = new Date().toISOString();
-
-    workoutDocuments.dispatchWorkoutDocumentsAction({
-      type: "startedWorkout",
-      workoutDocument: buildWorkoutDocument({
-        exercises: exerciseLibrary.data,
-        routine,
-        startedAt,
-        userId: session.data.user.id,
-        workoutExerciseIds,
-        workoutId,
-      }),
-    });
-
-    router.push("/workout");
+    startWorkout.mutate({ id: createId(), routineId });
   }
 
   return (
-    <Button
-      disabled={!canStartWorkout({ exerciseNames, routine })}
-      onPress={handleStartWorkout}
-      title={workoutStartButtonMessages.startWorkoutButton(routine.name)}
-    />
+    <>
+      {workoutInProgress.data === null ? (
+        <Button
+          isBusy={startWorkout.isPending}
+          onPress={handleStartWorkout}
+          title={WORKOUT_MESSAGES.startWorkoutButton(routineName)}
+        />
+      ) : null}
+      <StatusMessage message={startWorkoutErrorMessage} />
+    </>
   );
 }

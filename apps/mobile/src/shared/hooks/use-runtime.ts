@@ -1,11 +1,11 @@
 import { use } from "react";
 
-import { RuntimeContext } from "@/shared/providers/runtime-context";
+import { RuntimeContext } from "#/shared/providers/runtime-context.ts";
 
 export function useRuntime() {
   const runtime = use(RuntimeContext);
 
-  if (!runtime) {
+  if (runtime === null) {
     throw new Error("useRuntime must be called inside RuntimeContext");
   }
 

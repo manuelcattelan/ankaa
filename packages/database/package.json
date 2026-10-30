@@ -1,43 +1,42 @@
 {
   "dependencies": {
     "@ankaa/core": "workspace:*",
+    "@effect/sql-pg": "4.0.5",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "pg": "catalog:"
   },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
-    "@ankaa/prettier": "workspace:*",
     "@ankaa/typescript": "workspace:*",
+    "@ankaa/vitest": "workspace:*",
+    "@testcontainers/postgresql": "^12.2.1",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
+    "@types/proper-lockfile": "^4.1.4",
     "drizzle-kit": "1.0.0-rc.4",
     "eslint": "catalog:",
     "jiti": "catalog:",
-    "prettier": "catalog:",
-    "tsx": "catalog:",
-    "typescript": "catalog:"
+    "proper-lockfile": "^4.1.2",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./error": "./src/error.ts",
-    "./migrations-folder-path": "./src/migrations-folder-path.ts",
-    "./schema/authentication": "./src/schema/authentication.ts",
-    "./schema/exercise": "./src/schema/exercise.ts",
-    "./schema/routine": "./src/schema/routine.ts",
-    "./schema/workout": "./src/schema/workout.ts"
+    "./*": "./src/*.ts"
+  },
+  "imports": {
+    "#/*": "./src/*"
   },
   "name": "@ankaa/database",
   "private": true,
   "scripts": {
     "check-types": "tsc --noEmit",
-    "format": "prettier --check .",
-    "format:fix": "prettier --write .",
-    "generate": "drizzle-kit generate --name",
+    "generate": "DOTENV_CONFIG_PATH=../../.env drizzle-kit generate --name",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "migrate": "drizzle-kit migrate",
-    "seed": "tsx --env-file-if-exists=.env src/seed.ts"
+    "migrate": "DOTENV_CONFIG_PATH=../../.env drizzle-kit migrate",
+    "seed": "node --env-file-if-exists=../../.env src/seed.ts",
+    "test": "vitest run"
   },
   "type": "module"
 }

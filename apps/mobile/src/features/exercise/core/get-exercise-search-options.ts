@@ -1,20 +1,20 @@
-import type { Exercise } from "@/shared/interactors/list-exercises";
+import type { Exercise } from "#/shared/exercise-application-service.ts";
 
 export function getExerciseSearchOptions(exercises: Exercise[]) {
   return {
-    equipmentOptions: [
+    equipment: [
       ...new Set(
         exercises.flatMap((exercise) =>
-          exercise.exerciseEquipment.map(
+          exercise.equipment.map(
             (exerciseEquipment) => exerciseEquipment.equipment,
           ),
         ),
       ),
     ],
-    muscleGroupOptions: [
+    muscleGroups: [
       ...new Set(
         exercises.flatMap((exercise) =>
-          exercise.exerciseMuscleGroups.map(
+          exercise.muscleGroups.map(
             (exerciseMuscleGroup) => exerciseMuscleGroup.muscleGroup,
           ),
         ),

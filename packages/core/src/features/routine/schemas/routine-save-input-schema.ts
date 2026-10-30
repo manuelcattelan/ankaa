@@ -1,132 +1,84 @@
 import * as Schema from "effect/Schema";
 
-import { VARIATIONS } from "../../../shared/constants/intensity-technique.ts";
-import { SECTIONS } from "../../../shared/constants/section.ts";
-import { SET_TYPES } from "../../../shared/constants/set-type.ts";
-import { amountFilter } from "../../../shared/filters/amount-filter.ts";
-import { createLinkedWarmUpExercisesFilter } from "../../../shared/filters/create-linked-warm-up-exercises-filter.ts";
-import { createUniquePropertyValuesFilter } from "../../../shared/filters/create-unique-property-values-filter.ts";
-import { createUniqueValuesFilter } from "../../../shared/filters/create-unique-values-filter.ts";
-import { positionFilter } from "../../../shared/filters/position-filter.ts";
-import { supersetNeighborsFilter } from "../../../shared/filters/superset-neighbors-filter.ts";
-import { tempoFilter } from "../../../shared/filters/tempo-filter.ts";
-import { identifierSchema } from "../../../shared/schemas/identifier-schema.ts";
-import { int32Schema } from "../../../shared/schemas/int32-schema.ts";
-import { DAYS_OF_WEEK } from "../constants/day-of-week.ts";
-import {
-  DROP_SET_WEIGHT_PERCENTAGE_MAXIMUM,
-  DROP_SET_WEIGHT_PERCENTAGE_MINIMUM,
-} from "../constants/drop-set.ts";
-import { REST_SECONDS_MINIMUM } from "../constants/rest.ts";
-import { SEGMENT_COUNT_MINIMUM } from "../constants/segment.ts";
-import { routineNameFilter } from "../filters/routine-name-filter.ts";
+import { DAYS_OF_WEEK } from "#/features/routine/constants/days-of-week.ts";
+import { dropSetWeightPercentageFilter } from "#/features/routine/filters/drop-set-weight-percentage-filter.ts";
+import { exerciseGroupExercisesFilter } from "#/features/routine/filters/exercise-group-exercises-filter.ts";
+import { mainRoutineExerciseFilter } from "#/features/routine/filters/main-routine-exercise-filter.ts";
+import { pauseSecondsFilter } from "#/features/routine/filters/pause-seconds-filter.ts";
+import { restSecondsFilter } from "#/features/routine/filters/rest-seconds-filter.ts";
+import { routineNameFilter } from "#/features/routine/filters/routine-name-filter.ts";
+import { segmentCountFilter } from "#/features/routine/filters/segment-count-filter.ts";
+import { uniqueDaysFilter } from "#/features/routine/filters/unique-days-filter.ts";
+import { uniqueRoutineIdsFilter } from "#/features/routine/filters/unique-routine-ids-filter.ts";
+import { SET_TYPES } from "#/shared/constants/set-types.ts";
+import { amountFilter } from "#/shared/filters/amount-filter.ts";
+import { tempoFilter } from "#/shared/filters/tempo-filter.ts";
+import { idSchema } from "#/shared/schemas/id-schema.ts";
+import { integerSchema } from "#/shared/schemas/integer-schema.ts";
 
 export type RoutineSaveInput = typeof routineSaveInputSchema.Type;
 
-const dropSetWeightPercentageFilter = Schema.isBetween({
-  maximum: DROP_SET_WEIGHT_PERCENTAGE_MAXIMUM,
-  minimum: DROP_SET_WEIGHT_PERCENTAGE_MINIMUM,
+const dropSetSchema = Schema.TaggedStruct("DropSet", {
+  segmentCount: integerSchema.check(segmentCountFilter),
+  weightPercentage: Schema.NullOr(
+    integerSchema.check(dropSetWeightPercentageFilter),
+  ),
 });
 
-const restSecondsFilter = Schema.isGreaterThanOrEqualTo(REST_SECONDS_MINIMUM);
-
-const segmentCountFilter = Schema.isGreaterThanOrEqualTo(SEGMENT_COUNT_MINIMUM);
+const restPauseSetSchema = Schema.TaggedStruct("RestPauseSet", {
+  pauseSeconds: integerSchema.check(pauseSecondsFilter),
+  segmentCount: integerSchema.check(segmentCountFilter),
+});
 
 const routineExerciseSetSchema = Schema.Struct({
-  amount: Schema.NullOr(int32Schema.check(amountFilter)),
-  dropSetSegmentCount: Schema.NullOr(int32Schema.check(segmentCountFilter)),
-  dropSetWeightPercentage: Schema.NullOr(
-    int32Schema.check(dropSetWeightPercentageFilter),
+  amount: Schema.NullOr(integerSchema.check(amountFilter)),
+  id: idSchema,
+  intensityTechnique: Schema.NullOr(
+    Schema.Union([dropSetSchema, restPauseSetSchema]),
   ),
-  id: identifierSchema,
   isToFailure: Schema.Boolean,
-  position: int32Schema.check(positionFilter),
-  restPauseRestSeconds: Schema.NullOr(int32Schema.check(restSecondsFilter)),
-  restPauseSegmentCount: Schema.NullOr(int32Schema.check(segmentCountFilter)),
-  restSeconds: Schema.NullOr(int32Schema.check(restSecondsFilter)),
-  setType: Schema.Literals(SET_TYPES),
+  restSeconds: Schema.NullOr(integerSchema.check(restSecondsFilter)),
   tempo: Schema.NullOr(Schema.String.check(tempoFilter)),
-  variation: Schema.NullOr(Schema.Literals(VARIATIONS)),
-}).check(
-  Schema.makeFilter((routineExerciseSet) => {
-    const isRestPause = routineExerciseSet.variation === "rest_pause";
-    const isDropSet = routineExerciseSet.variation === "drop_set";
-
-    const restPauseIssues = (
-      ["restPauseRestSeconds", "restPauseSegmentCount"] as const
-    ).flatMap((restPauseKey) =>
-      (typeof routineExerciseSet[restPauseKey] === "number") === isRestPause
-        ? []
-        : [
-            {
-              issue: "Must be filled exactly when the variation is rest_pause",
-              path: [restPauseKey],
-            },
-          ],
-    );
-
-    const dropSetSegmentCountIssues =
-      (typeof routineExerciseSet.dropSetSegmentCount === "number") === isDropSet
-        ? []
-        : [
-            {
-              issue: "Must be filled exactly when the variation is drop_set",
-              path: ["dropSetSegmentCount"],
-            },
-          ];
-
-    const dropSetWeightPercentageIssues =
-      typeof routineExerciseSet.dropSetWeightPercentage === "number" &&
-      !isDropSet
-        ? [
-            {
-              issue: "Must be empty unless the variation is drop_set",
-              path: ["dropSetWeightPercentage"],
-            },
-          ]
-        : [];
-
-    return [
-      ...restPauseIssues,
-      ...dropSetSegmentCountIssues,
-      ...dropSetWeightPercentageIssues,
-    ];
-  }),
-);
+  type: Schema.Literals(SET_TYPES),
+});
 
 const routineExerciseSchema = Schema.Struct({
-  exerciseId: identifierSchema,
-  id: identifierSchema,
+  exerciseId: idSchema,
+  id: idSchema,
   note: Schema.NullOr(Schema.String),
-  position: int32Schema.check(positionFilter),
-  section: Schema.Literals(SECTIONS),
-  sets: Schema.Array(routineExerciseSetSchema).check(
-    createUniquePropertyValuesFilter({ propertyKey: "position" }),
-  ),
-  superset: Schema.NullOr(int32Schema),
-  warmUpForRoutineExerciseId: Schema.NullOr(identifierSchema),
+  sets: Schema.Array(routineExerciseSetSchema),
 });
 
-type RoutineExercise = typeof routineExerciseSchema.Type;
+const mainRoutineExerciseSchema = Schema.Struct({
+  ...routineExerciseSchema.fields,
+  warmUpExercises: Schema.Array(routineExerciseSchema),
+});
 
-export const routineSaveInputSchema = Schema.Struct({
-  days: Schema.Array(Schema.Literals(DAYS_OF_WEEK)).check(Schema.isUnique()),
+const exerciseGroupSchema = Schema.Struct({
   exercises: Schema.Array(routineExerciseSchema).check(
-    createUniquePropertyValuesFilter({ propertyKey: "id" }),
-    createUniquePropertyValuesFilter({ propertyKey: "position" }),
-    createUniqueValuesFilter({
-      getValues: (routineExercises: readonly RoutineExercise[]) =>
-        routineExercises.flatMap((routineExercise) =>
-          routineExercise.sets.map(
-            (routineExerciseSet) => routineExerciseSet.id,
-          ),
-        ),
-    }),
-    createLinkedWarmUpExercisesFilter({
-      warmUpForExerciseIdKey: "warmUpForRoutineExerciseId",
-    }),
-    supersetNeighborsFilter,
+    exerciseGroupExercisesFilter,
   ),
-  id: identifierSchema,
-  name: Schema.Trim.check(routineNameFilter),
+  id: idSchema,
 });
+
+const mainExerciseGroupSchema = Schema.Struct({
+  exercises: Schema.Array(mainRoutineExerciseSchema).check(
+    exerciseGroupExercisesFilter,
+  ),
+  id: idSchema,
+});
+
+/**
+ * The tree of a Routine that `routine.save` takes, with every rule that
+ * holds within one Routine.
+ */
+export const routineSaveInputSchema = Schema.Struct({
+  days: Schema.Array(Schema.Literals(DAYS_OF_WEEK)).check(uniqueDaysFilter),
+  id: idSchema,
+  name: Schema.Trim.check(routineNameFilter),
+  sections: Schema.Struct({
+    coolDown: Schema.Array(exerciseGroupSchema),
+    main: Schema.Array(mainExerciseGroupSchema),
+    warmUp: Schema.Array(exerciseGroupSchema),
+  }),
+}).check(mainRoutineExerciseFilter, uniqueRoutineIdsFilter);

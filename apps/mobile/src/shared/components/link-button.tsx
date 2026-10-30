@@ -2,14 +2,9 @@ import type { Href } from "expo-router";
 
 import { Link } from "expo-router";
 
-import { Button } from "@/shared/components/button";
+import { Button } from "#/shared/components/button.tsx";
 
-type LinkButtonProperties = {
-  href: Href;
-  title: string;
-};
-
-export function LinkButton({ href, title }: LinkButtonProperties) {
+export function LinkButton({ href, title }: { href: Href; title: string }) {
   return (
     <Link asChild href={href}>
       <Button title={title} />

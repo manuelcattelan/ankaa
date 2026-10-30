@@ -4,15 +4,23 @@ import * as Layer from "effect/Layer";
 import * as ExpoCrypto from "expo-crypto";
 import { v7 } from "uuid";
 
-const TEST_UUID_NODE_LENGTH = 12;
-
 const UUID_RANDOM_BYTE_COUNT = 16;
 
-export class Crypto extends Context.Service<Crypto>()(
-  "@ankaa/mobile/shared/services/Crypto",
+export class Crypto extends Context.Service<
+  Crypto,
   {
-    make: Effect.sync(() => {
-      function createIdentifier() {
+    readonly createId: () => Effect.Effect<string>;
+    readonly createRandomUuid: () => Effect.Effect<string>;
+    readonly createSha256Digest: (text: string) => Effect.Effect<string>;
+  }
+>()("@ankaa/mobile/shared/services/Crypto") {
+  static readonly layer = Layer.effect(
+    Crypto,
+    Effect.sync(() => {
+      // uuid's own random source needs crypto.getRandomValues, which React
+      // Native lacks, so expo-crypto supplies the random bytes
+      // (https://github.com/uuidjs/uuid#react-native--expo).
+      function createId() {
         return Effect.sync(() =>
           v7({ random: ExpoCrypto.getRandomBytes(UUID_RANDOM_BYTE_COUNT) }),
         );
@@ -31,40 +39,7 @@ export class Crypto extends Context.Service<Crypto>()(
         );
       }
 
-      return { createIdentifier, createRandomUuid, createSha256Digest };
+      return Crypto.of({ createId, createRandomUuid, createSha256Digest });
     }),
-  },
-) {
-  static readonly layer = Layer.effect(this, this.make);
-
-  static readonly layerTest = Layer.sync(this, () => {
-    let identifierCount = 0;
-    let randomUuidCount = 0;
-
-    function createIdentifier() {
-      return Effect.sync(() => {
-        identifierCount += 1;
-
-        return `00000000-0000-7000-8000-${formatTestUuidNode(identifierCount)}`;
-      });
-    }
-
-    function createRandomUuid() {
-      return Effect.sync(() => {
-        randomUuidCount += 1;
-
-        return `00000000-0000-4000-8000-${formatTestUuidNode(randomUuidCount)}`;
-      });
-    }
-
-    function createSha256Digest(text: string) {
-      return Effect.succeed(`sha256:${text}`);
-    }
-
-    return this.of({ createIdentifier, createRandomUuid, createSha256Digest });
-  });
-}
-
-function formatTestUuidNode(uuidCount: number) {
-  return uuidCount.toString().padStart(TEST_UUID_NODE_LENGTH, "0");
+  );
 }
