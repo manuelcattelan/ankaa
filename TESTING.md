@@ -35,7 +35,7 @@ These rules cover how tests are written and run in every workspace. Lint checks 
 
 ## Fakes
 
-- A Fake is a working implementation of a Service, written by hand for tests, that takes a shortcut the real one can't, such as keeping in memory the emails it would send. When a test needs to see what the code did through a Fake, the Fake records it into an array or a `Map` that the test passes in, and the test checks what it recorded.
+- When a test needs to see what the code did through a [Fake](GLOSSARY.md#fake), the Fake records it into an array or a `Map` that the test passes in, and the test checks what it recorded.
 - Swap behavior only through a Service's Layers: the real implementation wherever a test can run it, a Fake where it can't, and `Layer.mock` for a Service that no default scenario reaches, so an unexpected use fails loudly.
 - Export each Fake as a standalone Layer from the `testing/` folder of whatever owns its Service, never as a static of the Service class, because Metro doesn't tree-shake, so a static Fake ships in the production app. This departs from Effect's examples, such as `TodoRepo.layerTest`.
 - Make a mobile default Fake behave like an idle device: nobody signed in, nothing in storage on the device, and no tRPC responses. A test then configures only the Fakes its scenario needs.

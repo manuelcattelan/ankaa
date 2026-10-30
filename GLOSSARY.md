@@ -199,8 +199,6 @@ One of the three parts, done in order, that every [Routine](#routine) and [Worko
 
 A [User](#user)'s mark that a [Workout exercise](#workout-exercise) wasn't done as planned, with a reason (low on time, low energy, pain or other) and an optional note. The User can [Save](#save), change or clear it. It keeps the [Sets](#set) recorded for the Workout exercise, and the User clears it before recording more.
 
-- **Avoid**: missed exercise, dropped exercise, abandoned exercise
-
 ### Superset
 
 An [Exercise group](#exercise-group) of two or more [Routine exercises](#routine-exercise) or [Workout exercises](#workout-exercise), done by alternating them one [Set](#set) at a time, with [Rest](#rest) only after one Set of each.
@@ -250,7 +248,7 @@ A way of pushing a [Set](#set) past where it would end, by splitting it into sev
 - **Avoid**: variation, set variation, technique, method
 - **Distinct from**: [To failure](#to-failure): To failure says when a Set ends, with or without an Intensity technique.
 
-### Matching planned Set
+### Matching planned set
 
 The planned [Set](#set) that a recorded Set of a [Workout exercise](#workout-exercise) is paired with: the one in the same position, or a plain [Working set](#working-set) when none was planned. It makes the recorded Set a [Warm-up set](#warm-up-set) or a Working set, and gives it its [To failure](#to-failure), [Tempo](#tempo) and [Intensity technique](#intensity-technique).
 
