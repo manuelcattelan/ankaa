@@ -46,7 +46,7 @@ type SignInResponseBody = {
 };
 
 const DELETE_ACCOUNT_LINK_PATTERN =
-  /http:\/\/localhost:3000\/delete-account\?token=[\da-z]{32}(?:\s|$)/;
+  /^http:\/\/localhost:3000\/delete-account\?token=[\da-z]{32}$/;
 
 const OTP_CODE_PATTERN = /^\d{6}$/;
 
@@ -990,7 +990,7 @@ describe("applicationPlugin", () => {
     expect(sessionResponse.json()).toBe(null);
   });
 
-  it("emails a /delete-account link on the API host, and deletes nothing, when /api/auth/delete-user is requested without a token", async () => {
+  it("emails only a /delete-account link on the API host, and deletes nothing, when /api/auth/delete-user is requested without a token", async () => {
     const testUser = await createTestUser(runtime);
 
     await server.inject({

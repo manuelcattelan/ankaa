@@ -148,7 +148,7 @@ export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
         // Universal Links and App Links.
         sendEmailWithoutWaiting({
           subject: "Confirm deleting your Ankaa account",
-          text: `Open this link to delete your Ankaa account and everything in it: ${url}\n\nIf you didn't ask to delete your account, ignore this email.`,
+          text: url,
           to: emailAddress,
         }),
       sendVerificationOtpCode: ({ email: emailAddress, otpCode }) =>
