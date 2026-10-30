@@ -30,19 +30,19 @@ These rules cover how tests are written and run in every workspace. Lint checks 
 - Separate the given, the when and the then with blank lines, and write no comments. When the then wraps the when, such as a call that must reject, write them as one statement.
 - Name each `describe` after the unit or procedure it tests, such as `describe("tempoFilter")` or `describe("routine.save")`, and let each `it` state one behavior in one sentence, such as `it("rejects a Routine name that another Routine of the User already has")`.
 - Put a test file next to the file whose export it calls, named after that file with `.test.ts`, or `.test.tsx` for a component.
-- Write no test of its own for code without logic of its own, such as a constant, a Schema that adds no check, a route file, a Layer that only wraps a library, or Query options and mutation options. Application Services and Repositories get no tests of their own either: procedure tests cover them on the server, and screen tests on mobile, so a refactoring below a procedure or a screen breaks no test ([Beck's Test Desiderata](https://testdesiderata.com/)).
+- Write no test of its own for code without logic of its own, such as a constant, a Schema that adds no check, a route file, a Layer that only wraps a library, or Query options and Mutation options. Application Services and Repositories get no tests of their own either: procedure tests cover them on the server, and screen tests on mobile, so a refactoring below a procedure or a screen breaks no test ([Beck's Test Desiderata](https://testdesiderata.com/)).
 - Run an Effect in a test through the test Runtime, as the app does: `await runtime.runPromise(program)` for a success, `await runtime.runPromiseExit(program)` for a failure or a defect, checked against literal values, and `runtime.runFork(program)` followed by `await runtime.runPromise(Fiber.interrupt(fiber))` for an interruption.
 
 ## Fakes
 
-- A fake is a working implementation of a Service, written by hand for tests, that takes a shortcut the real one can't, such as keeping in memory the emails it would send. When a test needs to see what the code did through a fake, the fake records it into an array or a `Map` that the test passes in, and the test checks what it recorded.
-- Swap behavior only through a Service's Layers: the real implementation wherever a test can run it, a fake where it can't, and `Layer.mock` for a Service that no default scenario reaches, so an unexpected use fails loudly.
-- Export each fake as a standalone Layer from the `testing/` folder of whatever owns its Service, never as a static of the Service class, because Metro doesn't tree-shake, so a static fake ships in the production app. This departs from Effect's examples, such as `TodoRepo.layerTest`.
-- Make a mobile default fake behave like an idle device: nobody signed in, nothing in storage on the device, and no tRPC responses. A test then configures only the fakes its scenario needs.
+- A Fake is a working implementation of a Service, written by hand for tests, that takes a shortcut the real one can't, such as keeping in memory the emails it would send. When a test needs to see what the code did through a Fake, the Fake records it into an array or a `Map` that the test passes in, and the test checks what it recorded.
+- Swap behavior only through a Service's Layers: the real implementation wherever a test can run it, a Fake where it can't, and `Layer.mock` for a Service that no default scenario reaches, so an unexpected use fails loudly.
+- Export each Fake as a standalone Layer from the `testing/` folder of whatever owns its Service, never as a static of the Service class, because Metro doesn't tree-shake, so a static Fake ships in the production app. This departs from Effect's examples, such as `TodoRepo.layerTest`.
+- Make a mobile default Fake behave like an idle device: nobody signed in, nothing in storage on the device, and no tRPC responses. A test then configures only the Fakes its scenario needs.
 
 ## Core
 
-- Test a Core function by passing it values and checking the values it returns, every Outcome included, with no Runtime and no fake.
+- Test a Core function by passing it values and checking the values it returns, every Outcome included, with no Runtime and no Fake.
 - Test each rule of a Filter once, where the Filter is defined: one accepted value, at the rule's limit when it has one, and one rejected value, checked with its message.
 - In a Schema's test, cover only the checks the Schema adds, with one rejected value at each place where it applies a shared Filter, because the Filter's own test covers its rules.
 - Build the inputs of a Schema test from module-level constants that each hold one valid value, and spread one to change only the field the test is about, so each test shows the one thing that differs.
