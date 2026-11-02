@@ -27,7 +27,7 @@ export async function run<
   context: {
     // Only a procedure called over HTTP has a request, because a caller
     // takes the inner context (https://trpc.io/docs/server/context#inner-and-outer-context).
-    req?: CreateFastifyContextOptions["req"];
+    req?: Pick<CreateFastifyContextOptions["req"], "log">;
     runtime: ApplicationRuntime;
   };
   effect: Effect.Effect<
