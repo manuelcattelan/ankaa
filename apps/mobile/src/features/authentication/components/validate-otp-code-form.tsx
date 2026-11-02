@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Platform } from "react-native";
 
-import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
+import { getAuthenticationScreenErrorMessage } from "#/features/authentication/core/get-authentication-screen-error-message.ts";
 import { isOtpCodeRejection } from "#/features/authentication/core/is-otp-code-rejection.ts";
 import { otpCodeFormSchema } from "#/features/authentication/core/otp-code-form-schema.ts";
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
@@ -27,7 +27,7 @@ export function ValidateOtpCodeForm({ email }: { email: string }) {
   const resendOtpCode = useMutation({
     ...otpCodeRequestMutationOptions(runtime),
     onError: (error) => {
-      announceMessage(getAuthenticationErrorMessage(error));
+      announceMessage(getAuthenticationScreenErrorMessage(error));
     },
     onSuccess: () => {
       setOtpCode("");
@@ -37,7 +37,7 @@ export function ValidateOtpCodeForm({ email }: { email: string }) {
   const validateOtpCode = useMutation({
     ...otpCodeSignInMutationOptions(runtime),
     onError: (error) => {
-      announceMessage(getAuthenticationErrorMessage(error));
+      announceMessage(getAuthenticationScreenErrorMessage(error));
 
       if (isOtpCodeRejection(error)) {
         setOtpCode("");
@@ -54,7 +54,7 @@ export function ValidateOtpCodeForm({ email }: { email: string }) {
   const otpCodeErrorMessage =
     authenticationError === null
       ? otpCodeFormDecoding.errorMessages.otpCode
-      : getAuthenticationErrorMessage(authenticationError);
+      : getAuthenticationScreenErrorMessage(authenticationError);
 
   function handleResendOtpCode() {
     setHasSubmitted(false);

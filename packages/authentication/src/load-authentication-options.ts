@@ -51,6 +51,10 @@ export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
 
     const databaseUrl = yield* Config.Redacted("DATABASE_URL_POOLED");
 
+    // better-auth's Drizzle adapter awaits its queries, so it needs a
+    // Promise-based Drizzle instance instead of the Database Service's Effect one
+    // (https://github.com/better-auth/better-auth/issues/7234#issuecomment-4402982843),
+    // and @effect/sql-pg has no pg Pool to share, so better-auth gets its own.
     const pool = yield* Effect.acquireRelease(
       Effect.sync(
         () => new Pool({ connectionString: Redacted.value(databaseUrl) }),

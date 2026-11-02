@@ -19,7 +19,7 @@ export const makeAuthentication = Effect.fn("makeAuthentication")(
       return Effect.tryPromise({
         catch: (cause) => new AuthenticationError({ cause }),
         try: execute,
-      });
+      }).pipe(Effect.orDie);
     }
 
     yield* request(() => auth.$context);

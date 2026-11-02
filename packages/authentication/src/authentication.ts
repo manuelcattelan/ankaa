@@ -7,7 +7,6 @@ import * as Effect from "effect/Effect";
 import * as FetchHttpClient from "effect/http/FetchHttpClient";
 import * as Layer from "effect/Layer";
 
-import type { AuthenticationError } from "#/authentication-error.ts";
 import type { createAuthenticationOptions } from "#/create-authentication-options.ts";
 
 import { loadAuthenticationOptions } from "#/load-authentication-options.ts";
@@ -22,12 +21,9 @@ export class Authentication extends Context.Service<
       | Auth<
           ReturnType<typeof createAuthenticationOptions>
         >["$Infer"]["Session"]
-      | null,
-      AuthenticationError
+      | null
     >;
-    readonly handleRequest: (
-      request: Request,
-    ) => Effect.Effect<Response, AuthenticationError>;
+    readonly handleRequest: (request: Request) => Effect.Effect<Response>;
   }
 >()("@ankaa/authentication/Authentication") {
   static readonly layerNoDeps = Layer.effect(

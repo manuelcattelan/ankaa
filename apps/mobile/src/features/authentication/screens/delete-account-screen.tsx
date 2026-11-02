@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { ActivityIndicator } from "react-native";
 
 import { ACCOUNT_DELETED_SEARCH_PARAMETERS } from "#/features/authentication/constants/account-deleted-search-parameters.ts";
-import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
+import { getAuthenticationScreenErrorMessage } from "#/features/authentication/core/get-authentication-screen-error-message.ts";
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 import { accountDeletionMutationOptions } from "#/features/authentication/mutations/account-deletion-mutation-options.ts";
 import { LinkButton } from "#/shared/components/link-button.tsx";
@@ -66,7 +66,7 @@ export function DeleteAccountScreen({ token }: { token: null | string }) {
 
     return deleteAccount.error === null
       ? null
-      : getAuthenticationErrorMessage(deleteAccount.error);
+      : getAuthenticationScreenErrorMessage(deleteAccount.error);
   }
 
   return (

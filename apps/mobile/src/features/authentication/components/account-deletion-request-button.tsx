@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 
-import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
+import { getAuthenticationScreenErrorMessage } from "#/features/authentication/core/get-authentication-screen-error-message.ts";
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 import { accountDeletionRequestMutationOptions } from "#/features/authentication/mutations/account-deletion-request-mutation-options.ts";
 import { Button } from "#/shared/components/button.tsx";
@@ -34,7 +34,7 @@ export function AccountDeletionRequestButton() {
         message={
           requestAccountDeletion.error === null
             ? accountDeletionRequestMessage
-            : getAuthenticationErrorMessage(requestAccountDeletion.error)
+            : getAuthenticationScreenErrorMessage(requestAccountDeletion.error)
         }
       />
     </>

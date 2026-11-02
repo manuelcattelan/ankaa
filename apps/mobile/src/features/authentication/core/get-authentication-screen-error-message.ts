@@ -14,7 +14,7 @@ import { OtpCodeInvalidError } from "#/shared/errors/otp-code-invalid-error.ts";
 import { RateLimitedError } from "#/shared/errors/rate-limited-error.ts";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
-const authenticationErrorSchema = Schema.Union([
+const authenticationScreenErrorSchema = Schema.Union([
   AccountNotLinkedError,
   AuthenticationClientError,
   DeleteAccountTokenInvalidError,
@@ -27,17 +27,17 @@ const authenticationErrorSchema = Schema.Union([
   RateLimitedError,
 ]);
 
-const isAuthenticationError = Schema.is(authenticationErrorSchema);
+const isAuthenticationScreenError = Schema.is(authenticationScreenErrorSchema);
 
 /**
  * Maps every error that an authentication screen acts on to the message its
  * User sees. A rejected mutation can also carry a defect, which its error
  * type doesn't show, and a defect gets the unknown error message.
  */
-export function getAuthenticationErrorMessage(
-  error: typeof authenticationErrorSchema.Type,
+export function getAuthenticationScreenErrorMessage(
+  error: typeof authenticationScreenErrorSchema.Type,
 ) {
-  if (!isAuthenticationError(error)) {
+  if (!isAuthenticationScreenError(error)) {
     return SHARED_MESSAGES.unknownError;
   }
 

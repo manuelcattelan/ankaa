@@ -2,7 +2,12 @@ import type { FastifyPluginCallback } from "fastify";
 
 import { ACCOUNT_DELETION_PATH } from "@ankaa/core/features/authentication/constants/account-deletion-path";
 
-import type { ApplicationPluginOptions } from "#/application-plugin.ts";
+export type WellKnownRouteOptions = {
+  androidAppPackageName: string;
+  androidAppSha256CertificateFingerprints: readonly string[];
+  appleAppBundleId: string;
+  appleTeamId: string;
+};
 
 /**
  * Serves the files that let the API host open the app: Apple's for Universal
@@ -49,4 +54,4 @@ export const wellKnownRoute = ((
   );
 
   done();
-}) satisfies FastifyPluginCallback<Omit<ApplicationPluginOptions, "runtime">>;
+}) satisfies FastifyPluginCallback<WellKnownRouteOptions>;

@@ -4,7 +4,7 @@ import * as ExpoAppleAuthentication from "expo-apple-authentication";
 import { Platform, StyleSheet, useColorScheme } from "react-native";
 
 import { ACCOUNT_DELETED_SEARCH_PARAMETERS } from "#/features/authentication/constants/account-deleted-search-parameters.ts";
-import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
+import { getAuthenticationScreenErrorMessage } from "#/features/authentication/core/get-authentication-screen-error-message.ts";
 import { getSessionErrorMessage } from "#/features/authentication/core/get-session-error-message.ts";
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 import { appleSignInMutationOptions } from "#/features/authentication/mutations/apple-sign-in-mutation-options.ts";
@@ -50,7 +50,7 @@ export function SignInScreen({
   const statusMessage =
     signInError === null
       ? (sessionErrorMessage ?? accountDeletedStatus)
-      : getAuthenticationErrorMessage(signInError);
+      : getAuthenticationScreenErrorMessage(signInError);
 
   function handleSignInWithApple() {
     // Apple's native button takes no disabled state
