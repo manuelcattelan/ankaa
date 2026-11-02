@@ -1,5 +1,3 @@
-import type { Countdown } from "#/features/workout/core/countdown.ts";
-
 import { MILLISECONDS_PER_SECOND } from "#/features/workout/constants/milliseconds-per-second.ts";
 
 /**
@@ -9,20 +7,20 @@ import { MILLISECONDS_PER_SECOND } from "#/features/workout/constants/millisecon
  * its planned seconds included.
  */
 export function getSegmentTimerCount({
-  countdown,
   currentTime,
+  segmentTimer,
 }: {
-  countdown: Countdown;
   currentTime: number;
+  segmentTimer: { leadInSeconds: number; startTime: number };
 }) {
   const passedSeconds = Math.floor(
-    (currentTime - countdown.startTime) / MILLISECONDS_PER_SECOND,
+    (currentTime - segmentTimer.startTime) / MILLISECONDS_PER_SECOND,
   );
 
   return {
-    countedSeconds: Math.max(passedSeconds - countdown.leadInSeconds, 0),
+    countedSeconds: Math.max(passedSeconds - segmentTimer.leadInSeconds, 0),
     leadInRemainingSeconds: Math.max(
-      countdown.leadInSeconds - passedSeconds,
+      segmentTimer.leadInSeconds - passedSeconds,
       0,
     ),
   };

@@ -38,6 +38,25 @@ const SYDNEY_TIME_ZONE_LAYER = DateTime.layerCurrentZone(
   DateTime.zoneMakeNamedUnsafe("Australia/Sydney"),
 );
 
+/**
+ * Opens the form that records an Absence of Push day, and picks pain as its
+ * reason, which every Absence needs.
+ */
+async function openAbsenceRecordForm({
+  user,
+}: {
+  user: ReturnType<typeof userEvent.setup>;
+}) {
+  await user.press(
+    await screen.findByRole("button", {
+      name: "Record absence from Push day",
+    }),
+  );
+  fireEvent(screen.getByTestId("Why you couldn't train"), "selectionChange", {
+    nativeEvent: { selection: "pain" },
+  });
+}
+
 describe("HomeScreen", () => {
   it("lists each Routine of the User", async () => {
     renderScreen({
@@ -325,16 +344,9 @@ describe("HomeScreen", () => {
       },
     });
     jest.setSystemTime(new Date("2026-11-01T20:00:00.000Z"));
-    await user.press(
-      await screen.findByRole("button", {
-        name: "Record absence from Push day",
-      }),
-    );
+    await openAbsenceRecordForm({ user });
     fireEvent(screen.getByTestId("Day you couldn't train"), "dateChange", {
       nativeEvent: { date: "2026-10-29T14:00:00.000Z" },
-    });
-    fireEvent(screen.getByTestId("Why you couldn't train"), "selectionChange", {
-      nativeEvent: { selection: "pain" },
     });
     await user.type(screen.getByLabelText("Note"), "Sore shoulder");
 
@@ -372,16 +384,9 @@ describe("HomeScreen", () => {
       },
     });
     jest.setSystemTime(new Date("2026-11-01T20:00:00.000Z"));
-    await user.press(
-      await screen.findByRole("button", {
-        name: "Record absence from Push day",
-      }),
-    );
+    await openAbsenceRecordForm({ user });
     fireEvent(screen.getByTestId("Day you couldn't train"), "dateChange", {
       nativeEvent: { date: "2026-11-02T14:00:00.000Z" },
-    });
-    fireEvent(screen.getByTestId("Why you couldn't train"), "selectionChange", {
-      nativeEvent: { selection: "pain" },
     });
 
     await user.press(screen.getByRole("button", { name: "Record absence" }));
@@ -411,14 +416,7 @@ describe("HomeScreen", () => {
         }),
       },
     });
-    await user.press(
-      await screen.findByRole("button", {
-        name: "Record absence from Push day",
-      }),
-    );
-    fireEvent(screen.getByTestId("Why you couldn't train"), "selectionChange", {
-      nativeEvent: { selection: "pain" },
-    });
+    await openAbsenceRecordForm({ user });
 
     await user.press(screen.getByRole("button", { name: "Record absence" }));
 
@@ -446,14 +444,7 @@ describe("HomeScreen", () => {
         }),
       },
     });
-    await user.press(
-      await screen.findByRole("button", {
-        name: "Record absence from Push day",
-      }),
-    );
-    fireEvent(screen.getByTestId("Why you couldn't train"), "selectionChange", {
-      nativeEvent: { selection: "pain" },
-    });
+    await openAbsenceRecordForm({ user });
 
     await user.press(screen.getByRole("button", { name: "Record absence" }));
 
@@ -481,14 +472,7 @@ describe("HomeScreen", () => {
         }),
       },
     });
-    await user.press(
-      await screen.findByRole("button", {
-        name: "Record absence from Push day",
-      }),
-    );
-    fireEvent(screen.getByTestId("Why you couldn't train"), "selectionChange", {
-      nativeEvent: { selection: "pain" },
-    });
+    await openAbsenceRecordForm({ user });
 
     await user.press(screen.getByRole("button", { name: "Record absence" }));
 

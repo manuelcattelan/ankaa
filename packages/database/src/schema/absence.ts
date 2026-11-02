@@ -1,5 +1,5 @@
 import { SKIP_REASONS } from "@ankaa/core/shared/constants/skip-reasons";
-import { inArray, sql } from "drizzle-orm";
+import { inArray, isNull, sql } from "drizzle-orm";
 import {
   check,
   date,
@@ -7,7 +7,8 @@ import {
   primaryKey,
   snakeCase,
   text,
-  unique,
+  timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -18,6 +19,7 @@ export const absence = snakeCase.table(
   "absence",
   {
     date: date().notNull(),
+    deletedAt: timestamp({ withTimezone: true }),
     id: uuid()
       .notNull()
       .default(sql`uuidv7()`),
@@ -38,7 +40,10 @@ export const absence = snakeCase.table(
   },
   (table) => [
     primaryKey({ columns: [table.id], name: "absence_pkey" }),
-    unique("absence_routine_id_date_key").on(table.routineId, table.date),
+    uniqueIndex("absence_live_routine_id_date_idx")
+      .on(table.routineId, table.date)
+      .where(isNull(table.deletedAt)),
+    index("absence_routine_id_idx").on(table.routineId),
     index("absence_user_id_idx").on(table.userId),
     check("absence_reason_check", inArray(table.reason, SKIP_REASONS)),
   ],

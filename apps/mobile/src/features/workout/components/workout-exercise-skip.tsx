@@ -1,6 +1,5 @@
 import type { SkipReason } from "@ankaa/core/shared/constants/skip-reasons";
 
-import { SKIP_REASONS } from "@ankaa/core/shared/constants/skip-reasons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -13,21 +12,11 @@ import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.t
 import { workoutSaveSkipMutationOptions } from "#/features/workout/mutations/workout-save-skip-mutation-options.ts";
 import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/workout-find-in-progress-query-options.ts";
 import { Button } from "#/shared/components/button.tsx";
-import { PickerField } from "#/shared/components/picker-field.tsx";
+import { SkipReasonPicker } from "#/shared/components/skip-reason-picker.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
 import { decodeForm } from "#/shared/core/decode-form.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
-import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
-
-const NOT_SKIPPED = "not_skipped";
-
-const SKIP_REASON_OPTIONS = [NOT_SKIPPED, ...SKIP_REASONS] as const;
-
-const SKIP_REASON_OPTION_LABELS = {
-  ...SHARED_MESSAGES.skipReasonLabels,
-  [NOT_SKIPPED]: WORKOUT_MESSAGES.notSkippedLabel,
-};
 
 /**
  * Lets the User give a Workout exercise a Skip, with a reason and an optional
@@ -126,17 +115,13 @@ export function WorkoutExerciseSkip({
 
   return (
     <>
-      <PickerField
+      <SkipReasonPicker
         label={WORKOUT_MESSAGES.skipReasonLabel}
-        onChangeSelectedOption={(selectedOption) => {
-          handleChangeDraft({
-            ...skipDraft,
-            reason: selectedOption === NOT_SKIPPED ? null : selectedOption,
-          });
+        noReasonLabel={WORKOUT_MESSAGES.notSkippedLabel}
+        onChangeReason={(changedReason) => {
+          handleChangeDraft({ ...skipDraft, reason: changedReason });
         }}
-        optionLabels={SKIP_REASON_OPTION_LABELS}
-        options={SKIP_REASON_OPTIONS}
-        selectedOption={skipDraft.reason ?? NOT_SKIPPED}
+        reason={skipDraft.reason}
       />
       <TextField
         errorMessage={null}

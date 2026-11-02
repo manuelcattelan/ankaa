@@ -1,6 +1,8 @@
 import { AbsenceDateInFutureError } from "@ankaa/core/features/absence/errors/absence-date-in-future-error";
+import { createNotFutureDateFilter } from "@ankaa/core/features/absence/filters/create-not-future-date-filter";
 import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 import * as DateTime from "effect/DateTime";
+import * as Schema from "effect/Schema";
 
 /**
  * Decides whether an Absence may be recorded on `date`, given the Routine it
@@ -27,10 +29,11 @@ export function decideAbsenceRecord({
   }
 
   const today = DateTime.formatIsoDate(DateTime.setZone(now, timeZone));
+  const isNotFutureDate = Schema.is(
+    Schema.String.check(createNotFutureDateFilter({ today })),
+  );
 
-  // Calendar dates in ISO 8601's `YYYY-MM-DD` order as strings do:
-  // https://en.wikipedia.org/wiki/ISO_8601#General_principles
-  if (date > today) {
+  if (!isNotFutureDate(date)) {
     return new AbsenceDateInFutureError();
   }
 

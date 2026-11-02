@@ -214,53 +214,15 @@ const WORKING_PLANNED_SET = {
 };
 
 /**
- * Builds a Workout in progress of one Bench Press (Barbell) with its planned
- * and recorded Sets, and its note and Skip, which are empty by default.
+ * The fields of a Workout exercise of Bench Press (Barbell), whose Amounts
+ * are counted in Repetitions.
  */
-function buildBenchPressWorkout({
-  note = null,
-  plannedSets,
-  recordedSets,
-  skipNote = null,
-  skipReason = null,
-}: {
-  note?: null | string;
-  plannedSets: Workout["sections"]["main"][number]["exercises"][number]["plannedSets"];
-  recordedSets: Workout["sections"]["main"][number]["exercises"][number]["recordedSets"];
-  skipNote?: null | string;
-  skipReason?: null | SkipReason;
-}) {
-  return {
-    id: "01900000-0000-7000-8000-000000000201",
-    sections: {
-      coolDown: [],
-      main: [
-        {
-          exercises: [
-            {
-              amountUnit: "repetition",
-              exerciseId: BENCH_PRESS_EXERCISE_ID,
-              id: BENCH_PRESS_WORKOUT_EXERCISE_ID,
-              note,
-              plannedNote: null,
-              plannedSets,
-              pyramidLabel: null,
-              recordedSets,
-              skipNote,
-              skipReason,
-              warmUpExercises: [],
-              weightType: "total",
-              weightUnit: "kilogram",
-            },
-          ],
-          id: "01900000-0000-7000-8000-000000000204",
-        },
-      ],
-      warmUp: [],
-    },
-    startedAt: "2026-10-29T09:00:00.000Z",
-  } satisfies Workout;
-}
+const BENCH_PRESS_WORKOUT_EXERCISE = {
+  amountUnit: "repetition",
+  exerciseId: BENCH_PRESS_EXERCISE_ID,
+  id: BENCH_PRESS_WORKOUT_EXERCISE_ID,
+  weightType: "total",
+} as const;
 
 const PLANK_WORKOUT_EXERCISE_ID = "01900000-0000-7000-8000-000000000402";
 
@@ -275,43 +237,57 @@ const PLANK_PLANNED_SET = {
 };
 
 /**
- * Builds a Workout in progress of one Plank, whose Amounts are counted in
- * seconds, with its planned and recorded Sets, and its Skip reason, which is
- * empty by default.
+ * The fields of a Workout exercise of Plank, whose Amounts are counted in
+ * seconds.
  */
-function buildPlankWorkout({
+const PLANK_WORKOUT_EXERCISE = {
+  amountUnit: "second",
+  exerciseId: PLANK_EXERCISE_ID,
+  id: PLANK_WORKOUT_EXERCISE_ID,
+  weightType: "bodyweight",
+} as const;
+
+/**
+ * Builds a Workout in progress of one `workoutExercise`, with its planned and
+ * recorded Sets, and its note and Skip, which are empty by default.
+ */
+function buildWorkout({
+  note = null,
   plannedSets,
   recordedSets,
+  skipNote = null,
   skipReason = null,
+  workoutExercise,
 }: {
+  note?: null | string;
   plannedSets: Workout["sections"]["main"][number]["exercises"][number]["plannedSets"];
   recordedSets: Workout["sections"]["main"][number]["exercises"][number]["recordedSets"];
+  skipNote?: null | string;
   skipReason?: null | SkipReason;
+  workoutExercise:
+    typeof BENCH_PRESS_WORKOUT_EXERCISE | typeof PLANK_WORKOUT_EXERCISE;
 }) {
   return {
-    id: "01900000-0000-7000-8000-000000000401",
+    id: "01900000-0000-7000-8000-000000000201",
     sections: {
       coolDown: [],
       main: [
         {
           exercises: [
             {
-              amountUnit: "second",
-              exerciseId: PLANK_EXERCISE_ID,
-              id: PLANK_WORKOUT_EXERCISE_ID,
-              note: null,
+              ...workoutExercise,
+              note,
               plannedNote: null,
               plannedSets,
               pyramidLabel: null,
               recordedSets,
-              skipNote: null,
+              skipNote,
               skipReason,
               warmUpExercises: [],
-              weightType: "bodyweight",
               weightUnit: "kilogram",
             },
           ],
-          id: "01900000-0000-7000-8000-000000000404",
+          id: "01900000-0000-7000-8000-000000000204",
         },
       ],
       warmUp: [],
@@ -321,11 +297,54 @@ function buildPlankWorkout({
 }
 
 /**
+ * Renders the Workout screen of a Workout in progress of one Plank, whose
+ * Amounts are counted in seconds, with `plannedSets`, `recordedSets` and
+ * `skipReason`, which hold one planned Working set of 60 seconds, nothing
+ * recorded and no Skip by default, and records the paths it requests into
+ * `receivedPaths` and the notifications it schedules into
+ * `scheduledNotifications`.
+ */
+function renderPlankWorkoutScreen({
+  plannedSets = [PLANK_PLANNED_SET],
+  receivedPaths = [],
+  recordedSets = [],
+  scheduledNotifications = [],
+  skipReason = null,
+}: {
+  plannedSets?: Workout["sections"]["main"][number]["exercises"][number]["plannedSets"];
+  receivedPaths?: string[];
+  recordedSets?: Workout["sections"]["main"][number]["exercises"][number]["recordedSets"];
+  scheduledNotifications?: NotificationRequest[];
+  skipReason?: null | SkipReason;
+}) {
+  renderScreen({
+    initialUrl: "/workout",
+    testRuntimeLayers: {
+      authenticationClient: fakeSignedInAuthenticationClientLayer,
+      notifications: fakeNotificationsLayer({ scheduledNotifications }),
+      trpcClient: fakeTrpcClientLayer({
+        receivedPaths,
+        responses: {
+          "exercise.list": () => EXERCISES,
+          "workout.findInProgress": () =>
+            buildWorkout({
+              plannedSets,
+              recordedSets,
+              skipReason,
+              workoutExercise: PLANK_WORKOUT_EXERCISE,
+            }),
+        },
+      }),
+    },
+  });
+}
+
+/**
  * Builds a Workout in progress of one Bench Press (Barbell) whose one planned
  * Working set is recorded, so every Workout exercise is done.
  */
 function buildDoneBenchPressWorkout() {
-  return buildBenchPressWorkout({
+  return buildWorkout({
     plannedSets: [WORKING_PLANNED_SET],
     recordedSets: [
       {
@@ -333,6 +352,7 @@ function buildDoneBenchPressWorkout() {
         segments: [{ amount: 8, weight: 60 }],
       },
     ],
+    workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
   });
 }
 
@@ -439,9 +459,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -464,9 +485,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -517,9 +539,10 @@ describe("WorkoutScreen", () => {
 
   it("asks for the reason and the note of a Skip when the User stops with a Workout exercise not done, and sends them with the stop", async () => {
     const stoppedInputs: WorkoutStopInput[] = [];
-    let workoutInProgress: null | Workout = buildBenchPressWorkout({
+    let workoutInProgress: null | Workout = buildWorkout({
       plannedSets: [WORKING_PLANNED_SET],
       recordedSets: [],
+      workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
     });
     const user = userEvent.setup();
     renderScreen({
@@ -568,10 +591,11 @@ describe("WorkoutScreen", () => {
 
   it("stops without asking for a reason when every Workout exercise is done or has a Skip", async () => {
     const stoppedInputs: WorkoutStopInput[] = [];
-    let workoutInProgress: null | Workout = buildBenchPressWorkout({
+    let workoutInProgress: null | Workout = buildWorkout({
       plannedSets: [WORKING_PLANNED_SET],
       recordedSets: [],
       skipReason: "pain",
+      workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
     });
     const user = userEvent.setup();
     renderScreen({
@@ -616,9 +640,10 @@ describe("WorkoutScreen", () => {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () => workoutInProgress,
             "workout.stop": () => {
-              workoutInProgress = buildBenchPressWorkout({
+              workoutInProgress = buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               });
               throw new SkipReasonMissingError();
             },
@@ -690,9 +715,10 @@ describe("WorkoutScreen", () => {
 
   it("Saves a Set that the User fills in through Save set, and counts it as a done Working set", async () => {
     const savedInputs: WorkoutSaveSetInput[] = [];
-    let workoutInProgress = buildBenchPressWorkout({
+    let workoutInProgress = buildWorkout({
       plannedSets: [WORKING_PLANNED_SET, WORKING_PLANNED_SET],
       recordedSets: [],
+      workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
     });
     const user = userEvent.setup();
     renderScreen({
@@ -706,7 +732,7 @@ describe("WorkoutScreen", () => {
             "workout.findInProgress": () => workoutInProgress,
             "workout.saveSet": (input) => {
               savedInputs.push(input);
-              workoutInProgress = buildBenchPressWorkout({
+              workoutInProgress = buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET, WORKING_PLANNED_SET],
                 recordedSets: [
                   {
@@ -714,6 +740,7 @@ describe("WorkoutScreen", () => {
                     segments: [{ amount: 8, weight: 62.5 }],
                   },
                 ],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               });
             },
           },
@@ -750,9 +777,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
             "workout.saveSet": (input) => {
               savedInputs.push(input);
@@ -793,7 +821,7 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [
                   {
                     ...WORKING_PLANNED_SET,
@@ -805,6 +833,7 @@ describe("WorkoutScreen", () => {
                   },
                 ],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
             "workout.saveSet": (input) => {
               savedInputs.push(input);
@@ -856,7 +885,7 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [
                   { ...WORKING_PLANNED_SET, type: "warm_up" },
                   WORKING_PLANNED_SET,
@@ -873,6 +902,7 @@ describe("WorkoutScreen", () => {
                     segments: [{ amount: 8, weight: 60 }],
                   },
                 ],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -893,7 +923,7 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [
                   {
@@ -901,6 +931,7 @@ describe("WorkoutScreen", () => {
                     segments: [{ amount: 8, weight: 60 }],
                   },
                 ],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -916,7 +947,7 @@ describe("WorkoutScreen", () => {
 
   it("removes any recorded Set through its Remove set", async () => {
     const removedInputs: WorkoutRemoveSetInput[] = [];
-    let workoutInProgress = buildBenchPressWorkout({
+    let workoutInProgress = buildWorkout({
       plannedSets: [WORKING_PLANNED_SET, WORKING_PLANNED_SET],
       recordedSets: [
         {
@@ -928,6 +959,7 @@ describe("WorkoutScreen", () => {
           segments: [{ amount: 7, weight: 60 }],
         },
       ],
+      workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
     });
     const user = userEvent.setup();
     renderScreen({
@@ -940,7 +972,7 @@ describe("WorkoutScreen", () => {
             "workout.findInProgress": () => workoutInProgress,
             "workout.removeSet": (input) => {
               removedInputs.push(input);
-              workoutInProgress = buildBenchPressWorkout({
+              workoutInProgress = buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET, WORKING_PLANNED_SET],
                 recordedSets: [
                   {
@@ -948,6 +980,7 @@ describe("WorkoutScreen", () => {
                     segments: [{ amount: 7, weight: 60 }],
                   },
                 ],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               });
             },
           },
@@ -980,9 +1013,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
             "workout.stop": (input) => {
               stoppedInputs.push(input);
@@ -1014,9 +1048,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
           unreachablePaths: ["workout.saveSet"],
@@ -1050,9 +1085,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
             "workout.saveSet": () => {
               throw new SetNotPlannedError();
@@ -1076,9 +1112,10 @@ describe("WorkoutScreen", () => {
 
   it("Saves the note that the User writes on a Workout exercise through Save note", async () => {
     const savedInputs: WorkoutSaveNoteInput[] = [];
-    let workoutInProgress = buildBenchPressWorkout({
+    let workoutInProgress = buildWorkout({
       plannedSets: [WORKING_PLANNED_SET],
       recordedSets: [],
+      workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
     });
     const user = userEvent.setup();
     renderScreen({
@@ -1091,10 +1128,11 @@ describe("WorkoutScreen", () => {
             "workout.findInProgress": () => workoutInProgress,
             "workout.saveNote": (input) => {
               savedInputs.push(input);
-              workoutInProgress = buildBenchPressWorkout({
+              workoutInProgress = buildWorkout({
                 note: "Felt strong today",
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               });
             },
           },
@@ -1132,9 +1170,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
             "workout.stop": (input) => {
               stoppedInputs.push(input);
@@ -1160,9 +1199,10 @@ describe("WorkoutScreen", () => {
 
   it("Saves the Skip of a Workout exercise, with the reason the User picks and their note, through Save skip", async () => {
     const savedInputs: WorkoutSaveSkipInput[] = [];
-    let workoutInProgress = buildBenchPressWorkout({
+    let workoutInProgress = buildWorkout({
       plannedSets: [WORKING_PLANNED_SET],
       recordedSets: [],
+      workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
     });
     const user = userEvent.setup();
     renderScreen({
@@ -1175,11 +1215,12 @@ describe("WorkoutScreen", () => {
             "workout.findInProgress": () => workoutInProgress,
             "workout.saveSkip": (input) => {
               savedInputs.push(input);
-              workoutInProgress = buildBenchPressWorkout({
+              workoutInProgress = buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
                 skipNote: "Sore shoulder",
                 skipReason: "pain",
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               });
             },
           },
@@ -1221,9 +1262,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
             "workout.stop": (input) => {
               stoppedInputs.push(input);
@@ -1258,9 +1300,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -1291,7 +1334,7 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET, WORKING_PLANNED_SET],
                 recordedSets: [
                   {
@@ -1300,6 +1343,7 @@ describe("WorkoutScreen", () => {
                   },
                 ],
                 skipReason: "pain",
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -1337,9 +1381,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
             "workout.saveSet": () => {
               throw new SkipConflictError();
@@ -1369,7 +1414,7 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [
                   {
@@ -1377,6 +1422,7 @@ describe("WorkoutScreen", () => {
                     segments: [{ amount: 8, weight: 60 }],
                   },
                 ],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
             "workout.removeSet": () => {
               throw new SkipConflictError();
@@ -1407,9 +1453,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -1440,9 +1487,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
           unreachablePaths: ["workout.saveNote"],
@@ -1476,9 +1524,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -1572,7 +1621,7 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [
                   {
                     ...WORKING_PLANNED_SET,
@@ -1584,6 +1633,7 @@ describe("WorkoutScreen", () => {
                   },
                 ],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -1609,9 +1659,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -1635,9 +1686,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -1663,9 +1715,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -1699,9 +1752,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -1762,7 +1816,7 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [
                   {
                     ...WORKING_PLANNED_SET,
@@ -1774,6 +1828,7 @@ describe("WorkoutScreen", () => {
                   },
                 ],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -1806,7 +1861,7 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [
                   {
                     ...WORKING_PLANNED_SET,
@@ -1818,6 +1873,7 @@ describe("WorkoutScreen", () => {
                   },
                 ],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -1861,7 +1917,7 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [
                   {
                     ...WORKING_PLANNED_SET,
@@ -1873,6 +1929,7 @@ describe("WorkoutScreen", () => {
                   },
                 ],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -1903,9 +1960,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -1923,22 +1981,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("offers Start on a Set of a Workout exercise counted in seconds", async () => {
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [PLANK_PLANNED_SET],
-                recordedSets: [],
-              }),
-          },
-        }),
-      },
-    });
+    renderPlankWorkoutScreen({});
 
     expect(
       await screen.findByRole("button", { name: "Start" }),
@@ -1954,9 +1997,10 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () =>
-              buildBenchPressWorkout({
+              buildWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
+                workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
               }),
           },
         }),
@@ -1971,23 +2015,7 @@ describe("WorkoutScreen", () => {
   it("schedules a notification for the end of a 5-second lead-in when the User starts a Segment timer", async () => {
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        notifications: fakeNotificationsLayer({ scheduledNotifications }),
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [PLANK_PLANNED_SET],
-                recordedSets: [],
-              }),
-          },
-        }),
-      },
-    });
+    renderPlankWorkoutScreen({ scheduledNotifications });
 
     await user.press(await screen.findByRole("button", { name: "Start" }));
 
@@ -2009,22 +2037,7 @@ describe("WorkoutScreen", () => {
 
   it("counts down the planned seconds of the Set once the lead-in of the Segment timer ends", async () => {
     const user = userEvent.setup();
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [PLANK_PLANNED_SET],
-                recordedSets: [],
-              }),
-          },
-        }),
-      },
-    });
+    renderPlankWorkoutScreen({});
     await user.press(await screen.findByRole("button", { name: "Start" }));
 
     await advanceFakeTime(15_000);
@@ -2035,23 +2048,7 @@ describe("WorkoutScreen", () => {
   it("schedules a notification for the end of the planned seconds when the User starts a Segment timer", async () => {
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        notifications: fakeNotificationsLayer({ scheduledNotifications }),
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [PLANK_PLANNED_SET],
-                recordedSets: [],
-              }),
-          },
-        }),
-      },
-    });
+    renderPlankWorkoutScreen({ scheduledNotifications });
 
     await user.press(await screen.findByRole("button", { name: "Start" }));
 
@@ -2082,23 +2079,7 @@ describe("WorkoutScreen", () => {
   it("fills the planned seconds into the first Segment with no Amount when the Segment timer reaches zero, and doesn't Save the Set", async () => {
     const receivedPaths: string[] = [];
     const user = userEvent.setup();
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        trpcClient: fakeTrpcClientLayer({
-          receivedPaths,
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [PLANK_PLANNED_SET],
-                recordedSets: [],
-              }),
-          },
-        }),
-      },
-    });
+    renderPlankWorkoutScreen({ receivedPaths });
     await user.press(await screen.findByRole("button", { name: "Start" }));
 
     await advanceFakeTime(65_000);
@@ -2110,23 +2091,7 @@ describe("WorkoutScreen", () => {
   it("keeps counting the seconds past zero of a Segment timer, and fills in the total held when the User stops it, without Saving the Set", async () => {
     const receivedPaths: string[] = [];
     const user = userEvent.setup();
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        trpcClient: fakeTrpcClientLayer({
-          receivedPaths,
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [PLANK_PLANNED_SET],
-                recordedSets: [],
-              }),
-          },
-        }),
-      },
-    });
+    renderPlankWorkoutScreen({ receivedPaths });
     await user.press(await screen.findByRole("button", { name: "Start" }));
 
     await advanceFakeTime(77_000);
@@ -2142,23 +2107,7 @@ describe("WorkoutScreen", () => {
   it("fills in the seconds held and cancels the notification for zero when the User stops a Segment timer before zero", async () => {
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        notifications: fakeNotificationsLayer({ scheduledNotifications }),
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [PLANK_PLANNED_SET],
-                recordedSets: [],
-              }),
-          },
-        }),
-      },
-    });
+    renderPlankWorkoutScreen({ scheduledNotifications });
     await user.press(await screen.findByRole("button", { name: "Start" }));
     await waitFor(() => {
       expect(scheduledNotifications).toHaveLength(2);
@@ -2176,21 +2125,8 @@ describe("WorkoutScreen", () => {
 
   it("counts up from zero once the lead-in ends on a Set with no planned Amount, and fills in the seconds counted when the User stops it", async () => {
     const user = userEvent.setup();
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [{ ...PLANK_PLANNED_SET, amount: null }],
-                recordedSets: [],
-              }),
-          },
-        }),
-      },
+    renderPlankWorkoutScreen({
+      plannedSets: [{ ...PLANK_PLANNED_SET, amount: null }],
     });
     await user.press(await screen.findByRole("button", { name: "Start" }));
 
@@ -2210,22 +2146,9 @@ describe("WorkoutScreen", () => {
   it("schedules only the notification for the end of the lead-in when the User starts a Segment timer on a Set with no planned Amount", async () => {
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        notifications: fakeNotificationsLayer({ scheduledNotifications }),
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [{ ...PLANK_PLANNED_SET, amount: null }],
-                recordedSets: [],
-              }),
-          },
-        }),
-      },
+    renderPlankWorkoutScreen({
+      plannedSets: [{ ...PLANK_PLANNED_SET, amount: null }],
+      scheduledNotifications,
     });
 
     await user.press(await screen.findByRole("button", { name: "Start" }));
@@ -2247,35 +2170,23 @@ describe("WorkoutScreen", () => {
 
   it("adds a Segment and fills the planned seconds into it when every Segment has an Amount and the plan allows another", async () => {
     const user = userEvent.setup();
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [
-                  {
-                    ...PLANK_PLANNED_SET,
-                    intensityTechnique: {
-                      _tag: "RestPauseSet",
-                      pauseSeconds: 15,
-                      segmentCount: 2,
-                    },
-                  },
-                ],
-                recordedSets: [
-                  {
-                    id: "01900000-0000-7000-8000-000000000405",
-                    segments: [{ amount: 45, weight: null }],
-                  },
-                ],
-              }),
+    renderPlankWorkoutScreen({
+      plannedSets: [
+        {
+          ...PLANK_PLANNED_SET,
+          intensityTechnique: {
+            _tag: "RestPauseSet",
+            pauseSeconds: 15,
+            segmentCount: 2,
           },
-        }),
-      },
+        },
+      ],
+      recordedSets: [
+        {
+          id: "01900000-0000-7000-8000-000000000405",
+          segments: [{ amount: 45, weight: null }],
+        },
+      ],
     });
     await user.press(await screen.findByRole("button", { name: "Start" }));
 
@@ -2286,26 +2197,13 @@ describe("WorkoutScreen", () => {
   });
 
   it("doesn't offer Start on a Set whose Segments all have an Amount and whose plan allows no other", async () => {
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [PLANK_PLANNED_SET],
-                recordedSets: [
-                  {
-                    id: "01900000-0000-7000-8000-000000000405",
-                    segments: [{ amount: 45, weight: null }],
-                  },
-                ],
-              }),
-          },
-        }),
-      },
+    renderPlankWorkoutScreen({
+      recordedSets: [
+        {
+          id: "01900000-0000-7000-8000-000000000405",
+          segments: [{ amount: 45, weight: null }],
+        },
+      ],
     });
 
     await screen.findByRole("button", { name: "Remove set" });
@@ -2314,27 +2212,14 @@ describe("WorkoutScreen", () => {
   });
 
   it("offers Start only on the Sets that the User can record", async () => {
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [
-                  PLANK_PLANNED_SET,
-                  {
-                    ...PLANK_PLANNED_SET,
-                    id: "01900000-0000-7000-8000-000000000406",
-                  },
-                ],
-                recordedSets: [],
-              }),
-          },
-        }),
-      },
+    renderPlankWorkoutScreen({
+      plannedSets: [
+        PLANK_PLANNED_SET,
+        {
+          ...PLANK_PLANNED_SET,
+          id: "01900000-0000-7000-8000-000000000406",
+        },
+      ],
     });
 
     await screen.findByRole("button", { name: "Save set" });
@@ -2345,23 +2230,7 @@ describe("WorkoutScreen", () => {
   it("replaces a Segment timer and cancels its notifications when the User starts a Rest", async () => {
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        notifications: fakeNotificationsLayer({ scheduledNotifications }),
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [PLANK_PLANNED_SET],
-                recordedSets: [],
-              }),
-          },
-        }),
-      },
-    });
+    renderPlankWorkoutScreen({ scheduledNotifications });
     await user.press(await screen.findByRole("button", { name: "Start" }));
     await waitFor(() => {
       expect(scheduledNotifications).toHaveLength(2);
@@ -2389,23 +2258,7 @@ describe("WorkoutScreen", () => {
   it("replaces a Rest and its notification when the User starts a Segment timer", async () => {
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        notifications: fakeNotificationsLayer({ scheduledNotifications }),
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [PLANK_PLANNED_SET],
-                recordedSets: [],
-              }),
-          },
-        }),
-      },
-    });
+    renderPlankWorkoutScreen({ scheduledNotifications });
     await user.press(await screen.findByRole("button", { name: "Start rest" }));
     await waitFor(() => {
       expect(scheduledNotifications).toHaveLength(1);
@@ -2426,23 +2279,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("doesn't offer Start on a Set of a Workout exercise that has a Skip", async () => {
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildPlankWorkout({
-                plannedSets: [PLANK_PLANNED_SET],
-                recordedSets: [],
-                skipReason: "pain",
-              }),
-          },
-        }),
-      },
-    });
+    renderPlankWorkoutScreen({ skipReason: "pain" });
 
     await screen.findByRole("button", { name: "Save skip" });
 

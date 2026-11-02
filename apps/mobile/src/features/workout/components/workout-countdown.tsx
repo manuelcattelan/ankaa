@@ -16,7 +16,7 @@ export function WorkoutCountdown({
   countdown,
   onEnd,
 }: {
-  countdown: Countdown;
+  countdown: Extract<Countdown, { kind: "pause" | "rest" }>;
   onEnd: () => void;
 }) {
   const [currentTime, setCurrentTime] = useState(countdown.startTime);

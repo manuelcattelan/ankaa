@@ -1,4 +1,5 @@
 import { WEIGHT_UNITS } from "@ankaa/core/features/workout/constants/weight";
+import { getWorkingSetCounts } from "@ankaa/core/features/workout/core/get-working-set-counts";
 import { useState } from "react";
 
 import type { WorkoutExercise as WorkoutExerciseValue } from "#/shared/workout.ts";
@@ -6,7 +7,6 @@ import type { WorkoutExercise as WorkoutExerciseValue } from "#/shared/workout.t
 import { WorkoutExerciseNote } from "#/features/workout/components/workout-exercise-note.tsx";
 import { WorkoutExerciseSkip } from "#/features/workout/components/workout-exercise-skip.tsx";
 import { WorkoutSet } from "#/features/workout/components/workout-set.tsx";
-import { getWorkingSetCounts } from "#/features/workout/core/get-working-set-counts.ts";
 import { useWorkoutContext } from "#/features/workout/hooks/use-workout-context.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { PickerField } from "#/shared/components/picker-field.tsx";

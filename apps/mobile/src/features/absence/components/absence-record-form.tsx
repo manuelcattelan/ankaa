@@ -1,6 +1,5 @@
 import type { SkipReason } from "@ankaa/core/shared/constants/skip-reasons";
 
-import { SKIP_REASONS } from "@ankaa/core/shared/constants/skip-reasons";
 import { DateTimePicker } from "@expo/ui/community/datetime-picker";
 import { useMutation } from "@tanstack/react-query";
 import * as DateTime from "effect/DateTime";
@@ -12,22 +11,12 @@ import { getAbsenceRecordErrorMessage } from "#/features/absence/core/get-absenc
 import { ABSENCE_MESSAGES } from "#/features/absence/messages/absence-messages.ts";
 import { absenceRecordMutationOptions } from "#/features/absence/mutations/absence-record-mutation-options.ts";
 import { Button } from "#/shared/components/button.tsx";
-import { PickerField } from "#/shared/components/picker-field.tsx";
+import { SkipReasonPicker } from "#/shared/components/skip-reason-picker.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
 import { Text } from "#/shared/components/text.tsx";
 import { decodeForm } from "#/shared/core/decode-form.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
-import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
-
-const NO_REASON = "no_reason";
-
-const REASON_OPTIONS = [NO_REASON, ...SKIP_REASONS] as const;
-
-const REASON_OPTION_LABELS = {
-  ...SHARED_MESSAGES.skipReasonLabels,
-  [NO_REASON]: ABSENCE_MESSAGES.noReasonLabel,
-};
 
 /**
  * Lets the User record an Absence from a Routine, on today's date by default
@@ -121,14 +110,11 @@ export function AbsenceRecordForm({
         testID={ABSENCE_MESSAGES.dateLabel}
         value={selectedDate}
       />
-      <PickerField
+      <SkipReasonPicker
         label={ABSENCE_MESSAGES.reasonLabel}
-        onChangeSelectedOption={(selectedOption) => {
-          setReason(selectedOption === NO_REASON ? null : selectedOption);
-        }}
-        optionLabels={REASON_OPTION_LABELS}
-        options={REASON_OPTIONS}
-        selectedOption={reason ?? NO_REASON}
+        noReasonLabel={ABSENCE_MESSAGES.noReasonLabel}
+        onChangeReason={setReason}
+        reason={reason}
       />
       <TextField
         errorMessage={null}

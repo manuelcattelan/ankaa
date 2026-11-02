@@ -1,62 +1,66 @@
 import { useEffect, useState } from "react";
 
 import type { Countdown } from "#/features/workout/core/countdown.ts";
+import type { FilledSegment } from "#/features/workout/core/filled-segment.ts";
 
 import { MILLISECONDS_PER_SECOND } from "#/features/workout/constants/milliseconds-per-second.ts";
 import { getSegmentTimerCount } from "#/features/workout/core/get-segment-timer-count.ts";
+import { getSegmentTimerZeroSeconds } from "#/features/workout/core/get-segment-timer-zero-seconds.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { Button } from "#/shared/components/button.tsx";
 import { Text } from "#/shared/components/text.tsx";
 
 /**
- * Shows the seconds left in the lead-in of a Segment timer while it lasts,
+ * Shows the seconds left in the lead-in of `segmentTimer` while it lasts,
  * then the seconds left in its planned seconds, then the seconds past them,
  * or, when it counts up, the seconds it has counted,
  * read from the clock every second so the count stays right after the app
- * comes back from the background. Calls `onFillSegment` to fill in the
- * Segment at `segmentPosition` with the planned seconds once it reaches zero,
- * and with the seconds counted when the User stops it, before `onStop`.
+ * comes back from the background. Calls `onFillSegment` to fill in its
+ * Segment with the planned seconds once it reaches zero, and with the
+ * seconds counted when the User stops it, before `onStop`.
  */
 export function WorkoutSegmentTimer({
-  countdown,
   onFillSegment,
   onStop,
-  segmentPosition,
+  segmentTimer,
 }: {
-  countdown: Countdown;
-  onFillSegment: (filledSegment: { position: number; seconds: number }) => void;
+  onFillSegment: (filledSegment: FilledSegment) => void;
   onStop: () => void;
-  segmentPosition: number;
+  segmentTimer: Extract<Countdown, { kind: "segmentTimer" }>;
 }) {
-  const [currentTime, setCurrentTime] = useState(countdown.startTime);
+  const [currentTime, setCurrentTime] = useState(segmentTimer.startTime);
 
-  const segmentTimerCount = getSegmentTimerCount({ countdown, currentTime });
+  const segmentTimerCount = getSegmentTimerCount({
+    currentTime,
+    segmentTimer,
+  });
 
   useEffect(() => {
-    const plannedSeconds = countdown.seconds;
     let previousTickTime = Date.now();
 
     const interval = setInterval(() => {
       const tickTime = Date.now();
-      const hasReachedZero =
-        plannedSeconds !== null &&
-        getSegmentTimerCount({ countdown, currentTime: previousTickTime })
-          .countedSeconds < plannedSeconds &&
-        getSegmentTimerCount({ countdown, currentTime: tickTime })
-          .countedSeconds >= plannedSeconds;
+      const zeroSeconds = getSegmentTimerZeroSeconds({
+        previousTickTime,
+        segmentTimer,
+        tickTime,
+      });
 
       previousTickTime = tickTime;
       setCurrentTime(tickTime);
 
-      if (hasReachedZero) {
-        onFillSegment({ position: segmentPosition, seconds: plannedSeconds });
+      if (zeroSeconds !== null) {
+        onFillSegment({
+          position: segmentTimer.segmentPosition,
+          seconds: zeroSeconds,
+        });
       }
     }, MILLISECONDS_PER_SECOND);
 
     return () => {
       clearInterval(interval);
     };
-  }, [countdown, onFillSegment, segmentPosition]);
+  }, [onFillSegment, segmentTimer]);
 
   function getStatusLabel() {
     if (segmentTimerCount.leadInRemainingSeconds > 0) {
@@ -65,18 +69,18 @@ export function WorkoutSegmentTimer({
       );
     }
 
-    if (countdown.seconds === null) {
+    if (segmentTimer.seconds === null) {
       return WORKOUT_MESSAGES.segmentTimerCountedSecondsStatusLabel(
         segmentTimerCount.countedSeconds,
       );
     }
 
-    return segmentTimerCount.countedSeconds > countdown.seconds
+    return segmentTimerCount.countedSeconds > segmentTimer.seconds
       ? WORKOUT_MESSAGES.segmentTimerExtraSecondsStatusLabel(
-          segmentTimerCount.countedSeconds - countdown.seconds,
+          segmentTimerCount.countedSeconds - segmentTimer.seconds,
         )
       : WORKOUT_MESSAGES.countdownStatusLabels.segmentTimer(
-          countdown.seconds - segmentTimerCount.countedSeconds,
+          segmentTimer.seconds - segmentTimerCount.countedSeconds,
         );
   }
 
@@ -86,10 +90,10 @@ export function WorkoutSegmentTimer({
       <Button
         onPress={() => {
           onFillSegment({
-            position: segmentPosition,
+            position: segmentTimer.segmentPosition,
             seconds: getSegmentTimerCount({
-              countdown,
               currentTime: Date.now(),
+              segmentTimer,
             }).countedSeconds,
           });
           onStop();

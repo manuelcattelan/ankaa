@@ -275,7 +275,8 @@ export class WorkoutApplicationService extends Context.Service<
                   WorkoutStopAllowed: (outcome) =>
                     workoutRepository.stop({
                       id: input.id,
-                      skips: outcome.skips,
+                      skip: outcome.skip,
+                      workoutExerciseIds: outcome.workoutExerciseIds,
                     }),
                 },
               );

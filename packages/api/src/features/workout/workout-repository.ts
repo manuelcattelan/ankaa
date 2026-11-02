@@ -4,11 +4,11 @@ import type { WorkoutSaveSkipInput } from "@ankaa/core/features/workout/schemas/
 import type { Section } from "@ankaa/core/shared/constants/sections";
 import type { SkipReason } from "@ankaa/core/shared/constants/skip-reasons";
 import type * as ExerciseDatabaseSchema from "@ankaa/database/schema/exercise";
+import type * as RoutineDatabaseSchema from "@ankaa/database/schema/routine";
 
 import { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
 import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import { Database } from "@ankaa/database/database";
-import * as RoutineDatabaseSchema from "@ankaa/database/schema/routine";
 import {
   workout,
   workoutExercise,
@@ -17,7 +17,7 @@ import {
   workoutExerciseRecordedSet,
   workoutExerciseRecordedSetSegment,
 } from "@ankaa/database/schema/workout";
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, eq, inArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
@@ -27,6 +27,7 @@ import { buildPlannedSet } from "#/shared/build-planned-set.ts";
 import { buildSections } from "#/shared/build-sections.ts";
 import { catchUniqueIndexViolation } from "#/shared/catch-unique-index-violation.ts";
 import { PLANNED_SET_COLUMNS } from "#/shared/planned-set-columns.ts";
+import { shareRoutine } from "#/shared/share-routine.ts";
 
 type PlannedSetRow = Omit<
   typeof workoutExercisePlannedSet.$inferSelect,
@@ -117,7 +118,7 @@ const WORKOUT_EXERCISE_COLUMNS = {
   weightUnit: true,
 } as const;
 
-const STOPPED_WORKOUT_EXERCISE_RELATIONS = {
+const WORKOUT_EXERCISE_STOP_RELATIONS = {
   plannedSets: { columns: { type: true }, orderBy: { position: "asc" } },
   recordedSets: { columns: { id: true } },
 } as const;
@@ -152,7 +153,7 @@ export class WorkoutRepository extends Context.Service<
     readonly findForStop: (options: { id: string }) => Effect.Effect<
       | null
       | (WorkoutOwnerRow & {
-          workoutExercises: ReturnType<typeof buildStoppedWorkoutExercise>[];
+          workoutExercises: ReturnType<typeof buildWorkoutExerciseForStop>[];
         })
     >;
     readonly findInProgress: (options: {
@@ -197,11 +198,8 @@ export class WorkoutRepository extends Context.Service<
     }) => Effect.Effect<void, WorkoutInProgressConflictError>;
     readonly stop: (options: {
       id: string;
-      skips: readonly {
-        note: null | string;
-        reason: SkipReason;
-        workoutExerciseId: string;
-      }[];
+      skip: null | { note: null | string; reason: SkipReason };
+      workoutExerciseIds: readonly string[];
     }) => Effect.Effect<void>;
     readonly updateSet: (options: {
       input: WorkoutSaveSetInput;
@@ -260,10 +258,10 @@ export class WorkoutRepository extends Context.Service<
                 exercises: {
                   columns: { id: true, skipReason: true },
                   with: {
-                    ...STOPPED_WORKOUT_EXERCISE_RELATIONS,
+                    ...WORKOUT_EXERCISE_STOP_RELATIONS,
                     warmUpExercises: {
                       columns: { id: true, skipReason: true },
-                      with: STOPPED_WORKOUT_EXERCISE_RELATIONS,
+                      with: WORKOUT_EXERCISE_STOP_RELATIONS,
                     },
                   },
                 },
@@ -280,7 +278,7 @@ export class WorkoutRepository extends Context.Service<
                   ...groupedExercise.warmUpExercises,
                 ]),
               )
-              .map(buildStoppedWorkoutExercise),
+              .map(buildWorkoutExerciseForStop),
           };
         },
       );
@@ -292,31 +290,9 @@ export class WorkoutRepository extends Context.Service<
       const lockWorkoutExercises = Effect.fn(
         "WorkoutRepository.lockWorkoutExercises",
       )(function* ({ workoutId }: { workoutId: string }) {
-        const warmUpForWorkoutExercise = alias(
-          workoutExercise,
-          "warm_up_for_workout_exercise",
-        );
-
-        yield* database
-          .select({ id: workoutExercise.id })
-          .from(workoutExercise)
-          .leftJoin(
-            warmUpForWorkoutExercise,
-            eq(
-              warmUpForWorkoutExercise.id,
-              workoutExercise.warmUpForWorkoutExerciseId,
-            ),
-          )
-          .innerJoin(
-            workoutExerciseGroup,
-            eq(
-              workoutExerciseGroup.id,
-              sql`coalesce(${workoutExercise.workoutExerciseGroupId}, ${warmUpForWorkoutExercise.workoutExerciseGroupId})`,
-            ),
-          )
+        yield* selectLockedWorkoutExercises()
           .where(eq(workoutExerciseGroup.workoutId, workoutId))
           .orderBy(asc(workoutExercise.id))
-          .for("update", { of: workoutExercise })
           .pipe(Effect.orDie);
       });
 
@@ -355,7 +331,7 @@ export class WorkoutRepository extends Context.Service<
 
       const findRoutine = Effect.fn("WorkoutRepository.findRoutine")(
         function* ({ id }: { id: string }) {
-          const lockedRoutine = yield* shareRoutine({ id });
+          const lockedRoutine = yield* shareRoutine({ database, id });
 
           if (lockedRoutine === null) {
             return null;
@@ -388,28 +364,6 @@ export class WorkoutRepository extends Context.Service<
           return routineRow === undefined
             ? null
             : { ...lockedRoutine, ...routineRow };
-        },
-      );
-
-      /**
-       * Reads the Routine with `id` `FOR SHARE`, the one row a start locks
-       * without changing it, so the start waits for a deletion of its
-       * Routine that is committing, and then sees it deleted:
-       * https://github.com/manuelcattelan/ankaa/issues/133
-       */
-      const shareRoutine = Effect.fn("WorkoutRepository.shareRoutine")(
-        function* ({ id }: { id: string }) {
-          const routines = yield* database
-            .select({
-              deletedAt: RoutineDatabaseSchema.routine.deletedAt,
-              userId: RoutineDatabaseSchema.routine.userId,
-            })
-            .from(RoutineDatabaseSchema.routine)
-            .where(eq(RoutineDatabaseSchema.routine.id, id))
-            .for("share")
-            .pipe(Effect.orDie);
-
-          return routines[0] ?? null;
         },
       );
 
@@ -509,12 +463,24 @@ export class WorkoutRepository extends Context.Service<
       const lockWorkoutExercise = Effect.fn(
         "WorkoutRepository.lockWorkoutExercise",
       )(function* ({ id }: { id: string }) {
+        return yield* selectLockedWorkoutExercises()
+          .where(eq(workoutExercise.id, id))
+          .pipe(Effect.orDie);
+      });
+
+      /**
+       * Selects Workout exercises, each with the id of its Workout, which a
+       * Warm-up exercise reaches through the Workout exercise it prepares
+       * for, and locks them for the write. Each caller adds the Workout
+       * exercises it locks, and their order.
+       */
+      function selectLockedWorkoutExercises() {
         const warmUpForWorkoutExercise = alias(
           workoutExercise,
           "warm_up_for_workout_exercise",
         );
 
-        return yield* database
+        return database
           .select({
             skipReason: workoutExercise.skipReason,
             weightType: workoutExercise.weightType,
@@ -535,10 +501,9 @@ export class WorkoutRepository extends Context.Service<
               sql`coalesce(${workoutExercise.workoutExerciseGroupId}, ${warmUpForWorkoutExercise.workoutExerciseGroupId})`,
             ),
           )
-          .where(eq(workoutExercise.id, id))
           .for("update", { of: workoutExercise })
-          .pipe(Effect.orDie);
-      });
+          .$dynamic();
+      }
 
       /**
        * Reads the Workout with `id` `FOR SHARE`, the one row a write of a
@@ -835,27 +800,26 @@ export class WorkoutRepository extends Context.Service<
         }
       });
 
+      /**
+       * Gives `skip` to the Workout exercises with `workoutExerciseIds`, when
+       * the stop Skips some, and stops the Workout with `id`.
+       */
       const stop = Effect.fn("WorkoutRepository.stop")(function* ({
         id,
-        skips,
+        skip,
+        workoutExerciseIds,
       }: {
         id: string;
-        skips: readonly {
-          note: null | string;
-          reason: SkipReason;
-          workoutExerciseId: string;
-        }[];
+        skip: null | { note: null | string; reason: SkipReason };
+        workoutExerciseIds: readonly string[];
       }) {
-        yield* Effect.forEach(
-          skips,
-          (skip) =>
-            database
-              .update(workoutExercise)
-              .set({ skipNote: skip.note, skipReason: skip.reason })
-              .where(eq(workoutExercise.id, skip.workoutExerciseId))
-              .pipe(Effect.orDie),
-          { discard: true },
-        );
+        if (skip !== null && workoutExerciseIds.length > 0) {
+          yield* database
+            .update(workoutExercise)
+            .set({ skipNote: skip.note, skipReason: skip.reason })
+            .where(inArray(workoutExercise.id, workoutExerciseIds))
+            .pipe(Effect.orDie);
+        }
 
         yield* database
           .update(workout)
@@ -951,17 +915,17 @@ function buildWorkoutExercise(workoutExerciseRow: WorkoutExerciseRow) {
   };
 }
 
-function buildStoppedWorkoutExercise(stoppedWorkoutExerciseRow: {
+function buildWorkoutExerciseForStop(workoutExerciseRow: {
   id: string;
   plannedSets: Pick<typeof workoutExercisePlannedSet.$inferSelect, "type">[];
   recordedSets: { id: string }[];
   skipReason: (typeof workoutExercise.$inferSelect)["skipReason"];
 }) {
   return {
-    id: stoppedWorkoutExerciseRow.id,
-    plannedSets: stoppedWorkoutExerciseRow.plannedSets,
-    recordedSetCount: stoppedWorkoutExerciseRow.recordedSets.length,
-    skipReason: stoppedWorkoutExerciseRow.skipReason,
+    id: workoutExerciseRow.id,
+    plannedSets: workoutExerciseRow.plannedSets,
+    recordedSetCount: workoutExerciseRow.recordedSets.length,
+    skipReason: workoutExerciseRow.skipReason,
   };
 }
 

@@ -23,34 +23,28 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import { constUndefined } from "effect/Function";
 import * as Layer from "effect/Layer";
+import * as Struct from "effect/Struct";
 
+import type { CountdownNotifications } from "#/features/workout/core/countdown-notifications.ts";
 import type { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
-import type { ScheduledNotification } from "#/shared/services/notifications.ts";
 import type { Workout } from "#/shared/workout.ts";
 
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { Notifications } from "#/shared/services/notifications.ts";
 import { TrpcClient } from "#/shared/services/trpc-client.ts";
 
-/**
- * The notifications of a countdown: one for its end when it counts down, and
- * one for the end of its lead-in when it has one.
- */
-export type CountdownNotifications = {
-  end: null | ScheduledNotification;
-  leadInEnd: null | ScheduledNotification;
-};
-
 const COUNTDOWN_NOTIFICATION_CHANNEL_ID = "countdowns";
 
 /**
  * The identifiers that the notifications of a countdown are scheduled under,
  * one for the end of its lead-in and one for its end, so the Workout cancels
- * only its own notifications and leaves any other one scheduled.
+ * only its own notifications and leaves any other one scheduled. They're
+ * scheduled in the order of their keys, which is the order they fire in.
  */
 const COUNTDOWN_NOTIFICATION_IDENTIFIERS = {
-  end: "countdown",
   leadInEnd: "countdownLeadIn",
+
+  end: "countdown",
 };
 
 export class WorkoutApplicationService extends Context.Service<
@@ -115,11 +109,10 @@ export class WorkoutApplicationService extends Context.Service<
       const cancelCountdownNotifications = Effect.fn(
         "WorkoutApplicationService.cancelCountdownNotifications",
       )(function* () {
-        yield* notifications.cancelScheduled(
-          COUNTDOWN_NOTIFICATION_IDENTIFIERS.leadInEnd,
-        );
-        yield* notifications.cancelScheduled(
-          COUNTDOWN_NOTIFICATION_IDENTIFIERS.end,
+        yield* Effect.forEach(
+          Object.values(COUNTDOWN_NOTIFICATION_IDENTIFIERS),
+          (identifier) => notifications.cancelScheduled(identifier),
+          { discard: true },
         );
       });
 
@@ -181,7 +174,7 @@ export class WorkoutApplicationService extends Context.Service<
        */
       const scheduleCountdownNotifications = Effect.fn(
         "WorkoutApplicationService.scheduleCountdownNotifications",
-      )(function* ({ end, leadInEnd }: CountdownNotifications) {
+      )(function* (countdownNotifications: CountdownNotifications) {
         const permissionStatus = yield* notifications.getPermissionStatus();
 
         if (permissionStatus === "undetermined") {
@@ -195,21 +188,21 @@ export class WorkoutApplicationService extends Context.Service<
 
         yield* cancelCountdownNotifications();
 
-        if (leadInEnd !== null) {
-          yield* notifications.schedule({
-            channelId: COUNTDOWN_NOTIFICATION_CHANNEL_ID,
-            identifier: COUNTDOWN_NOTIFICATION_IDENTIFIERS.leadInEnd,
-            notification: leadInEnd,
-          });
-        }
+        yield* Effect.forEach(
+          Struct.keys(COUNTDOWN_NOTIFICATION_IDENTIFIERS),
+          (key) => {
+            const notification = countdownNotifications[key];
 
-        if (end !== null) {
-          yield* notifications.schedule({
-            channelId: COUNTDOWN_NOTIFICATION_CHANNEL_ID,
-            identifier: COUNTDOWN_NOTIFICATION_IDENTIFIERS.end,
-            notification: end,
-          });
-        }
+            return notification === null
+              ? Effect.void
+              : notifications.schedule({
+                  channelId: COUNTDOWN_NOTIFICATION_CHANNEL_ID,
+                  identifier: COUNTDOWN_NOTIFICATION_IDENTIFIERS[key],
+                  notification,
+                });
+          },
+          { discard: true },
+        );
       });
 
       const start = Effect.fn("WorkoutApplicationService.start")(function* (

@@ -1,3 +1,4 @@
+import { createNotFutureDateFilter } from "@ankaa/core/features/absence/filters/create-not-future-date-filter";
 import { SKIP_REASONS } from "@ankaa/core/shared/constants/skip-reasons";
 import * as Predicate from "effect/Predicate";
 import * as Schema from "effect/Schema";
@@ -14,12 +15,9 @@ import { createNullableTextSchema } from "#/shared/core/create-nullable-text-sch
 export function createAbsenceFormSchema({ today }: { today: string }) {
   return Schema.Struct({
     date: Schema.String.check(
-      Schema.makeFilter(
-        // Calendar dates in ISO 8601's `YYYY-MM-DD` order as strings do:
-        // https://en.wikipedia.org/wiki/ISO_8601#General_principles
-        (date: string) => date <= today,
-        { message: ABSENCE_MESSAGES.dateInFutureError },
-      ),
+      createNotFutureDateFilter({ today }).annotate({
+        message: ABSENCE_MESSAGES.dateInFutureError,
+      }),
     ),
     note: createNullableTextSchema(Schema.String),
     reason: Schema.NullOr(Schema.Literals(SKIP_REASONS)).pipe(

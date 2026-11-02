@@ -1,42 +1,20 @@
 import { Database } from "@ankaa/database/database";
 import { absence } from "@ankaa/database/schema/absence";
 import { exercise } from "@ankaa/database/schema/exercise";
-import { routine } from "@ankaa/database/schema/routine";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { TestRuntime } from "#/shared/testing/create-test-runtime.ts";
 
-import { beginTransaction } from "#/shared/testing/begin-transaction.ts";
+import { beginRoutineDeletion } from "#/shared/testing/begin-routine-deletion.ts";
+import { buildRoutineSaveInput } from "#/shared/testing/build-routine-save-input.ts";
 import { createSignedInCaller } from "#/shared/testing/create-signed-in-caller.ts";
 import { createTestRuntime } from "#/shared/testing/create-test-runtime.ts";
 import { waitForLockWait } from "#/shared/testing/wait-for-lock-wait.ts";
 
 const BENCH_PRESS_EXERCISE_ID = "019a0000-0000-7000-8000-000000000001";
-
-/**
- * Deletes the Routine with `id` in a transaction that stays open until the
- * returned function runs, so a test can record an Absence while the deletion
- * holds the Routine's row.
- */
-function beginRoutineDeletion({
-  id,
-  runtime,
-}: {
-  id: string;
-  runtime: TestRuntime;
-}) {
-  return beginTransaction({
-    runtime,
-    write: (database) =>
-      database
-        .update(routine)
-        .set({ deletedAt: sql`now()` })
-        .where(eq(routine.id, id)),
-  });
-}
 
 /**
  * Formats the calendar date that is `daysFromToday` days after today in
@@ -57,53 +35,6 @@ function formatDate({
   );
 }
 
-/**
- * Builds a Routine of one Bench Press (Barbell) with one Working set, whose
- * ids all start with `idPrefix`.
- */
-function buildRoutineSaveInput({
-  idPrefix,
-  name,
-}: {
-  idPrefix: string;
-  name: string;
-}) {
-  return {
-    days: [],
-    id: `${idPrefix}-0000-7000-8000-000000000001`,
-    name,
-    sections: {
-      coolDown: [],
-      main: [
-        {
-          exercises: [
-            {
-              exerciseId: BENCH_PRESS_EXERCISE_ID,
-              id: `${idPrefix}-0000-7000-8000-000000000003`,
-              note: null,
-              pyramidLabel: null,
-              sets: [
-                {
-                  amount: 8,
-                  id: `${idPrefix}-0000-7000-8000-000000000004`,
-                  intensityTechnique: null,
-                  isToFailure: false,
-                  restSeconds: 120,
-                  tempo: null,
-                  type: "working" as const,
-                },
-              ],
-              warmUpExercises: [],
-            },
-          ],
-          id: `${idPrefix}-0000-7000-8000-000000000002`,
-        },
-      ],
-      warmUp: [],
-    },
-  };
-}
-
 function insertExercises(runtime: TestRuntime) {
   return runtime.runPromise(
     Effect.gen(function* () {
@@ -120,8 +51,9 @@ function insertExercises(runtime: TestRuntime) {
 }
 
 /**
- * Reads the id of the one Absence of the Routine with `routineId`, which the
- * database generates, since no procedure returns or lists Absences.
+ * Reads the id of the one Absence of the Routine with `routineId` that the
+ * User hasn't removed, which the database generates, since no procedure
+ * returns or lists Absences.
  */
 async function readAbsenceId({
   routineId,
@@ -137,13 +69,19 @@ async function readAbsenceId({
       return yield* database
         .select({ id: absence.id })
         .from(absence)
-        .where(eq(absence.routineId, routineId));
+        .where(
+          and(eq(absence.routineId, routineId), isNull(absence.deletedAt)),
+        );
     }),
   );
 
   return absences[0]?.id ?? "";
 }
 
+/**
+ * Reads the Absences of the Routine with `routineId` that the User hasn't
+ * removed.
+ */
 function readAbsences({
   routineId,
   runtime,
@@ -162,7 +100,9 @@ function readAbsences({
           reason: absence.reason,
         })
         .from(absence)
-        .where(eq(absence.routineId, routineId));
+        .where(
+          and(eq(absence.routineId, routineId), isNull(absence.deletedAt)),
+        );
     }),
   );
 }
@@ -181,7 +121,11 @@ describe("absence.record", () => {
   it("records an Absence for the User's Routine today, even when that Routine has a Workout today", async () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0001", name: "Push day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0001",
+        name: "Push day",
+      }),
     );
     await caller.workout.start({
       id: "019a0001-0000-7000-8000-000000000005",
@@ -213,7 +157,11 @@ describe("absence.record", () => {
   it("fails with CONFLICT and AbsenceDateConflictError for a second Absence for the same Routine and date", async () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0002", name: "Push day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0002",
+        name: "Push day",
+      }),
     );
     await caller.absence.record({
       date: "2026-10-01",
@@ -240,7 +188,11 @@ describe("absence.record", () => {
   it("fails with UNPROCESSABLE_CONTENT and AbsenceDateInFutureError for the day after today in the time zone sent, and records nothing", async () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0003", name: "Push day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0003",
+        name: "Push day",
+      }),
     );
 
     await expect(
@@ -266,7 +218,11 @@ describe("absence.record", () => {
   it("fails with NOT_FOUND and RoutineNotFoundError for a Routine the User deleted, and records nothing", async () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0004", name: "Push day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0004",
+        name: "Push day",
+      }),
     );
     await caller.routine.delete({ id: "019a0004-0000-7000-8000-000000000001" });
 
@@ -293,7 +249,11 @@ describe("absence.record", () => {
   it("fails with NOT_FOUND and RoutineNotFoundError for an Absence recorded while a deletion of its Routine commits, and records nothing", async () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0005", name: "Push day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0005",
+        name: "Push day",
+      }),
     );
     const commitRoutineDeletion = await beginRoutineDeletion({
       id: "019a0005-0000-7000-8000-000000000001",
@@ -337,10 +297,18 @@ describe("absence.edit", () => {
   it("changes the Routine, the date, the reason and the note of the User's Absence", async () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0101", name: "Push day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0101",
+        name: "Push day",
+      }),
     );
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0102", name: "Pull day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0102",
+        name: "Pull day",
+      }),
     );
     await caller.absence.record({
       date: "2026-10-01",
@@ -382,10 +350,18 @@ describe("absence.edit", () => {
   it("fails with CONFLICT and AbsenceDateConflictError for a Routine and date that already have an Absence, and changes nothing", async () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0103", name: "Push day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0103",
+        name: "Push day",
+      }),
     );
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0104", name: "Pull day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0104",
+        name: "Pull day",
+      }),
     );
     await caller.absence.record({
       date: "2026-10-01",
@@ -432,7 +408,11 @@ describe("absence.edit", () => {
   it("fails with UNPROCESSABLE_CONTENT and AbsenceDateInFutureError for the day after today in the time zone sent, and changes nothing", async () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0105", name: "Push day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0105",
+        name: "Push day",
+      }),
     );
     await caller.absence.record({
       date: "2026-10-01",
@@ -472,10 +452,18 @@ describe("absence.edit", () => {
   it("fails with NOT_FOUND and RoutineNotFoundError for a Routine the User deleted, and changes nothing", async () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0106", name: "Push day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0106",
+        name: "Push day",
+      }),
     );
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0107", name: "Pull day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0107",
+        name: "Pull day",
+      }),
     );
     await caller.routine.delete({ id: "019a0107-0000-7000-8000-000000000001" });
     await caller.absence.record({
@@ -516,7 +504,11 @@ describe("absence.edit", () => {
   it("fails with NOT_FOUND and AbsenceNotFoundError for an Absence of another User, and changes nothing", async () => {
     const otherCaller = await createSignedInCaller({ runtime });
     await otherCaller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0108", name: "Push day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0108",
+        name: "Push day",
+      }),
     );
     await otherCaller.absence.record({
       date: "2026-10-01",
@@ -531,7 +523,11 @@ describe("absence.edit", () => {
     });
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0109", name: "Push day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0109",
+        name: "Push day",
+      }),
     );
 
     await expect(
@@ -572,7 +568,11 @@ describe("absence.remove", () => {
   it("removes the User's Absence, so its Routine and date can have an Absence again", async () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0201", name: "Push day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0201",
+        name: "Push day",
+      }),
     );
     await caller.absence.record({
       date: "2026-10-01",
@@ -608,7 +608,11 @@ describe("absence.remove", () => {
   it("succeeds and writes nothing for an Absence that's already gone", async () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0202", name: "Push day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0202",
+        name: "Push day",
+      }),
     );
     await caller.absence.record({
       date: "2026-10-01",
@@ -645,7 +649,11 @@ describe("absence.remove", () => {
   it("fails with NOT_FOUND and AbsenceNotFoundError for an Absence of another User, and removes nothing", async () => {
     const otherCaller = await createSignedInCaller({ runtime });
     await otherCaller.routine.save(
-      buildRoutineSaveInput({ idPrefix: "019a0203", name: "Push day" }),
+      buildRoutineSaveInput({
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0203",
+        name: "Push day",
+      }),
     );
     await otherCaller.absence.record({
       date: "2026-10-01",

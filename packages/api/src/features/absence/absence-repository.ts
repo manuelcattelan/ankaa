@@ -1,18 +1,19 @@
 import type { AbsenceEditInput } from "@ankaa/core/features/absence/schemas/absence-edit-input-schema";
 import type { AbsenceRecordInput } from "@ankaa/core/features/absence/schemas/absence-record-input-schema";
+import type { routine } from "@ankaa/database/schema/routine";
 
 import { AbsenceDateConflictError } from "@ankaa/core/features/absence/errors/absence-date-conflict-error";
 import { Database } from "@ankaa/database/database";
 import { absence } from "@ankaa/database/schema/absence";
-import { routine } from "@ankaa/database/schema/routine";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { catchUniqueIndexViolation } from "#/shared/catch-unique-index-violation.ts";
+import { shareRoutine } from "#/shared/share-routine.ts";
 
-const ABSENCE_ROUTINE_ID_DATE_KEY = "absence_routine_id_date_key";
+const ABSENCE_LIVE_ROUTINE_ID_DATE_INDEX = "absence_live_routine_id_date_idx";
 
 export class AbsenceRepository extends Context.Service<
   AbsenceRepository,
@@ -58,18 +59,24 @@ export class AbsenceRepository extends Context.Service<
           .pipe(
             catchUniqueIndexViolation({
               errors: {
-                [ABSENCE_ROUTINE_ID_DATE_KEY]: new AbsenceDateConflictError(),
+                [ABSENCE_LIVE_ROUTINE_ID_DATE_INDEX]:
+                  new AbsenceDateConflictError(),
               },
             }),
           );
       });
 
+      /**
+       * Locks the Absence with `id` for the write, or gives null when none
+       * has it, or when the User removed it, because a removed Absence is
+       * gone for every procedure.
+       */
       const findForUpdate = Effect.fn("AbsenceRepository.findForUpdate")(
         function* ({ id }: { id: string }) {
           const absences = yield* database
             .select({ userId: absence.userId })
             .from(absence)
-            .where(eq(absence.id, id))
+            .where(and(eq(absence.id, id), isNull(absence.deletedAt)))
             .for("update")
             .pipe(Effect.orDie);
 
@@ -77,21 +84,9 @@ export class AbsenceRepository extends Context.Service<
         },
       );
 
-      /**
-       * Reads the Routine with `id` `FOR SHARE`, the one row a record or an
-       * edit locks without changing it, so the record or the edit waits for a
-       * deletion of its Routine that is committing, and then sees it deleted.
-       */
       const findRoutine = Effect.fn("AbsenceRepository.findRoutine")(
         function* ({ id }: { id: string }) {
-          const routines = yield* database
-            .select({ deletedAt: routine.deletedAt, userId: routine.userId })
-            .from(routine)
-            .where(eq(routine.id, id))
-            .for("share")
-            .pipe(Effect.orDie);
-
-          return routines[0] ?? null;
+          return yield* shareRoutine({ database, id });
         },
       );
 
@@ -114,7 +109,8 @@ export class AbsenceRepository extends Context.Service<
           .pipe(
             catchUniqueIndexViolation({
               errors: {
-                [ABSENCE_ROUTINE_ID_DATE_KEY]: new AbsenceDateConflictError(),
+                [ABSENCE_LIVE_ROUTINE_ID_DATE_INDEX]:
+                  new AbsenceDateConflictError(),
               },
             }),
           );
@@ -126,7 +122,8 @@ export class AbsenceRepository extends Context.Service<
         id: string;
       }) {
         yield* database
-          .delete(absence)
+          .update(absence)
+          .set({ deletedAt: sql`now()` })
           .where(eq(absence.id, id))
           .pipe(Effect.orDie);
       });

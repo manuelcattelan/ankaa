@@ -1,4 +1,5 @@
 import type { Countdown } from "#/features/workout/core/countdown.ts";
+import type { FilledSegment } from "#/features/workout/core/filled-segment.ts";
 import type { PlannedSet } from "#/shared/workout.ts";
 
 import { WorkoutCountdown } from "#/features/workout/components/workout-countdown.tsx";
@@ -9,16 +10,16 @@ import { Button } from "#/shared/components/button.tsx";
 
 /**
  * The seconds a Segment timer gives the User to get into position before it
- * counts, so a timed Set doesn't end short by the time it takes to put the
- * phone down.
+ * counts, so the Segment it times doesn't end short by the time it takes to
+ * put the phone down.
  */
 const SEGMENT_TIMER_LEAD_IN_SECONDS = 5;
 
 /**
  * Lets the User start the countdown of a Set's planned Rest, whether or not
- * it's Saved yet, of a Pause when it's a Rest-pause set, and of a Segment
- * timer of its planned Amount, or counting up when it has none, that fills in
- * the Segment at `segmentTimerSegmentPosition` when it has one, and shows the
+ * it's Saved yet, of a Pause when it's a Rest-pause set, and a Segment timer
+ * of its planned Amount, or counting up when it has none, that fills in the
+ * Segment at `segmentTimerSegmentPosition` when it has one, and shows the
  * countdown started under the Set. Calls `onFillSegment` with the seconds a
  * Segment timer fills in.
  */
@@ -31,7 +32,7 @@ export function WorkoutSetCountdown({
   workoutExerciseId,
 }: {
   canStartRest: boolean;
-  onFillSegment: (filledSegment: { position: number; seconds: number }) => void;
+  onFillSegment: (filledSegment: FilledSegment) => void;
   plannedSet: Omit<PlannedSet, "id">;
   position: number;
   segmentTimerSegmentPosition: null | number;
@@ -50,25 +51,29 @@ export function WorkoutSetCountdown({
       ? workoutContext.countdown
       : null;
 
-  function handleStartCountdown({
-    kind,
-    leadInSeconds,
-    seconds,
-    segmentPosition,
-  }: {
-    kind: Countdown["kind"];
-    leadInSeconds: number;
-    seconds: null | number;
-    segmentPosition: null | number;
-  }) {
-    workoutContext.onStartCountdown({
-      kind,
-      leadInSeconds,
-      position,
-      seconds,
-      segmentPosition,
-      workoutExerciseId,
-    });
+  function renderShownCountdown(countdown: Countdown) {
+    switch (countdown.kind) {
+      case "pause":
+      case "rest": {
+        return (
+          <WorkoutCountdown
+            countdown={countdown}
+            key={countdown.startTime}
+            onEnd={workoutContext.onEndCountdown}
+          />
+        );
+      }
+      case "segmentTimer": {
+        return (
+          <WorkoutSegmentTimer
+            key={countdown.startTime}
+            onFillSegment={onFillSegment}
+            onStop={workoutContext.onStopCountdown}
+            segmentTimer={countdown}
+          />
+        );
+      }
+    }
   }
 
   return (
@@ -76,11 +81,14 @@ export function WorkoutSetCountdown({
       {segmentTimerSegmentPosition === null ? null : (
         <Button
           onPress={() => {
-            handleStartCountdown({
+            workoutContext.onStartCountdown({
               kind: "segmentTimer",
               leadInSeconds: SEGMENT_TIMER_LEAD_IN_SECONDS,
+              position,
               seconds: plannedSet.amount,
               segmentPosition: segmentTimerSegmentPosition,
+              startTime: Date.now(),
+              workoutExerciseId,
             });
           }}
           title={WORKOUT_MESSAGES.startSegmentTimerButton}
@@ -89,11 +97,12 @@ export function WorkoutSetCountdown({
       {pauseSeconds === null ? null : (
         <Button
           onPress={() => {
-            handleStartCountdown({
+            workoutContext.onStartCountdown({
               kind: "pause",
-              leadInSeconds: 0,
+              position,
               seconds: pauseSeconds,
-              segmentPosition: null,
+              startTime: Date.now(),
+              workoutExerciseId,
             });
           }}
           title={WORKOUT_MESSAGES.startPauseButton}
@@ -102,32 +111,18 @@ export function WorkoutSetCountdown({
       {restSeconds === null ? null : (
         <Button
           onPress={() => {
-            handleStartCountdown({
+            workoutContext.onStartCountdown({
               kind: "rest",
-              leadInSeconds: 0,
+              position,
               seconds: restSeconds,
-              segmentPosition: null,
+              startTime: Date.now(),
+              workoutExerciseId,
             });
           }}
           title={WORKOUT_MESSAGES.startRestButton}
         />
       )}
-      {shownCountdown?.segmentPosition === null ? (
-        <WorkoutCountdown
-          countdown={shownCountdown}
-          key={shownCountdown.startTime}
-          onEnd={workoutContext.onEndCountdown}
-        />
-      ) : null}
-      {typeof shownCountdown?.segmentPosition === "number" ? (
-        <WorkoutSegmentTimer
-          countdown={shownCountdown}
-          key={shownCountdown.startTime}
-          onFillSegment={onFillSegment}
-          onStop={workoutContext.onStopCountdown}
-          segmentPosition={shownCountdown.segmentPosition}
-        />
-      ) : null}
+      {shownCountdown === null ? null : renderShownCountdown(shownCountdown)}
     </>
   );
 }

@@ -2,7 +2,6 @@ import type { RoutineSaveInput } from "@ankaa/core/features/routine/schemas/rout
 
 import { Database } from "@ankaa/database/database";
 import { exercise } from "@ankaa/database/schema/exercise";
-import { routine } from "@ankaa/database/schema/routine";
 import {
   workout,
   workoutExercise,
@@ -14,7 +13,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { TestRuntime } from "#/shared/testing/create-test-runtime.ts";
 
+import { beginRoutineDeletion } from "#/shared/testing/begin-routine-deletion.ts";
 import { beginTransaction } from "#/shared/testing/begin-transaction.ts";
+import { buildRoutineSaveInput } from "#/shared/testing/build-routine-save-input.ts";
 import { createSignedInCaller } from "#/shared/testing/create-signed-in-caller.ts";
 import { createTestRuntime } from "#/shared/testing/create-test-runtime.ts";
 import { waitForLockWait } from "#/shared/testing/wait-for-lock-wait.ts";
@@ -41,28 +42,6 @@ const WORKING_PLANNED_SET = {
 };
 
 /**
- * Deletes the Routine with `id` in a transaction that stays open until the
- * returned function runs, so a test can send a start while the deletion
- * holds the Routine's row.
- */
-function beginRoutineDeletion({
-  id,
-  runtime,
-}: {
-  id: string;
-  runtime: TestRuntime;
-}) {
-  return beginTransaction({
-    runtime,
-    write: (database) =>
-      database
-        .update(routine)
-        .set({ deletedAt: sql`now()` })
-        .where(eq(routine.id, id)),
-  });
-}
-
-/**
  * Stops the Workout with `id` in a transaction that stays open until the
  * returned function runs, so a test can send a write while the stop holds
  * the Workout's row.
@@ -82,45 +61,6 @@ function beginWorkoutStop({
         .set({ endedAt: sql`now()` })
         .where(eq(workout.id, id)),
   });
-}
-
-function buildRoutineSaveInput({
-  exerciseGroupId,
-  id,
-  name,
-  routineExerciseId,
-  sets,
-}: {
-  exerciseGroupId: string;
-  id: string;
-  name: string;
-  routineExerciseId: string;
-  sets: RoutineSaveInput["sections"]["main"][number]["exercises"][number]["sets"];
-}) {
-  return {
-    days: [],
-    id,
-    name,
-    sections: {
-      coolDown: [],
-      main: [
-        {
-          exercises: [
-            {
-              exerciseId: BENCH_PRESS_EXERCISE_ID,
-              id: routineExerciseId,
-              note: null,
-              pyramidLabel: null,
-              sets,
-              warmUpExercises: [],
-            },
-          ],
-          id: exerciseGroupId,
-        },
-      ],
-      warmUp: [],
-    },
-  };
 }
 
 function insertExercises(runtime: TestRuntime) {
@@ -287,10 +227,9 @@ async function startBenchPressWorkout({
 }) {
   await caller.routine.save(
     buildRoutineSaveInput({
-      exerciseGroupId: `${idPrefix}-0000-7000-8000-000000000002`,
-      id: `${idPrefix}-0000-7000-8000-000000000001`,
+      exerciseId: BENCH_PRESS_EXERCISE_ID,
+      idPrefix,
       name: "Push day",
-      routineExerciseId: `${idPrefix}-0000-7000-8000-000000000003`,
       sets: plannedSets.map((plannedSet, position) => ({
         ...plannedSet,
         id: `${idPrefix}-0000-7000-8000-00000000001${String(position)}`,
@@ -744,26 +683,19 @@ describe("workout.start", () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000211",
-        id: "019a0000-0000-7000-8000-000000000111",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0111",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000311",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000411",
-          },
-        ],
       }),
     );
     await caller.workout.start({
       id: "019a0000-0000-7000-8000-000000000511",
-      routineId: "019a0000-0000-7000-8000-000000000111",
+      routineId: "019a0111-0000-7000-8000-000000000001",
     });
 
     await caller.routine.save({
       days: [],
-      id: "019a0000-0000-7000-8000-000000000111",
+      id: "019a0111-0000-7000-8000-000000000001",
       name: "Push day",
       sections: {
         coolDown: [],
@@ -813,26 +745,19 @@ describe("workout.start", () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000221",
-        id: "019a0000-0000-7000-8000-000000000121",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0121",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000321",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000421",
-          },
-        ],
       }),
     );
     await caller.workout.start({
       id: "019a0000-0000-7000-8000-000000000521",
-      routineId: "019a0000-0000-7000-8000-000000000121",
+      routineId: "019a0121-0000-7000-8000-000000000001",
     });
 
     await caller.workout.start({
       id: "019a0000-0000-7000-8000-000000000521",
-      routineId: "019a0000-0000-7000-8000-000000000121",
+      routineId: "019a0121-0000-7000-8000-000000000001",
     });
 
     await caller.workout.stop({
@@ -847,27 +772,20 @@ describe("workout.start", () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000231",
-        id: "019a0000-0000-7000-8000-000000000131",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0131",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000331",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000431",
-          },
-        ],
       }),
     );
     await caller.workout.start({
       id: "019a0000-0000-7000-8000-000000000531",
-      routineId: "019a0000-0000-7000-8000-000000000131",
+      routineId: "019a0131-0000-7000-8000-000000000001",
     });
 
     await expect(
       caller.workout.start({
         id: "019a0000-0000-7000-8000-000000000532",
-        routineId: "019a0000-0000-7000-8000-000000000131",
+        routineId: "019a0131-0000-7000-8000-000000000001",
       }),
     ).rejects.toMatchObject({
       cause: { _tag: "WorkoutInProgressConflictError" },
@@ -882,27 +800,20 @@ describe("workout.start", () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000241",
-        id: "019a0000-0000-7000-8000-000000000141",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0141",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000341",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000441",
-          },
-        ],
       }),
     );
 
     const results = await Promise.allSettled([
       caller.workout.start({
         id: "019a0000-0000-7000-8000-000000000541",
-        routineId: "019a0000-0000-7000-8000-000000000141",
+        routineId: "019a0141-0000-7000-8000-000000000001",
       }),
       caller.workout.start({
         id: "019a0000-0000-7000-8000-000000000542",
-        routineId: "019a0000-0000-7000-8000-000000000141",
+        routineId: "019a0141-0000-7000-8000-000000000001",
       }),
     ]);
 
@@ -922,42 +833,28 @@ describe("workout.start", () => {
     const otherCaller = await createSignedInCaller({ runtime });
     await otherCaller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000243",
-        id: "019a0000-0000-7000-8000-000000000143",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0143",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000343",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000443",
-          },
-        ],
       }),
     );
     await otherCaller.workout.start({
       id: "019a0000-0000-7000-8000-000000000543",
-      routineId: "019a0000-0000-7000-8000-000000000143",
+      routineId: "019a0143-0000-7000-8000-000000000001",
     });
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000244",
-        id: "019a0000-0000-7000-8000-000000000144",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0144",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000344",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000444",
-          },
-        ],
       }),
     );
 
     await expect(
       caller.workout.start({
         id: "019a0000-0000-7000-8000-000000000543",
-        routineId: "019a0000-0000-7000-8000-000000000144",
+        routineId: "019a0144-0000-7000-8000-000000000001",
       }),
     ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
     await expect(otherCaller.workout.findInProgress()).resolves.toMatchObject({
@@ -969,16 +866,9 @@ describe("workout.start", () => {
     const otherCaller = await createSignedInCaller({ runtime });
     await otherCaller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000251",
-        id: "019a0000-0000-7000-8000-000000000151",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0151",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000351",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000451",
-          },
-        ],
       }),
     );
     const caller = await createSignedInCaller({ runtime });
@@ -986,7 +876,7 @@ describe("workout.start", () => {
     await expect(
       caller.workout.start({
         id: "019a0000-0000-7000-8000-000000000551",
-        routineId: "019a0000-0000-7000-8000-000000000151",
+        routineId: "019a0151-0000-7000-8000-000000000001",
       }),
     ).rejects.toMatchObject({
       cause: { _tag: "RoutineNotFoundError" },
@@ -999,24 +889,17 @@ describe("workout.start", () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000261",
-        id: "019a0000-0000-7000-8000-000000000161",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0161",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000361",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000461",
-          },
-        ],
       }),
     );
-    await caller.routine.delete({ id: "019a0000-0000-7000-8000-000000000161" });
+    await caller.routine.delete({ id: "019a0161-0000-7000-8000-000000000001" });
 
     await expect(
       caller.workout.start({
         id: "019a0000-0000-7000-8000-000000000561",
-        routineId: "019a0000-0000-7000-8000-000000000161",
+        routineId: "019a0161-0000-7000-8000-000000000001",
       }),
     ).rejects.toMatchObject({
       cause: { _tag: "RoutineNotFoundError" },
@@ -1028,26 +911,19 @@ describe("workout.start", () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000271",
-        id: "019a0000-0000-7000-8000-000000000171",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0171",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000371",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000471",
-          },
-        ],
       }),
     );
     const commitRoutineDeletion = await beginRoutineDeletion({
-      id: "019a0000-0000-7000-8000-000000000171",
+      id: "019a0171-0000-7000-8000-000000000001",
       runtime,
     });
 
     const workoutStart = caller.workout.start({
       id: "019a0000-0000-7000-8000-000000000571",
-      routineId: "019a0000-0000-7000-8000-000000000171",
+      routineId: "019a0171-0000-7000-8000-000000000001",
     });
     await waitForLockWait(runtime);
     await commitRoutineDeletion();
@@ -1075,22 +951,15 @@ describe("workout.findInProgress", () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000283",
-        id: "019a0000-0000-7000-8000-000000000183",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0183",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000383",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000483",
-          },
-        ],
       }),
     );
     const timeBeforeStart = await readDatabaseTime(runtime);
     await caller.workout.start({
       id: "019a0000-0000-7000-8000-000000000583",
-      routineId: "019a0000-0000-7000-8000-000000000183",
+      routineId: "019a0183-0000-7000-8000-000000000001",
     });
     const timeAfterStart = await readDatabaseTime(runtime);
 
@@ -1108,40 +977,26 @@ describe("workout.findInProgress", () => {
     const otherCaller = await createSignedInCaller({ runtime });
     await otherCaller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000281",
-        id: "019a0000-0000-7000-8000-000000000181",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0181",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000381",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000481",
-          },
-        ],
       }),
     );
     await otherCaller.workout.start({
       id: "019a0000-0000-7000-8000-000000000581",
-      routineId: "019a0000-0000-7000-8000-000000000181",
+      routineId: "019a0181-0000-7000-8000-000000000001",
     });
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000282",
-        id: "019a0000-0000-7000-8000-000000000182",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0182",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000382",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000482",
-          },
-        ],
       }),
     );
     await caller.workout.start({
       id: "019a0000-0000-7000-8000-000000000582",
-      routineId: "019a0000-0000-7000-8000-000000000182",
+      routineId: "019a0182-0000-7000-8000-000000000001",
     });
     await caller.workout.stop({
       id: "019a0000-0000-7000-8000-000000000582",
@@ -1170,21 +1025,14 @@ describe("workout.stop", () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000291",
-        id: "019a0000-0000-7000-8000-000000000191",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0191",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000391",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000491",
-          },
-        ],
       }),
     );
     await caller.workout.start({
       id: "019a0000-0000-7000-8000-000000000591",
-      routineId: "019a0000-0000-7000-8000-000000000191",
+      routineId: "019a0191-0000-7000-8000-000000000001",
     });
 
     await caller.workout.stop({
@@ -1426,21 +1274,14 @@ describe("workout.stop", () => {
     const caller = await createSignedInCaller({ runtime });
     await caller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000292",
-        id: "019a0000-0000-7000-8000-000000000192",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0192",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000392",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000492",
-          },
-        ],
       }),
     );
     await caller.workout.start({
       id: "019a0000-0000-7000-8000-000000000592",
-      routineId: "019a0000-0000-7000-8000-000000000192",
+      routineId: "019a0192-0000-7000-8000-000000000001",
     });
     await stopWorkoutAt({
       endedAt: new Date("2026-10-29T10:00:00.000Z"),
@@ -1481,21 +1322,14 @@ describe("workout.stop", () => {
     const otherCaller = await createSignedInCaller({ runtime });
     await otherCaller.routine.save(
       buildRoutineSaveInput({
-        exerciseGroupId: "019a0000-0000-7000-8000-000000000294",
-        id: "019a0000-0000-7000-8000-000000000194",
+        exerciseId: BENCH_PRESS_EXERCISE_ID,
+        idPrefix: "019a0194",
         name: "Push day",
-        routineExerciseId: "019a0000-0000-7000-8000-000000000394",
-        sets: [
-          {
-            ...WORKING_PLANNED_SET,
-            id: "019a0000-0000-7000-8000-000000000494",
-          },
-        ],
       }),
     );
     await otherCaller.workout.start({
       id: "019a0000-0000-7000-8000-000000000594",
-      routineId: "019a0000-0000-7000-8000-000000000194",
+      routineId: "019a0194-0000-7000-8000-000000000001",
     });
     const caller = await createSignedInCaller({ runtime });
 

@@ -12,7 +12,7 @@ type WorkoutContextValue = {
   drafts: WorkoutDrafts;
   exerciseNames: ReadonlyMap<string, string>;
   onEndCountdown: () => void;
-  onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
+  onStartCountdown: (countdown: Countdown) => void;
   onStopCountdown: () => void;
 };
 

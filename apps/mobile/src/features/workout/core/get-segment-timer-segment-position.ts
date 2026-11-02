@@ -1,6 +1,12 @@
 import type { SegmentDraft } from "#/features/workout/core/segment-form-schema.ts";
 
 /**
+ * The index that `findIndex` gives when no element matches:
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex
+ */
+const NO_INDEX = -1;
+
+/**
  * Gives the position of the Segment of a Set's Draft that a Segment timer
  * fills in: the first of `segments` with no Amount, or the position of a new
  * Segment when every one has an Amount and `maximumSegmentCount` allows
@@ -16,7 +22,7 @@ export function getSegmentTimerSegmentPosition({
 }) {
   const position = segments.findIndex((segment) => segment.amount === "");
 
-  if (segments[position] !== undefined) {
+  if (position !== NO_INDEX) {
     return position;
   }
 

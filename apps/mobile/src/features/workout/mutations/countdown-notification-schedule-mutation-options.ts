@@ -1,7 +1,7 @@
 import { mutationOptions } from "@tanstack/react-query";
 import * as Effect from "effect/Effect";
 
-import type { CountdownNotifications } from "#/features/workout/workout-application-service.ts";
+import type { CountdownNotifications } from "#/features/workout/core/countdown-notifications.ts";
 import type { ApplicationRuntime } from "#/layer.ts";
 
 import { COUNTDOWN_NOTIFICATION_SCOPE } from "#/features/workout/constants/countdown-notification-scope.ts";

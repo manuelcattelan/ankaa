@@ -95,29 +95,11 @@ export function WorkoutScreen() {
     setCountdown(null);
   }
 
-  function handleStartCountdown(
-    startedCountdown: Omit<Countdown, "startTime">,
-  ) {
-    setCountdown({ ...startedCountdown, startTime: Date.now() });
-    scheduleCountdownNotifications.mutate({
-      end:
-        startedCountdown.seconds === null
-          ? null
-          : {
-              ...WORKOUT_MESSAGES.countdownEndNotifications[
-                startedCountdown.kind
-              ],
-              seconds:
-                startedCountdown.leadInSeconds + startedCountdown.seconds,
-            },
-      leadInEnd:
-        startedCountdown.leadInSeconds === 0
-          ? null
-          : {
-              ...WORKOUT_MESSAGES.countdownLeadInEndNotification,
-              seconds: startedCountdown.leadInSeconds,
-            },
-    });
+  function handleStartCountdown(startedCountdown: Countdown) {
+    setCountdown(startedCountdown);
+    scheduleCountdownNotifications.mutate(
+      getCountdownNotifications(startedCountdown),
+    );
   }
 
   function handleStopCountdown() {
@@ -165,4 +147,38 @@ export function WorkoutScreen() {
       </ScrollView>
     </>
   );
+}
+
+/**
+ * Gives the notifications of `countdown`: one at its end when it counts
+ * down, and one at the end of its lead-in when it's a Segment timer.
+ */
+function getCountdownNotifications(countdown: Countdown) {
+  switch (countdown.kind) {
+    case "pause":
+    case "rest": {
+      return {
+        end: {
+          ...WORKOUT_MESSAGES.countdownEndNotifications[countdown.kind],
+          seconds: countdown.seconds,
+        },
+        leadInEnd: null,
+      };
+    }
+    case "segmentTimer": {
+      return {
+        end:
+          countdown.seconds === null
+            ? null
+            : {
+                ...WORKOUT_MESSAGES.countdownEndNotifications.segmentTimer,
+                seconds: countdown.leadInSeconds + countdown.seconds,
+              },
+        leadInEnd: {
+          ...WORKOUT_MESSAGES.countdownLeadInEndNotification,
+          seconds: countdown.leadInSeconds,
+        },
+      };
+    }
+  }
 }

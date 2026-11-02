@@ -1,33 +1,22 @@
-import { SKIP_REASONS } from "@ankaa/core/shared/constants/skip-reasons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 
 import type { SkipDraft } from "#/features/workout/core/skip-form-schema.ts";
-import type { Workout, WorkoutExercise } from "#/shared/workout.ts";
+import type { Workout } from "#/shared/workout.ts";
 
-import { getWorkingSetCounts } from "#/features/workout/core/get-working-set-counts.ts";
 import { getWorkoutStopErrorMessage } from "#/features/workout/core/get-workout-stop-error-message.ts";
+import { isEveryWorkoutExerciseDone } from "#/features/workout/core/is-every-workout-exercise-done.ts";
 import { skipFormSchema } from "#/features/workout/core/skip-form-schema.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { workoutStopMutationOptions } from "#/features/workout/mutations/workout-stop-mutation-options.ts";
 import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/workout-find-in-progress-query-options.ts";
 import { Button } from "#/shared/components/button.tsx";
-import { PickerField } from "#/shared/components/picker-field.tsx";
+import { SkipReasonPicker } from "#/shared/components/skip-reason-picker.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
 import { decodeForm } from "#/shared/core/decode-form.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
-import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
-
-const NO_REASON = "no_reason";
-
-const SKIP_REASON_OPTIONS = [NO_REASON, ...SKIP_REASONS] as const;
-
-const SKIP_REASON_OPTION_LABELS = {
-  ...SHARED_MESSAGES.skipReasonLabels,
-  [NO_REASON]: WORKOUT_MESSAGES.noStopSkipReasonLabel,
-};
 
 const NO_SKIP_DRAFT: SkipDraft = { note: "", reason: null };
 
@@ -79,10 +68,8 @@ export function WorkoutStopButton({
     },
   });
 
-  const isEveryWorkoutExerciseDone = getWorkoutExercises(workout).every(
-    isWorkoutExerciseDone,
-  );
-  const isAskingForSkip = hasAskedForSkip && !isEveryWorkoutExerciseDone;
+  const isWorkoutDone = isEveryWorkoutExerciseDone(workout);
+  const isAskingForSkip = hasAskedForSkip && !isWorkoutDone;
   const skipFormDecoding = decodeForm({
     hasSubmitted: hasSubmittedSkip,
     schema: skipFormSchema,
@@ -119,7 +106,7 @@ export function WorkoutStopButton({
       return;
     }
 
-    if (isEveryWorkoutExerciseDone) {
+    if (isWorkoutDone) {
       stopWorkout.mutate({ id: workout.id, note: null, reason: null });
 
       return;
@@ -142,17 +129,13 @@ export function WorkoutStopButton({
     <>
       {isAskingForSkip ? (
         <>
-          <PickerField
+          <SkipReasonPicker
             label={WORKOUT_MESSAGES.stopSkipReasonLabel}
-            onChangeSelectedOption={(selectedOption) => {
-              setSkipDraft({
-                ...skipDraft,
-                reason: selectedOption === NO_REASON ? null : selectedOption,
-              });
+            noReasonLabel={WORKOUT_MESSAGES.noStopSkipReasonLabel}
+            onChangeReason={(changedReason) => {
+              setSkipDraft({ ...skipDraft, reason: changedReason });
             }}
-            optionLabels={SKIP_REASON_OPTION_LABELS}
-            options={SKIP_REASON_OPTIONS}
-            selectedOption={skipDraft.reason ?? NO_REASON}
+            reason={skipDraft.reason}
           />
           <TextField
             errorMessage={null}
@@ -171,39 +154,5 @@ export function WorkoutStopButton({
       />
       <StatusMessage message={statusMessage} />
     </>
-  );
-}
-
-/**
- * Gives every Workout exercise of a Workout, Warm-up exercises included.
- */
-function getWorkoutExercises(workout: Workout) {
-  return [
-    ...workout.sections.warmUp.flatMap(
-      (exerciseGroup) => exerciseGroup.exercises,
-    ),
-    ...workout.sections.main.flatMap((exerciseGroup) =>
-      exerciseGroup.exercises.flatMap((workoutExercise) => [
-        workoutExercise,
-        ...workoutExercise.warmUpExercises,
-      ]),
-    ),
-    ...workout.sections.coolDown.flatMap(
-      (exerciseGroup) => exerciseGroup.exercises,
-    ),
-  ];
-}
-
-/**
- * Tells whether a stop leaves a Workout exercise as it is: it has a Skip, or
- * no planned Working set is left to record.
- */
-function isWorkoutExerciseDone(workoutExercise: WorkoutExercise) {
-  return (
-    workoutExercise.skipReason !== null ||
-    getWorkingSetCounts({
-      plannedSets: workoutExercise.plannedSets,
-      recordedSetCount: workoutExercise.recordedSets.length,
-    }).leftCount === 0
   );
 }

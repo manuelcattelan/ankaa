@@ -29,7 +29,11 @@ describe("decideWorkoutStop", () => {
           workoutExercises: [DONE_WORKOUT_EXERCISE],
         },
       }),
-    ).toStrictEqual({ _tag: "WorkoutStopAllowed", skips: [] });
+    ).toStrictEqual({
+      _tag: "WorkoutStopAllowed",
+      skip: null,
+      workoutExerciseIds: [],
+    });
   });
 
   it("Skips with the stop's reason and note each Workout exercise with no Skip and fewer recorded Working sets than planned, and leaves alone one with a Skip and one with every planned Working set recorded, whatever its Warm-up sets", () => {
@@ -82,18 +86,8 @@ describe("decideWorkoutStop", () => {
       }),
     ).toStrictEqual({
       _tag: "WorkoutStopAllowed",
-      skips: [
-        {
-          note: "Gym closing",
-          reason: "low_on_time",
-          workoutExerciseId: "workout-exercise-1",
-        },
-        {
-          note: "Gym closing",
-          reason: "low_on_time",
-          workoutExerciseId: "workout-exercise-2",
-        },
-      ],
+      skip: { note: "Gym closing", reason: "low_on_time" },
+      workoutExerciseIds: ["workout-exercise-1", "workout-exercise-2"],
     });
   });
 
