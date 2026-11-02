@@ -23,7 +23,7 @@ export type TrpcRequest<
 
 /**
  * Builds the implementation of the `TrpcClient` Service over a vanilla tRPC
- * client that sends the session's cookie, so the Service's Layer and the fake
+ * client that sends the session's cookie, so the Service's Layer and the Fake
  * in `#/shared/testing/` run the same client and differ only in its `fetch`.
  * A call that the server rejects as unauthorized refetches the session, so
  * the app learns that the session is gone and routes the User to sign-in.

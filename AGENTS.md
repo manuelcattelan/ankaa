@@ -45,8 +45,8 @@ Every name stands for a **concept**: a unit of meaning from the product, the arc
 
 - **Locals and parameters.** A local or parameter may take the name of a more general concept when no other value in its function belongs to that concept, because a narrow scope keeps a short name clear ([Feitelson](https://doi.org/10.1109/ICPC58990.2023.00037)). When two values do, each keeps the modifier that tells it apart.
 
-  🟢 In `save`, `const outcome = decideRoutineSave(…)`, next to `routineWithSameName` and `routineWithSameId`.<br>
-  🔴 In `save`, `const routineSaveOutcome = decideRoutineSave(…)`, next to `routine` and `otherRoutine`.
+  🟢 In `decideRecordedSetSave`, `const position = …`, next to `plannedSet` and `(recordedSet) => …`.<br>
+  🔴 In `decideRecordedSetSave`, `const recordedSetPosition = …`, next to `set` and `(otherSet) => …`.
 
 - **Library constructs.** When you write a construct that a library documents, use the name its docs always give it, even an abbreviation, and even over a name the code already uses, because agents follow a library best when the code reads like its docs. When two libraries meet, the one whose construct you're writing decides. A name that the docs change with the domain, and every name of our own concepts, follows the rules above.
 
@@ -60,11 +60,11 @@ Every name stands for a **concept**: a unit of meaning from the product, the arc
 
 ## Conventions
 
-The [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html) is the base guide, and lint enforces our departures from it. Lint can't check these:
+The [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html) is the base guide, and lint enforces our departures from it. Lint checks these only in part, if at all:
 
 - Write a comment only to say why, such as a workaround, a library quirk or a constraint, with a link to its source, and never to restate the code. Prefer JSDoc on exports and on APIs that other code uses.
 - Name a string, a 0 or a 1 when it's a setting, a limit, unclear, or used twice or more, and keep it inline otherwise. Lint names every other number.
-- Write an object type inline, and name it only when it's exported or used twice or more.
+- Write the object type of a parameter or of `Context.Service`'s type argument inline, and name it only when it's exported or used twice or more.
 - Type a data field that can be empty as `T | null`, never as optional, and keep `undefined` for an optional parameter, option or prop, because `null` means empty and `undefined` means missing ([MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/null)).
 
   🟢 `type Routine = { note: string | null }`, `function RoutineCard({ onPress }: { onPress?: () => void })`.<br>

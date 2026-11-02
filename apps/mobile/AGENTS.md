@@ -18,7 +18,7 @@ Expo ships breaking changes in every SDK release, so an API you remember may hav
 
 ## Components
 
-- Wrap a React Native primitive in `shared/components/` only once the app needs a default on it, and lint then bans importing it from `react-native`. Import a primitive that has no wrapper, such as `View`, directly.
+- Wrap a React Native primitive in `shared/components/` only once the app needs a default on it, and lint then bans importing it from `react-native`. Lint also bans `Pressable`, which `Button` replaces without wrapping it. Import any other primitive, such as `View`, directly.
 - Make a wrapper extend its primitive's props and pass `...rest` on, so its API is the one React Native documents. Give every other shared component only the props it needs.
 - In a component that passes `...rest` on, put the props a caller may override before `{...rest}`, the props the component owns after it, and the caller's `style` last in the style array, so a caller can change the defaults and the layout without breaking the component.
 

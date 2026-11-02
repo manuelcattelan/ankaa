@@ -83,7 +83,7 @@ export const componentOrder = createRule({
   meta: {
     docs: {
       description:
-        "Order the body of a component or custom hook as described in apps/mobile/AGENTS.md.",
+        "Order the body of a component or custom hook: hooks, state, queries and mutations, derived values, effects, early returns, handlers, returned JSX.",
     },
     messages: {
       unexpectedOrder:

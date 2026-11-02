@@ -33,7 +33,7 @@ const TESTING_IMPORTING_FILES = [
 
 const TESTING_IMPORT_PATTERN = {
   message:
-    "Import a testing/ file only in a test file, another testing/ file or a Vitest configuration, so test code, such as a fake, never ships in an app.",
+    "Import a testing/ file only in a test file, another testing/ file or a Vitest configuration, so test code, such as a Fake, never ships in an app.",
   regex: "(?:^|/)testing(?:/|$)",
 };
 
@@ -66,7 +66,7 @@ export const RESTRICTED_MOCK_METHODS = {
 };
 
 const RESTRICTED_CALL_MATCHER_MESSAGE =
-  "Check what the code did through what a fake recorded or what a later call returns, because a call assertion checks how the code works instead of what it does.";
+  "Check what the code did through what a Fake recorded or what a later call returns, because a call assertion checks how the code works instead of what it does.";
 
 const RESTRICTED_CALL_MATCHERS = [
   "toBeCalled",
@@ -421,7 +421,7 @@ export const rulesConfiguration = defineConfig([
   {
     files: [...TEST_FILES, ...TESTING_FILES],
     // A test and its setup write literal values, and a testing/ file holds
-    // the fixtures and fakes that tests share
+    // the fixtures and Fakes that tests share
     // (https://github.com/manuelcattelan/ankaa/issues/86#issuecomment-6504562591).
     rules: { "@typescript-eslint/no-magic-numbers": "off" },
   },

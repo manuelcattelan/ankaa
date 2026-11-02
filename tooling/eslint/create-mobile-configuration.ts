@@ -67,11 +67,11 @@ const ROUTE_IMPORTABLE_SHARED_PATHS = [
 
 const DYNAMIC_ROUTE_FILE_NAME_PATTERN = /^\[[a-z][A-Za-z]*\]\.tsx$/;
 
-const WRAPPED_PRIMITIVES = ["Pressable", "ScrollView", "Text", "TextInput"];
+const WRAPPED_PRIMITIVES = ["ScrollView", "Text", "TextInput"];
 
 const ROUTE_PACKAGE_IMPORT_PATTERN = {
   message:
-    "Import only screens and components in a route file, and expo-router for its params and navigators. The root layout wires the rest of the app.",
+    "Import only screens and components in a route file, and expo-router for its params and navigators. The Composition root wires the rest of the app.",
   regex: "^(?!#/|expo-router$|react$)",
 };
 
@@ -85,6 +85,13 @@ const MEMOIZATION_IMPORT = {
 const WRAPPED_PRIMITIVES_IMPORT = {
   importNames: WRAPPED_PRIMITIVES,
   message: "Use the component with the same name from #/shared/components.",
+  name: "react-native",
+};
+
+const PRESSABLE_IMPORT = {
+  importNames: ["Pressable"],
+  message:
+    "Use Button from #/shared/components, so every pressable has the button role, the minimum touch target, and the disabled and busy looks.",
   name: "react-native",
 };
 
@@ -123,7 +130,7 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
     ],
     from: "./src",
     message:
-      "Import only screens and components in a route file. The root layout wires the rest of the app.",
+      "Import only screens and components in a route file. The Composition root wires the rest of the app.",
     target: ROUTE_FILES,
   };
 
@@ -177,7 +184,7 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
     },
     createRestrictedImportsConfiguration({
       files: JAVASCRIPT_FILES,
-      paths: [MEMOIZATION_IMPORT, WRAPPED_PRIMITIVES_IMPORT],
+      paths: [MEMOIZATION_IMPORT, WRAPPED_PRIMITIVES_IMPORT, PRESSABLE_IMPORT],
       patterns: RESTRICTED_IMPORT_PATTERNS,
     }),
     {
@@ -194,7 +201,7 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
     createRestrictedImportsConfiguration({
       files: ["src/app/**"],
       ignores: ["src/app/_layout.tsx"],
-      paths: [MEMOIZATION_IMPORT, WRAPPED_PRIMITIVES_IMPORT],
+      paths: [MEMOIZATION_IMPORT, WRAPPED_PRIMITIVES_IMPORT, PRESSABLE_IMPORT],
       patterns: [...RESTRICTED_IMPORT_PATTERNS, ROUTE_PACKAGE_IMPORT_PATTERN],
     }),
     createRestrictedImportsConfiguration({

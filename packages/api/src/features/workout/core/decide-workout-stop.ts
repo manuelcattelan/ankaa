@@ -3,8 +3,8 @@ import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workou
 /**
  * Decides whether stopping a Workout writes, given the Workout with the
  * stopped id, or `null` when none has it. Stopping a Workout the User already
- * stopped writes nothing and succeeds, so a stop retried after an unknown
- * outcome ends where the User meant.
+ * stopped writes nothing and succeeds, so a stop retried without knowing
+ * whether the first one succeeded ends where the User meant.
  */
 export function decideWorkoutStop({
   userId,

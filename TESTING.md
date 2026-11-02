@@ -27,10 +27,10 @@ These rules cover how tests are written and run in every workspace. Lint checks 
   🟢 `expect(formatRest(90)).toBe("1:30")`.<br>
   🔴 ``expect(formatRest(90)).toBe(`${Math.floor(90 / 60)}:${90 % 60}`)``.
 
-- Separate the given, the when and the then with blank lines, and write no comments. When the then wraps the when, such as a call that must reject, write them as one statement.
+- Separate the given, the when and the then with blank lines, and write no comments inside a test, because its `it` states the behavior and its code shows it. When the then wraps the when, such as a call that must reject, write them as one statement. A setup helper follows the root's rule on comments.
 - Name each `describe` after the unit or procedure it tests, such as `describe("tempoFilter")` or `describe("routine.save")`, and let each `it` state one behavior in one sentence, such as `it("rejects a Routine name that another Routine of the User already has")`.
 - Put a test file next to the file whose export it calls, named after that file with `.test.ts`, or `.test.tsx` for a component.
-- Write no test of its own for code without logic of its own, such as a constant, a Schema that adds no check, a route file, a Layer that only wraps a library, or Query options and Mutation options. Application Services and Repositories get no tests of their own either: procedure tests cover them on the server, and screen tests on mobile, so a refactoring below a procedure or a screen breaks no test ([Beck's Test Desiderata](https://testdesiderata.com/)).
+- Write no test of its own for code without logic of its own, such as a constant, a Schema that adds no check, a route file, an Infrastructure Service, or Query options and Mutation options. Application Services and Repositories get no tests of their own either: procedure tests cover them on the server, and screen tests on mobile, so a refactoring below a procedure or a screen breaks no test ([Beck's Test Desiderata](https://testdesiderata.com/)).
 - Run an Effect in a test through the test Runtime, as the app does: `await runtime.runPromise(program)` for a success, `await runtime.runPromiseExit(program)` for a failure or a defect, checked against literal values, and `runtime.runFork(program)` followed by `await runtime.runPromise(Fiber.interrupt(fiber))` for an interruption.
 
 ## Fakes

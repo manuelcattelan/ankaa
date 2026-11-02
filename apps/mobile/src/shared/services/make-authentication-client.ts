@@ -54,7 +54,7 @@ const APPLICATION_SLUG = "ankaa";
 
 /**
  * Builds the implementation of the `AuthenticationClient` Service over the
- * better-auth client, so the Service's Layer and the fake in
+ * better-auth client, so the Service's Layer and the Fake in
  * `#/shared/testing/` run the same client and differ only in its fetch and
  * storage.
  */

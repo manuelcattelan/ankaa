@@ -29,8 +29,8 @@ import { TrpcClient } from "#/shared/services/trpc-client.ts";
 import { FAKE_API_URL } from "#/shared/testing/fake-api-url.ts";
 
 /**
- * One fake procedure for each procedure of `AppRouter`, keyed by its path and
- * taking its input, so the fake router fails to type-check until it serves
+ * One Fake procedure for each procedure of `AppRouter`, keyed by its path and
+ * taking its input, so the Fake router fails to type-check until it serves
  * every procedure and decodes each input as the server does.
  */
 export type FakeTrpcProcedures = {
@@ -79,7 +79,7 @@ type TrpcProcedures = {
 };
 
 /**
- * Serves the real tRPC client from a fake router that answers each procedure
+ * Serves the real tRPC client from a Fake router that answers each procedure
  * with its response in `responses`, and records the path of every procedure
  * the client calls into `receivedPaths`. A procedure with no response fails
  * with `NOT_FOUND`, a response fails by throwing a Wire error of its
@@ -155,7 +155,7 @@ function createFakeTrpcResolver<TProcedure extends AnyProcedure>({
     if (response === undefined) {
       throw new TRPCError({
         code: "NOT_FOUND",
-        message: `No fake response for "${path}"`,
+        message: `No Fake response for "${path}"`,
       });
     }
 
