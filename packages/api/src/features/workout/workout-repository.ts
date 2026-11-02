@@ -3,11 +3,11 @@ import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/w
 import type { WorkoutSaveSkipInput } from "@ankaa/core/features/workout/schemas/workout-save-skip-input-schema";
 import type { Section } from "@ankaa/core/shared/constants/sections";
 import type * as ExerciseDatabaseSchema from "@ankaa/database/schema/exercise";
-import type * as RoutineDatabaseSchema from "@ankaa/database/schema/routine";
 
 import { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
 import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import { Database } from "@ankaa/database/database";
+import * as RoutineDatabaseSchema from "@ankaa/database/schema/routine";
 import {
   workout,
   workoutExercise,
@@ -270,9 +270,15 @@ export class WorkoutRepository extends Context.Service<
 
       const findRoutine = Effect.fn("WorkoutRepository.findRoutine")(
         function* ({ id }: { id: string }) {
+          const lockedRoutine = yield* shareRoutine({ id });
+
+          if (lockedRoutine === null) {
+            return null;
+          }
+
           const routineRow = yield* database.query.routine
             .findFirst({
-              columns: { deletedAt: true, id: true, userId: true },
+              columns: { id: true },
               where: { id },
               with: {
                 exerciseGroups: {
@@ -294,14 +300,33 @@ export class WorkoutRepository extends Context.Service<
             })
             .pipe(Effect.orDie);
 
-          return routineRow ?? null;
+          return routineRow === undefined
+            ? null
+            : { ...lockedRoutine, ...routineRow };
         },
       );
 
       /**
-       * Locks the Workout exercise with `id` for the write, and reads its
-       * Workout without locking it.
+       * Reads the Routine with `id` `FOR SHARE`, the one row a start locks
+       * without changing it, so the start waits for a deletion of its
+       * Routine that is committing, and then sees it deleted.
        */
+      const shareRoutine = Effect.fn("WorkoutRepository.shareRoutine")(
+        function* ({ id }: { id: string }) {
+          const routines = yield* database
+            .select({
+              deletedAt: RoutineDatabaseSchema.routine.deletedAt,
+              userId: RoutineDatabaseSchema.routine.userId,
+            })
+            .from(RoutineDatabaseSchema.routine)
+            .where(eq(RoutineDatabaseSchema.routine.id, id))
+            .for("share")
+            .pipe(Effect.orDie);
+
+          return routines[0] ?? null;
+        },
+      );
+
       const findWorkoutExerciseForUpdate = Effect.fn(
         "WorkoutRepository.findWorkoutExerciseForUpdate",
       )(function* ({ id }: { id: string }) {
@@ -312,13 +337,11 @@ export class WorkoutRepository extends Context.Service<
           return null;
         }
 
-        const workouts = yield* database
-          .select({ endedAt: workout.endedAt, userId: workout.userId })
-          .from(workout)
-          .where(eq(workout.id, workoutExerciseRow.workoutId))
-          .pipe(Effect.orDie);
+        const lockedWorkout = yield* shareWorkout({
+          id: workoutExerciseRow.workoutId,
+        });
 
-        return workouts[0] === undefined ? null : { workout: workouts[0] };
+        return lockedWorkout === null ? null : { workout: lockedWorkout };
       });
 
       const findWorkoutExerciseForRecordedSetRemove = Effect.fn(
@@ -424,9 +447,10 @@ export class WorkoutRepository extends Context.Service<
       });
 
       /**
-       * Reads the Workout with `id` `FOR SHARE`, the one row a Set write
-       * locks without changing it, so the write waits for a stop of its
-       * Workout that is committing, and then sees it stopped:
+       * Reads the Workout with `id` `FOR SHARE`, the one row a write of a
+       * Set, a note or a Skip locks without changing it, so the write waits
+       * for a stop of its Workout that is committing, and then sees it
+       * stopped:
        * https://github.com/manuelcattelan/ankaa/issues/86#issuecomment-6502966213
        */
       const shareWorkout = Effect.fn("WorkoutRepository.shareWorkout")(
