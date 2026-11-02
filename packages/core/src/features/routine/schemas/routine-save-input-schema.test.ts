@@ -29,6 +29,7 @@ const ROUTINE_EXERCISE = {
   exerciseId: "019a0000-0000-7000-8000-000000000001",
   id: "019a0000-0000-7000-8000-000000000301",
   note: null,
+  pyramidLabel: null,
   sets: [SET],
   warmUpExercises: [],
 };
@@ -78,6 +79,7 @@ describe("routineSaveInputSchema", () => {
                 exerciseId: "019a0000-0000-7000-8000-000000000003",
                 id: "019a0000-0000-7000-8000-000000000305",
                 note: "Slowly",
+                pyramidLabel: null,
                 sets: [
                   {
                     ...SET,
@@ -102,6 +104,7 @@ describe("routineSaveInputSchema", () => {
                     exerciseId: "019a0000-0000-7000-8000-000000000003",
                     id: "019a0000-0000-7000-8000-000000000302",
                     note: null,
+                    pyramidLabel: null,
                     sets: [
                       {
                         ...SET,
@@ -109,6 +112,7 @@ describe("routineSaveInputSchema", () => {
                         id: "019a0000-0000-7000-8000-000000000402",
                         type: "warm_up",
                       },
+                      { ...SET, id: "019a0000-0000-7000-8000-000000000406" },
                     ],
                   },
                 ],
@@ -117,6 +121,7 @@ describe("routineSaveInputSchema", () => {
                 exerciseId: "019a0000-0000-7000-8000-000000000002",
                 id: "019a0000-0000-7000-8000-000000000303",
                 note: null,
+                pyramidLabel: null,
                 sets: [
                   {
                     ...SET,
@@ -138,7 +143,8 @@ describe("routineSaveInputSchema", () => {
                 exerciseId: "019a0000-0000-7000-8000-000000000003",
                 id: "019a0000-0000-7000-8000-000000000304",
                 note: null,
-                sets: [],
+                pyramidLabel: null,
+                sets: [{ ...SET, id: "019a0000-0000-7000-8000-000000000407" }],
               },
             ],
             id: "019a0000-0000-7000-8000-000000000202",
@@ -188,6 +194,42 @@ describe("routineSaveInputSchema", () => {
         sections: { ...ROUTINE_SAVE_INPUT.sections, main: [] },
       }),
     ).toThrow("Expected a Routine exercise in the main Section");
+  });
+
+  it("rejects a main Routine exercise that plans only Warm-up sets", () => {
+    expect(() => decodeRoutineSaveInput(withSet({ type: "warm_up" }))).toThrow(
+      "Expected a planned Working set",
+    );
+  });
+
+  it("rejects a Warm-up exercise that plans no Working set", () => {
+    expect(() =>
+      decodeRoutineSaveInput({
+        ...ROUTINE_SAVE_INPUT,
+        sections: {
+          ...ROUTINE_SAVE_INPUT.sections,
+          main: [
+            {
+              exercises: [
+                {
+                  ...ROUTINE_EXERCISE,
+                  warmUpExercises: [
+                    {
+                      exerciseId: "019a0000-0000-7000-8000-000000000003",
+                      id: "019a0000-0000-7000-8000-000000000302",
+                      note: null,
+                      pyramidLabel: null,
+                      sets: [],
+                    },
+                  ],
+                },
+              ],
+              id: "019a0000-0000-7000-8000-000000000201",
+            },
+          ],
+        },
+      }),
+    ).toThrow("Expected a planned Working set");
   });
 
   it("rejects an Exercise group with no Routine exercise", () => {

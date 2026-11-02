@@ -35,7 +35,9 @@ export const ROUTINE_MESSAGES = {
   newRoutineButton: "New routine",
   newRoutineScreenTitle: "New routine",
   noIntensityTechniqueLabel: "None",
+  noPyramidLabelLabel: "None",
   pauseSecondsLabel: "Pause, in seconds",
+  pyramidLabelLabel: "Pyramid",
   removeExerciseButton: "Remove exercise",
   removeSetButton: "Remove set",
   restPauseSetSegmentCountLabel: "Segments, the first included",
@@ -70,4 +72,6 @@ export const ROUTINE_MESSAGES = {
     minimum: number;
   }) =>
     `This number isn't valid: enter a whole number from ${String(minimum)} to ${String(maximum)}.`,
+  workingSetMissingError:
+    "This exercise has no working set: add a working set.",
 };

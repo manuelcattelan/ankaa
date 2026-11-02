@@ -77,6 +77,7 @@ async function buildPushDayDraft(user: ReturnType<typeof userEvent.setup>) {
     exerciseName: "Bench Press (Barbell)",
     user,
   });
+  await user.press(screen.getByRole("button", { name: "Add set" }));
 }
 
 function getButton({ index, name }: { index: number; name: string }) {
@@ -147,7 +148,6 @@ describe("NewRoutineScreen", () => {
       await screen.findByRole("button", { name: "Band Pull-Apart" }),
     );
     await screen.findByText("Warm-up for Bench Press (Barbell)");
-    await user.press(getButton({ index: 1, name: "Add set" }));
     await user.type(screen.getByLabelText("Repetitions or seconds"), "8");
     fireEvent(screen.getByTestId("Intensity technique"), "selectionChange", {
       nativeEvent: { selection: "drop_set" },
@@ -156,13 +156,15 @@ describe("NewRoutineScreen", () => {
       await screen.findByLabelText("Segments, the first included"),
       "3",
     );
+    await user.press(getButton({ index: 0, name: "Add set" }));
+    await user.press(getButton({ index: 2, name: "Add set" }));
     await user.press(screen.getByRole("button", { name: "Save routine" }));
 
     await waitFor(() => {
       expect(savedInputs).toStrictEqual([
         {
           days: [],
-          id: "00000000-0000-7000-8000-000000000007",
+          id: "00000000-0000-7000-8000-000000000009",
           name: "Push day",
           sections: {
             coolDown: [],
@@ -173,10 +175,11 @@ describe("NewRoutineScreen", () => {
                     exerciseId: BENCH_PRESS_EXERCISE_ID,
                     id: "00000000-0000-7000-8000-000000000002",
                     note: null,
+                    pyramidLabel: null,
                     sets: [
                       {
                         amount: 8,
-                        id: "00000000-0000-7000-8000-000000000006",
+                        id: "00000000-0000-7000-8000-000000000003",
                         intensityTechnique: {
                           _tag: "DropSet",
                           segmentCount: 3,
@@ -191,17 +194,39 @@ describe("NewRoutineScreen", () => {
                     warmUpExercises: [
                       {
                         exerciseId: BAND_PULL_APART_EXERCISE_ID,
-                        id: "00000000-0000-7000-8000-000000000005",
+                        id: "00000000-0000-7000-8000-000000000006",
                         note: null,
-                        sets: [],
+                        pyramidLabel: null,
+                        sets: [
+                          {
+                            amount: null,
+                            id: "00000000-0000-7000-8000-000000000007",
+                            intensityTechnique: null,
+                            isToFailure: false,
+                            restSeconds: null,
+                            tempo: null,
+                            type: "working",
+                          },
+                        ],
                       },
                     ],
                   },
                   {
                     exerciseId: PUSH_UP_EXERCISE_ID,
-                    id: "00000000-0000-7000-8000-000000000004",
+                    id: "00000000-0000-7000-8000-000000000005",
                     note: null,
-                    sets: [],
+                    pyramidLabel: null,
+                    sets: [
+                      {
+                        amount: null,
+                        id: "00000000-0000-7000-8000-000000000008",
+                        intensityTechnique: null,
+                        isToFailure: false,
+                        restSeconds: null,
+                        tempo: null,
+                        type: "working",
+                      },
+                    ],
                     warmUpExercises: [],
                   },
                 ],
@@ -325,6 +350,29 @@ describe("NewRoutineScreen", () => {
         "This routine has no exercise in the main section: add an exercise to the main section.",
       ),
     ).toBeOnTheScreen();
+  });
+
+  it("tells the User that an exercise needs a Working set when they Save a Routine with an exercise that plans none, and doesn't Save", async () => {
+    const receivedPaths: string[] = [];
+    const user = await openNewRoutineScreen({
+      receivedPaths,
+      responses: { "routine.save": constUndefined },
+    });
+    await user.type(screen.getByLabelText("Name"), "Push day");
+    await addExercise({
+      addExerciseButtonIndex: 1,
+      exerciseName: "Bench Press (Barbell)",
+      user,
+    });
+
+    await user.press(screen.getByRole("button", { name: "Save routine" }));
+
+    expect(
+      await screen.findByText(
+        "This exercise has no working set: add a working set.",
+      ),
+    ).toBeOnTheScreen();
+    expect(receivedPaths).not.toContain("routine.save");
   });
 
   it("tells the User that they already have a Routine with the name when the server fails with RoutineNameConflictError", async () => {

@@ -1,17 +1,15 @@
-import type { Countdown } from "#/features/workout/core/countdown.ts";
-
 import { MILLISECONDS_PER_SECOND } from "#/features/workout/constants/milliseconds-per-second.ts";
 
 /**
- * Gives the whole seconds left in `countdown` at `currentTime`, counting a
- * second as left until it has fully passed, and 0 once the countdown has
- * ended.
+ * Gives the whole seconds left at `currentTime` in the countdown of Rest or
+ * of a Pause, counting a second as left until it has fully passed, and 0
+ * once the countdown has ended.
  */
 export function getCountdownRemainingSeconds({
   countdown,
   currentTime,
 }: {
-  countdown: Countdown;
+  countdown: { seconds: number; startTime: number };
   currentTime: number;
 }) {
   const passedSeconds = Math.floor(

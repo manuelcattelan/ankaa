@@ -1,3 +1,4 @@
+import type { SkipReasonMissingError } from "@ankaa/core/features/workout/errors/skip-reason-missing-error";
 import type { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 
 import * as Match from "effect/Match";
@@ -8,9 +9,10 @@ import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.t
 import { getTrpcClientErrorMessage } from "#/shared/core/get-trpc-client-error-message.ts";
 
 export function getWorkoutStopErrorMessage(
-  error: TrpcClientError | WorkoutNotFoundError,
+  error: SkipReasonMissingError | TrpcClientError | WorkoutNotFoundError,
 ) {
   return Match.valueTags(error, {
+    SkipReasonMissingError: () => WORKOUT_MESSAGES.skipReasonMissingError,
     TrpcClientError: (trpcClientError) =>
       getTrpcClientErrorMessage(trpcClientError),
     WorkoutNotFoundError: () => WORKOUT_MESSAGES.workoutNotFoundError,

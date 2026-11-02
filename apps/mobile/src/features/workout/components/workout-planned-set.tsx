@@ -7,8 +7,8 @@ import { Text } from "#/shared/components/text.tsx";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 /**
- * Shows the matching planned Set of one Set of a Workout exercise, with the
- * Amount and Rest that only a Set within its planned Sets has.
+ * Shows the matching planned Set of one Set of a Workout exercise, with its
+ * Amount and Rest.
  */
 export function WorkoutPlannedSet({
   amountUnit,

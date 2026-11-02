@@ -1,11 +1,8 @@
 import { getCountdownRemainingSeconds } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
 
 const REST_COUNTDOWN = {
-  kind: "rest" as const,
-  position: 0,
   seconds: 120,
   startTime: 1_000_000,
-  workoutExerciseId: "01900000-0000-7000-8000-000000000001",
 };
 
 describe("getCountdownRemainingSeconds", () => {

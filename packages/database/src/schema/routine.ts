@@ -1,5 +1,6 @@
 import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/days-of-week";
 import { MINIMUM_POSITION } from "@ankaa/core/shared/constants/minimum-position";
+import { PYRAMID_LABELS } from "@ankaa/core/shared/constants/pyramid-labels";
 import { SECTIONS } from "@ankaa/core/shared/constants/sections";
 import { gte, inArray, isNull, sql } from "drizzle-orm";
 import {
@@ -116,6 +117,7 @@ export const routineExercise = snakeCase.table(
     id: uuid().notNull(),
     note: text(),
     position: integer().notNull(),
+    pyramidLabel: text({ enum: PYRAMID_LABELS }),
     routineExerciseGroupId: uuid().references(() => routineExerciseGroup.id, {
       name: "routine_exercise_routine_exercise_group_id_fkey",
       onDelete: "cascade",
@@ -141,6 +143,10 @@ export const routineExercise = snakeCase.table(
     check(
       "routine_exercise_position_check",
       gte(table.position, MINIMUM_POSITION),
+    ),
+    check(
+      "routine_exercise_pyramid_label_check",
+      inArray(table.pyramidLabel, PYRAMID_LABELS),
     ),
     check(
       "routine_exercise_parent_check",

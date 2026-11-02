@@ -1,5 +1,5 @@
-import { SKIP_REASONS } from "@ankaa/core/features/workout/constants/skip-reasons";
 import { skipNoteFilter } from "@ankaa/core/features/workout/filters/skip-note-filter";
+import { SKIP_REASONS } from "@ankaa/core/shared/constants/skip-reasons";
 import * as Schema from "effect/Schema";
 
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";

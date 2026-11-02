@@ -27,7 +27,7 @@ type ListedRoutine = ReturnType<typeof buildRoutine>;
 
 type RoutineExerciseRow = Pick<
   typeof routineExercise.$inferSelect,
-  "exerciseId" | "id" | "note"
+  "exerciseId" | "id" | "note" | "pyramidLabel"
 > & { sets: RoutineExerciseSetRow[] };
 
 type RoutineExerciseSetRow = Omit<
@@ -43,6 +43,7 @@ const ROUTINE_EXERCISE_COLUMNS = {
   exerciseId: true,
   id: true,
   note: true,
+  pyramidLabel: true,
 } as const;
 
 const ROUTINE_EXERCISE_SETS = {
@@ -282,6 +283,7 @@ function buildRoutineExercise(routineExerciseRow: RoutineExerciseRow) {
     exerciseId: routineExerciseRow.exerciseId,
     id: routineExerciseRow.id,
     note: routineExerciseRow.note,
+    pyramidLabel: routineExerciseRow.pyramidLabel,
     sets: routineExerciseRow.sets.map(buildPlannedSet),
   };
 }
@@ -350,6 +352,7 @@ function buildRoutineRows(input: RoutineSaveInput) {
         id: groupedRoutineExercise.id,
         note: groupedRoutineExercise.note,
         position,
+        pyramidLabel: groupedRoutineExercise.pyramidLabel,
         routineExerciseGroupId,
       }),
     ),
@@ -377,6 +380,7 @@ function buildRoutineRows(input: RoutineSaveInput) {
         id: warmUpRoutineExercise.id,
         note: warmUpRoutineExercise.note,
         position,
+        pyramidLabel: warmUpRoutineExercise.pyramidLabel,
         warmUpForRoutineExerciseId,
       }),
     ),

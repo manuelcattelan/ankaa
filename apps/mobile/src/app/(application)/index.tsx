@@ -1,3 +1,4 @@
+import { AbsenceRecordButton } from "#/features/absence/components/absence-record-button.tsx";
 import { AccountDeletionRequestButton } from "#/features/authentication/components/account-deletion-request-button.tsx";
 import { SignOutButton } from "#/features/authentication/components/sign-out-button.tsx";
 import { Routines } from "#/features/routine/components/routines.tsx";
@@ -11,10 +12,16 @@ export default function ApplicationRoute() {
       <WorkoutResumeButton />
       <Routines
         renderRoutineActions={(routine) => (
-          <WorkoutStartButton
-            routineId={routine.id}
-            routineName={routine.name}
-          />
+          <>
+            <WorkoutStartButton
+              routineId={routine.id}
+              routineName={routine.name}
+            />
+            <AbsenceRecordButton
+              routineId={routine.id}
+              routineName={routine.name}
+            />
+          </>
         )}
       />
       <SignOutButton />

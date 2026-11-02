@@ -1,5 +1,6 @@
 import * as Layer from "effect/Layer";
 
+import { AbsenceApplicationService } from "#/features/absence/absence-application-service.ts";
 import { ExerciseApplicationService } from "#/features/exercise/exercise-application-service.ts";
 import { RoutineApplicationService } from "#/features/routine/routine-application-service.ts";
 import { WorkoutApplicationService } from "#/features/workout/workout-application-service.ts";
@@ -9,6 +10,7 @@ import { WorkoutApplicationService } from "#/features/workout/workout-applicatio
  * Runtime and the test Runtime share.
  */
 export const applicationServicesLayer = Layer.mergeAll(
+  AbsenceApplicationService.layer,
   ExerciseApplicationService.layer,
   RoutineApplicationService.layer,
   WorkoutApplicationService.layer,

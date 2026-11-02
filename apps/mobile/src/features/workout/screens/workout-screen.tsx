@@ -33,8 +33,8 @@ const noExerciseNames: ReadonlyMap<string, string> = new Map();
 /**
  * Shows the User's Workout in progress, and keeps the Draft of every Set,
  * note and Skip that has something to Save, so stopping can be refused while
- * one has, and the one countdown of Rest or a Pause, which starting another
- * replaces.
+ * one has, and the one countdown of Rest, a Pause or a Segment timer, which
+ * starting another replaces.
  */
 export function WorkoutScreen() {
   const runtime = useRuntime();
@@ -52,10 +52,10 @@ export function WorkoutScreen() {
     ...exerciseListQueryOptions(runtime),
     select: getExerciseNames,
   });
-  const scheduleCountdownNotification = useMutation(
+  const scheduleCountdownNotifications = useMutation(
     countdownNotificationScheduleMutationOptions(runtime),
   );
-  const cancelCountdownNotification = useMutation(
+  const cancelCountdownNotifications = useMutation(
     countdownNotificationCancelMutationOptions(runtime),
   );
 
@@ -95,19 +95,16 @@ export function WorkoutScreen() {
     setCountdown(null);
   }
 
-  function handleCancelCountdown() {
-    setCountdown(null);
-    cancelCountdownNotification.mutate();
+  function handleStartCountdown(startedCountdown: Countdown) {
+    setCountdown(startedCountdown);
+    scheduleCountdownNotifications.mutate(
+      getCountdownNotifications(startedCountdown),
+    );
   }
 
-  function handleStartCountdown(
-    startedCountdown: Omit<Countdown, "startTime">,
-  ) {
-    setCountdown({ ...startedCountdown, startTime: Date.now() });
-    scheduleCountdownNotification.mutate({
-      ...WORKOUT_MESSAGES.countdownEndNotifications[startedCountdown.kind],
-      seconds: startedCountdown.seconds,
-    });
+  function handleStopCountdown() {
+    setCountdown(null);
+    cancelCountdownNotifications.mutate();
   }
 
   return (
@@ -123,9 +120,9 @@ export function WorkoutScreen() {
               dispatch,
               drafts,
               exerciseNames: exerciseNamesById,
-              onCancelCountdown: handleCancelCountdown,
               onEndCountdown: handleEndCountdown,
               onStartCountdown: handleStartCountdown,
+              onStopCountdown: handleStopCountdown,
             }}
           >
             <WorkoutElapsedTime startedAt={workout.startedAt} />
@@ -143,11 +140,45 @@ export function WorkoutScreen() {
             />
             <WorkoutStopButton
               unsavedDraftLabels={unsavedDraftLabels}
-              workoutId={workout.id}
+              workout={workout}
             />
           </WorkoutContext>
         )}
       </ScrollView>
     </>
   );
+}
+
+/**
+ * Gives the notifications of `countdown`: one at its end when it counts
+ * down, and one at the end of its lead-in when it's a Segment timer.
+ */
+function getCountdownNotifications(countdown: Countdown) {
+  switch (countdown.kind) {
+    case "pause":
+    case "rest": {
+      return {
+        end: {
+          ...WORKOUT_MESSAGES.countdownEndNotifications[countdown.kind],
+          seconds: countdown.seconds,
+        },
+        leadInEnd: null,
+      };
+    }
+    case "segmentTimer": {
+      return {
+        end:
+          countdown.seconds === null
+            ? null
+            : {
+                ...WORKOUT_MESSAGES.countdownEndNotifications.segmentTimer,
+                seconds: countdown.leadInSeconds + countdown.seconds,
+              },
+        leadInEnd: {
+          ...WORKOUT_MESSAGES.countdownLeadInEndNotification,
+          seconds: countdown.leadInSeconds,
+        },
+      };
+    }
+  }
 }

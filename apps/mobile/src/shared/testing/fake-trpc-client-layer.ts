@@ -1,4 +1,6 @@
 import type { AppRouter } from "@ankaa/api/trpc/app-router";
+import type { AbsenceEditInput } from "@ankaa/core/features/absence/schemas/absence-edit-input-schema";
+import type { AbsenceRecordInput } from "@ankaa/core/features/absence/schemas/absence-record-input-schema";
 import type {
   AnyMutationProcedure,
   AnyProcedure,
@@ -9,6 +11,9 @@ import type {
 } from "@trpc/server";
 
 import { errorFormatter } from "@ankaa/api/trpc/error-formatter";
+import { absenceEditInputSchema } from "@ankaa/core/features/absence/schemas/absence-edit-input-schema";
+import { absenceRecordInputSchema } from "@ankaa/core/features/absence/schemas/absence-record-input-schema";
+import { absenceRemoveInputSchema } from "@ankaa/core/features/absence/schemas/absence-remove-input-schema";
 import { routineDeleteInputSchema } from "@ankaa/core/features/routine/schemas/routine-delete-input-schema";
 import { routineSaveInputSchema } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
 import { workoutRemoveSetInputSchema } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
@@ -42,7 +47,18 @@ export type FakeTrpcProcedures = {
 };
 
 export type FakeTrpcResponses = {
-  [Path in keyof TrpcProcedures]?: FakeTrpcResponse<TrpcProcedures[Path]>;
+  [Path in keyof TrpcProcedures]?: FakeTrpcResponse<Path>;
+};
+
+/**
+ * The input of each procedure whose input Schema decodes into another type
+ * than the client sends, such as a time zone name into its time zone, which
+ * a Fake response receives decoded, as the server's procedure does. tRPC's
+ * types keep only the input that the client sends.
+ */
+type FakeTrpcDecodedInputs = {
+  "absence.edit": AbsenceEditInput;
+  "absence.record": AbsenceRecordInput;
 };
 
 type FakeTrpcProcedureTypes<TProcedure extends AnyProcedure> = {
@@ -51,11 +67,16 @@ type FakeTrpcProcedureTypes<TProcedure extends AnyProcedure> = {
   output: unknown;
 };
 
-type FakeTrpcResponse<TProcedure extends AnyProcedure> = (
-  input: inferProcedureInput<TProcedure>,
+type FakeTrpcResponse<Path extends keyof TrpcProcedures> = (
+  input: FakeTrpcResponseInput<Path>,
 ) =>
-  | FakeTrpcResponseOutput<TProcedure>
-  | Promise<FakeTrpcResponseOutput<TProcedure>>;
+  | FakeTrpcResponseOutput<TrpcProcedures[Path]>
+  | Promise<FakeTrpcResponseOutput<TrpcProcedures[Path]>>;
+
+type FakeTrpcResponseInput<Path extends keyof TrpcProcedures> =
+  Path extends keyof FakeTrpcDecodedInputs
+    ? FakeTrpcDecodedInputs[Path]
+    : inferProcedureInput<TrpcProcedures[Path]>;
 
 type FakeTrpcResponseOutput<TProcedure extends AnyProcedure> = [
   inferTransformedProcedureOutput<AppRouter, TProcedure>,
@@ -140,16 +161,16 @@ export function fakeTrpcClientLayer({
   );
 }
 
-function createFakeTrpcResolver<TProcedure extends AnyProcedure>({
+function createFakeTrpcResolver<Path extends keyof TrpcProcedures>({
   response,
 }: {
-  response: FakeTrpcResponse<TProcedure> | undefined;
+  response: FakeTrpcResponse<Path> | undefined;
 }) {
   return async ({
     input,
     path,
   }: {
-    input: inferProcedureInput<TProcedure>;
+    input: FakeTrpcResponseInput<Path>;
     path: string;
   }) => {
     if (response === undefined) {
@@ -167,6 +188,27 @@ function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
   const t = initTRPC.create({ errorFormatter });
 
   const fakeTrpcProcedures: FakeTrpcProcedures = {
+    "absence.edit": t.procedure
+      .input(Schema.toStandardSchemaV1(absenceEditInputSchema))
+      .mutation(
+        createFakeTrpcResolver({
+          response: fakeTrpcResponses["absence.edit"],
+        }),
+      ),
+    "absence.record": t.procedure
+      .input(Schema.toStandardSchemaV1(absenceRecordInputSchema))
+      .mutation(
+        createFakeTrpcResolver({
+          response: fakeTrpcResponses["absence.record"],
+        }),
+      ),
+    "absence.remove": t.procedure
+      .input(Schema.toStandardSchemaV1(absenceRemoveInputSchema))
+      .mutation(
+        createFakeTrpcResolver({
+          response: fakeTrpcResponses["absence.remove"],
+        }),
+      ),
     "exercise.list": t.procedure.query(
       createFakeTrpcResolver({
         response: fakeTrpcResponses["exercise.list"],

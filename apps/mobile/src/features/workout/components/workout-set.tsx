@@ -6,6 +6,7 @@ import { getMaximumSegmentCount } from "@ankaa/core/features/workout/core/get-ma
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import type { FilledSegment } from "#/features/workout/core/filled-segment.ts";
 import type { RecordedSetDraft } from "#/features/workout/core/recorded-set-form-schema.ts";
 import type { PlannedSet, RecordedSet } from "#/shared/workout.ts";
 
@@ -13,6 +14,7 @@ import { WorkoutPlannedSet } from "#/features/workout/components/workout-planned
 import { WorkoutSegment } from "#/features/workout/components/workout-segment.tsx";
 import { WorkoutSetCountdown } from "#/features/workout/components/workout-set-countdown.tsx";
 import { createRecordedSetDraft } from "#/features/workout/core/create-recorded-set-draft.ts";
+import { getSegmentTimerSegmentPosition } from "#/features/workout/core/get-segment-timer-segment-position.ts";
 import { getWorkoutRemoveSetErrorMessage } from "#/features/workout/core/get-workout-remove-set-error-message.ts";
 import { getWorkoutSaveSetErrorMessage } from "#/features/workout/core/get-workout-save-set-error-message.ts";
 import { isRecordedSetDraftSaved } from "#/features/workout/core/is-recorded-set-draft-saved.ts";
@@ -31,7 +33,11 @@ import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 /**
  * Shows one Set of a Workout exercise with its matching planned Set, and
  * lets the User fill in its Segments and Save it when it's a recorded Set or
- * the next one to record, and remove it when it's a recorded Set.
+ * the next one to record, and remove it when it's a recorded Set. While the
+ * Workout exercise has a Skip, it shows a recorded Set's Segments read-only
+ * and offers no Set to record. When its Amounts are counted in seconds, it
+ * offers a Segment timer of the planned Amount, or counting up when none is
+ * planned, while it can be recorded and has a Segment for the timer to fill.
  */
 export function WorkoutSet({
   amountUnit,
@@ -39,6 +45,7 @@ export function WorkoutSet({
   draft,
   exerciseId,
   isRecordable,
+  isSkipped,
   plannedSet,
   position,
   recordedSet,
@@ -51,6 +58,7 @@ export function WorkoutSet({
   draft: null | RecordedSetDraft;
   exerciseId: string;
   isRecordable: boolean;
+  isSkipped: boolean;
   plannedSet: Omit<PlannedSet, "id">;
   position: number;
   recordedSet: null | RecordedSet;
@@ -105,6 +113,14 @@ export function WorkoutSet({
     values: recordedSetDraft,
   });
   const maximumSegmentCount = getMaximumSegmentCount(plannedSet);
+  const hasSegments = isSkipped ? recordedSet !== null : isRecordable;
+  const segmentTimerSegmentPosition =
+    amountUnit === "second" && isRecordable && !isSkipped
+      ? getSegmentTimerSegmentPosition({
+          maximumSegmentCount,
+          segments: recordedSetDraft.segments,
+        })
+      : null;
   const statusMessage = getStatusMessage();
 
   function getStatusMessage() {
@@ -135,6 +151,22 @@ export function WorkoutSet({
             type: "changedRecordedSetDraft",
           },
     );
+  }
+
+  function handleFillSegment(filledSegment: FilledSegment) {
+    const segments =
+      filledSegment.position === recordedSetDraft.segments.length
+        ? [...recordedSetDraft.segments, { amount: "", weight: "" }]
+        : recordedSetDraft.segments;
+
+    handleChangeDraft({
+      ...recordedSetDraft,
+      segments: segments.map((segment, segmentPosition) =>
+        segmentPosition === filledSegment.position
+          ? { ...segment, amount: String(filledSegment.seconds) }
+          : segment,
+      ),
+    });
   }
 
   function handleRemoveSet(removedRecordedSet: { id: string }) {
@@ -182,12 +214,13 @@ export function WorkoutSet({
         plannedSet={plannedSet}
         setNumber={position + 1}
       />
-      {isRecordable ? (
+      {hasSegments ? (
         <>
           {recordedSetDraft.segments.map((segment, segmentPosition) => (
             <WorkoutSegment
               amountUnit={amountUnit}
               hasSubmitted={hasSubmitted}
+              isEditable={!isSkipped}
               key={segmentPosition}
               number={maximumSegmentCount === 1 ? null : segmentPosition + 1}
               onChange={(changedSegment) => {
@@ -206,55 +239,61 @@ export function WorkoutSet({
               weightUnit={weightUnit}
             />
           ))}
-          {recordedSetDraft.segments.length < maximumSegmentCount ? (
-            <Button
-              onPress={() => {
-                handleChangeDraft({
-                  ...recordedSetDraft,
-                  segments: [
-                    ...recordedSetDraft.segments,
-                    { amount: "", weight: "" },
-                  ],
-                });
-              }}
-              title={WORKOUT_MESSAGES.addSegmentButton}
-            />
-          ) : null}
-          {recordedSetDraft.segments.length > 1 ? (
-            <Button
-              onPress={() => {
-                handleChangeDraft({
-                  ...recordedSetDraft,
-                  segments: recordedSetDraft.segments.slice(
-                    0,
-                    recordedSetDraft.segments.length - 1,
-                  ),
-                });
-              }}
-              title={WORKOUT_MESSAGES.removeSegmentButton}
-            />
-          ) : null}
-          <Button
-            isBusy={saveSet.isPending}
-            onPress={handleSaveSet}
-            title={WORKOUT_MESSAGES.saveSetButton}
-          />
-          {recordedSet === null ? null : (
-            <Button
-              isBusy={removeSet.isPending}
-              onPress={() => {
-                handleRemoveSet(recordedSet);
-              }}
-              title={WORKOUT_MESSAGES.removeSetButton}
-            />
+          {isSkipped ? null : (
+            <>
+              {recordedSetDraft.segments.length < maximumSegmentCount ? (
+                <Button
+                  onPress={() => {
+                    handleChangeDraft({
+                      ...recordedSetDraft,
+                      segments: [
+                        ...recordedSetDraft.segments,
+                        { amount: "", weight: "" },
+                      ],
+                    });
+                  }}
+                  title={WORKOUT_MESSAGES.addSegmentButton}
+                />
+              ) : null}
+              {recordedSetDraft.segments.length > 1 ? (
+                <Button
+                  onPress={() => {
+                    handleChangeDraft({
+                      ...recordedSetDraft,
+                      segments: recordedSetDraft.segments.slice(
+                        0,
+                        recordedSetDraft.segments.length - 1,
+                      ),
+                    });
+                  }}
+                  title={WORKOUT_MESSAGES.removeSegmentButton}
+                />
+              ) : null}
+              <Button
+                isBusy={saveSet.isPending}
+                onPress={handleSaveSet}
+                title={WORKOUT_MESSAGES.saveSetButton}
+              />
+              {recordedSet === null ? null : (
+                <Button
+                  isBusy={removeSet.isPending}
+                  onPress={() => {
+                    handleRemoveSet(recordedSet);
+                  }}
+                  title={WORKOUT_MESSAGES.removeSetButton}
+                />
+              )}
+            </>
           )}
           <StatusMessage message={statusMessage} />
         </>
       ) : null}
       <WorkoutSetCountdown
         canStartRest={canStartRest}
+        onFillSegment={handleFillSegment}
         plannedSet={plannedSet}
         position={position}
+        segmentTimerSegmentPosition={segmentTimerSegmentPosition}
         workoutExerciseId={workoutExerciseId}
       />
     </>

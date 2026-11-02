@@ -1,5 +1,7 @@
 import { SegmentCountInvalidError } from "@ankaa/core/features/workout/errors/segment-count-invalid-error";
 import { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
+import { SetNotPlannedError } from "@ankaa/core/features/workout/errors/set-not-planned-error";
+import { SkipConflictError } from "@ankaa/core/features/workout/errors/skip-conflict-error";
 import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import { describe, expect, it } from "vitest";
 
@@ -25,6 +27,7 @@ const WORKOUT_EXERCISE = {
     },
   ],
   recordedSets: [{ id: "set-1", position: 0 }],
+  skipReason: null,
   weightType: "total" as const,
   workout: { endedAt: null, userId: "user-1" },
 };
@@ -67,11 +70,7 @@ describe("decideRecordedSetSave", () => {
       decideRecordedSetSave({
         input: { id: "set-2", segments: [{ amount: 15, weight: null }] },
         userId: "user-1",
-        workoutExercise: {
-          ...WORKOUT_EXERCISE,
-          plannedSets: [],
-          weightType: "none",
-        },
+        workoutExercise: { ...WORKOUT_EXERCISE, weightType: "none" },
       }),
     ).toStrictEqual({ _tag: "RecordedSetCreateAllowed", position: 1 });
   });
@@ -117,6 +116,42 @@ describe("decideRecordedSetSave", () => {
         workoutExercise: { ...WORKOUT_EXERCISE, weightType: "none" },
       }),
     ).toStrictEqual(new SegmentWeightNotAllowedError());
+  });
+
+  it("fails with SetNotPlannedError for a new Set past the last planned Set", () => {
+    expect(
+      decideRecordedSetSave({
+        input: { id: "set-3", segments: [SEGMENT] },
+        userId: "user-1",
+        workoutExercise: {
+          ...WORKOUT_EXERCISE,
+          recordedSets: [
+            { id: "set-1", position: 0 },
+            { id: "set-2", position: 1 },
+          ],
+        },
+      }),
+    ).toStrictEqual(new SetNotPlannedError());
+  });
+
+  it("fails with SkipConflictError for a new Set in a Workout exercise with a Skip", () => {
+    expect(
+      decideRecordedSetSave({
+        input: { id: "set-2", segments: [SEGMENT] },
+        userId: "user-1",
+        workoutExercise: { ...WORKOUT_EXERCISE, skipReason: "pain" },
+      }),
+    ).toStrictEqual(new SkipConflictError());
+  });
+
+  it("fails with SkipConflictError for a recorded Set Saved again in a Workout exercise with a Skip", () => {
+    expect(
+      decideRecordedSetSave({
+        input: { id: "set-1", segments: [SEGMENT] },
+        userId: "user-1",
+        workoutExercise: { ...WORKOUT_EXERCISE, skipReason: "low_on_time" },
+      }),
+    ).toStrictEqual(new SkipConflictError());
   });
 
   it("fails with WorkoutNotFoundError for a Workout exercise that doesn't exist", () => {

@@ -1,5 +1,8 @@
 import type { SegmentCountInvalidError } from "@ankaa/core/features/workout/errors/segment-count-invalid-error";
 import type { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
+import type { SetNotPlannedError } from "@ankaa/core/features/workout/errors/set-not-planned-error";
+import type { SkipConflictError } from "@ankaa/core/features/workout/errors/skip-conflict-error";
+import type { SkipReasonMissingError } from "@ankaa/core/features/workout/errors/skip-reason-missing-error";
 import type { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
 import type { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
@@ -20,9 +23,10 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import { constUndefined } from "effect/Function";
 import * as Layer from "effect/Layer";
+import * as Struct from "effect/Struct";
 
+import type { CountdownNotifications } from "#/features/workout/core/countdown-notifications.ts";
 import type { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
-import type { ScheduledNotification } from "#/shared/services/notifications.ts";
 import type { Workout } from "#/shared/workout.ts";
 
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
@@ -32,23 +36,31 @@ import { TrpcClient } from "#/shared/services/trpc-client.ts";
 const COUNTDOWN_NOTIFICATION_CHANNEL_ID = "countdowns";
 
 /**
- * The identifier that the notification of a countdown is scheduled under, so
- * the Workout cancels only its own notification and leaves any other one
- * scheduled.
+ * The identifiers that the notifications of a countdown are scheduled under,
+ * one for the end of its lead-in and one for its end, so the Workout cancels
+ * only its own notifications and leaves any other one scheduled. They're
+ * scheduled in the order of their keys, which is the order they fire in.
  */
-const COUNTDOWN_NOTIFICATION_IDENTIFIER = "countdown";
+const COUNTDOWN_NOTIFICATION_IDENTIFIERS = {
+  leadInEnd: "countdownLeadIn",
+
+  end: "countdown",
+};
 
 export class WorkoutApplicationService extends Context.Service<
   WorkoutApplicationService,
   {
-    readonly cancelCountdownNotification: () => Effect.Effect<void>;
+    readonly cancelCountdownNotifications: () => Effect.Effect<void>;
     readonly findInProgress: () => Effect.Effect<
       null | Workout,
       TrpcClientError
     >;
     readonly removeSet: (
       input: WorkoutRemoveSetInput,
-    ) => Effect.Effect<void, TrpcClientError | WorkoutNotFoundError>;
+    ) => Effect.Effect<
+      void,
+      SkipConflictError | TrpcClientError | WorkoutNotFoundError
+    >;
     readonly saveNote: (
       input: WorkoutSaveNoteInput,
     ) => Effect.Effect<void, TrpcClientError | WorkoutNotFoundError>;
@@ -58,14 +70,16 @@ export class WorkoutApplicationService extends Context.Service<
       void,
       | SegmentCountInvalidError
       | SegmentWeightNotAllowedError
+      | SetNotPlannedError
+      | SkipConflictError
       | TrpcClientError
       | WorkoutNotFoundError
     >;
     readonly saveSkip: (
       input: WorkoutSaveSkipInput,
     ) => Effect.Effect<void, TrpcClientError | WorkoutNotFoundError>;
-    readonly scheduleCountdownNotification: (
-      notification: ScheduledNotification,
+    readonly scheduleCountdownNotifications: (
+      countdownNotifications: CountdownNotifications,
     ) => Effect.Effect<void>;
     readonly start: (
       input: WorkoutStartInput,
@@ -75,7 +89,10 @@ export class WorkoutApplicationService extends Context.Service<
     >;
     readonly stop: (
       input: WorkoutStopInput,
-    ) => Effect.Effect<void, TrpcClientError | WorkoutNotFoundError>;
+    ) => Effect.Effect<
+      void,
+      SkipReasonMissingError | TrpcClientError | WorkoutNotFoundError
+    >;
   }
 >()("@ankaa/mobile/features/workout/WorkoutApplicationService") {
   static readonly layerNoDeps = Layer.effect(
@@ -84,10 +101,19 @@ export class WorkoutApplicationService extends Context.Service<
       const notifications = yield* Notifications;
       const trpcClient = yield* TrpcClient;
 
-      const cancelCountdownNotification = Effect.fn(
-        "WorkoutApplicationService.cancelCountdownNotification",
+      /**
+       * Cancels the notifications of the countdown, so a countdown that the
+       * User stops, or that has nothing left to count down for, doesn't
+       * notify.
+       */
+      const cancelCountdownNotifications = Effect.fn(
+        "WorkoutApplicationService.cancelCountdownNotifications",
       )(function* () {
-        yield* notifications.cancelScheduled(COUNTDOWN_NOTIFICATION_IDENTIFIER);
+        yield* Effect.forEach(
+          Object.values(COUNTDOWN_NOTIFICATION_IDENTIFIERS),
+          (identifier) => notifications.cancelScheduled(identifier),
+          { discard: true },
+        );
       });
 
       const findInProgress = Effect.fn(
@@ -142,12 +168,13 @@ export class WorkoutApplicationService extends Context.Service<
 
       /**
        * Asks for notification permission the first time a countdown starts,
-       * and replaces the notification of an earlier countdown with
-       * `notification`, so only one countdown ever notifies.
+       * and replaces the notifications of an earlier countdown with those of
+       * the countdown started, so only one countdown ever notifies. Both are
+       * scheduled at once, because the app may not run when its lead-in ends.
        */
-      const scheduleCountdownNotification = Effect.fn(
-        "WorkoutApplicationService.scheduleCountdownNotification",
-      )(function* (notification: ScheduledNotification) {
+      const scheduleCountdownNotifications = Effect.fn(
+        "WorkoutApplicationService.scheduleCountdownNotifications",
+      )(function* (countdownNotifications: CountdownNotifications) {
         const permissionStatus = yield* notifications.getPermissionStatus();
 
         if (permissionStatus === "undetermined") {
@@ -159,12 +186,23 @@ export class WorkoutApplicationService extends Context.Service<
           });
         }
 
-        yield* cancelCountdownNotification();
-        yield* notifications.schedule({
-          channelId: COUNTDOWN_NOTIFICATION_CHANNEL_ID,
-          identifier: COUNTDOWN_NOTIFICATION_IDENTIFIER,
-          notification,
-        });
+        yield* cancelCountdownNotifications();
+
+        yield* Effect.forEach(
+          Struct.keys(COUNTDOWN_NOTIFICATION_IDENTIFIERS),
+          (key) => {
+            const notification = countdownNotifications[key];
+
+            return notification === null
+              ? Effect.void
+              : notifications.schedule({
+                  channelId: COUNTDOWN_NOTIFICATION_CHANNEL_ID,
+                  identifier: COUNTDOWN_NOTIFICATION_IDENTIFIERS[key],
+                  notification,
+                });
+          },
+          { discard: true },
+        );
       });
 
       const start = Effect.fn("WorkoutApplicationService.start")(function* (
@@ -178,7 +216,7 @@ export class WorkoutApplicationService extends Context.Service<
       });
 
       /**
-       * Stops the Workout, then cancels the notification of its countdown,
+       * Stops the Workout, then cancels the notifications of its countdown,
        * which has nothing left to count down for.
        */
       const stop = Effect.fn("WorkoutApplicationService.stop")(function* (
@@ -189,17 +227,17 @@ export class WorkoutApplicationService extends Context.Service<
             trpc.workout.stop.mutate(input, { signal }),
           errors: WORKOUT_STOP_WIRE_ERRORS,
         });
-        yield* cancelCountdownNotification();
+        yield* cancelCountdownNotifications();
       });
 
       return WorkoutApplicationService.of({
-        cancelCountdownNotification,
+        cancelCountdownNotifications,
         findInProgress,
         removeSet,
         saveNote,
         saveSet,
         saveSkip,
-        scheduleCountdownNotification,
+        scheduleCountdownNotifications,
         start,
         stop,
       });

@@ -1,6 +1,5 @@
-import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reasons";
+import type { SkipReason } from "@ankaa/core/shared/constants/skip-reasons";
 
-import { SKIP_REASONS } from "@ankaa/core/features/workout/constants/skip-reasons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -13,24 +12,17 @@ import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.t
 import { workoutSaveSkipMutationOptions } from "#/features/workout/mutations/workout-save-skip-mutation-options.ts";
 import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/workout-find-in-progress-query-options.ts";
 import { Button } from "#/shared/components/button.tsx";
-import { PickerField } from "#/shared/components/picker-field.tsx";
+import { SkipReasonPicker } from "#/shared/components/skip-reason-picker.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
 import { decodeForm } from "#/shared/core/decode-form.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
-const NOT_SKIPPED = "not_skipped";
-
-const SKIP_REASON_OPTIONS = [NOT_SKIPPED, ...SKIP_REASONS] as const;
-
-const SKIP_REASON_OPTION_LABELS = {
-  ...WORKOUT_MESSAGES.skipReasonLabels,
-  [NOT_SKIPPED]: WORKOUT_MESSAGES.notSkippedLabel,
-};
-
 /**
  * Lets the User give a Workout exercise a Skip, with a reason and an optional
- * note, or clear it, and Save it through its own button.
+ * note, or clear it, and Save it through its own button, and refuses to while
+ * a Set of the Workout exercise has a Draft left to Save, which the Skip would
+ * keep from being Saved.
  */
 export function WorkoutExerciseSkip({
   draft,
@@ -53,6 +45,8 @@ export function WorkoutExerciseSkip({
 
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
+  const [hasRefusedSave, setHasRefusedSave] = useState(false);
+
   const saveSkip = useMutation({
     ...workoutSaveSkipMutationOptions(runtime),
     onSuccess: async () => {
@@ -71,9 +65,16 @@ export function WorkoutExerciseSkip({
     schema: skipFormSchema,
     values: skipDraft,
   });
+  const hasRecordedSetDrafts = workoutContext.drafts.recordedSets.some(
+    (entry) => entry.workoutExerciseId === workoutExerciseId,
+  );
   const statusMessage = getStatusMessage();
 
   function getStatusMessage() {
+    if (hasRefusedSave && hasRecordedSetDrafts) {
+      return WORKOUT_MESSAGES.recordedSetDraftsUnsavedError;
+    }
+
     if (saveSkip.error !== null) {
       return getWorkoutSaveSkipErrorMessage(saveSkip.error);
     }
@@ -101,6 +102,12 @@ export function WorkoutExerciseSkip({
     setHasSubmitted(true);
     saveSkip.reset();
 
+    if (hasRecordedSetDrafts) {
+      setHasRefusedSave(true);
+
+      return;
+    }
+
     if (skipFormDecoding.value !== null) {
       saveSkip.mutate({ ...skipFormDecoding.value, workoutExerciseId });
     }
@@ -108,17 +115,13 @@ export function WorkoutExerciseSkip({
 
   return (
     <>
-      <PickerField
+      <SkipReasonPicker
         label={WORKOUT_MESSAGES.skipReasonLabel}
-        onChangeSelectedOption={(selectedOption) => {
-          handleChangeDraft({
-            ...skipDraft,
-            reason: selectedOption === NOT_SKIPPED ? null : selectedOption,
-          });
+        noReasonLabel={WORKOUT_MESSAGES.notSkippedLabel}
+        onChangeReason={(changedReason) => {
+          handleChangeDraft({ ...skipDraft, reason: changedReason });
         }}
-        optionLabels={SKIP_REASON_OPTION_LABELS}
-        options={SKIP_REASON_OPTIONS}
-        selectedOption={skipDraft.reason ?? NOT_SKIPPED}
+        reason={skipDraft.reason}
       />
       <TextField
         errorMessage={null}

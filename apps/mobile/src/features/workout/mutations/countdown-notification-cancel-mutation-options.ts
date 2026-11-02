@@ -9,7 +9,7 @@ import { WorkoutApplicationService } from "#/features/workout/workout-applicatio
 const program = Effect.fn("countdownNotificationCancelMutation")(function* () {
   const workoutApplicationService = yield* WorkoutApplicationService;
 
-  yield* workoutApplicationService.cancelCountdownNotification();
+  yield* workoutApplicationService.cancelCountdownNotifications();
 });
 
 export function countdownNotificationCancelMutationOptions(

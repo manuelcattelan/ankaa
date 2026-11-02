@@ -1,7 +1,12 @@
 import type { RoutineSaveInput } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
 
 import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
-import { screen, userEvent, waitFor } from "@testing-library/react-native";
+import {
+  fireEvent,
+  screen,
+  userEvent,
+  waitFor,
+} from "@testing-library/react-native";
 import { TRPCError } from "@trpc/server";
 
 import type { Routine } from "#/shared/routine.ts";
@@ -12,6 +17,39 @@ import { fakeTrpcClientLayer } from "#/shared/testing/fake-trpc-client-layer.ts"
 import { PUSH_DAY_ROUTINE } from "#/shared/testing/push-day-routine.ts";
 import { signedInSession } from "#/shared/testing/signed-in-session.ts";
 import { renderScreen } from "#/testing/render-screen.tsx";
+
+const REVERSE_PYRAMID_PUSH_DAY_ROUTINE: Routine = {
+  ...PUSH_DAY_ROUTINE,
+  sections: {
+    coolDown: [],
+    main: [
+      {
+        exercises: [
+          {
+            exerciseId: "01900000-0000-7000-8000-000000000001",
+            id: "01900000-0000-7000-8000-000000000002",
+            note: null,
+            pyramidLabel: "reverse_pyramid",
+            sets: [
+              {
+                amount: 8,
+                id: "01900000-0000-7000-8000-000000000003",
+                intensityTechnique: null,
+                isToFailure: false,
+                restSeconds: 120,
+                tempo: null,
+                type: "working",
+              },
+            ],
+            warmUpExercises: [],
+          },
+        ],
+        id: "01900000-0000-7000-8000-000000000005",
+      },
+    ],
+    warmUp: [],
+  },
+};
 
 describe("RoutineScreen", () => {
   it("opens the Routine of a link to it for a signed-in User, not the home screen", async () => {
@@ -74,6 +112,7 @@ describe("RoutineScreen", () => {
                     exerciseId: "01900000-0000-7000-8000-000000000001",
                     id: "01900000-0000-7000-8000-000000000002",
                     note: null,
+                    pyramidLabel: null,
                     sets: [
                       {
                         amount: 10,
@@ -96,6 +135,47 @@ describe("RoutineScreen", () => {
         },
       ]);
     });
+  });
+
+  it("Saves the reverse Pyramid label that the User picks for a Routine exercise, which is picked when the Routine opens again", async () => {
+    const user = userEvent.setup();
+    const savedInputs: RoutineSaveInput[] = [];
+    let routines: Routine[] = [PUSH_DAY_ROUTINE];
+    renderScreen({
+      initialUrl: "/",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => [],
+            "routine.list": () => routines,
+            "routine.save": (input) => {
+              savedInputs.push(input);
+              routines = [REVERSE_PYRAMID_PUSH_DAY_ROUTINE];
+            },
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("link", { name: "Push day" }));
+
+    fireEvent(await screen.findByTestId("Pyramid"), "selectionChange", {
+      nativeEvent: { selection: "reverse_pyramid" },
+    });
+    await user.press(screen.getByRole("button", { name: "Save routine" }));
+    await user.press(await screen.findByRole("link", { name: "Push day" }));
+
+    expect(savedInputs).toMatchObject([
+      {
+        sections: {
+          main: [{ exercises: [{ pyramidLabel: "reverse_pyramid" }] }],
+        },
+      },
+    ]);
+    expect(await screen.findByTestId("Pyramid")).toHaveProp(
+      "selection",
+      "reverse_pyramid",
+    );
   });
 
   it("takes the User back to their Routines, without the Routine, once they delete it", async () => {

@@ -11,14 +11,14 @@ type WorkoutContextValue = {
   dispatch: (action: WorkoutDraftsAction) => void;
   drafts: WorkoutDrafts;
   exerciseNames: ReadonlyMap<string, string>;
-  onCancelCountdown: () => void;
   onEndCountdown: () => void;
-  onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
+  onStartCountdown: (countdown: Countdown) => void;
+  onStopCountdown: () => void;
 };
 
 /**
  * The state that the Workout screen shares with every Workout exercise deep
  * in its tree: every Draft with something to Save, and the one countdown of
- * Rest or a Pause, which starting another replaces.
+ * Rest, a Pause or a Segment timer, which starting another replaces.
  */
 export const WorkoutContext = createContext<null | WorkoutContextValue>(null);

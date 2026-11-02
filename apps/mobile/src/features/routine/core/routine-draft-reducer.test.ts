@@ -14,12 +14,14 @@ const BENCH_PRESS_ROUTINE_EXERCISE_DRAFT = {
   exerciseId: "bench-press",
   id: "bench-press-routine-exercise",
   note: "",
+  pyramidLabel: null,
   sets: [SET_DRAFT],
   warmUpExercises: [
     {
       exerciseId: "band-pull-apart",
       id: "band-pull-apart-routine-exercise",
       note: "",
+      pyramidLabel: null,
       sets: [],
     },
   ],
@@ -29,6 +31,7 @@ const PUSH_UP_ROUTINE_EXERCISE_DRAFT = {
   exerciseId: "push-up",
   id: "push-up-routine-exercise",
   note: "",
+  pyramidLabel: null,
   sets: [],
   warmUpExercises: [],
 };
@@ -37,6 +40,7 @@ const DIP_ROUTINE_EXERCISE_DRAFT = {
   exerciseId: "dip",
   id: "dip-routine-exercise",
   note: "",
+  pyramidLabel: null,
   sets: [],
   warmUpExercises: [],
 };
@@ -107,6 +111,7 @@ describe("routineDraftReducer", () => {
             exerciseId: "squat",
             id: "squat-routine-exercise",
             note: "",
+            pyramidLabel: null,
             sets: [],
             warmUpExercises: [],
           },
@@ -134,6 +139,7 @@ describe("routineDraftReducer", () => {
               exerciseId: "stretch",
               id: "stretch-routine-exercise",
               note: "",
+              pyramidLabel: null,
               sets: [],
             },
           ],
@@ -156,12 +162,14 @@ describe("routineDraftReducer", () => {
         exerciseId: "band-pull-apart",
         id: "band-pull-apart-routine-exercise",
         note: "",
+        pyramidLabel: null,
         sets: [],
       },
       {
         exerciseId: "push-up",
         id: "push-up-warm-up-routine-exercise",
         note: "",
+        pyramidLabel: null,
         sets: [],
       },
     ]);
@@ -179,6 +187,7 @@ describe("routineDraftReducer", () => {
         exerciseId: "band-pull-apart",
         id: "band-pull-apart-routine-exercise",
         note: "Light band",
+        pyramidLabel: null,
         sets: [],
       },
     ]);

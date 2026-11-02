@@ -1,4 +1,3 @@
-import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reasons";
 import type { WeightUnit } from "@ankaa/core/features/workout/constants/weight";
 import type { AmountUnit } from "@ankaa/core/shared/constants/amount";
 import type { WeightType } from "@ankaa/core/shared/constants/weight-types";
@@ -18,20 +17,31 @@ export const WORKOUT_MESSAGES = {
     repetition: "Repetitions",
     second: "Seconds",
   } satisfies Record<AmountUnit, string>,
-  cancelRestButton: "Skip rest",
   countdownEndNotifications: {
     pause: {
       body: "Start the next segment of your set.",
       title: "Your pause is over",
     },
     rest: { body: "Start your next set.", title: "Your rest is over" },
+    segmentTimer: {
+      body: "The planned seconds are filled in: save your set.",
+      title: "Your time is up",
+    },
   } satisfies Record<Countdown["kind"], Omit<ScheduledNotification, "seconds">>,
-  countdownNotificationChannelName: "Rest and pauses",
+  countdownLeadInEndNotification: {
+    body: "The timer is running.",
+    title: "Start your set",
+  } satisfies Omit<ScheduledNotification, "seconds">,
+  countdownLeadInStatusLabel: (remainingSeconds: number) =>
+    `Get into position: ${formatCount({ count: remainingSeconds, ...SECONDS_UNIT })} left`,
+  countdownNotificationChannelName: "Rest, pauses and timers",
   countdownStatusLabels: {
     pause: (remainingSeconds: number) =>
       `Pause: ${formatCount({ count: remainingSeconds, ...SECONDS_UNIT })} left`,
     rest: (remainingSeconds: number) =>
       `Rest: ${formatCount({ count: remainingSeconds, ...SECONDS_UNIT })} left`,
+    segmentTimer: (remainingSeconds: number) =>
+      `Timer: ${formatCount({ count: remainingSeconds, ...SECONDS_UNIT })} left`,
   } satisfies Record<Countdown["kind"], (remainingSeconds: number) => string>,
   draftsUnsavedError: (draftLabels: readonly string[]) =>
     `You haven't saved these: ${draftLabels.join("; ")}. Save them before you stop the workout.`,
@@ -40,6 +50,7 @@ export const WORKOUT_MESSAGES = {
       ? "Drop set"
       : `Drop set: take off ${String(weightPercentage)}% at each drop`,
   elapsedTimeStatus: (elapsedTime: string) => `Elapsed time: ${elapsedTime}`,
+  noStopSkipReasonLabel: "Pick a reason",
   noteLabel: "Note for this workout",
   notSkippedLabel: "Not skipped",
   plannedAmountLabels: {
@@ -54,6 +65,8 @@ export const WORKOUT_MESSAGES = {
   plannedNoteLabel: (plannedNote: string) => `Routine note: ${plannedNote}`,
   recordedSetDraftInvalidError:
     "Some fields of this set aren't valid: correct the fields marked with an error.",
+  recordedSetDraftsUnsavedError:
+    "You haven't saved some sets of this exercise: save or discard them before you save the skip.",
   removeSegmentButton: "Remove segment",
   removeSetButton: "Remove set",
   restLabel: (restSeconds: number) =>
@@ -75,21 +88,33 @@ export const WORKOUT_MESSAGES = {
   segmentCountInvalidError:
     "This set has more segments than planned: remove a segment and save the set again.",
   segmentLabel: (segmentNumber: number) => `Segment ${String(segmentNumber)}`,
+  segmentTimerCountedSecondsStatusLabel: (countedSeconds: number) =>
+    `Timer: ${formatCount({ count: countedSeconds, ...SECONDS_UNIT })}`,
+  segmentTimerExtraSecondsStatusLabel: (extraSeconds: number) =>
+    `Timer: ${formatCount({ count: extraSeconds, plural: "extra seconds", singular: "extra second" })}`,
   segmentWeightNotAllowedError:
     "This exercise takes no weight: clear the weight and save the set again.",
+  setNotPlannedError:
+    "This exercise has no more sets planned: you've already recorded every set it plans.",
+  skipConflictError:
+    "This exercise is skipped, so its sets can't change: pick Not skipped, save the skip and try again.",
   skipNoteLabel: "Why you skipped it",
   skipNoteWithoutReasonError:
     "This note needs a reason: pick why you skipped the exercise, or clear the note.",
   skipReasonLabel: "Skipped",
-  skipReasonLabels: {
-    low_energy: "Low energy",
-    low_on_time: "Low on time",
-    other: "Other",
-    pain: "Pain",
-  } satisfies Record<SkipReason, string>,
+  skipReasonMissingError:
+    "Some exercises aren't done: pick why you're stopping early, then stop the workout again.",
+  skipStatus:
+    "This exercise is skipped: to record, change or remove a set, pick Not skipped and save the skip.",
   startPauseButton: "Start pause",
   startRestButton: "Start rest",
+  startSegmentTimerButton: "Start",
   startWorkoutButton: (routineName: string) => `Start ${routineName}`,
+  stopSegmentTimerButton: "Stop",
+  stopSkipNoteLabel: "Note on why you're stopping early",
+  stopSkipReasonLabel: "Why you're stopping early",
+  stopSkipStatus:
+    "Some exercises aren't done yet: pick why you're stopping early, then stop the workout again to mark them as skipped.",
   stopWorkoutButton: "Stop workout",
   tempoDescription:
     "The seconds for lowering, holding at the bottom, lifting and holding at the top. X means lifting as fast as you can.",
