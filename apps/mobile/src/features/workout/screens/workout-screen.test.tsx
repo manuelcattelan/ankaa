@@ -1240,24 +1240,12 @@ describe("WorkoutScreen", () => {
     });
   });
 
-  it("ends the Rest early and cancels its notification through Skip rest", async () => {
-    const scheduledNotifications: NotificationRequest[] = [
-      {
-        channelId: "other",
-        identifier: "other",
-        notification: {
-          body: "Another notification.",
-          seconds: 600,
-          title: "Another notification",
-        },
-      },
-    ];
+  it("offers no way to skip a Rest that the User starts", async () => {
     const user = userEvent.setup();
     renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
-        notifications: fakeNotificationsLayer({ scheduledNotifications }),
         trpcClient: fakeTrpcClientLayer({
           responses: {
             "exercise.list": () => EXERCISES,
@@ -1270,27 +1258,11 @@ describe("WorkoutScreen", () => {
         }),
       },
     });
+
     await user.press(await screen.findByRole("button", { name: "Start rest" }));
-    await waitFor(() => {
-      expect(scheduledNotifications).toHaveLength(2);
-    });
 
-    await user.press(screen.getByRole("button", { name: "Skip rest" }));
-
-    await waitFor(() => {
-      expect(scheduledNotifications).toStrictEqual([
-        {
-          channelId: "other",
-          identifier: "other",
-          notification: {
-            body: "Another notification.",
-            seconds: 600,
-            title: "Another notification",
-          },
-        },
-      ]);
-    });
-    expect(screen.queryByText("Rest: 120 seconds left")).toBeNull();
+    expect(screen.getByText("Rest: 120 seconds left")).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Skip rest" })).toBeNull();
   });
 
   it("cancels the notification of the countdown when the User stops the Workout", async () => {

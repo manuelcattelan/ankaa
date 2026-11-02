@@ -11,7 +11,6 @@ type WorkoutContextValue = {
   dispatch: (action: WorkoutDraftsAction) => void;
   drafts: WorkoutDrafts;
   exerciseNames: ReadonlyMap<string, string>;
-  onCancelCountdown: () => void;
   onEndCountdown: () => void;
   onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
 };

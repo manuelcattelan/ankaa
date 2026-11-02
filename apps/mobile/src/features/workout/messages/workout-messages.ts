@@ -18,7 +18,6 @@ export const WORKOUT_MESSAGES = {
     repetition: "Repetitions",
     second: "Seconds",
   } satisfies Record<AmountUnit, string>,
-  cancelRestButton: "Skip rest",
   countdownEndNotifications: {
     pause: {
       body: "Start the next segment of your set.",

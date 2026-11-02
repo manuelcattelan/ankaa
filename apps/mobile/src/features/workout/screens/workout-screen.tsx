@@ -11,7 +11,6 @@ import { WorkoutSection } from "#/features/workout/components/workout-section.ts
 import { WorkoutStopButton } from "#/features/workout/components/workout-stop-button.tsx";
 import { workoutDraftsReducer } from "#/features/workout/core/workout-drafts-reducer.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
-import { countdownNotificationCancelMutationOptions } from "#/features/workout/mutations/countdown-notification-cancel-mutation-options.ts";
 import { countdownNotificationScheduleMutationOptions } from "#/features/workout/mutations/countdown-notification-schedule-mutation-options.ts";
 import { WorkoutContext } from "#/features/workout/providers/workout-context.ts";
 import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/workout-find-in-progress-query-options.ts";
@@ -55,9 +54,6 @@ export function WorkoutScreen() {
   const scheduleCountdownNotification = useMutation(
     countdownNotificationScheduleMutationOptions(runtime),
   );
-  const cancelCountdownNotification = useMutation(
-    countdownNotificationCancelMutationOptions(runtime),
-  );
 
   const workout = workoutInProgress.data ?? null;
   const exerciseNamesById = exerciseNames.data ?? noExerciseNames;
@@ -95,11 +91,6 @@ export function WorkoutScreen() {
     setCountdown(null);
   }
 
-  function handleCancelCountdown() {
-    setCountdown(null);
-    cancelCountdownNotification.mutate();
-  }
-
   function handleStartCountdown(
     startedCountdown: Omit<Countdown, "startTime">,
   ) {
@@ -123,7 +114,6 @@ export function WorkoutScreen() {
               dispatch,
               drafts,
               exerciseNames: exerciseNamesById,
-              onCancelCountdown: handleCancelCountdown,
               onEndCountdown: handleEndCountdown,
               onStartCountdown: handleStartCountdown,
             }}

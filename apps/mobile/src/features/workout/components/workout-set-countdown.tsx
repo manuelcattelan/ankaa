@@ -72,19 +72,11 @@ export function WorkoutSetCountdown({
         />
       )}
       {shownCountdown === null ? null : (
-        <>
-          <WorkoutCountdown
-            countdown={shownCountdown}
-            key={shownCountdown.startTime}
-            onEnd={workoutContext.onEndCountdown}
-          />
-          {shownCountdown.kind === "rest" ? (
-            <Button
-              onPress={workoutContext.onCancelCountdown}
-              title={WORKOUT_MESSAGES.cancelRestButton}
-            />
-          ) : null}
-        </>
+        <WorkoutCountdown
+          countdown={shownCountdown}
+          key={shownCountdown.startTime}
+          onEnd={workoutContext.onEndCountdown}
+        />
       )}
     </>
   );

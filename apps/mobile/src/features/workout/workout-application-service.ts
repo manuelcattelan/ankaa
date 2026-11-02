@@ -41,7 +41,6 @@ const COUNTDOWN_NOTIFICATION_IDENTIFIER = "countdown";
 export class WorkoutApplicationService extends Context.Service<
   WorkoutApplicationService,
   {
-    readonly cancelCountdownNotification: () => Effect.Effect<void>;
     readonly findInProgress: () => Effect.Effect<
       null | Workout,
       TrpcClientError
@@ -193,7 +192,6 @@ export class WorkoutApplicationService extends Context.Service<
       });
 
       return WorkoutApplicationService.of({
-        cancelCountdownNotification,
         findInProgress,
         removeSet,
         saveNote,
