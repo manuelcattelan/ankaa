@@ -1,6 +1,6 @@
-import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reasons";
 import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
 import type { SetType } from "@ankaa/core/shared/constants/set-types";
+import type { SkipReason } from "@ankaa/core/shared/constants/skip-reasons";
 import type { WeightType } from "@ankaa/core/shared/constants/weight-types";
 
 import { getMatchingPlannedSet } from "@ankaa/core/features/workout/core/get-matching-planned-set";

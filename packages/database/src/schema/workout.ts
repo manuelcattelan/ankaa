@@ -1,4 +1,3 @@
-import { SKIP_REASONS } from "@ankaa/core/features/workout/constants/skip-reasons";
 import {
   MAXIMUM_WEIGHT,
   MINIMUM_WEIGHT,
@@ -13,6 +12,7 @@ import {
 import { MINIMUM_POSITION } from "@ankaa/core/shared/constants/minimum-position";
 import { PYRAMID_LABELS } from "@ankaa/core/shared/constants/pyramid-labels";
 import { SECTIONS } from "@ankaa/core/shared/constants/sections";
+import { SKIP_REASONS } from "@ankaa/core/shared/constants/skip-reasons";
 import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-types";
 import { between, gte, inArray, isNull, sql } from "drizzle-orm";
 import {

@@ -1,6 +1,6 @@
-import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reasons";
 import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 import type { SetType } from "@ankaa/core/shared/constants/set-types";
+import type { SkipReason } from "@ankaa/core/shared/constants/skip-reasons";
 
 import { SkipReasonMissingError } from "@ankaa/core/features/workout/errors/skip-reason-missing-error";
 import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";

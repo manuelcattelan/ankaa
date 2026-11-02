@@ -1,9 +1,11 @@
 import * as Cause from "effect/Cause";
 import * as ConfigProvider from "effect/ConfigProvider";
+import * as DateTime from "effect/DateTime";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 
+import { AbsenceApplicationService } from "#/features/absence/absence-application-service.ts";
 import { AuthenticationApplicationService } from "#/features/authentication/authentication-application-service.ts";
 import { RoutineApplicationService } from "#/features/routine/routine-application-service.ts";
 import { WorkoutApplicationService } from "#/features/workout/workout-application-service.ts";
@@ -22,10 +24,12 @@ export type ApplicationRuntime = ManagedRuntime.ManagedRuntime<
  * it depends on.
  */
 export const applicationLayer = Layer.mergeAll(
+  AbsenceApplicationService.layer,
   Accessibility.layer,
   AuthenticationApplicationService.layer,
   AuthenticationClient.layer,
   Crypto.layer,
+  DateTime.layerCurrentZoneLocal,
   ExerciseApplicationService.layer,
   RoutineApplicationService.layer,
   WorkoutApplicationService.layer,

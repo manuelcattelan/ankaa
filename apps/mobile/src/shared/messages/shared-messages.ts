@@ -1,5 +1,6 @@
 import type { PyramidLabel } from "@ankaa/core/shared/constants/pyramid-labels";
 import type { Section } from "@ankaa/core/shared/constants/sections";
+import type { SkipReason } from "@ankaa/core/shared/constants/skip-reasons";
 
 export const SHARED_MESSAGES = {
   goHomeButton: "Go to home screen",
@@ -18,6 +19,12 @@ export const SHARED_MESSAGES = {
   serverUnreachableError:
     "Ankaa can't connect: check your internet connection and try again.",
   setLabel: (setNumber: number) => `Set ${String(setNumber)}`,
+  skipReasonLabels: {
+    low_energy: "Low energy",
+    low_on_time: "Low on time",
+    other: "Other",
+    pain: "Pain",
+  } satisfies Record<SkipReason, string>,
   supersetLabel: "Superset",
   textFieldErrorLabel: ({
     errorMessage,

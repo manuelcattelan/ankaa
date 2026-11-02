@@ -1,9 +1,9 @@
-import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reasons";
 import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
 import type { WorkoutSaveNoteInput } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
 import type { WorkoutSaveSkipInput } from "@ankaa/core/features/workout/schemas/workout-save-skip-input-schema";
 import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
+import type { SkipReason } from "@ankaa/core/shared/constants/skip-reasons";
 
 import { SetNotPlannedError } from "@ankaa/core/features/workout/errors/set-not-planned-error";
 import { SkipConflictError } from "@ankaa/core/features/workout/errors/skip-conflict-error";

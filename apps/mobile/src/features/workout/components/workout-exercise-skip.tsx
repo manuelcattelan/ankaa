@@ -1,6 +1,6 @@
-import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reasons";
+import type { SkipReason } from "@ankaa/core/shared/constants/skip-reasons";
 
-import { SKIP_REASONS } from "@ankaa/core/features/workout/constants/skip-reasons";
+import { SKIP_REASONS } from "@ankaa/core/shared/constants/skip-reasons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -18,13 +18,14 @@ import { StatusMessage } from "#/shared/components/status-message.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
 import { decodeForm } from "#/shared/core/decode-form.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
+import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 const NOT_SKIPPED = "not_skipped";
 
 const SKIP_REASON_OPTIONS = [NOT_SKIPPED, ...SKIP_REASONS] as const;
 
 const SKIP_REASON_OPTION_LABELS = {
-  ...WORKOUT_MESSAGES.skipReasonLabels,
+  ...SHARED_MESSAGES.skipReasonLabels,
   [NOT_SKIPPED]: WORKOUT_MESSAGES.notSkippedLabel,
 };
 

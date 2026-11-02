@@ -1,8 +1,8 @@
-import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reasons";
 import type { WorkoutSaveNoteInput } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
 import type { WorkoutSaveSkipInput } from "@ankaa/core/features/workout/schemas/workout-save-skip-input-schema";
 import type { Section } from "@ankaa/core/shared/constants/sections";
+import type { SkipReason } from "@ankaa/core/shared/constants/skip-reasons";
 import type * as ExerciseDatabaseSchema from "@ankaa/database/schema/exercise";
 
 import { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";

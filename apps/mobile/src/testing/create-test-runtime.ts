@@ -1,3 +1,4 @@
+import * as DateTime from "effect/DateTime";
 import * as Layer from "effect/Layer";
 
 import type { Accessibility } from "#/shared/services/accessibility.ts";
@@ -5,6 +6,7 @@ import type { AuthenticationClient } from "#/shared/services/authentication-clie
 import type { Notifications } from "#/shared/services/notifications.ts";
 import type { TrpcClient } from "#/shared/services/trpc-client.ts";
 
+import { AbsenceApplicationService } from "#/features/absence/absence-application-service.ts";
 import { AuthenticationApplicationService } from "#/features/authentication/authentication-application-service.ts";
 import { AppleSignIn } from "#/features/authentication/services/apple-sign-in.ts";
 import { GoogleSignIn } from "#/features/authentication/services/google-sign-in.ts";
@@ -23,6 +25,7 @@ export type TestRuntimeLayers = {
   appleSignIn?: Layer.Layer<AppleSignIn>;
   authenticationClient?: Layer.Layer<AuthenticationClient>;
   crypto?: Layer.Layer<Crypto>;
+  currentTimeZone?: Layer.Layer<DateTime.CurrentTimeZone>;
   googleSignIn?: Layer.Layer<GoogleSignIn>;
   notifications?: Layer.Layer<Notifications>;
   trpcClient?: Layer.Layer<TrpcClient, never, AuthenticationClient>;
@@ -31,12 +34,15 @@ export type TestRuntimeLayers = {
 /**
  * Builds the app's Runtime from Fakes that behave like an idle device, and
  * from `Layer.mock` for every Service that no default scenario reaches, so
- * an unexpected use fails loudly.
+ * an unexpected use fails loudly. The device's time zone is UTC unless a test
+ * gives another.
  */
 export function createTestRuntime(layers: TestRuntimeLayers) {
   return createRuntime(
     Layer.mergeAll(
       layers.accessibility ?? fakeAccessibilityLayer([]),
+      layers.currentTimeZone ??
+        DateTime.layerCurrentZone(DateTime.zoneMakeNamedUnsafe("UTC")),
       AuthenticationApplicationService.layerNoDeps.pipe(
         Layer.provideMerge(
           Layer.mergeAll(
@@ -47,6 +53,7 @@ export function createTestRuntime(layers: TestRuntimeLayers) {
         ),
       ),
       Layer.mergeAll(
+        AbsenceApplicationService.layerNoDeps,
         ExerciseApplicationService.layerNoDeps,
         RoutineApplicationService.layerNoDeps,
         WorkoutApplicationService.layerNoDeps,

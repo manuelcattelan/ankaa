@@ -1,7 +1,7 @@
 import * as Schema from "effect/Schema";
 
-import { SKIP_REASONS } from "#/features/workout/constants/skip-reasons.ts";
 import { skipNoteFilter } from "#/features/workout/filters/skip-note-filter.ts";
+import { SKIP_REASONS } from "#/shared/constants/skip-reasons.ts";
 import { idSchema } from "#/shared/schemas/id-schema.ts";
 
 export type WorkoutSaveSkipInput = typeof workoutSaveSkipInputSchema.Type;

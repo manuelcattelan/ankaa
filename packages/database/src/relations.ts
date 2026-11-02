@@ -1,5 +1,6 @@
 import { defineRelations } from "drizzle-orm";
 
+import * as AbsenceDatabaseSchema from "#/schema/absence.ts";
 import * as AuthenticationDatabaseSchema from "#/schema/authentication.ts";
 import * as ExerciseDatabaseSchema from "#/schema/exercise.ts";
 import * as RoutineDatabaseSchema from "#/schema/routine.ts";
@@ -7,12 +8,25 @@ import * as WorkoutDatabaseSchema from "#/schema/workout.ts";
 
 export const relations = defineRelations(
   {
+    ...AbsenceDatabaseSchema,
     ...AuthenticationDatabaseSchema,
     ...ExerciseDatabaseSchema,
     ...RoutineDatabaseSchema,
     ...WorkoutDatabaseSchema,
   },
   (r) => ({
+    absence: {
+      routine: r.one.routine({
+        from: r.absence.routineId,
+        optional: false,
+        to: r.routine.id,
+      }),
+      user: r.one.user({
+        from: r.absence.userId,
+        optional: false,
+        to: r.user.id,
+      }),
+    },
     account: {
       user: r.one.user({
         from: r.account.userId,
@@ -53,6 +67,10 @@ export const relations = defineRelations(
       }),
     },
     routine: {
+      absences: r.many.absence({
+        from: r.routine.id,
+        to: r.absence.routineId,
+      }),
       days: r.many.routineDay({
         from: r.routine.id,
         to: r.routineDay.routineId,
@@ -129,6 +147,10 @@ export const relations = defineRelations(
       }),
     },
     user: {
+      absences: r.many.absence({
+        from: r.user.id,
+        to: r.absence.userId,
+      }),
       accounts: r.many.account({
         from: r.user.id,
         to: r.account.userId,

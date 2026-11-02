@@ -1,5 +1,5 @@
-import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reasons";
 import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
+import type { SkipReason } from "@ankaa/core/shared/constants/skip-reasons";
 
 import { SkipConflictError } from "@ankaa/core/features/workout/errors/skip-conflict-error";
 import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";

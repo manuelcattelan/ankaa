@@ -1,4 +1,3 @@
-import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reasons";
 import type { WeightUnit } from "@ankaa/core/features/workout/constants/weight";
 import type { AmountUnit } from "@ankaa/core/shared/constants/amount";
 import type { WeightType } from "@ankaa/core/shared/constants/weight-types";
@@ -99,12 +98,6 @@ export const WORKOUT_MESSAGES = {
   skipNoteWithoutReasonError:
     "This note needs a reason: pick why you skipped the exercise, or clear the note.",
   skipReasonLabel: "Skipped",
-  skipReasonLabels: {
-    low_energy: "Low energy",
-    low_on_time: "Low on time",
-    other: "Other",
-    pain: "Pain",
-  } satisfies Record<SkipReason, string>,
   skipReasonMissingError:
     "Some exercises aren't done: pick why you're stopping early, then stop the workout again.",
   skipStatus:

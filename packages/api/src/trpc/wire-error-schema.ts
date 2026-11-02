@@ -1,3 +1,5 @@
+import { AbsenceDateConflictError } from "@ankaa/core/features/absence/errors/absence-date-conflict-error";
+import { AbsenceDateInFutureError } from "@ankaa/core/features/absence/errors/absence-date-in-future-error";
 import { RoutineNameConflictError } from "@ankaa/core/features/routine/errors/routine-name-conflict-error";
 import { SegmentCountInvalidError } from "@ankaa/core/features/workout/errors/segment-count-invalid-error";
 import { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
@@ -15,6 +17,8 @@ export type WireError = typeof wireErrorSchema.Type;
  * The union of every Wire error, which the error formatter encodes with.
  */
 export const wireErrorSchema = Schema.Union([
+  AbsenceDateConflictError,
+  AbsenceDateInFutureError,
   RoutineNameConflictError,
   RoutineNotFoundError,
   SegmentCountInvalidError,
