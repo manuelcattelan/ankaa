@@ -29,6 +29,7 @@ const ROUTINE_EXERCISE = {
   exerciseId: "019a0000-0000-7000-8000-000000000001",
   id: "019a0000-0000-7000-8000-000000000301",
   note: null,
+  pyramidLabel: null,
   sets: [SET],
   warmUpExercises: [],
 };
@@ -78,6 +79,7 @@ describe("routineSaveInputSchema", () => {
                 exerciseId: "019a0000-0000-7000-8000-000000000003",
                 id: "019a0000-0000-7000-8000-000000000305",
                 note: "Slowly",
+                pyramidLabel: null,
                 sets: [
                   {
                     ...SET,
@@ -102,6 +104,7 @@ describe("routineSaveInputSchema", () => {
                     exerciseId: "019a0000-0000-7000-8000-000000000003",
                     id: "019a0000-0000-7000-8000-000000000302",
                     note: null,
+                    pyramidLabel: null,
                     sets: [
                       {
                         ...SET,
@@ -118,6 +121,7 @@ describe("routineSaveInputSchema", () => {
                 exerciseId: "019a0000-0000-7000-8000-000000000002",
                 id: "019a0000-0000-7000-8000-000000000303",
                 note: null,
+                pyramidLabel: null,
                 sets: [
                   {
                     ...SET,
@@ -139,6 +143,7 @@ describe("routineSaveInputSchema", () => {
                 exerciseId: "019a0000-0000-7000-8000-000000000003",
                 id: "019a0000-0000-7000-8000-000000000304",
                 note: null,
+                pyramidLabel: null,
                 sets: [{ ...SET, id: "019a0000-0000-7000-8000-000000000407" }],
               },
             ],
@@ -213,6 +218,7 @@ describe("routineSaveInputSchema", () => {
                       exerciseId: "019a0000-0000-7000-8000-000000000003",
                       id: "019a0000-0000-7000-8000-000000000302",
                       note: null,
+                      pyramidLabel: null,
                       sets: [],
                     },
                   ],

@@ -11,6 +11,7 @@ import {
   MINIMUM_AMOUNT,
 } from "@ankaa/core/shared/constants/amount";
 import { MINIMUM_POSITION } from "@ankaa/core/shared/constants/minimum-position";
+import { PYRAMID_LABELS } from "@ankaa/core/shared/constants/pyramid-labels";
 import { SECTIONS } from "@ankaa/core/shared/constants/sections";
 import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-types";
 import { between, gte, inArray, isNull, sql } from "drizzle-orm";
@@ -116,6 +117,7 @@ export const workoutExercise = snakeCase.table(
     note: text(),
     plannedNote: text(),
     position: integer().notNull(),
+    pyramidLabel: text({ enum: PYRAMID_LABELS }),
     skipNote: text(),
     skipReason: text({ enum: SKIP_REASONS }),
     warmUpForWorkoutExerciseId: uuid(),
@@ -153,6 +155,10 @@ export const workoutExercise = snakeCase.table(
     check(
       "workout_exercise_weight_unit_check",
       inArray(table.weightUnit, WEIGHT_UNITS),
+    ),
+    check(
+      "workout_exercise_pyramid_label_check",
+      inArray(table.pyramidLabel, PYRAMID_LABELS),
     ),
     check(
       "workout_exercise_skip_reason_check",

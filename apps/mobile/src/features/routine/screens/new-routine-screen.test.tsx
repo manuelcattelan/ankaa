@@ -175,6 +175,7 @@ describe("NewRoutineScreen", () => {
                     exerciseId: BENCH_PRESS_EXERCISE_ID,
                     id: "00000000-0000-7000-8000-000000000002",
                     note: null,
+                    pyramidLabel: null,
                     sets: [
                       {
                         amount: 8,
@@ -195,6 +196,7 @@ describe("NewRoutineScreen", () => {
                         exerciseId: BAND_PULL_APART_EXERCISE_ID,
                         id: "00000000-0000-7000-8000-000000000006",
                         note: null,
+                        pyramidLabel: null,
                         sets: [
                           {
                             amount: null,
@@ -213,6 +215,7 @@ describe("NewRoutineScreen", () => {
                     exerciseId: PUSH_UP_EXERCISE_ID,
                     id: "00000000-0000-7000-8000-000000000005",
                     note: null,
+                    pyramidLabel: null,
                     sets: [
                       {
                         amount: null,

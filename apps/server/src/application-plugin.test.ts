@@ -273,6 +273,7 @@ function buildRoutineSaveInput(id: string) {
               exerciseId: BENCH_PRESS_EXERCISE_ID,
               id: `${id.slice(0, -3)}301`,
               note: null,
+              pyramidLabel: null,
               sets: [
                 {
                   amount: 8,

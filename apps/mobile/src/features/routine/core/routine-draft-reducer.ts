@@ -1,4 +1,5 @@
 import type { DayOfWeek } from "@ankaa/core/features/routine/constants/days-of-week";
+import type { PyramidLabel } from "@ankaa/core/shared/constants/pyramid-labels";
 import type { Section } from "@ankaa/core/shared/constants/sections";
 
 import type { RoutineExerciseSetDraft } from "#/features/routine/core/routine-exercise-set-form-schema.ts";
@@ -48,6 +49,11 @@ export type RoutineDraftAction =
   | { id: string; type: "assignedId" }
   | { name: string; type: "changedName" }
   | { note: string; routineExerciseId: string; type: "changedExerciseNote" }
+  | {
+      pyramidLabel: null | PyramidLabel;
+      routineExerciseId: string;
+      type: "changedPyramidLabel";
+    }
   | {
       routineExerciseId: string;
       set: RoutineExerciseSetDraft;
@@ -173,6 +179,14 @@ export function routineDraftReducer(
 
     case "changedName": {
       return { ...routineDraft, name: action.name };
+    }
+
+    case "changedPyramidLabel": {
+      return changeRoutineExercise({
+        getChanges: () => ({ pyramidLabel: action.pyramidLabel }),
+        routineDraft,
+        routineExerciseId: action.routineExerciseId,
+      });
     }
 
     case "changedSet": {
@@ -487,8 +501,8 @@ function removeRoutineExercise<
 }
 
 /**
- * Creates the Draft of a new Routine exercise of `exerciseId`, with no note
- * and no Set yet.
+ * Creates the Draft of a new Routine exercise of `exerciseId`, with no note,
+ * no Pyramid label and no Set yet.
  */
 function createRoutineExerciseDraft({
   exerciseId,
@@ -497,5 +511,5 @@ function createRoutineExerciseDraft({
   exerciseId: string;
   id: string;
 }) {
-  return { exerciseId, id, note: "", sets: [] };
+  return { exerciseId, id, note: "", pyramidLabel: null, sets: [] };
 }

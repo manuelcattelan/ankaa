@@ -15,6 +15,7 @@ const ROUTINE = {
             exerciseId: "01900000-0000-7000-8000-000000000001",
             id: "01900000-0000-7000-8000-000000000301",
             note: "Pause at the chest",
+            pyramidLabel: null,
             sets: [
               {
                 amount: 8,
@@ -35,6 +36,7 @@ const ROUTINE = {
                 exerciseId: "01900000-0000-7000-8000-000000000003",
                 id: "01900000-0000-7000-8000-000000000302",
                 note: null,
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: null,
@@ -53,6 +55,7 @@ const ROUTINE = {
             exerciseId: "01900000-0000-7000-8000-000000000002",
             id: "01900000-0000-7000-8000-000000000303",
             note: null,
+            pyramidLabel: null,
             sets: [
               {
                 amount: 6,
@@ -91,6 +94,7 @@ const ROUTINE_DRAFT = {
             exerciseId: "01900000-0000-7000-8000-000000000001",
             id: "01900000-0000-7000-8000-000000000301",
             note: "Pause at the chest",
+            pyramidLabel: null,
             sets: [
               {
                 amount: "8",
@@ -111,6 +115,7 @@ const ROUTINE_DRAFT = {
                 exerciseId: "01900000-0000-7000-8000-000000000003",
                 id: "01900000-0000-7000-8000-000000000302",
                 note: "",
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: "",
@@ -129,6 +134,7 @@ const ROUTINE_DRAFT = {
             exerciseId: "01900000-0000-7000-8000-000000000002",
             id: "01900000-0000-7000-8000-000000000303",
             note: "",
+            pyramidLabel: null,
             sets: [
               {
                 amount: "6",
@@ -172,6 +178,7 @@ function withSetDraft(setDraft: Record<string, unknown>) {
               exerciseId: "01900000-0000-7000-8000-000000000001",
               id: "01900000-0000-7000-8000-000000000301",
               note: "",
+              pyramidLabel: null,
               sets: [{ ...ROUTINE_SET_DRAFT, ...setDraft }],
               warmUpExercises: [],
             },
@@ -312,12 +319,14 @@ describe("routineFormSchema", () => {
                   exerciseId: "01900000-0000-7000-8000-000000000001",
                   id: "01900000-0000-7000-8000-000000000301",
                   note: "",
+                  pyramidLabel: null,
                   sets: [ROUTINE_SET_DRAFT],
                   warmUpExercises: [
                     {
                       exerciseId: "01900000-0000-7000-8000-000000000003",
                       id: "01900000-0000-7000-8000-000000000302",
                       note: "",
+                      pyramidLabel: null,
                       sets: [],
                     },
                   ],

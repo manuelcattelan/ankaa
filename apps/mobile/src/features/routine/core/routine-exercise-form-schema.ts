@@ -1,4 +1,5 @@
 import { workingSetFilter } from "@ankaa/core/features/routine/filters/working-set-filter";
+import { PYRAMID_LABELS } from "@ankaa/core/shared/constants/pyramid-labels";
 import { idSchema } from "@ankaa/core/shared/schemas/id-schema";
 import * as Schema from "effect/Schema";
 
@@ -10,6 +11,7 @@ export const routineExerciseFormSchema = Schema.Struct({
   exerciseId: idSchema,
   id: idSchema,
   note: createNullableTextSchema(Schema.String),
+  pyramidLabel: Schema.NullOr(Schema.Literals(PYRAMID_LABELS)),
   sets: Schema.Array(routineExerciseSetFormSchema),
 }).check(
   workingSetFilter.annotate({

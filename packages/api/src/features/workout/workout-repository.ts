@@ -53,7 +53,7 @@ type StartedRoutineRow = Pick<
 
 type StartedRoutineExerciseRow = Pick<
   typeof RoutineDatabaseSchema.routineExercise.$inferSelect,
-  "exerciseId" | "note" | "position"
+  "exerciseId" | "note" | "position" | "pyramidLabel"
 > & {
   exercise: Pick<
     typeof ExerciseDatabaseSchema.exercise.$inferSelect,
@@ -69,6 +69,7 @@ type WorkoutExerciseRow = Pick<
   | "id"
   | "note"
   | "plannedNote"
+  | "pyramidLabel"
   | "skipNote"
   | "skipReason"
   | "weightType"
@@ -94,6 +95,7 @@ const ROUTINE_EXERCISE_COLUMNS = {
   exerciseId: true,
   note: true,
   position: true,
+  pyramidLabel: true,
 } as const;
 
 const ROUTINE_EXERCISE_RELATIONS = {
@@ -107,6 +109,7 @@ const WORKOUT_EXERCISE_COLUMNS = {
   id: true,
   note: true,
   plannedNote: true,
+  pyramidLabel: true,
   skipNote: true,
   skipReason: true,
   weightType: true,
@@ -826,6 +829,7 @@ function buildWorkoutExercise(workoutExerciseRow: WorkoutExerciseRow) {
     note: workoutExerciseRow.note,
     plannedNote: workoutExerciseRow.plannedNote,
     plannedSets: workoutExerciseRow.plannedSets.map(buildPlannedSet),
+    pyramidLabel: workoutExerciseRow.pyramidLabel,
     recordedSets: workoutExerciseRow.recordedSets,
     skipNote: workoutExerciseRow.skipNote,
     skipReason: workoutExerciseRow.skipReason,
@@ -847,6 +851,7 @@ function buildWorkoutExerciseColumns(
     exerciseId: routineExercise.exerciseId,
     plannedNote: routineExercise.note,
     position: routineExercise.position,
+    pyramidLabel: routineExercise.pyramidLabel,
     weightType: routineExercise.exercise.weightType,
   };
 }

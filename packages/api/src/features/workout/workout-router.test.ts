@@ -110,6 +110,7 @@ function buildRoutineSaveInput({
               exerciseId: BENCH_PRESS_EXERCISE_ID,
               id: routineExerciseId,
               note: null,
+              pyramidLabel: null,
               sets,
               warmUpExercises: [],
             },
@@ -330,6 +331,7 @@ describe("workout.start", () => {
                 exerciseId: PLANK_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000301",
                 note: null,
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 60,
@@ -353,6 +355,7 @@ describe("workout.start", () => {
                 exerciseId: BENCH_PRESS_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000302",
                 note: "Pause at the chest",
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 8,
@@ -386,6 +389,7 @@ describe("workout.start", () => {
                     exerciseId: BAND_PULL_APART_EXERCISE_ID,
                     id: "019a0000-0000-7000-8000-000000000303",
                     note: null,
+                    pyramidLabel: null,
                     sets: [
                       {
                         amount: 15,
@@ -413,6 +417,7 @@ describe("workout.start", () => {
                 exerciseId: PLANK_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000304",
                 note: null,
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 60,
@@ -437,6 +442,7 @@ describe("workout.start", () => {
                 exerciseId: BAND_PULL_APART_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000305",
                 note: "Slowly",
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 15,
@@ -484,6 +490,7 @@ describe("workout.start", () => {
                     type: "working",
                   },
                 ],
+                pyramidLabel: null,
                 recordedSets: [],
                 skipNote: null,
                 skipReason: null,
@@ -531,6 +538,7 @@ describe("workout.start", () => {
                     type: "working",
                   },
                 ],
+                pyramidLabel: null,
                 recordedSets: [],
                 skipNote: null,
                 skipReason: null,
@@ -561,6 +569,7 @@ describe("workout.start", () => {
                         type: "working",
                       },
                     ],
+                    pyramidLabel: null,
                     recordedSets: [],
                     skipNote: null,
                     skipReason: null,
@@ -588,6 +597,7 @@ describe("workout.start", () => {
                     type: "working",
                   },
                 ],
+                pyramidLabel: null,
                 recordedSets: [],
                 skipNote: null,
                 skipReason: null,
@@ -619,6 +629,7 @@ describe("workout.start", () => {
                     type: "working",
                   },
                 ],
+                pyramidLabel: null,
                 recordedSets: [],
                 skipNote: null,
                 skipReason: null,
@@ -631,6 +642,101 @@ describe("workout.start", () => {
         ],
       },
       startedAt: serverTime,
+    });
+  });
+
+  it("gives each Workout exercise the Pyramid label of its Routine exercise", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    await caller.routine.save({
+      days: [],
+      id: "019a0000-0000-7000-8000-000000000106",
+      name: "Pyramid day",
+      sections: {
+        coolDown: [],
+        main: [
+          {
+            exercises: [
+              {
+                exerciseId: BENCH_PRESS_EXERCISE_ID,
+                id: "019a0000-0000-7000-8000-000000000306",
+                note: null,
+                pyramidLabel: "pyramid",
+                sets: [
+                  {
+                    amount: 8,
+                    id: "019a0000-0000-7000-8000-000000000409",
+                    intensityTechnique: null,
+                    isToFailure: false,
+                    restSeconds: null,
+                    tempo: null,
+                    type: "working",
+                  },
+                ],
+                warmUpExercises: [
+                  {
+                    exerciseId: BAND_PULL_APART_EXERCISE_ID,
+                    id: "019a0000-0000-7000-8000-000000000307",
+                    note: null,
+                    pyramidLabel: "reverse_pyramid",
+                    sets: [
+                      {
+                        amount: 8,
+                        id: "019a0000-0000-7000-8000-000000000410",
+                        intensityTechnique: null,
+                        isToFailure: false,
+                        restSeconds: null,
+                        tempo: null,
+                        type: "working",
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                exerciseId: PLANK_EXERCISE_ID,
+                id: "019a0000-0000-7000-8000-000000000308",
+                note: null,
+                pyramidLabel: null,
+                sets: [
+                  {
+                    amount: 8,
+                    id: "019a0000-0000-7000-8000-000000000413",
+                    intensityTechnique: null,
+                    isToFailure: false,
+                    restSeconds: null,
+                    tempo: null,
+                    type: "working",
+                  },
+                ],
+                warmUpExercises: [],
+              },
+            ],
+            id: "019a0000-0000-7000-8000-000000000206",
+          },
+        ],
+        warmUp: [],
+      },
+    });
+
+    await caller.workout.start({
+      id: "019a0000-0000-7000-8000-000000000506",
+      routineId: "019a0000-0000-7000-8000-000000000106",
+    });
+
+    await expect(caller.workout.findInProgress()).resolves.toMatchObject({
+      sections: {
+        main: [
+          {
+            exercises: [
+              {
+                pyramidLabel: "pyramid",
+                warmUpExercises: [{ pyramidLabel: "reverse_pyramid" }],
+              },
+              { pyramidLabel: null },
+            ],
+          },
+        ],
+      },
     });
   });
 
@@ -668,6 +774,7 @@ describe("workout.start", () => {
                 exerciseId: PLANK_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000312",
                 note: "Brace",
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 60,

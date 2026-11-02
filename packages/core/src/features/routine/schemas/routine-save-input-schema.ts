@@ -11,6 +11,7 @@ import { segmentCountFilter } from "#/features/routine/filters/segment-count-fil
 import { uniqueDaysFilter } from "#/features/routine/filters/unique-days-filter.ts";
 import { uniqueRoutineIdsFilter } from "#/features/routine/filters/unique-routine-ids-filter.ts";
 import { workingSetFilter } from "#/features/routine/filters/working-set-filter.ts";
+import { PYRAMID_LABELS } from "#/shared/constants/pyramid-labels.ts";
 import { SET_TYPES } from "#/shared/constants/set-types.ts";
 import { amountFilter } from "#/shared/filters/amount-filter.ts";
 import { tempoFilter } from "#/shared/filters/tempo-filter.ts";
@@ -47,6 +48,7 @@ const routineExerciseSchema = Schema.Struct({
   exerciseId: idSchema,
   id: idSchema,
   note: Schema.NullOr(Schema.String),
+  pyramidLabel: Schema.NullOr(Schema.Literals(PYRAMID_LABELS)),
   sets: Schema.Array(routineExerciseSetSchema),
 }).check(workingSetFilter);
 

@@ -95,6 +95,7 @@ const PUSH_DAY_WORKOUT: Workout = {
                 type: "working",
               },
             ],
+            pyramidLabel: null,
             recordedSets: [],
             skipNote: null,
             skipReason: null,
@@ -138,6 +139,7 @@ const PUSH_DAY_WORKOUT: Workout = {
                 type: "working",
               },
             ],
+            pyramidLabel: "pyramid",
             recordedSets: [],
             skipNote: null,
             skipReason: null,
@@ -149,6 +151,7 @@ const PUSH_DAY_WORKOUT: Workout = {
                 note: null,
                 plannedNote: null,
                 plannedSets: [],
+                pyramidLabel: null,
                 recordedSets: [],
                 skipNote: null,
                 skipReason: null,
@@ -180,6 +183,7 @@ const PUSH_DAY_WORKOUT: Workout = {
                 type: "working",
               },
             ],
+            pyramidLabel: null,
             recordedSets: [],
             skipNote: null,
             skipReason: null,
@@ -239,6 +243,7 @@ function buildBenchPressWorkout({
               note,
               plannedNote: null,
               plannedSets,
+              pyramidLabel: null,
               recordedSets,
               skipNote,
               skipReason,
@@ -323,6 +328,31 @@ describe("WorkoutScreen", () => {
       screen.getByText("Rest-pause set: 3 segments, with pauses of 15 seconds"),
     ).toBeOnTheScreen();
     expect(screen.getByText("60 seconds")).toBeOnTheScreen();
+  });
+
+  it("shows the Pyramid label of a labelled Workout exercise once, under its name, and none for an unlabelled one", async () => {
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () => PUSH_DAY_WORKOUT,
+          },
+        }),
+      },
+    });
+
+    await screen.findByText("Bench Press (Barbell)");
+
+    const texts = screen.getAllByText(
+      /^(Bench Press \(Barbell\)|Push-Up|Pyramid|Reverse pyramid)$/,
+    );
+    expect(texts).toHaveLength(3);
+    expect(texts[0]).toHaveTextContent("Bench Press (Barbell)");
+    expect(texts[1]).toHaveTextContent("Pyramid");
+    expect(texts[2]).toHaveTextContent("Push-Up");
   });
 
   it("counts the time elapsed since the Workout started up as time passes", async () => {
@@ -1287,6 +1317,7 @@ describe("WorkoutScreen", () => {
                         plannedSets: [
                           { ...WORKING_PLANNED_SET, restSeconds: 90 },
                         ],
+                        pyramidLabel: null,
                         recordedSets: [],
                         skipNote: null,
                         skipReason: null,
@@ -1303,6 +1334,7 @@ describe("WorkoutScreen", () => {
                         plannedSets: [
                           { ...WORKING_PLANNED_SET, restSeconds: 60 },
                         ],
+                        pyramidLabel: null,
                         recordedSets: [],
                         skipNote: null,
                         skipReason: null,

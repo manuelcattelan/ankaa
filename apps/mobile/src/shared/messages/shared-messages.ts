@@ -1,3 +1,4 @@
+import type { PyramidLabel } from "@ankaa/core/shared/constants/pyramid-labels";
 import type { Section } from "@ankaa/core/shared/constants/sections";
 
 export const SHARED_MESSAGES = {
@@ -5,6 +6,10 @@ export const SHARED_MESSAGES = {
   homeScreenTitle: "Ankaa",
   notFoundScreenBody: "This screen doesn't exist.",
   notFoundScreenTitle: "Screen not found",
+  pyramidLabelLabels: {
+    pyramid: "Pyramid",
+    reverse_pyramid: "Reverse pyramid",
+  } satisfies Record<PyramidLabel, string>,
   sectionLabels: {
     cool_down: "Cool-down",
     main: "Main",

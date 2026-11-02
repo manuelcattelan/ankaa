@@ -41,6 +41,11 @@ export function WorkoutExercise({
   return (
     <>
       <Text>{exerciseName}</Text>
+      {workoutExercise.pyramidLabel === null ? null : (
+        <Text>
+          {SHARED_MESSAGES.pyramidLabelLabels[workoutExercise.pyramidLabel]}
+        </Text>
+      )}
       {warmUpForExerciseName === undefined ? null : (
         <Text>
           {SHARED_MESSAGES.warmUpForExerciseLabel(warmUpForExerciseName)}

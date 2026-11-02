@@ -63,6 +63,7 @@ function buildRoutineSaveInput({
               exerciseId: BENCH_PRESS_EXERCISE_ID,
               id: routineExerciseId,
               note: null,
+              pyramidLabel: null,
               sets: [
                 {
                   amount: 8,
@@ -177,6 +178,7 @@ describe("routine.list", () => {
                 exerciseId: BENCH_PRESS_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000303",
                 note: "Pause at the chest",
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 8,
@@ -206,6 +208,7 @@ describe("routine.list", () => {
                     exerciseId: BAND_PULL_APART_EXERCISE_ID,
                     id: "019a0000-0000-7000-8000-000000000304",
                     note: null,
+                    pyramidLabel: null,
                     sets: [
                       {
                         amount: 15,
@@ -224,6 +227,7 @@ describe("routine.list", () => {
                 exerciseId: PUSH_UP_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000302",
                 note: null,
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 6,
@@ -250,6 +254,7 @@ describe("routine.list", () => {
                 exerciseId: PUSH_UP_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000301",
                 note: null,
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 10,
@@ -274,6 +279,7 @@ describe("routine.list", () => {
                 exerciseId: BAND_PULL_APART_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000305",
                 note: null,
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 20,
@@ -309,6 +315,7 @@ describe("routine.list", () => {
                   exerciseId: BENCH_PRESS_EXERCISE_ID,
                   id: "019a0000-0000-7000-8000-000000000303",
                   note: "Pause at the chest",
+                  pyramidLabel: null,
                   sets: [
                     {
                       amount: 8,
@@ -338,6 +345,7 @@ describe("routine.list", () => {
                       exerciseId: BAND_PULL_APART_EXERCISE_ID,
                       id: "019a0000-0000-7000-8000-000000000304",
                       note: null,
+                      pyramidLabel: null,
                       sets: [
                         {
                           amount: 15,
@@ -356,6 +364,7 @@ describe("routine.list", () => {
                   exerciseId: PUSH_UP_EXERCISE_ID,
                   id: "019a0000-0000-7000-8000-000000000302",
                   note: null,
+                  pyramidLabel: null,
                   sets: [
                     {
                       amount: 6,
@@ -382,6 +391,7 @@ describe("routine.list", () => {
                   exerciseId: PUSH_UP_EXERCISE_ID,
                   id: "019a0000-0000-7000-8000-000000000301",
                   note: null,
+                  pyramidLabel: null,
                   sets: [
                     {
                       amount: 10,
@@ -406,6 +416,7 @@ describe("routine.list", () => {
                   exerciseId: BAND_PULL_APART_EXERCISE_ID,
                   id: "019a0000-0000-7000-8000-000000000305",
                   note: null,
+                  pyramidLabel: null,
                   sets: [
                     {
                       amount: 20,
@@ -494,6 +505,7 @@ describe("routine.save", () => {
                 exerciseId: BENCH_PRESS_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000331",
                 note: "Pause at the chest",
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 8,
@@ -514,6 +526,7 @@ describe("routine.save", () => {
                     exerciseId: BAND_PULL_APART_EXERCISE_ID,
                     id: "019a0000-0000-7000-8000-000000000332",
                     note: null,
+                    pyramidLabel: null,
                     sets: [
                       {
                         amount: 15,
@@ -532,6 +545,7 @@ describe("routine.save", () => {
                 exerciseId: PUSH_UP_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000333",
                 note: null,
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: null,
@@ -560,6 +574,7 @@ describe("routine.save", () => {
                 exerciseId: BAND_PULL_APART_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000334",
                 note: null,
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 8,
@@ -593,6 +608,7 @@ describe("routine.save", () => {
                   exerciseId: BENCH_PRESS_EXERCISE_ID,
                   id: "019a0000-0000-7000-8000-000000000331",
                   note: "Pause at the chest",
+                  pyramidLabel: null,
                   sets: [
                     {
                       amount: 8,
@@ -613,6 +629,7 @@ describe("routine.save", () => {
                       exerciseId: BAND_PULL_APART_EXERCISE_ID,
                       id: "019a0000-0000-7000-8000-000000000332",
                       note: null,
+                      pyramidLabel: null,
                       sets: [
                         {
                           amount: 15,
@@ -631,6 +648,7 @@ describe("routine.save", () => {
                   exerciseId: PUSH_UP_EXERCISE_ID,
                   id: "019a0000-0000-7000-8000-000000000333",
                   note: null,
+                  pyramidLabel: null,
                   sets: [
                     {
                       amount: null,
@@ -659,6 +677,7 @@ describe("routine.save", () => {
                   exerciseId: BAND_PULL_APART_EXERCISE_ID,
                   id: "019a0000-0000-7000-8000-000000000334",
                   note: null,
+                  pyramidLabel: null,
                   sets: [
                     {
                       amount: 8,
@@ -673,6 +692,126 @@ describe("routine.save", () => {
                 },
               ],
               id: "019a0000-0000-7000-8000-000000000232",
+            },
+          ],
+        },
+      },
+    ]);
+  });
+
+  it("keeps the Pyramid label of each Routine exercise, a Pyramid, a reverse Pyramid or none, whatever its planned Amounts", async () => {
+    const caller = await createSignedInCaller({ runtime });
+
+    await caller.routine.save({
+      days: [],
+      id: "019a0000-0000-7000-8000-000000000136",
+      name: "Pyramid day",
+      sections: {
+        coolDown: [],
+        main: [
+          {
+            exercises: [
+              {
+                exerciseId: BENCH_PRESS_EXERCISE_ID,
+                id: "019a0000-0000-7000-8000-000000000336",
+                note: null,
+                pyramidLabel: "pyramid",
+                sets: [
+                  {
+                    amount: 6,
+                    id: "019a0000-0000-7000-8000-000000000448",
+                    intensityTechnique: null,
+                    isToFailure: false,
+                    restSeconds: null,
+                    tempo: null,
+                    type: "working",
+                  },
+                  {
+                    amount: 10,
+                    id: "019a0000-0000-7000-8000-000000000449",
+                    intensityTechnique: null,
+                    isToFailure: false,
+                    restSeconds: null,
+                    tempo: null,
+                    type: "working",
+                  },
+                ],
+                warmUpExercises: [
+                  {
+                    exerciseId: BAND_PULL_APART_EXERCISE_ID,
+                    id: "019a0000-0000-7000-8000-000000000337",
+                    note: null,
+                    pyramidLabel: "reverse_pyramid",
+                    sets: [
+                      {
+                        amount: 15,
+                        id: "019a0000-0000-7000-8000-000000000450",
+                        intensityTechnique: null,
+                        isToFailure: false,
+                        restSeconds: null,
+                        tempo: null,
+                        type: "working",
+                      },
+                      {
+                        amount: 15,
+                        id: "019a0000-0000-7000-8000-000000000452",
+                        intensityTechnique: null,
+                        isToFailure: false,
+                        restSeconds: null,
+                        tempo: null,
+                        type: "working",
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                exerciseId: PUSH_UP_EXERCISE_ID,
+                id: "019a0000-0000-7000-8000-000000000338",
+                note: null,
+                pyramidLabel: null,
+                sets: [
+                  {
+                    amount: 12,
+                    id: "019a0000-0000-7000-8000-000000000446",
+                    intensityTechnique: null,
+                    isToFailure: false,
+                    restSeconds: null,
+                    tempo: null,
+                    type: "working",
+                  },
+                  {
+                    amount: 10,
+                    id: "019a0000-0000-7000-8000-000000000447",
+                    intensityTechnique: null,
+                    isToFailure: false,
+                    restSeconds: null,
+                    tempo: null,
+                    type: "working",
+                  },
+                ],
+                warmUpExercises: [],
+              },
+            ],
+            id: "019a0000-0000-7000-8000-000000000236",
+          },
+        ],
+        warmUp: [],
+      },
+    });
+
+    await expect(caller.routine.list()).resolves.toMatchObject([
+      {
+        sections: {
+          main: [
+            {
+              exercises: [
+                {
+                  pyramidLabel: "pyramid",
+                  warmUpExercises: [{ pyramidLabel: "reverse_pyramid" }],
+                },
+                { pyramidLabel: null },
+              ],
             },
           ],
         },
@@ -695,6 +834,7 @@ describe("routine.save", () => {
                 exerciseId: BENCH_PRESS_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000341",
                 note: null,
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 8,
@@ -721,6 +861,7 @@ describe("routine.save", () => {
                 exerciseId: PUSH_UP_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000342",
                 note: null,
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 8,
@@ -745,6 +886,7 @@ describe("routine.save", () => {
                 exerciseId: BAND_PULL_APART_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000343",
                 note: null,
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 8,
@@ -776,6 +918,7 @@ describe("routine.save", () => {
                 exerciseId: BAND_PULL_APART_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000344",
                 note: null,
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 8,
@@ -799,6 +942,7 @@ describe("routine.save", () => {
                 exerciseId: BENCH_PRESS_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000341",
                 note: "Pause at the chest",
+                pyramidLabel: null,
                 sets: [
                   {
                     amount: 6,
@@ -833,6 +977,7 @@ describe("routine.save", () => {
                   exerciseId: BAND_PULL_APART_EXERCISE_ID,
                   id: "019a0000-0000-7000-8000-000000000344",
                   note: null,
+                  pyramidLabel: null,
                   sets: [
                     {
                       amount: 8,
@@ -856,6 +1001,7 @@ describe("routine.save", () => {
                   exerciseId: BENCH_PRESS_EXERCISE_ID,
                   id: "019a0000-0000-7000-8000-000000000341",
                   note: "Pause at the chest",
+                  pyramidLabel: null,
                   sets: [
                     {
                       amount: 6,
@@ -914,6 +1060,7 @@ describe("routine.save", () => {
                   exerciseId: BENCH_PRESS_EXERCISE_ID,
                   id: "019a0000-0000-7000-8000-000000000357",
                   note: null,
+                  pyramidLabel: null,
                   sets: [
                     {
                       amount: 12,

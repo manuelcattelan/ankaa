@@ -28,6 +28,7 @@ export const PUSH_DAY_WORKOUT: Workout = {
                 type: "working",
               },
             ],
+            pyramidLabel: null,
             recordedSets: [],
             skipNote: null,
             skipReason: null,
