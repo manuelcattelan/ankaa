@@ -13,6 +13,7 @@ type WorkoutContextValue = {
   exerciseNames: ReadonlyMap<string, string>;
   onEndCountdown: () => void;
   onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
+  onStopCountdown: () => void;
 };
 
 /**

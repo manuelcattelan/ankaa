@@ -2107,6 +2107,144 @@ describe("WorkoutScreen", () => {
     expect(receivedPaths).not.toContain("workout.saveSet");
   });
 
+  it("keeps counting the seconds past zero of a Segment timer, and fills in the total held when the User stops it, without Saving the Set", async () => {
+    const receivedPaths: string[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          receivedPaths,
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [PLANK_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start" }));
+
+    await advanceFakeTime(77_000);
+
+    expect(screen.getByText("Timer: 12 extra seconds")).toBeOnTheScreen();
+
+    await user.press(screen.getByRole("button", { name: "Stop" }));
+
+    expect(screen.getByLabelText("Seconds")).toHaveDisplayValue("72");
+    expect(receivedPaths).not.toContain("workout.saveSet");
+  });
+
+  it("fills in the seconds held and cancels the notification for zero when the User stops a Segment timer before zero", async () => {
+    const scheduledNotifications: NotificationRequest[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({ scheduledNotifications }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [PLANK_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start" }));
+    await waitFor(() => {
+      expect(scheduledNotifications).toHaveLength(2);
+    });
+    await advanceFakeTime(50_000);
+
+    await user.press(screen.getByRole("button", { name: "Stop" }));
+
+    expect(screen.getByLabelText("Seconds")).toHaveDisplayValue("45");
+    await waitFor(() => {
+      expect(scheduledNotifications).toStrictEqual([]);
+    });
+    expect(screen.queryByText("Timer: 15 seconds left")).toBeNull();
+  });
+
+  it("counts up from zero once the lead-in ends on a Set with no planned Amount, and fills in the seconds counted when the User stops it", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [{ ...PLANK_PLANNED_SET, amount: null }],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start" }));
+
+    await advanceFakeTime(5000);
+
+    expect(screen.getByText("Timer: 0 seconds")).toBeOnTheScreen();
+
+    await advanceFakeTime(90_000);
+
+    expect(screen.getByText("Timer: 90 seconds")).toBeOnTheScreen();
+
+    await user.press(screen.getByRole("button", { name: "Stop" }));
+
+    expect(screen.getByLabelText("Seconds")).toHaveDisplayValue("90");
+  });
+
+  it("schedules only the notification for the end of the lead-in when the User starts a Segment timer on a Set with no planned Amount", async () => {
+    const scheduledNotifications: NotificationRequest[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({ scheduledNotifications }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [{ ...PLANK_PLANNED_SET, amount: null }],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+
+    await user.press(await screen.findByRole("button", { name: "Start" }));
+
+    await waitFor(() => {
+      expect(scheduledNotifications).toStrictEqual([
+        {
+          channelId: "countdowns",
+          identifier: "countdownLeadIn",
+          notification: {
+            body: "The timer is running.",
+            seconds: 5,
+            title: "Start your set",
+          },
+        },
+      ]);
+    });
+  });
+
   it("adds a Segment and fills the planned seconds into it when every Segment has an Amount and the plan allows another", async () => {
     const user = userEvent.setup();
     renderScreen({

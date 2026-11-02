@@ -5,6 +5,7 @@ const REST_COUNTDOWN = {
   leadInSeconds: 0,
   position: 0,
   seconds: 120,
+  segmentPosition: null,
   startTime: 1_000_000,
   workoutExerciseId: "01900000-0000-7000-8000-000000000001",
 };

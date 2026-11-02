@@ -33,11 +33,11 @@ import { Notifications } from "#/shared/services/notifications.ts";
 import { TrpcClient } from "#/shared/services/trpc-client.ts";
 
 /**
- * The notifications of a countdown: one for its end, and one for the end of
- * its lead-in when it has one.
+ * The notifications of a countdown: one for its end when it counts down, and
+ * one for the end of its lead-in when it has one.
  */
 export type CountdownNotifications = {
-  end: ScheduledNotification;
+  end: null | ScheduledNotification;
   leadInEnd: null | ScheduledNotification;
 };
 
@@ -56,6 +56,7 @@ const COUNTDOWN_NOTIFICATION_IDENTIFIERS = {
 export class WorkoutApplicationService extends Context.Service<
   WorkoutApplicationService,
   {
+    readonly cancelCountdownNotifications: () => Effect.Effect<void>;
     readonly findInProgress: () => Effect.Effect<
       null | Workout,
       TrpcClientError
@@ -106,6 +107,11 @@ export class WorkoutApplicationService extends Context.Service<
       const notifications = yield* Notifications;
       const trpcClient = yield* TrpcClient;
 
+      /**
+       * Cancels the notifications of the countdown, so a countdown that the
+       * User stops, or that has nothing left to count down for, doesn't
+       * notify.
+       */
       const cancelCountdownNotifications = Effect.fn(
         "WorkoutApplicationService.cancelCountdownNotifications",
       )(function* () {
@@ -197,11 +203,13 @@ export class WorkoutApplicationService extends Context.Service<
           });
         }
 
-        yield* notifications.schedule({
-          channelId: COUNTDOWN_NOTIFICATION_CHANNEL_ID,
-          identifier: COUNTDOWN_NOTIFICATION_IDENTIFIERS.end,
-          notification: end,
-        });
+        if (end !== null) {
+          yield* notifications.schedule({
+            channelId: COUNTDOWN_NOTIFICATION_CHANNEL_ID,
+            identifier: COUNTDOWN_NOTIFICATION_IDENTIFIERS.end,
+            notification: end,
+          });
+        }
       });
 
       const start = Effect.fn("WorkoutApplicationService.start")(function* (
@@ -230,6 +238,7 @@ export class WorkoutApplicationService extends Context.Service<
       });
 
       return WorkoutApplicationService.of({
+        cancelCountdownNotifications,
         findInProgress,
         removeSet,
         saveNote,

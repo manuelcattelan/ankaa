@@ -35,8 +35,8 @@ import { useRuntime } from "#/shared/hooks/use-runtime.ts";
  * the next one to record, and remove it when it's a recorded Set. While the
  * Workout exercise has a Skip, it shows a recorded Set's Segments read-only
  * and offers no Set to record. When its Amounts are counted in seconds, it
- * offers a Segment timer of the planned Amount while it can be recorded and
- * has a Segment for the timer to fill.
+ * offers a Segment timer of the planned Amount, or counting up when none is
+ * planned, while it can be recorded and has a Segment for the timer to fill.
  */
 export function WorkoutSet({
   amountUnit,
@@ -149,21 +149,20 @@ export function WorkoutSet({
     );
   }
 
-  function handleEndSegmentTimer(seconds: number) {
-    if (segmentTimerSegmentPosition === null) {
-      return;
-    }
-
+  function handleFillSegment(filledSegment: {
+    position: number;
+    seconds: number;
+  }) {
     const segments =
-      segmentTimerSegmentPosition === recordedSetDraft.segments.length
+      filledSegment.position === recordedSetDraft.segments.length
         ? [...recordedSetDraft.segments, { amount: "", weight: "" }]
         : recordedSetDraft.segments;
 
     handleChangeDraft({
       ...recordedSetDraft,
       segments: segments.map((segment, segmentPosition) =>
-        segmentPosition === segmentTimerSegmentPosition
-          ? { ...segment, amount: String(seconds) }
+        segmentPosition === filledSegment.position
+          ? { ...segment, amount: String(filledSegment.seconds) }
           : segment,
       ),
     });
@@ -289,15 +288,12 @@ export function WorkoutSet({
       ) : null}
       <WorkoutSetCountdown
         canStartRest={canStartRest}
-        onEndSegmentTimer={handleEndSegmentTimer}
+        onFillSegment={handleFillSegment}
         plannedSet={plannedSet}
         position={position}
-        segmentTimerSeconds={
-          amountUnit === "second" &&
-          isRecordable &&
-          !isSkipped &&
-          segmentTimerSegmentPosition !== null
-            ? plannedSet.amount
+        segmentTimerSegmentPosition={
+          amountUnit === "second" && isRecordable && !isSkipped
+            ? segmentTimerSegmentPosition
             : null
         }
         workoutExerciseId={workoutExerciseId}

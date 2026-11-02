@@ -2,6 +2,7 @@ import type { Countdown } from "#/features/workout/core/countdown.ts";
 import type { PlannedSet } from "#/shared/workout.ts";
 
 import { WorkoutCountdown } from "#/features/workout/components/workout-countdown.tsx";
+import { WorkoutSegmentTimer } from "#/features/workout/components/workout-segment-timer.tsx";
 import { useWorkoutContext } from "#/features/workout/hooks/use-workout-context.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { Button } from "#/shared/components/button.tsx";
@@ -16,23 +17,24 @@ const SEGMENT_TIMER_LEAD_IN_SECONDS = 5;
 /**
  * Lets the User start the countdown of a Set's planned Rest, whether or not
  * it's Saved yet, of a Pause when it's a Rest-pause set, and of a Segment
- * timer of `segmentTimerSeconds` when it has one, and shows the countdown
- * started under the Set. Calls `onEndSegmentTimer` with the seconds counted
- * when a Segment timer reaches zero.
+ * timer of its planned Amount, or counting up when it has none, that fills in
+ * the Segment at `segmentTimerSegmentPosition` when it has one, and shows the
+ * countdown started under the Set. Calls `onFillSegment` with the seconds a
+ * Segment timer fills in.
  */
 export function WorkoutSetCountdown({
   canStartRest,
-  onEndSegmentTimer,
+  onFillSegment,
   plannedSet,
   position,
-  segmentTimerSeconds,
+  segmentTimerSegmentPosition,
   workoutExerciseId,
 }: {
   canStartRest: boolean;
-  onEndSegmentTimer: (seconds: number) => void;
+  onFillSegment: (filledSegment: { position: number; seconds: number }) => void;
   plannedSet: Omit<PlannedSet, "id">;
   position: number;
-  segmentTimerSeconds: null | number;
+  segmentTimerSegmentPosition: null | number;
   workoutExerciseId: string;
 }) {
   const workoutContext = useWorkoutContext();
@@ -52,29 +54,33 @@ export function WorkoutSetCountdown({
     kind,
     leadInSeconds,
     seconds,
+    segmentPosition,
   }: {
     kind: Countdown["kind"];
     leadInSeconds: number;
-    seconds: number;
+    seconds: null | number;
+    segmentPosition: null | number;
   }) {
     workoutContext.onStartCountdown({
       kind,
       leadInSeconds,
       position,
       seconds,
+      segmentPosition,
       workoutExerciseId,
     });
   }
 
   return (
     <>
-      {segmentTimerSeconds === null ? null : (
+      {segmentTimerSegmentPosition === null ? null : (
         <Button
           onPress={() => {
             handleStartCountdown({
               kind: "segmentTimer",
               leadInSeconds: SEGMENT_TIMER_LEAD_IN_SECONDS,
-              seconds: segmentTimerSeconds,
+              seconds: plannedSet.amount,
+              segmentPosition: segmentTimerSegmentPosition,
             });
           }}
           title={WORKOUT_MESSAGES.startSegmentTimerButton}
@@ -87,6 +93,7 @@ export function WorkoutSetCountdown({
               kind: "pause",
               leadInSeconds: 0,
               seconds: pauseSeconds,
+              segmentPosition: null,
             });
           }}
           title={WORKOUT_MESSAGES.startPauseButton}
@@ -99,24 +106,28 @@ export function WorkoutSetCountdown({
               kind: "rest",
               leadInSeconds: 0,
               seconds: restSeconds,
+              segmentPosition: null,
             });
           }}
           title={WORKOUT_MESSAGES.startRestButton}
         />
       )}
-      {shownCountdown === null ? null : (
+      {shownCountdown?.segmentPosition === null ? (
         <WorkoutCountdown
           countdown={shownCountdown}
           key={shownCountdown.startTime}
-          onEnd={() => {
-            if (shownCountdown.kind === "segmentTimer") {
-              onEndSegmentTimer(shownCountdown.seconds);
-            }
-
-            workoutContext.onEndCountdown();
-          }}
+          onEnd={workoutContext.onEndCountdown}
         />
-      )}
+      ) : null}
+      {typeof shownCountdown?.segmentPosition === "number" ? (
+        <WorkoutSegmentTimer
+          countdown={shownCountdown}
+          key={shownCountdown.startTime}
+          onFillSegment={onFillSegment}
+          onStop={workoutContext.onStopCountdown}
+          segmentPosition={shownCountdown.segmentPosition}
+        />
+      ) : null}
     </>
   );
 }

@@ -5,7 +5,8 @@ import { MILLISECONDS_PER_SECOND } from "#/features/workout/constants/millisecon
 /**
  * Gives the whole seconds left in `countdown` at `currentTime`, its lead-in
  * included, counting a second as left until it has fully passed, and 0 once
- * the countdown has ended.
+ * the countdown has ended. A countdown that counts up has only its lead-in
+ * to count down.
  */
 export function getCountdownRemainingSeconds({
   countdown,
@@ -19,7 +20,7 @@ export function getCountdownRemainingSeconds({
   );
 
   return Math.max(
-    countdown.leadInSeconds + countdown.seconds - passedSeconds,
+    countdown.leadInSeconds + (countdown.seconds ?? 0) - passedSeconds,
     0,
   );
 }

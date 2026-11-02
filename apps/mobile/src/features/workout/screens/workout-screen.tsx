@@ -11,6 +11,7 @@ import { WorkoutSection } from "#/features/workout/components/workout-section.ts
 import { WorkoutStopButton } from "#/features/workout/components/workout-stop-button.tsx";
 import { workoutDraftsReducer } from "#/features/workout/core/workout-drafts-reducer.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
+import { countdownNotificationCancelMutationOptions } from "#/features/workout/mutations/countdown-notification-cancel-mutation-options.ts";
 import { countdownNotificationScheduleMutationOptions } from "#/features/workout/mutations/countdown-notification-schedule-mutation-options.ts";
 import { WorkoutContext } from "#/features/workout/providers/workout-context.ts";
 import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/workout-find-in-progress-query-options.ts";
@@ -54,6 +55,9 @@ export function WorkoutScreen() {
   const scheduleCountdownNotifications = useMutation(
     countdownNotificationScheduleMutationOptions(runtime),
   );
+  const cancelCountdownNotifications = useMutation(
+    countdownNotificationCancelMutationOptions(runtime),
+  );
 
   const workout = workoutInProgress.data ?? null;
   const exerciseNamesById = exerciseNames.data ?? noExerciseNames;
@@ -96,10 +100,16 @@ export function WorkoutScreen() {
   ) {
     setCountdown({ ...startedCountdown, startTime: Date.now() });
     scheduleCountdownNotifications.mutate({
-      end: {
-        ...WORKOUT_MESSAGES.countdownEndNotifications[startedCountdown.kind],
-        seconds: startedCountdown.leadInSeconds + startedCountdown.seconds,
-      },
+      end:
+        startedCountdown.seconds === null
+          ? null
+          : {
+              ...WORKOUT_MESSAGES.countdownEndNotifications[
+                startedCountdown.kind
+              ],
+              seconds:
+                startedCountdown.leadInSeconds + startedCountdown.seconds,
+            },
       leadInEnd:
         startedCountdown.leadInSeconds === 0
           ? null
@@ -108,6 +118,11 @@ export function WorkoutScreen() {
               seconds: startedCountdown.leadInSeconds,
             },
     });
+  }
+
+  function handleStopCountdown() {
+    setCountdown(null);
+    cancelCountdownNotifications.mutate();
   }
 
   return (
@@ -125,6 +140,7 @@ export function WorkoutScreen() {
               exerciseNames: exerciseNamesById,
               onEndCountdown: handleEndCountdown,
               onStartCountdown: handleStartCountdown,
+              onStopCountdown: handleStopCountdown,
             }}
           >
             <WorkoutElapsedTime startedAt={workout.startedAt} />

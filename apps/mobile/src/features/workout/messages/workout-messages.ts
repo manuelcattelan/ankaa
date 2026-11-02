@@ -88,6 +88,10 @@ export const WORKOUT_MESSAGES = {
   segmentCountInvalidError:
     "This set has more segments than planned: remove a segment and save the set again.",
   segmentLabel: (segmentNumber: number) => `Segment ${String(segmentNumber)}`,
+  segmentTimerCountedSecondsStatusLabel: (countedSeconds: number) =>
+    `Timer: ${formatCount({ count: countedSeconds, ...SECONDS_UNIT })}`,
+  segmentTimerExtraSecondsStatusLabel: (extraSeconds: number) =>
+    `Timer: ${formatCount({ count: extraSeconds, plural: "extra seconds", singular: "extra second" })}`,
   segmentWeightNotAllowedError:
     "This exercise takes no weight: clear the weight and save the set again.",
   setNotPlannedError:
@@ -106,6 +110,7 @@ export const WORKOUT_MESSAGES = {
   startRestButton: "Start rest",
   startSegmentTimerButton: "Start",
   startWorkoutButton: (routineName: string) => `Start ${routineName}`,
+  stopSegmentTimerButton: "Stop",
   stopSkipNoteLabel: "Note on why you're stopping early",
   stopSkipReasonLabel: "Why you're stopping early",
   stopSkipStatus:
