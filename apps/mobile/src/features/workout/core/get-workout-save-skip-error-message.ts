@@ -7,7 +7,7 @@ import type { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { getTrpcClientErrorMessage } from "#/shared/core/get-trpc-client-error-message.ts";
 
-export function getWorkoutSkipExerciseErrorMessage(
+export function getWorkoutSaveSkipErrorMessage(
   error: TrpcClientError | WorkoutNotFoundError,
 ) {
   return Match.valueTags(error, {

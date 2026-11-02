@@ -2,20 +2,20 @@ import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/w
 import type { SetType } from "@ankaa/core/shared/constants/set-types";
 import type { WeightType } from "@ankaa/core/shared/constants/weight-types";
 
+import { getMatchingPlannedSet } from "@ankaa/core/features/workout/core/get-matching-planned-set";
+import { getMaximumSegmentCount } from "@ankaa/core/features/workout/core/get-maximum-segment-count";
 import { SegmentCountInvalidError } from "@ankaa/core/features/workout/errors/segment-count-invalid-error";
 import { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
 import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
-import { getMatchingPlannedSet } from "@ankaa/core/features/workout/get-matching-planned-set";
-import { getMaximumSegmentCount } from "@ankaa/core/features/workout/get-maximum-segment-count";
 
 import { getWorkoutExerciseInProgress } from "#/features/workout/core/get-workout-exercise-in-progress.ts";
 
 /**
  * Decides whether a Save may write a Set into a Workout exercise, given the
  * Workout exercise with its Workout, or `null` when none has its id. A Set
- * the Workout exercise already records keeps its position, and a new Set
- * takes the next one. Its Segments must fit its matching planned Set, and
- * carry no weight when the Weight type is none.
+ * the Workout exercise already records is updated and keeps its position,
+ * and a new Set is created at the next one. Its Segments must fit its
+ * matching planned Set, and carry no weight when the Weight type is none.
  */
 export function decideRecordedSetSave({
   input,
@@ -45,10 +45,12 @@ export function decideRecordedSetSave({
     return new WorkoutNotFoundError();
   }
 
+  const recordedSetWithSameId = workoutExerciseInProgress.recordedSets.find(
+    (recordedSet) => recordedSet.id === input.id,
+  );
   const position =
-    workoutExerciseInProgress.recordedSets.find(
-      (recordedSet) => recordedSet.id === input.id,
-    )?.position ?? workoutExerciseInProgress.recordedSets.length;
+    recordedSetWithSameId?.position ??
+    workoutExerciseInProgress.recordedSets.length;
   const plannedSet = getMatchingPlannedSet({
     plannedSets: workoutExerciseInProgress.plannedSets,
     position,
@@ -69,5 +71,9 @@ export function decideRecordedSetSave({
     return new SegmentWeightNotAllowedError();
   }
 
-  return { _tag: "RecordedSetSaveAllowed" as const, position };
+  if (recordedSetWithSameId === undefined) {
+    return { _tag: "RecordedSetCreateAllowed" as const, position };
+  }
+
+  return { _tag: "RecordedSetUpdateAllowed" as const };
 }

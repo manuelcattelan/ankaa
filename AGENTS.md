@@ -9,6 +9,7 @@ When a change makes a document wrong, update the document in the same change. Do
 ## Structure
 
 - Keep code in the file that uses it, and move it when a second user needs it: to its Feature's role folder when a second file of the Feature needs it, to `shared/` when a second Feature needs it, and to the package that owns its concept when another workspace needs it, so each piece of code sits either where it's used or where its role says.
+- In a Feature, give each role its own folder, such as `core/`, `errors/` or `messages/`, even for a single file, and put only the Feature's Application Service, Repository and router at its root, so lint can target each role by its folder and the Application Service sits apart from the Infrastructure Services in `services/`.
 - Share code from its second copy when every change to one copy would have to be made to the other, and extract only the part that is the same rule. Never share code that only looks alike, because the wrong abstraction costs more than the duplication ([Metz](https://sandimetz.com/blog/2016/1/20/the-wrong-abstraction), after Martin's true and accidental duplication in _Clean Architecture_).
 - Move a dependency to the pnpm [`catalog:`](https://pnpm.io/catalogs) in `pnpm-workspace.yaml` once a second workspace depends on it, and refer to it as `catalog:` in every workspace that does, so all workspaces share one version and an upgrade lands in one place.
 
@@ -40,13 +41,13 @@ Every name stands for a **concept**: a unit of meaning from the product, the arc
 
 - **Members.** A property, a method, or a key of an object parameter drops the concept that its object or function already names, because the code always reads it through that object ([Swift's guidelines](https://www.swift.org/documentation/api-design-guidelines/)). An export keeps its whole concept, because the code reads it alone.
 
-  🟢 `routine.name`, `routineRepository.save({ input, userId })`, `export function routineListQueryOptions`.<br>
-  🔴 `routine.routineName`, `routineRepository.saveRoutine({ routineSaveInput, userId })`, `export function listQueryOptions`.
+  🟢 `routine.name`, `routineRepository.create({ input, userId })`, `export function routineListQueryOptions`.<br>
+  🔴 `routine.routineName`, `routineRepository.createRoutine({ routineSaveInput, userId })`, `export function listQueryOptions`.
 
 - **Locals and parameters.** A local or parameter may take the name of a more general concept when no other value in its function belongs to that concept, because a narrow scope keeps a short name clear ([Feitelson](https://doi.org/10.1109/ICPC58990.2023.00037)). When two values do, each keeps the modifier that tells it apart.
 
-  🟢 In `save`, `const outcome = decideRoutineSave(…)`, next to `routineWithSameName` and `routineWithSameId`.<br>
-  🔴 In `save`, `const routineSaveOutcome = decideRoutineSave(…)`, next to `routine` and `otherRoutine`.
+  🟢 In `decideRecordedSetSave`, `const position = …`, next to `plannedSet` and `(recordedSet) => …`.<br>
+  🔴 In `decideRecordedSetSave`, `const recordedSetPosition = …`, next to `set` and `(otherSet) => …`.
 
 - **Library constructs.** When you write a construct that a library documents, use the name its docs always give it, even an abbreviation, and even over a name the code already uses, because agents follow a library best when the code reads like its docs. When two libraries meet, the one whose construct you're writing decides. A name that the docs change with the domain, and every name of our own concepts, follows the rules above.
 
@@ -60,11 +61,11 @@ Every name stands for a **concept**: a unit of meaning from the product, the arc
 
 ## Conventions
 
-The [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html) is the base guide, and lint enforces our departures from it. Lint can't check these:
+The [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html) is the base guide, and lint enforces our departures from it. Lint checks these only in part, if at all:
 
 - Write a comment only to say why, such as a workaround, a library quirk or a constraint, with a link to its source, and never to restate the code. Prefer JSDoc on exports and on APIs that other code uses.
 - Name a string, a 0 or a 1 when it's a setting, a limit, unclear, or used twice or more, and keep it inline otherwise. Lint names every other number.
-- Write an object type inline, and name it only when it's exported or used twice or more.
+- Write the object type of a parameter or of `Context.Service`'s type argument inline, and name it only when it's exported or used twice or more.
 - Type a data field that can be empty as `T | null`, never as optional, and keep `undefined` for an optional parameter, option or prop, because `null` means empty and `undefined` means missing ([MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/null)).
 
   🟢 `type Routine = { note: string | null }`, `function RoutineCard({ onPress }: { onPress?: () => void })`.<br>
@@ -80,7 +81,7 @@ Both apps follow one architecture: the Core makes every decision in plain TypeSc
 
 - Pass the current time and every random value, such as a new id, to the Core as parameters, and never read a clock or a random source in it, so the Core stays pure.
 - Make a Core decision return its Outcome, and never throw: its success, or the error of the rule it breaks, so the Shell handles every Outcome in one exhaustive `Match`.
-- In a Shell program, read, then decide, then write, and never read after the first write, so the program stays free of branching ([Seemann's Recawr sandwich](https://blog.ploeh.dk/2025/01/13/recawr-sandwich/)).
+- In a Shell program, read, then decide, then write, and never read after the first write, so the program stays free of branching ([Seemann's Recawr sandwich](https://blog.ploeh.dk/2025/01/13/recawr-sandwich/)). A guard that only compares a value it read with a literal, such as a missing token that dies or a canceled sign-in that ends the program early, stays in the Shell, because a Core function would only return the same comparison for the Shell to branch on again.
 - Make a failure a typed error when it's anticipated and a caller acts on it, such as a broken rule. Let an anticipated failure that no caller acts on, such as a failure of the database, die where it's caught, and leave every failure that isn't anticipated a defect, as [Effect's own example](https://github.com/Effect-TS/effect/blob/7f524e25cfb49a71ac39b0f44278d08d40dda5de/ai-docs/src/51_http-server/fixtures/server/Users.ts) does. So Repositories and server Application Services list only Wire errors, while a mobile Application Service also lists the failures its screens act on that never cross the wire, such as the server being unreachable or the User canceling a sign-in.
 - Put a Feature's business operations in its Application Service and its reads and writes in its Repository. Keep an Infrastructure Service a thin wrapper over one library or device API, with its failure mapping in a pure Core function, because tests replace the Service whole and would leave any logic inside it untested.
 - Give an Infrastructure Service that wraps an API client one generic `request(call)` method, which runs the call with `Effect.tryPromise` and keeps the original error as `cause`, so every call fails the same way, while the client's own types already name each operation.

@@ -3,8 +3,8 @@ import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-foun
 /**
  * Decides whether deleting a Routine writes, given the Routine with the
  * deleted id, or `null` when none has it. Deleting a Routine the User already
- * deleted writes nothing and succeeds, so a delete retried after an unknown
- * outcome ends where the User meant.
+ * deleted writes nothing and succeeds, so a delete retried without knowing
+ * whether the first one succeeded ends where the User meant.
  */
 export function decideRoutineDelete({
   routine,

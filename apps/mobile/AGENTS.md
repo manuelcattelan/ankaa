@@ -18,7 +18,7 @@ Expo ships breaking changes in every SDK release, so an API you remember may hav
 
 ## Components
 
-- Wrap a React Native primitive in `shared/components/` only once the app needs a default on it, and lint then bans importing it from `react-native`. Import a primitive that has no wrapper, such as `View`, directly.
+- Wrap a React Native primitive in `shared/components/` only once the app needs a default on it, and lint then bans importing it from `react-native`. Lint also bans `Pressable`, which `Button` replaces without wrapping it. Import any other primitive, such as `View`, directly.
 - Make a wrapper extend its primitive's props and pass `...rest` on, so its API is the one React Native documents. Give every other shared component only the props it needs.
 - In a component that passes `...rest` on, put the props a caller may override before `{...rest}`, the props the component owns after it, and the caller's `style` last in the style array, so a caller can change the defaults and the layout without breaking the component.
 
@@ -30,7 +30,7 @@ Expo ships breaking changes in every SDK release, so an API you remember may hav
   🟢 `<RoutineCard actions={<StartWorkoutButton routineId={routine.id} />} />`, and `renderExercisePicker(onSelectExercise)` when the picker needs the handler.<br>
   🔴 `renderActions={() => <StartWorkoutButton routineId={routine.id} />}`, a render prop that receives nothing.
 
-- Give every component its own file in its Feature's `components/` or `screens/` folder, even when only one file uses it, so an agent reads and edits one component without loading a whole screen ([Thinking in React](https://react.dev/learn/thinking-in-react)). This is the one exception to the root's rule that code stays in the file that uses it, and helpers and private hooks still follow that rule.
+- Give every component its own file in its Feature's `components/` or `screens/` folder, even when only one file uses it, so an agent reads and edits one component without loading a whole screen ([Thinking in React](https://react.dev/learn/thinking-in-react)). This is the one exception to the root's rule that code stays in the file that uses it, and helpers and private hooks still follow that rule. A component that the Composition root renders to wire the app, such as `RootNavigator`, sits in `src/` next to `layer.ts` instead, because it belongs to no Feature.
 - When code other than the returned JSX needs a value that an early return narrows, move that code into a child component that takes the narrowed value, because hooks can't come after an early return and lint bans `!` and `as`.
 - Pass a form's or a screen's state and `dispatch` to its components through props. For a deep tree, follow React's order: props first, then `children` to cut out the components that only pass props on, then a reducer combined with a context ([Passing Data Deeply with Context](https://react.dev/learn/passing-data-deeply-with-context), [Scaling Up with a Reducer and Context](https://react.dev/learn/scaling-up-with-reducer-and-context)). A context also holds state that several screens share.
 - Screens never set colors: they don't read theme colors, and they pass `style` only to change the layout, so every color comes from `src/shared/components/`. A screen may call `useColorScheme` only to pick the variant of a third-party component, such as a sign-in button that comes in a light and a dark version.

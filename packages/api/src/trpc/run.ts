@@ -27,7 +27,7 @@ export async function run<
   context: {
     // Only a procedure called over HTTP has a request, because a caller
     // takes the inner context (https://trpc.io/docs/server/context#inner-and-outer-context).
-    req?: CreateFastifyContextOptions["req"];
+    req?: Pick<CreateFastifyContextOptions["req"], "log">;
     runtime: ApplicationRuntime;
   };
   effect: Effect.Effect<
@@ -49,8 +49,8 @@ export async function run<
     return exit.value;
   }
 
-  // A client that disconnects interrupts the Effect, so the outcome of the
-  // call is unknown: a COMMIT already sent to PostgreSQL can still complete
+  // A client that disconnects interrupts the Effect, so whether the call
+  // succeeds is unknown: a COMMIT already sent to PostgreSQL can still complete
   // (https://www.postgresql.org/docs/current/protocol-flow.html#PROTOCOL-FLOW-CANCELING-REQUESTS).
   if (Cause.hasInterruptsOnly(exit.cause)) {
     throw new TRPCError({

@@ -8,17 +8,15 @@ import underPressure from "@fastify/under-pressure";
 import fastifyPlugin from "fastify-plugin";
 import { STATUS_CODES } from "node:http";
 
+import type { WellKnownRouteOptions } from "#/routes/well-known-route.ts";
+
 import { getUrlPath } from "#/get-url-path.ts";
 import { logRequestFailure } from "#/log-request-failure.ts";
 import { authenticationRoute } from "#/routes/authentication-route.ts";
 import { trpcRoute } from "#/routes/trpc-route.ts";
 import { wellKnownRoute } from "#/routes/well-known-route.ts";
 
-export type ApplicationPluginOptions = {
-  androidAppPackageName: string;
-  androidAppSha256CertificateFingerprints: readonly string[];
-  appleAppBundleId: string;
-  appleTeamId: string;
+export type ApplicationPluginOptions = WellKnownRouteOptions & {
   runtime: ApplicationRuntime;
 };
 

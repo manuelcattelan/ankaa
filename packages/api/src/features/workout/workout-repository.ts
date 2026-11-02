@@ -1,13 +1,13 @@
 import type { WorkoutSaveNoteInput } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
-import type { WorkoutSkipExerciseInput } from "@ankaa/core/features/workout/schemas/workout-skip-exercise-input-schema";
+import type { WorkoutSaveSkipInput } from "@ankaa/core/features/workout/schemas/workout-save-skip-input-schema";
 import type { Section } from "@ankaa/core/shared/constants/sections";
 import type * as ExerciseDatabaseSchema from "@ankaa/database/schema/exercise";
-import type * as RoutineDatabaseSchema from "@ankaa/database/schema/routine";
 
 import { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
 import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import { Database } from "@ankaa/database/database";
+import * as RoutineDatabaseSchema from "@ankaa/database/schema/routine";
 import {
   workout,
   workoutExercise,
@@ -22,9 +22,10 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { buildIntensityTechnique } from "#/shared/build-intensity-technique.ts";
+import { buildPlannedSet } from "#/shared/build-planned-set.ts";
 import { buildSections } from "#/shared/build-sections.ts";
 import { catchUniqueIndexViolation } from "#/shared/catch-unique-index-violation.ts";
+import { PLANNED_SET_COLUMNS } from "#/shared/planned-set-columns.ts";
 
 type PlannedSetRow = Omit<
   typeof workoutExercisePlannedSet.$inferSelect,
@@ -87,17 +88,7 @@ type WorkoutOwnerRow = Pick<typeof workout.$inferSelect, "endedAt" | "userId">;
 
 const WORKOUT_IN_PROGRESS_INDEX = "workout_in_progress_idx";
 
-const PLANNED_SET_COLUMNS = {
-  amount: true,
-  intensityTechnique: true,
-  isToFailure: true,
-  pauseSeconds: true,
-  restSeconds: true,
-  segmentCount: true,
-  tempo: true,
-  type: true,
-  weightPercentage: true,
-} as const;
+const RECORDED_SET_PRIMARY_KEY = "workout_exercise_recorded_set_pkey";
 
 const ROUTINE_EXERCISE_COLUMNS = {
   exerciseId: true,
@@ -142,6 +133,10 @@ const WORKOUT_EXERCISE_SETS = {
 export class WorkoutRepository extends Context.Service<
   WorkoutRepository,
   {
+    readonly createSet: (options: {
+      input: WorkoutSaveSetInput;
+      position: number;
+    }) => Effect.Effect<void, WorkoutNotFoundError>;
     readonly find: (options: {
       id: string;
     }) => Effect.Effect<null | Pick<typeof workout.$inferSelect, "userId">>;
@@ -163,12 +158,7 @@ export class WorkoutRepository extends Context.Service<
     readonly findWorkoutExerciseForRecordedSetSave: (options: {
       id: string;
     }) => Effect.Effect<null | {
-      plannedSets: (Pick<
-        typeof workoutExercisePlannedSet.$inferSelect,
-        "isToFailure" | "tempo" | "type"
-      > & {
-        intensityTechnique: ReturnType<typeof buildIntensityTechnique>;
-      })[];
+      plannedSets: ReturnType<typeof buildPlannedSet>[];
       recordedSets: RecordedSetRow[];
       weightType: (typeof workoutExercise.$inferSelect)["weightType"];
       workout: WorkoutOwnerRow;
@@ -183,12 +173,8 @@ export class WorkoutRepository extends Context.Service<
     readonly saveNote: (options: {
       input: WorkoutSaveNoteInput;
     }) => Effect.Effect<void>;
-    readonly saveSet: (options: {
-      input: WorkoutSaveSetInput;
-      position: number;
-    }) => Effect.Effect<void, WorkoutNotFoundError>;
-    readonly skipExercise: (options: {
-      input: WorkoutSkipExerciseInput;
+    readonly saveSkip: (options: {
+      input: WorkoutSaveSkipInput;
     }) => Effect.Effect<void>;
     readonly start: (options: {
       id: string;
@@ -196,6 +182,9 @@ export class WorkoutRepository extends Context.Service<
       userId: string;
     }) => Effect.Effect<void, WorkoutInProgressConflictError>;
     readonly stop: (options: { id: string }) => Effect.Effect<void>;
+    readonly updateSet: (options: {
+      input: WorkoutSaveSetInput;
+    }) => Effect.Effect<void>;
   }
 >()("@ankaa/api/features/workout/WorkoutRepository") {
   static readonly layerNoDeps = Layer.effect(
@@ -265,9 +254,15 @@ export class WorkoutRepository extends Context.Service<
 
       const findRoutine = Effect.fn("WorkoutRepository.findRoutine")(
         function* ({ id }: { id: string }) {
+          const lockedRoutine = yield* shareRoutine({ id });
+
+          if (lockedRoutine === null) {
+            return null;
+          }
+
           const routineRow = yield* database.query.routine
             .findFirst({
-              columns: { deletedAt: true, id: true, userId: true },
+              columns: { id: true },
               where: { id },
               with: {
                 exerciseGroups: {
@@ -289,55 +284,96 @@ export class WorkoutRepository extends Context.Service<
             })
             .pipe(Effect.orDie);
 
-          return routineRow ?? null;
+          return routineRow === undefined
+            ? null
+            : { ...lockedRoutine, ...routineRow };
         },
       );
 
       /**
-       * Locks the Workout exercise with `id` for the write, and reads its
-       * Workout without locking it.
+       * Reads the Routine with `id` `FOR SHARE`, the one row a start locks
+       * without changing it, so the start waits for a deletion of its
+       * Routine that is committing, and then sees it deleted:
+       * https://github.com/manuelcattelan/ankaa/issues/133
        */
+      const shareRoutine = Effect.fn("WorkoutRepository.shareRoutine")(
+        function* ({ id }: { id: string }) {
+          const routines = yield* database
+            .select({
+              deletedAt: RoutineDatabaseSchema.routine.deletedAt,
+              userId: RoutineDatabaseSchema.routine.userId,
+            })
+            .from(RoutineDatabaseSchema.routine)
+            .where(eq(RoutineDatabaseSchema.routine.id, id))
+            .for("share")
+            .pipe(Effect.orDie);
+
+          return routines[0] ?? null;
+        },
+      );
+
       const findWorkoutExerciseForUpdate = Effect.fn(
         "WorkoutRepository.findWorkoutExerciseForUpdate",
       )(function* ({ id }: { id: string }) {
-        const workoutExercises = yield* lockWorkoutExercise({ id });
-        const workoutExerciseRow = workoutExercises[0];
+        const lockedWorkoutExercise = yield* lockWorkoutExerciseWithWorkout({
+          id,
+        });
 
-        if (workoutExerciseRow === undefined) {
-          return null;
-        }
-
-        const workouts = yield* database
-          .select({ endedAt: workout.endedAt, userId: workout.userId })
-          .from(workout)
-          .where(eq(workout.id, workoutExerciseRow.workoutId))
-          .pipe(Effect.orDie);
-
-        return workouts[0] === undefined ? null : { workout: workouts[0] };
+        return lockedWorkoutExercise === null
+          ? null
+          : { workout: lockedWorkoutExercise.workout };
       });
 
       const findWorkoutExerciseForRecordedSetRemove = Effect.fn(
         "WorkoutRepository.findWorkoutExerciseForRecordedSetRemove",
       )(function* ({ id }: { id: string }) {
-        const workoutExercises = yield* lockWorkoutExercise({ id });
-        const workoutExerciseRow = workoutExercises[0];
+        const lockedWorkoutExercise = yield* lockWorkoutExerciseWithWorkout({
+          id,
+        });
 
-        if (workoutExerciseRow === undefined) {
+        if (lockedWorkoutExercise === null) {
           return null;
         }
 
-        const lockedWorkout = yield* shareWorkout({
-          id: workoutExerciseRow.workoutId,
-        });
         const recordedSets = yield* findRecordedSets({ workoutExerciseId: id });
 
-        return lockedWorkout === null
-          ? null
-          : { recordedSets, workout: lockedWorkout };
+        return { recordedSets, workout: lockedWorkoutExercise.workout };
       });
 
       const findWorkoutExerciseForRecordedSetSave = Effect.fn(
         "WorkoutRepository.findWorkoutExerciseForRecordedSetSave",
+      )(function* ({ id }: { id: string }) {
+        const lockedWorkoutExercise = yield* lockWorkoutExerciseWithWorkout({
+          id,
+        });
+
+        if (lockedWorkoutExercise === null) {
+          return null;
+        }
+
+        const plannedSets = yield* database.query.workoutExercisePlannedSet
+          .findMany({
+            columns: { ...PLANNED_SET_COLUMNS, id: true },
+            orderBy: { position: "asc" },
+            where: { workoutExerciseId: id },
+          })
+          .pipe(Effect.orDie);
+        const recordedSets = yield* findRecordedSets({ workoutExerciseId: id });
+
+        return {
+          plannedSets: plannedSets.map(buildPlannedSet),
+          recordedSets,
+          weightType: lockedWorkoutExercise.weightType,
+          workout: lockedWorkoutExercise.workout,
+        };
+      });
+
+      /**
+       * Locks the Workout exercise with `id`, and then reads its Workout
+       * `FOR SHARE`, and gives null when either row doesn't exist.
+       */
+      const lockWorkoutExerciseWithWorkout = Effect.fn(
+        "WorkoutRepository.lockWorkoutExerciseWithWorkout",
       )(function* ({ id }: { id: string }) {
         const workoutExercises = yield* lockWorkoutExercise({ id });
         const workoutExerciseRow = workoutExercises[0];
@@ -349,32 +385,10 @@ export class WorkoutRepository extends Context.Service<
         const lockedWorkout = yield* shareWorkout({
           id: workoutExerciseRow.workoutId,
         });
-        const plannedSets = yield* database
-          .select({
-            intensityTechnique: workoutExercisePlannedSet.intensityTechnique,
-            isToFailure: workoutExercisePlannedSet.isToFailure,
-            pauseSeconds: workoutExercisePlannedSet.pauseSeconds,
-            segmentCount: workoutExercisePlannedSet.segmentCount,
-            tempo: workoutExercisePlannedSet.tempo,
-            type: workoutExercisePlannedSet.type,
-            weightPercentage: workoutExercisePlannedSet.weightPercentage,
-          })
-          .from(workoutExercisePlannedSet)
-          .where(eq(workoutExercisePlannedSet.workoutExerciseId, id))
-          .orderBy(asc(workoutExercisePlannedSet.position))
-          .pipe(Effect.orDie);
-        const recordedSets = yield* findRecordedSets({ workoutExerciseId: id });
 
         return lockedWorkout === null
           ? null
           : {
-              plannedSets: plannedSets.map((plannedSet) => ({
-                intensityTechnique: buildIntensityTechnique(plannedSet),
-                isToFailure: plannedSet.isToFailure,
-                tempo: plannedSet.tempo,
-                type: plannedSet.type,
-              })),
-              recordedSets,
               weightType: workoutExerciseRow.weightType,
               workout: lockedWorkout,
             };
@@ -419,9 +433,10 @@ export class WorkoutRepository extends Context.Service<
       });
 
       /**
-       * Reads the Workout with `id` `FOR SHARE`, the one row a Set write
-       * locks without changing it, so the write waits for a stop of its
-       * Workout that is committing, and then sees it stopped:
+       * Reads the Workout with `id` `FOR SHARE`, the one row a write of a
+       * Set, a note or a Skip locks without changing it, so the write waits
+       * for a stop of its Workout that is committing, and then sees it
+       * stopped:
        * https://github.com/manuelcattelan/ankaa/issues/86#issuecomment-6502966213
        */
       const shareWorkout = Effect.fn("WorkoutRepository.shareWorkout")(
@@ -496,78 +511,70 @@ export class WorkoutRepository extends Context.Service<
           .pipe(Effect.orDie);
       });
 
-      const saveSet = Effect.fn("WorkoutRepository.saveSet")(function* ({
+      const insertSegments = Effect.fn("WorkoutRepository.insertSegments")(
+        function* ({ input }: { input: WorkoutSaveSetInput }) {
+          yield* database
+            .insert(workoutExerciseRecordedSetSegment)
+            .values(
+              input.segments.map((segment, segmentPosition) => ({
+                amount: segment.amount,
+                position: segmentPosition,
+                weight: segment.weight,
+                workoutExerciseRecordedSetId: input.id,
+              })),
+            )
+            .pipe(Effect.orDie);
+        },
+      );
+
+      const saveWeightUnit = Effect.fn("WorkoutRepository.saveWeightUnit")(
+        function* ({ input }: { input: WorkoutSaveSetInput }) {
+          yield* database
+            .update(workoutExercise)
+            .set({ weightUnit: input.weightUnit })
+            .where(eq(workoutExercise.id, input.workoutExerciseId))
+            .pipe(Effect.orDie);
+        },
+      );
+
+      const createSet = Effect.fn("WorkoutRepository.createSet")(function* ({
         input,
         position,
       }: {
         input: WorkoutSaveSetInput;
         position: number;
       }) {
-        yield* database
-          .update(workoutExercise)
-          .set({ weightUnit: input.weightUnit })
-          .where(eq(workoutExercise.id, input.workoutExerciseId))
-          .pipe(Effect.orDie);
+        yield* saveWeightUnit({ input });
 
-        const savedSets = yield* database
+        yield* database
           .insert(workoutExerciseRecordedSet)
           .values({
             id: input.id,
             position,
             workoutExerciseId: input.workoutExerciseId,
           })
-          .onConflictDoUpdate({
-            set: { position },
-            // The Core reads only this Workout exercise's Sets, so this WHERE
-            // keeps an id that names a Set elsewhere, such as in another
-            // User's Workout, from moving that Set here: the upsert then
-            // returns no row. It guards a row the Core never read, so it
-            // repeats no check (https://github.com/manuelcattelan/ankaa/issues/86).
-            setWhere: eq(
-              workoutExerciseRecordedSet.workoutExerciseId,
-              input.workoutExerciseId,
-            ),
-            target: workoutExerciseRecordedSet.id,
-          })
-          .returning({ id: workoutExerciseRecordedSet.id })
-          .pipe(Effect.orDie);
+          .pipe(
+            catchUniqueIndexViolation({
+              errors: {
+                [RECORDED_SET_PRIMARY_KEY]: new WorkoutNotFoundError(),
+              },
+            }),
+          );
 
-        if (savedSets.length === 0) {
-          return yield* Effect.fail(new WorkoutNotFoundError());
-        }
-
-        yield* database
-          .delete(workoutExerciseRecordedSetSegment)
-          .where(
-            eq(
-              workoutExerciseRecordedSetSegment.workoutExerciseRecordedSetId,
-              input.id,
-            ),
-          )
-          .pipe(Effect.orDie);
-
-        yield* database
-          .insert(workoutExerciseRecordedSetSegment)
-          .values(
-            input.segments.map((segment, segmentPosition) => ({
-              amount: segment.amount,
-              position: segmentPosition,
-              weight: segment.weight,
-              workoutExerciseRecordedSetId: input.id,
-            })),
-          )
-          .pipe(Effect.orDie);
+        yield* insertSegments({ input });
       });
 
-      const skipExercise = Effect.fn("WorkoutRepository.skipExercise")(
-        function* ({ input }: { input: WorkoutSkipExerciseInput }) {
-          yield* database
-            .update(workoutExercise)
-            .set({ skipNote: input.note, skipReason: input.reason })
-            .where(eq(workoutExercise.id, input.workoutExerciseId))
-            .pipe(Effect.orDie);
-        },
-      );
+      const saveSkip = Effect.fn("WorkoutRepository.saveSkip")(function* ({
+        input,
+      }: {
+        input: WorkoutSaveSkipInput;
+      }) {
+        yield* database
+          .update(workoutExercise)
+          .set({ skipNote: input.note, skipReason: input.reason })
+          .where(eq(workoutExercise.id, input.workoutExerciseId))
+          .pipe(Effect.orDie);
+      });
 
       const start = Effect.fn("WorkoutRepository.start")(function* ({
         id,
@@ -583,8 +590,10 @@ export class WorkoutRepository extends Context.Service<
           .values({ id, routineId: routine.id, userId })
           .pipe(
             catchUniqueIndexViolation({
-              error: new WorkoutInProgressConflictError(),
-              index: WORKOUT_IN_PROGRESS_INDEX,
+              errors: {
+                [WORKOUT_IN_PROGRESS_INDEX]:
+                  new WorkoutInProgressConflictError(),
+              },
             }),
           );
 
@@ -730,7 +739,28 @@ export class WorkoutRepository extends Context.Service<
           .pipe(Effect.orDie);
       });
 
+      const updateSet = Effect.fn("WorkoutRepository.updateSet")(function* ({
+        input,
+      }: {
+        input: WorkoutSaveSetInput;
+      }) {
+        yield* saveWeightUnit({ input });
+
+        yield* database
+          .delete(workoutExerciseRecordedSetSegment)
+          .where(
+            eq(
+              workoutExerciseRecordedSetSegment.workoutExerciseRecordedSetId,
+              input.id,
+            ),
+          )
+          .pipe(Effect.orDie);
+
+        yield* insertSegments({ input });
+      });
+
       return WorkoutRepository.of({
+        createSet,
         find,
         findForUpdate,
         findInProgress,
@@ -740,10 +770,10 @@ export class WorkoutRepository extends Context.Service<
         findWorkoutExerciseForUpdate,
         removeSet,
         saveNote,
-        saveSet,
-        skipExercise,
+        saveSkip,
         start,
         stop,
+        updateSet,
       });
     }),
   );
@@ -786,15 +816,7 @@ function buildWorkoutExercise(workoutExerciseRow: WorkoutExerciseRow) {
     id: workoutExerciseRow.id,
     note: workoutExerciseRow.note,
     plannedNote: workoutExerciseRow.plannedNote,
-    plannedSets: workoutExerciseRow.plannedSets.map((plannedSet) => ({
-      amount: plannedSet.amount,
-      id: plannedSet.id,
-      intensityTechnique: buildIntensityTechnique(plannedSet),
-      isToFailure: plannedSet.isToFailure,
-      restSeconds: plannedSet.restSeconds,
-      tempo: plannedSet.tempo,
-      type: plannedSet.type,
-    })),
+    plannedSets: workoutExerciseRow.plannedSets.map(buildPlannedSet),
     recordedSets: workoutExerciseRow.recordedSets,
     skipNote: workoutExerciseRow.skipNote,
     skipReason: workoutExerciseRow.skipReason,

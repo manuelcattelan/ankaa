@@ -6,9 +6,7 @@ import type {
 import type { SentEmail } from "@ankaa/email/testing/fake-email-layer";
 import type { FastifyInstance } from "fastify";
 
-import { ExerciseApplicationService } from "@ankaa/api/features/exercise/exercise-application-service";
-import { RoutineApplicationService } from "@ankaa/api/features/routine/routine-application-service";
-import { WorkoutApplicationService } from "@ankaa/api/features/workout/workout-application-service";
+import { applicationServicesLayer } from "@ankaa/api/application-services-layer";
 import { createSignedInCaller } from "@ankaa/api/shared/testing/create-signed-in-caller";
 import { createTestRuntime } from "@ankaa/api/shared/testing/create-test-runtime";
 import { Authentication } from "@ankaa/authentication/authentication";
@@ -20,9 +18,11 @@ import { AUTHORIZATION_CODE_HEADER_NAME } from "@ankaa/core/features/authenticat
 import { Database } from "@ankaa/database/database";
 import { verification } from "@ankaa/database/schema/authentication";
 import { exercise } from "@ankaa/database/schema/exercise";
+import { getMissingDatabaseUrl } from "@ankaa/database/testing/get-missing-database-url";
 import { fakeEmailLayer } from "@ankaa/email/testing/fake-email-layer";
 import { fakeStalledEmailLayer } from "@ankaa/email/testing/fake-stalled-email-layer";
 import * as Cause from "effect/Cause";
+import * as ConfigProvider from "effect/ConfigProvider";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
@@ -120,28 +120,31 @@ const session = {
 };
 
 /**
- * Builds a server whose Services do only what `authentication` and
- * `exerciseApplicationService` implement, and fail loudly otherwise, and
+ * Builds a server whose `Authentication` does only what `authentication`
+ * implements, and fails loudly otherwise, whose Application Services are the
+ * real ones over a database that doesn't exist, so every query dies, and
  * whose log lines at `level` go to `logLines`.
  */
 async function createLoggingServer({
   authentication = {},
-  exerciseApplicationService = {},
   level,
   logLines,
 }: {
   authentication?: Layer.PartialEffectful<Authentication["Service"]>;
-  exerciseApplicationService?: Layer.PartialEffectful<
-    ExerciseApplicationService["Service"]
-  >;
   level: string;
   logLines: unknown[];
 }) {
   const layer = Layer.mergeAll(
     Layer.mock(Authentication, authentication),
-    Layer.mock(ExerciseApplicationService, exerciseApplicationService),
-    Layer.mock(RoutineApplicationService, {}),
-    Layer.mock(WorkoutApplicationService, {}),
+    applicationServicesLayer.pipe(
+      Layer.provide(
+        ConfigProvider.layer(
+          ConfigProvider.fromUnknown({
+            DATABASE_URL_POOLED: getMissingDatabaseUrl(),
+          }),
+        ),
+      ),
+    ),
   );
   const server = fastify({
     genReqId: () => REQUEST_ID,
@@ -423,7 +426,7 @@ describe("applicationPlugin", () => {
     });
   });
 
-  it("answers /api/auth/get-session with no session once the User is deleted, even with every cookie an earlier answer set", async () => {
+  it("answers /api/auth/get-session with no session once the Account is deleted, even with every cookie an earlier answer set", async () => {
     const testUser = await createTestUser(runtime);
     const earlierResponse = await server.inject({
       headers: Object.fromEntries(testUser.headers),
@@ -1014,7 +1017,7 @@ describe("applicationPlugin", () => {
     expect(response.json()).toMatchObject({ user: { id: testUser.user.id } });
   });
 
-  it("deletes the User and every row they own when /api/auth/delete-user is requested with the token of the emailed link", async () => {
+  it("deletes the Account and every row it holds when /api/auth/delete-user is requested with the token of the emailed link", async () => {
     const testUser = await createTestUser(runtime);
     const caller = await createSignedInCaller({ runtime, testUser });
     await caller.routine.save(buildRoutineSaveInput(DELETED_ROUTINE_ID));
@@ -1048,7 +1051,7 @@ describe("applicationPlugin", () => {
     });
   });
 
-  it("deletes the User together with a Workout they started from one of their Routines when /api/auth/delete-user is requested with the token of the emailed link", async () => {
+  it("deletes the Account together with a Workout started from one of its Routines when /api/auth/delete-user is requested with the token of the emailed link", async () => {
     const testUser = await createTestUser(runtime);
     const caller = await createSignedInCaller({ runtime, testUser });
     await caller.routine.save(
@@ -1182,12 +1185,6 @@ describe("applicationPlugin", () => {
       authentication: {
         getSession: () => Effect.succeed(session),
       },
-      exerciseApplicationService: {
-        list: () =>
-          Effect.die(
-            new Error("Failed to connect to the database at 10.0.0.1"),
-          ),
-      },
       level: "silent",
       logLines: [],
     });
@@ -1236,53 +1233,6 @@ describe("applicationPlugin", () => {
       expect.objectContaining({
         level: 30,
         msg: 'Failed to handle tRPC request on path "exercise.list"',
-      }),
-    );
-  });
-
-  it("logs a tRPC call that the client closed at info level", async () => {
-    const logLines: unknown[] = [];
-    const loggingServer = await createLoggingServer({
-      authentication: { getSession: () => Effect.succeed(session) },
-      exerciseApplicationService: { list: () => Effect.interrupt },
-      level: "info",
-      logLines,
-    });
-
-    await loggingServer.inject({ method: "GET", url: "/trpc/exercise.list" });
-    await loggingServer.close();
-
-    expect(logLines).toContainEqual(
-      expect.objectContaining<Record<string, unknown>>({
-        err: expect.objectContaining<Record<string, unknown>>({
-          code: "CLIENT_CLOSED_REQUEST",
-        }),
-        level: 30,
-        msg: 'Failed to handle tRPC request on path "exercise.list"',
-      }),
-    );
-  });
-
-  it("writes an Effect log of a tRPC procedure to the log of its request, with the request's ID", async () => {
-    const logLines: unknown[] = [];
-    const loggingServer = await createLoggingServer({
-      authentication: {
-        getSession: () => Effect.succeed(session),
-      },
-      exerciseApplicationService: {
-        list: () => Effect.log("Listing the Exercises").pipe(Effect.as([])),
-      },
-      level: "info",
-      logLines,
-    });
-
-    await loggingServer.inject({ method: "GET", url: "/trpc/exercise.list" });
-    await loggingServer.close();
-
-    expect(logLines).toContainEqual(
-      expect.objectContaining({
-        msg: "Listing the Exercises",
-        reqId: "request-1",
       }),
     );
   });

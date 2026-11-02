@@ -1,3 +1,4 @@
+import type { ApplicationRuntime } from "@ankaa/api/trpc/context";
 import type { FastifyPluginCallback } from "fastify";
 
 import { PinoLogger } from "@ankaa/api/shared/pino-logger";
@@ -5,7 +6,7 @@ import { Authentication } from "@ankaa/authentication/authentication";
 import { fromNodeHeaders } from "better-auth/node";
 import * as Effect from "effect/Effect";
 
-import type { ApplicationPluginOptions } from "#/application-plugin.ts";
+type AuthenticationRouteOptions = { runtime: ApplicationRuntime };
 
 export const authenticationRoute = ((server, { runtime }, done) => {
   server.route({
@@ -54,4 +55,4 @@ export const authenticationRoute = ((server, { runtime }, done) => {
   });
 
   done();
-}) satisfies FastifyPluginCallback<Pick<ApplicationPluginOptions, "runtime">>;
+}) satisfies FastifyPluginCallback<AuthenticationRouteOptions>;

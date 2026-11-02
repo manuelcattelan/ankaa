@@ -4,7 +4,7 @@ import { decodeForm } from "#/shared/core/decode-form.ts";
 const SKIP_DRAFT = { note: "Sore shoulder", reason: "pain" as const };
 
 describe("skipFormSchema", () => {
-  it("decodes a skip Draft into its reason and note", () => {
+  it("decodes a Skip Draft into its reason and note", () => {
     expect(
       decodeForm({
         hasSubmitted: true,

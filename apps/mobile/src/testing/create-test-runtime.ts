@@ -29,7 +29,7 @@ export type TestRuntimeLayers = {
 };
 
 /**
- * Builds the app's Runtime from fakes that behave like an idle device, and
+ * Builds the app's Runtime from Fakes that behave like an idle device, and
  * from `Layer.mock` for every Service that no default scenario reaches, so
  * an unexpected use fails loudly.
  */

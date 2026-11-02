@@ -10,8 +10,9 @@ import { integerSchema } from "#/shared/schemas/integer-schema.ts";
 export type WorkoutSaveSetInput = typeof workoutSaveSetInputSchema.Type;
 
 /**
- * The Set that `workout.saveSet` upserts by its `id` into a Workout exercise,
- * with its Segments in order and the Weight unit of the Workout exercise.
+ * The Set that `workout.saveSet` creates or updates by its `id` in a Workout
+ * exercise, with its Segments in order and the Weight unit of the Workout
+ * exercise.
  */
 export const workoutSaveSetInputSchema = Schema.Struct({
   id: idSchema,

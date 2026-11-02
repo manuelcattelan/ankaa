@@ -2,25 +2,50 @@ import type { ExpoConfig } from "expo/config";
 
 import { ACCOUNT_DELETION_PATH } from "@ankaa/core/features/authentication/constants/account-deletion-path";
 import { APPLICATION_SCHEME } from "@ankaa/core/features/authentication/constants/application-scheme";
+import * as Schema from "effect/Schema";
+
+import {
+  GOOGLE_IOS_CLIENT_ID_SUFFIX,
+  googleIosClientIdSchema,
+} from "#/features/authentication/core/google-ios-client-id-schema.ts";
+import { apiUrlSchema } from "#/shared/core/api-url-schema.ts";
 
 const APPLICATION_ID = "app.ankaa";
 const APPLICATION_SLUG = "ankaa";
 
-const GOOGLE_IOS_CLIENT_ID_PATTERN = /^(.+)\.apps\.googleusercontent\.com$/;
-
 const SPLASH_IMAGE_WIDTH = 76;
 
-const googleIosClientId = GOOGLE_IOS_CLIENT_ID_PATTERN.exec(
-  process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? "",
-)?.[1];
+// @expo/config's readConfigFile prefixes the message of the error that a
+// config throws by assigning `error.message`, which SchemaError only has a
+// getter for, so it would throw a TypeError that hides which setting is wrong
+// (https://github.com/expo/expo/blob/119b336f677fc6ce44658ea34f79ba823028923d/packages/@expo/config/src/getConfig.ts#L16-L23).
+function decodeSetting({
+  name,
+  schema,
+  value,
+}: {
+  name: string;
+  schema: Schema.Codec<string>;
+  value: string | undefined;
+}) {
+  try {
+    return Schema.decodeUnknownSync(schema)(value);
+  } catch (error) {
+    if (Schema.isSchemaError(error)) {
+      throw new Error(`${name}: ${error.message}`, { cause: error });
+    }
 
-if (googleIosClientId === undefined) {
-  throw new Error(
-    'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID must match "<id>.apps.googleusercontent.com"',
-  );
+    throw error;
+  }
 }
 
-const iosUrlScheme = `com.googleusercontent.apps.${googleIosClientId}`;
+const googleIosClientId = decodeSetting({
+  name: "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID",
+  schema: googleIosClientIdSchema,
+  value: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+});
+
+const iosUrlScheme = `com.googleusercontent.apps.${googleIosClientId.slice(0, -GOOGLE_IOS_CLIENT_ID_SUFFIX.length)}`;
 
 // Account deletion links open the app through Universal Links and App Links on
 // the API's own host, which in development is the ngrok domain that
@@ -31,7 +56,12 @@ const iosUrlScheme = `com.googleusercontent.apps.${googleIosClientId}`;
 // and Android verifies the domain against the debug key's fingerprint in the
 // server's assetlinks.json
 // (https://developer.android.com/training/app-links/verify-android-applinks).
-const apiHost = new URL(process.env.EXPO_PUBLIC_API_URL ?? "").host;
+const apiUrl = decodeSetting({
+  name: "EXPO_PUBLIC_API_URL",
+  schema: apiUrlSchema,
+  value: process.env.EXPO_PUBLIC_API_URL,
+});
+const apiHost = new URL(apiUrl).host;
 
 const configuration: ExpoConfig = {
   android: {

@@ -8,13 +8,13 @@ import type {
   TRPCQueryProcedure,
 } from "@trpc/server";
 
-import { wireErrorSchema } from "@ankaa/api/trpc/wire-error-schema";
+import { errorFormatter } from "@ankaa/api/trpc/error-formatter";
 import { routineDeleteInputSchema } from "@ankaa/core/features/routine/schemas/routine-delete-input-schema";
 import { routineSaveInputSchema } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
 import { workoutRemoveSetInputSchema } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
 import { workoutSaveNoteInputSchema } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import { workoutSaveSetInputSchema } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
-import { workoutSkipExerciseInputSchema } from "@ankaa/core/features/workout/schemas/workout-skip-exercise-input-schema";
+import { workoutSaveSkipInputSchema } from "@ankaa/core/features/workout/schemas/workout-save-skip-input-schema";
 import { workoutStartInputSchema } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
 import { workoutStopInputSchema } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 import { initTRPC, TRPCError } from "@trpc/server";
@@ -29,8 +29,8 @@ import { TrpcClient } from "#/shared/services/trpc-client.ts";
 import { FAKE_API_URL } from "#/shared/testing/fake-api-url.ts";
 
 /**
- * One fake procedure for each procedure of `AppRouter`, keyed by its path and
- * taking its input, so the fake router fails to type-check until it serves
+ * One Fake procedure for each procedure of `AppRouter`, keyed by its path and
+ * taking its input, so the Fake router fails to type-check until it serves
  * every procedure and decodes each input as the server does.
  */
 export type FakeTrpcProcedures = {
@@ -79,7 +79,7 @@ type TrpcProcedures = {
 };
 
 /**
- * Serves the real tRPC client from a fake router that answers each procedure
+ * Serves the real tRPC client from a Fake router that answers each procedure
  * with its response in `responses`, and records the path of every procedure
  * the client calls into `receivedPaths`. A procedure with no response fails
  * with `NOT_FOUND`, a response fails by throwing a Wire error of its
@@ -155,7 +155,7 @@ function createFakeTrpcResolver<TProcedure extends AnyProcedure>({
     if (response === undefined) {
       throw new TRPCError({
         code: "NOT_FOUND",
-        message: `No fake response for "${path}"`,
+        message: `No Fake response for "${path}"`,
       });
     }
 
@@ -164,15 +164,7 @@ function createFakeTrpcResolver<TProcedure extends AnyProcedure>({
 }
 
 function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
-  const t = initTRPC.create({
-    errorFormatter: ({ error, shape }) => ({
-      ...shape,
-      data: {
-        ...shape.data,
-        wireError: encodeFakeWireError(error.cause),
-      },
-    }),
-  });
+  const t = initTRPC.create({ errorFormatter });
 
   const fakeTrpcProcedures: FakeTrpcProcedures = {
     "exercise.list": t.procedure.query(
@@ -225,11 +217,11 @@ function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
           response: fakeTrpcResponses["workout.saveSet"],
         }),
       ),
-    "workout.skipExercise": t.procedure
-      .input(Schema.toStandardSchemaV1(workoutSkipExerciseInputSchema))
+    "workout.saveSkip": t.procedure
+      .input(Schema.toStandardSchemaV1(workoutSaveSkipInputSchema))
       .mutation(
         createFakeTrpcResolver({
-          response: fakeTrpcResponses["workout.skipExercise"],
+          response: fakeTrpcResponses["workout.saveSkip"],
         }),
       ),
     "workout.start": t.procedure
@@ -249,12 +241,6 @@ function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
   };
 
   return t.router(fakeTrpcProcedures);
-}
-
-function encodeFakeWireError(cause: unknown) {
-  return Schema.is(wireErrorSchema)(cause)
-    ? Schema.encodeUnknownSync(wireErrorSchema)(cause)
-    : null;
 }
 
 function getFakeTrpcRequestPaths(fakeTrpcRequest: Request) {

@@ -9,30 +9,32 @@ import { isSqlError } from "effect/sql/SqlError";
 type QueryError = { cause: unknown };
 
 /**
- * Fails a write with `error` when it breaks the unique index `index`, which
- * the driver reports as a `UniqueViolation` inside the query error's
- * `Cause`, and dies on any other failure of the write.
+ * Fails a write with the error that `errors` gives for the unique index it
+ * breaks, which the driver reports as a `UniqueViolation` inside the query
+ * error's `Cause`, and dies on a violation of any other index and on any
+ * other failure of the write.
  */
 export function catchUniqueIndexViolation<TError>({
-  error,
-  index,
+  errors,
 }: {
-  error: TError;
-  index: string;
+  errors: Record<string, TError>;
 }) {
   return <TSuccess, TQueryError extends QueryError, TServices>(
     write: Effect.Effect<TSuccess, TQueryError, TServices>,
   ) =>
-    Effect.catch(write, (queryError) =>
-      Cause.isCause(queryError.cause) &&
-      Option.exists(
-        Cause.findErrorOption(queryError.cause),
-        (sqlError) =>
-          isSqlError(sqlError) &&
-          sqlError.reason._tag === "UniqueViolation" &&
-          sqlError.reason.constraint === index,
-      )
-        ? Effect.fail(error)
-        : Effect.die(queryError),
-    );
+    Effect.catch(write, (queryError) => {
+      const sqlError = Cause.isCause(queryError.cause)
+        ? Option.getOrNull(Cause.findErrorOption(queryError.cause))
+        : null;
+      const constraint =
+        isSqlError(sqlError) && sqlError.reason._tag === "UniqueViolation"
+          ? sqlError.reason.constraint
+          : null;
+      const error =
+        constraint !== null && Object.hasOwn(errors, constraint)
+          ? (errors[constraint] ?? null)
+          : null;
+
+      return error === null ? Effect.die(queryError) : Effect.fail(error);
+    });
 }

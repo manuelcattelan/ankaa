@@ -1,7 +1,7 @@
 import type { Equipment } from "@ankaa/core/features/exercise/constants/equipment";
 import type { MuscleGroup } from "@ankaa/core/features/exercise/constants/muscle-group";
 
-import type { Exercise } from "#/shared/exercise-application-service.ts";
+import type { Exercise } from "#/shared/exercise.ts";
 
 const EXERCISE_NAME_SEARCH_WORD_SEPARATOR = /\s+/;
 

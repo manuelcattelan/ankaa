@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getMatchingPlannedSet } from "#/features/workout/get-matching-planned-set.ts";
+import { getMatchingPlannedSet } from "#/features/workout/core/get-matching-planned-set.ts";
 
 const WARM_UP_PLANNED_SET = {
   intensityTechnique: null,

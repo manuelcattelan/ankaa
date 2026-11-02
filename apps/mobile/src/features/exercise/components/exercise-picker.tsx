@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ActivityIndicator } from "react-native";
 
-import type { Exercise } from "#/shared/exercise-application-service.ts";
+import type { Exercise } from "#/shared/exercise.ts";
 
 import { ExercisePickerContent } from "#/features/exercise/components/exercise-picker-content.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";

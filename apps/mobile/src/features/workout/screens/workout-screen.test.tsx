@@ -2,7 +2,7 @@ import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-rea
 import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
 import type { WorkoutSaveNoteInput } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
-import type { WorkoutSkipExerciseInput } from "@ankaa/core/features/workout/schemas/workout-skip-exercise-input-schema";
+import type { WorkoutSaveSkipInput } from "@ankaa/core/features/workout/schemas/workout-save-skip-input-schema";
 import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 
 import {
@@ -12,10 +12,10 @@ import {
   waitFor,
 } from "@testing-library/react-native";
 
-import type { Exercise } from "#/shared/exercise-application-service.ts";
+import type { Exercise } from "#/shared/exercise.ts";
 import type {
   NotificationPermissionStatus,
-  ScheduledNotification,
+  NotificationRequest,
 } from "#/shared/services/notifications.ts";
 import type { Workout } from "#/shared/workout.ts";
 
@@ -208,7 +208,7 @@ const WORKING_PLANNED_SET = {
 
 /**
  * Builds a Workout in progress of one Bench Press (Barbell) with its planned
- * and recorded Sets, and its note and skip, which are empty by default.
+ * and recorded Sets, and its note and Skip, which are empty by default.
  */
 function buildBenchPressWorkout({
   note = null,
@@ -860,8 +860,8 @@ describe("WorkoutScreen", () => {
     expect(stoppedInputs).toStrictEqual([]);
   });
 
-  it("Saves the skip of a Workout exercise, with the reason the User picks and their note, through Save skip", async () => {
-    const skippedInputs: WorkoutSkipExerciseInput[] = [];
+  it("Saves the Skip of a Workout exercise, with the reason the User picks and their note, through Save skip", async () => {
+    const savedInputs: WorkoutSaveSkipInput[] = [];
     let workoutInProgress = buildBenchPressWorkout({
       plannedSets: [WORKING_PLANNED_SET],
       recordedSets: [],
@@ -875,8 +875,8 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () => workoutInProgress,
-            "workout.skipExercise": (input) => {
-              skippedInputs.push(input);
+            "workout.saveSkip": (input) => {
+              savedInputs.push(input);
               workoutInProgress = buildBenchPressWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
@@ -899,7 +899,7 @@ describe("WorkoutScreen", () => {
     await user.press(screen.getByRole("button", { name: "Save skip" }));
 
     await waitFor(() => {
-      expect(skippedInputs).toStrictEqual([
+      expect(savedInputs).toStrictEqual([
         {
           note: "Sore shoulder",
           reason: "pain",
@@ -912,7 +912,7 @@ describe("WorkoutScreen", () => {
     );
   });
 
-  it("refuses to stop the Workout while a skip has a Draft the User hasn't Saved, naming its Workout exercise", async () => {
+  it("refuses to stop the Workout while a Skip has a Draft the User hasn't Saved, naming its Workout exercise", async () => {
     const stoppedInputs: WorkoutStopInput[] = [];
     const user = userEvent.setup();
     renderScreen({
@@ -948,7 +948,7 @@ describe("WorkoutScreen", () => {
     expect(stoppedInputs).toStrictEqual([]);
   });
 
-  it("refuses to Save a skip with a note and no reason, telling the User to pick a reason", async () => {
+  it("refuses to Save a Skip with a note and no reason, telling the User to pick a reason", async () => {
     const receivedPaths: string[] = [];
     const user = userEvent.setup();
     renderScreen({
@@ -980,7 +980,7 @@ describe("WorkoutScreen", () => {
         "This note needs a reason: pick why you skipped the exercise, or clear the note.",
       ),
     ).toBeOnTheScreen();
-    expect(receivedPaths).not.toContain("workout.skipExercise");
+    expect(receivedPaths).not.toContain("workout.saveSkip");
   });
 
   it("tells the User that Ankaa can't connect when a note's Save can't reach the server, and keeps the Draft on the screen", async () => {
@@ -1203,7 +1203,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("schedules a notification for the end of the Rest that the User starts", async () => {
-    const scheduledNotifications: ScheduledNotification[] = [];
+    const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
     renderScreen({
       initialUrl: "/workout",
@@ -1228,16 +1228,30 @@ describe("WorkoutScreen", () => {
     await waitFor(() => {
       expect(scheduledNotifications).toStrictEqual([
         {
-          body: "Start your next set.",
-          seconds: 120,
-          title: "Your rest is over",
+          channelId: "countdowns",
+          identifier: "countdown",
+          notification: {
+            body: "Start your next set.",
+            seconds: 120,
+            title: "Your rest is over",
+          },
         },
       ]);
     });
   });
 
-  it("ends the Rest and cancels its notification when the User skips it", async () => {
-    const scheduledNotifications: ScheduledNotification[] = [];
+  it("ends the Rest early and cancels its notification through Skip rest", async () => {
+    const scheduledNotifications: NotificationRequest[] = [
+      {
+        channelId: "other",
+        identifier: "other",
+        notification: {
+          body: "Another notification.",
+          seconds: 600,
+          title: "Another notification",
+        },
+      },
+    ];
     const user = userEvent.setup();
     renderScreen({
       initialUrl: "/workout",
@@ -1258,19 +1272,29 @@ describe("WorkoutScreen", () => {
     });
     await user.press(await screen.findByRole("button", { name: "Start rest" }));
     await waitFor(() => {
-      expect(scheduledNotifications).toHaveLength(1);
+      expect(scheduledNotifications).toHaveLength(2);
     });
 
     await user.press(screen.getByRole("button", { name: "Skip rest" }));
 
     await waitFor(() => {
-      expect(scheduledNotifications).toStrictEqual([]);
+      expect(scheduledNotifications).toStrictEqual([
+        {
+          channelId: "other",
+          identifier: "other",
+          notification: {
+            body: "Another notification.",
+            seconds: 600,
+            title: "Another notification",
+          },
+        },
+      ]);
     });
     expect(screen.queryByText("Rest: 120 seconds left")).toBeNull();
   });
 
   it("cancels the notification of the countdown when the User stops the Workout", async () => {
-    const scheduledNotifications: ScheduledNotification[] = [];
+    const scheduledNotifications: NotificationRequest[] = [];
     let workoutInProgress: null | Workout = buildBenchPressWorkout({
       plannedSets: [WORKING_PLANNED_SET],
       recordedSets: [],
@@ -1306,7 +1330,7 @@ describe("WorkoutScreen", () => {
 
   it("replaces the countdown of an earlier countdown when the User starts another", async () => {
     const permissionRequests: NotificationPermissionStatus[] = [];
-    const scheduledNotifications: ScheduledNotification[] = [];
+    const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
     renderScreen({
       initialUrl: "/workout",
@@ -1350,7 +1374,7 @@ describe("WorkoutScreen", () => {
 
   it("replaces the notification of an earlier countdown when the User starts another", async () => {
     const permissionRequests: NotificationPermissionStatus[] = [];
-    const scheduledNotifications: ScheduledNotification[] = [];
+    const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
     renderScreen({
       initialUrl: "/workout",
@@ -1391,9 +1415,13 @@ describe("WorkoutScreen", () => {
     await waitFor(() => {
       expect(scheduledNotifications).toStrictEqual([
         {
-          body: "Start the next segment of your set.",
-          seconds: 15,
-          title: "Your pause is over",
+          channelId: "countdowns",
+          identifier: "countdown",
+          notification: {
+            body: "Start the next segment of your set.",
+            seconds: 15,
+            title: "Your pause is over",
+          },
         },
       ]);
     });
@@ -1401,7 +1429,7 @@ describe("WorkoutScreen", () => {
 
   it("asks for notification permission only once when the User starts a second countdown", async () => {
     const permissionRequests: NotificationPermissionStatus[] = [];
-    const scheduledNotifications: ScheduledNotification[] = [];
+    const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
     renderScreen({
       initialUrl: "/workout",
@@ -1440,7 +1468,9 @@ describe("WorkoutScreen", () => {
     await user.press(screen.getByRole("button", { name: "Start pause" }));
 
     await waitFor(() => {
-      expect(scheduledNotifications).toMatchObject([{ seconds: 15 }]);
+      expect(scheduledNotifications).toMatchObject([
+        { notification: { seconds: 15 } },
+      ]);
     });
     expect(permissionRequests).toStrictEqual(["granted"]);
   });

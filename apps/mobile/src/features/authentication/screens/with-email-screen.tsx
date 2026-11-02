@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 
 import { emailFormSchema } from "#/features/authentication/core/email-form-schema.ts";
-import { getAuthenticationErrorMessage } from "#/features/authentication/core/get-authentication-error-message.ts";
+import { getAuthenticationScreenErrorMessage } from "#/features/authentication/core/get-authentication-screen-error-message.ts";
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 import { otpCodeRequestMutationOptions } from "#/features/authentication/mutations/otp-code-request-mutation-options.ts";
 import { Button } from "#/shared/components/button.tsx";
@@ -26,7 +26,7 @@ export function WithEmailScreen() {
   const sendOtpCode = useMutation({
     ...otpCodeRequestMutationOptions(runtime),
     onError: (error) => {
-      announceMessage(getAuthenticationErrorMessage(error));
+      announceMessage(getAuthenticationScreenErrorMessage(error));
     },
   });
 
@@ -39,7 +39,7 @@ export function WithEmailScreen() {
   const emailErrorMessage =
     sendOtpCode.error === null
       ? emailFormDecoding.errorMessages.email
-      : getAuthenticationErrorMessage(sendOtpCode.error);
+      : getAuthenticationScreenErrorMessage(sendOtpCode.error);
 
   function handleSendOtpCode() {
     // The keyboard's submit key also sends the code, and a TextInput has no

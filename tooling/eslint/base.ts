@@ -19,7 +19,9 @@ type RestrictedImportPattern = (typeof RESTRICTED_IMPORT_PATTERNS)[number];
 
 export const JAVASCRIPT_FILES = ["**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"];
 
-export const TEST_FILES = ["**/*.test.{ts,tsx}"];
+export const TYPE_TEST_FILES = ["**/*.test-d.ts"];
+
+export const TEST_FILES = ["**/*.test.{ts,tsx}", ...TYPE_TEST_FILES];
 
 const FILENAME_MATCH_EXPORT_EXEMPT_FILES = ["**/*.config.*", "**/*.d.ts"];
 
@@ -33,7 +35,7 @@ const TESTING_IMPORTING_FILES = [
 
 const TESTING_IMPORT_PATTERN = {
   message:
-    "Import a testing/ file only in a test file, another testing/ file or a Vitest configuration, so test code, such as a fake, never ships in an app.",
+    "Import a testing/ file only in a test file, another testing/ file or a Vitest configuration, so test code, such as a Fake, never ships in an app.",
   regex: "(?:^|/)testing(?:/|$)",
 };
 
@@ -66,7 +68,7 @@ export const RESTRICTED_MOCK_METHODS = {
 };
 
 const RESTRICTED_CALL_MATCHER_MESSAGE =
-  "Check what the code did through what a fake recorded or what a later call returns, because a call assertion checks how the code works instead of what it does.";
+  "Check what the code did through what a Fake recorded or what a later call returns, because a call assertion checks how the code works instead of what it does.";
 
 const RESTRICTED_CALL_MATCHERS = [
   "toBeCalled",
@@ -421,7 +423,7 @@ export const rulesConfiguration = defineConfig([
   {
     files: [...TEST_FILES, ...TESTING_FILES],
     // A test and its setup write literal values, and a testing/ file holds
-    // the fixtures and fakes that tests share
+    // the fixtures and Fakes that tests share
     // (https://github.com/manuelcattelan/ankaa/issues/86#issuecomment-6504562591).
     rules: { "@typescript-eslint/no-magic-numbers": "off" },
   },
@@ -468,23 +470,31 @@ export const baseConfiguration = defineConfig([
   },
 ]);
 
-export const vitestConfiguration = defineConfig({
-  extends: [eslintPluginVitest.configs.recommended],
-  files: TEST_FILES,
-  rules: {
-    "no-restricted-syntax": [
-      "error",
-      ...RESTRICTED_SYNTAX,
-      ...TEST_RESTRICTED_SYNTAX,
-    ],
-    "vitest/max-nested-describe": ["error", { max: 1 }],
-    "vitest/no-conditional-in-test": "error",
-    "vitest/no-disabled-tests": "error",
-    "vitest/no-restricted-matchers": ["error", restrictedCallMatchers],
-    "vitest/no-restricted-vi-methods": ["error", RESTRICTED_MOCK_METHODS],
-    "vitest/require-top-level-describe": "error",
+export const vitestConfiguration = defineConfig([
+  {
+    extends: [eslintPluginVitest.configs.recommended],
+    files: TEST_FILES,
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        ...RESTRICTED_SYNTAX,
+        ...TEST_RESTRICTED_SYNTAX,
+      ],
+      "vitest/max-nested-describe": ["error", { max: 1 }],
+      "vitest/no-conditional-in-test": "error",
+      "vitest/no-disabled-tests": "error",
+      "vitest/no-restricted-matchers": ["error", restrictedCallMatchers],
+      "vitest/no-restricted-vi-methods": ["error", RESTRICTED_MOCK_METHODS],
+      "vitest/require-top-level-describe": "error",
+    },
   },
-});
+  {
+    files: TYPE_TEST_FILES,
+    // A type test asserts through @ts-expect-error, which check-types checks
+    // (https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-9.html#-ts-expect-error-comments).
+    rules: { "vitest/expect-expect": "off" },
+  },
+]);
 
 export function createFeatureIsolationZone(featureName: string) {
   return {

@@ -3,7 +3,7 @@ import { Stack } from "expo-router";
 import { useReducer, useState } from "react";
 import { ActivityIndicator } from "react-native";
 
-import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
+import type { Countdown } from "#/features/workout/core/countdown.ts";
 import type { WorkoutDrafts } from "#/features/workout/core/workout-drafts-reducer.ts";
 
 import { WorkoutElapsedTime } from "#/features/workout/components/workout-elapsed-time.tsx";
@@ -28,11 +28,11 @@ const NO_WORKOUT_DRAFTS: WorkoutDrafts = {
   skips: [],
 };
 
-const NO_EXERCISE_NAMES: ReadonlyMap<string, string> = new Map();
+const noExerciseNames: ReadonlyMap<string, string> = new Map();
 
 /**
  * Shows the User's Workout in progress, and keeps the Draft of every Set,
- * note and skip that has something to Save, so stopping can be refused while
+ * note and Skip that has something to Save, so stopping can be refused while
  * one has, and the one countdown of Rest or a Pause, which starting another
  * replaces.
  */
@@ -60,7 +60,7 @@ export function WorkoutScreen() {
   );
 
   const workout = workoutInProgress.data ?? null;
-  const exerciseNamesById = exerciseNames.data ?? NO_EXERCISE_NAMES;
+  const exerciseNamesById = exerciseNames.data ?? noExerciseNames;
   const unsavedDraftLabels = [
     ...drafts.recordedSets.map((entry) =>
       WORKOUT_MESSAGES.unsavedSetLabel({
@@ -95,7 +95,7 @@ export function WorkoutScreen() {
     setCountdown(null);
   }
 
-  function handleSkipCountdown() {
+  function handleCancelCountdown() {
     setCountdown(null);
     cancelCountdownNotification.mutate();
   }
@@ -123,8 +123,8 @@ export function WorkoutScreen() {
               dispatch,
               drafts,
               exerciseNames: exerciseNamesById,
+              onCancelCountdown: handleCancelCountdown,
               onEndCountdown: handleEndCountdown,
-              onSkipCountdown: handleSkipCountdown,
               onStartCountdown: handleStartCountdown,
             }}
           >

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getMaximumSegmentCount } from "#/features/workout/get-maximum-segment-count.ts";
+import { getMaximumSegmentCount } from "#/features/workout/core/get-maximum-segment-count.ts";
 
 describe("getMaximumSegmentCount", () => {
   it("gives the Segment count of the planned Set's Intensity technique", () => {

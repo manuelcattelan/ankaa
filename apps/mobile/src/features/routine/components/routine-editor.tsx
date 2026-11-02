@@ -7,7 +7,7 @@ import { useReducer, useState } from "react";
 import { Modal } from "react-native";
 
 import type { ExercisePickerTarget } from "#/features/routine/core/exercise-picker-target.ts";
-import type { Exercise } from "#/shared/exercise-application-service.ts";
+import type { Exercise } from "#/shared/exercise.ts";
 import type { Routine } from "#/shared/routine.ts";
 
 import { RoutineEditorSection } from "#/features/routine/components/routine-editor-section.tsx";
@@ -29,7 +29,7 @@ import { useCreateId } from "#/shared/hooks/use-create-id.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { exerciseListQueryOptions } from "#/shared/queries/exercise-list-query-options.ts";
 
-const NO_EXERCISE_NAMES: ReadonlyMap<string, string> = new Map();
+const noExerciseNames: ReadonlyMap<string, string> = new Map();
 
 /**
  * Edits the Draft of a Routine, a new one when `routine` is `null`, and
@@ -84,7 +84,7 @@ export function RoutineEditor({
     schema: routineFormSchema,
     values: routineDraft,
   });
-  const exerciseNamesById = exerciseNames.data ?? NO_EXERCISE_NAMES;
+  const exerciseNamesById = exerciseNames.data ?? noExerciseNames;
   const nameErrorMessage = routineFormDecoding.errorMessages.name;
   const statusMessage = getStatusMessage();
 

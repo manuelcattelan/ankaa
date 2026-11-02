@@ -1,4 +1,5 @@
 import type { AppRouter } from "@ankaa/api/trpc/app-router";
+import type { ApplicationRuntime } from "@ankaa/api/trpc/context";
 import type { FastifyTRPCPluginOptions } from "@trpc/server/adapters/fastify";
 import type { FastifyPluginAsync } from "fastify";
 
@@ -7,9 +8,9 @@ import { createContext } from "@ankaa/api/trpc/context";
 import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 
-import type { ApplicationPluginOptions } from "#/application-plugin.ts";
-
 import { logRequestFailure } from "#/log-request-failure.ts";
+
+type TrpcRouteOptions = { runtime: ApplicationRuntime };
 
 export const trpcRoute = (async (server, { runtime }) => {
   await server.register(fastifyTRPCPlugin, {
@@ -26,4 +27,4 @@ export const trpcRoute = (async (server, { runtime }) => {
       router: appRouter,
     } satisfies FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],
   });
-}) satisfies FastifyPluginAsync<Pick<ApplicationPluginOptions, "runtime">>;
+}) satisfies FastifyPluginAsync<TrpcRouteOptions>;

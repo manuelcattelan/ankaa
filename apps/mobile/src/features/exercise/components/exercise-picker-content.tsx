@@ -3,7 +3,7 @@ import type { MuscleGroup } from "@ankaa/core/features/exercise/constants/muscle
 
 import { useState } from "react";
 
-import type { Exercise } from "#/shared/exercise-application-service.ts";
+import type { Exercise } from "#/shared/exercise.ts";
 
 import { getExerciseSearchOptions } from "#/features/exercise/core/get-exercise-search-options.ts";
 import { searchExercises } from "#/features/exercise/core/search-exercises.ts";

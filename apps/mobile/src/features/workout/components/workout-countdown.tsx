@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
+import type { Countdown } from "#/features/workout/core/countdown.ts";
 
 import { MILLISECONDS_PER_SECOND } from "#/features/workout/constants/milliseconds-per-second.ts";
 import { getCountdownRemainingSeconds } from "#/features/workout/core/get-countdown-remaining-seconds.ts";

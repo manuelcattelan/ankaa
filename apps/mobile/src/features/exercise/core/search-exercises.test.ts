@@ -1,4 +1,4 @@
-import type { Exercise } from "#/shared/exercise-application-service.ts";
+import type { Exercise } from "#/shared/exercise.ts";
 
 import { searchExercises } from "#/features/exercise/core/search-exercises.ts";
 

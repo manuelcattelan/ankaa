@@ -2,17 +2,16 @@ import type { WeightUnit } from "@ankaa/core/features/workout/constants/weight";
 import type { AmountUnit } from "@ankaa/core/shared/constants/amount";
 import type { WeightType } from "@ankaa/core/shared/constants/weight-types";
 
-import { getMaximumSegmentCount } from "@ankaa/core/features/workout/get-maximum-segment-count";
+import { getMaximumSegmentCount } from "@ankaa/core/features/workout/core/get-maximum-segment-count";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
 import type { RecordedSetDraft } from "#/features/workout/core/recorded-set-form-schema.ts";
 import type { PlannedSet, RecordedSet } from "#/shared/workout.ts";
 
-import { WorkoutCountdown } from "#/features/workout/components/workout-countdown.tsx";
 import { WorkoutPlannedSet } from "#/features/workout/components/workout-planned-set.tsx";
 import { WorkoutSegment } from "#/features/workout/components/workout-segment.tsx";
+import { WorkoutSetCountdown } from "#/features/workout/components/workout-set-countdown.tsx";
 import { createRecordedSetDraft } from "#/features/workout/core/create-recorded-set-draft.ts";
 import { getWorkoutRemoveSetErrorMessage } from "#/features/workout/core/get-workout-remove-set-error-message.ts";
 import { getWorkoutSaveSetErrorMessage } from "#/features/workout/core/get-workout-save-set-error-message.ts";
@@ -32,9 +31,7 @@ import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 /**
  * Shows one Set of a Workout exercise with its matching planned Set, and
  * lets the User fill in its Segments and Save it when it's a recorded Set or
- * the next one to record, and remove it when it's a recorded Set. Under it,
- * the User starts the countdown of its planned Rest, whether or not it's
- * Saved yet, and of a Pause when it's a Rest-pause set.
+ * the next one to record, and remove it when it's a recorded Set.
  */
 export function WorkoutSet({
   amountUnit,
@@ -108,16 +105,6 @@ export function WorkoutSet({
     values: recordedSetDraft,
   });
   const maximumSegmentCount = getMaximumSegmentCount(plannedSet);
-  const restSeconds = canStartRest ? plannedSet.restSeconds : null;
-  const pauseSeconds =
-    plannedSet.intensityTechnique?._tag === "RestPauseSet"
-      ? plannedSet.intensityTechnique.pauseSeconds
-      : null;
-  const shownCountdown =
-    workoutContext.countdown?.workoutExerciseId === workoutExerciseId &&
-    workoutContext.countdown.position === position
-      ? workoutContext.countdown
-      : null;
   const statusMessage = getStatusMessage();
 
   function getStatusMessage() {
@@ -148,21 +135,6 @@ export function WorkoutSet({
             type: "changedRecordedSetDraft",
           },
     );
-  }
-
-  function handleStartCountdown({
-    kind,
-    seconds,
-  }: {
-    kind: Countdown["kind"];
-    seconds: number;
-  }) {
-    workoutContext.onStartCountdown({
-      kind,
-      position,
-      seconds,
-      workoutExerciseId,
-    });
   }
 
   function handleRemoveSet(removedRecordedSet: { id: string }) {
@@ -279,40 +251,12 @@ export function WorkoutSet({
           <StatusMessage message={statusMessage} />
         </>
       ) : null}
-      {pauseSeconds === null ? null : (
-        <Button
-          onPress={() => {
-            handleStartCountdown({ kind: "pause", seconds: pauseSeconds });
-          }}
-          title={WORKOUT_MESSAGES.startPauseButton}
-        />
-      )}
-      {restSeconds === null ? null : (
-        <Button
-          onPress={() => {
-            handleStartCountdown({
-              kind: "rest",
-              seconds: restSeconds,
-            });
-          }}
-          title={WORKOUT_MESSAGES.startRestButton}
-        />
-      )}
-      {shownCountdown === null ? null : (
-        <>
-          <WorkoutCountdown
-            countdown={shownCountdown}
-            key={shownCountdown.startTime}
-            onEnd={workoutContext.onEndCountdown}
-          />
-          {shownCountdown.kind === "rest" ? (
-            <Button
-              onPress={workoutContext.onSkipCountdown}
-              title={WORKOUT_MESSAGES.skipRestButton}
-            />
-          ) : null}
-        </>
-      )}
+      <WorkoutSetCountdown
+        canStartRest={canStartRest}
+        plannedSet={plannedSet}
+        position={position}
+        workoutExerciseId={workoutExerciseId}
+      />
     </>
   );
 }

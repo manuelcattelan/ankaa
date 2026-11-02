@@ -19,7 +19,7 @@ describe("skipNoteFilter", () => {
 
   it("rejects a note with no reason", () => {
     expect(() => decodeSkip({ note: "Sore shoulder", reason: null })).toThrow(
-      "Expected a skip reason with a note",
+      "Expected a Skip reason with a note",
     );
   });
 });

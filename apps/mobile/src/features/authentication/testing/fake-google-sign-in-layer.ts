@@ -30,7 +30,7 @@ export function fakeGoogleSignInLayer({
           receivedCalls.push("signIn");
 
           return signInResponse === undefined
-            ? Effect.die(new Error("No fake Google sign-in response"))
+            ? Effect.die(new Error("No Fake Google sign-in response"))
             : Effect.succeed(signInResponse);
         }),
       signOut: () =>

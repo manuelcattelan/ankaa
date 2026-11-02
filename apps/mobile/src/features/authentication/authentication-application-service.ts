@@ -209,8 +209,10 @@ export class AuthenticationApplicationService extends Context.Service<
           });
 
           yield* googleSignIn.signOut();
-          // A countdown lives only in the device's memory and ends with the
-          // session, while the Workout stays in progress on the server
+          // Every scheduled notification belongs to the signed-in User, so
+          // signing out cancels them all: a countdown, for one, lives only in
+          // the device's memory and ends with the session, while the Workout
+          // stays in progress on the server
           // (https://github.com/manuelcattelan/ankaa/issues/86).
           yield* notifications.cancelAllScheduled();
         },

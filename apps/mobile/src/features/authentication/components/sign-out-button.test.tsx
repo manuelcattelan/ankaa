@@ -2,7 +2,7 @@ import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/work
 
 import { screen, userEvent } from "@testing-library/react-native";
 
-import type { ScheduledNotification } from "#/shared/services/notifications.ts";
+import type { NotificationRequest } from "#/shared/services/notifications.ts";
 
 import { fakeGoogleSignInLayer } from "#/features/authentication/testing/fake-google-sign-in-layer.ts";
 import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";
@@ -69,11 +69,15 @@ describe("SignOutButton", () => {
   });
 
   it("cancels the scheduled notification of a countdown when the User signs out, and leaves their Workout in progress", async () => {
-    const scheduledNotifications: ScheduledNotification[] = [
+    const scheduledNotifications: NotificationRequest[] = [
       {
-        body: "Start your next set.",
-        seconds: 120,
-        title: "Your rest is over",
+        channelId: "countdowns",
+        identifier: "countdown",
+        notification: {
+          body: "Start your next set.",
+          seconds: 120,
+          title: "Your rest is over",
+        },
       },
     ];
     const stoppedInputs: WorkoutStopInput[] = [];

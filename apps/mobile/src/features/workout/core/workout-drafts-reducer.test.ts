@@ -154,7 +154,7 @@ describe("workoutDraftsReducer", () => {
     });
   });
 
-  it("clears the note Draft of a Workout exercise whose note has nothing left to Save, keeping its skip Draft", () => {
+  it("clears the note Draft of a Workout exercise whose note has nothing left to Save, keeping its Skip Draft", () => {
     expect(
       workoutDraftsReducer(
         {
@@ -174,7 +174,7 @@ describe("workoutDraftsReducer", () => {
     });
   });
 
-  it("adds the skip Draft of a Workout exercise whose skip the User starts editing", () => {
+  it("adds the Skip Draft of a Workout exercise whose Skip the User starts editing", () => {
     expect(
       workoutDraftsReducer(
         { ...NO_DRAFTS, notes: [BENCH_PRESS_NOTE_DRAFT_ENTRY] },
@@ -187,7 +187,7 @@ describe("workoutDraftsReducer", () => {
     });
   });
 
-  it("clears the skip Draft of a Workout exercise whose skip has nothing left to Save, keeping its note Draft", () => {
+  it("clears the Skip Draft of a Workout exercise whose Skip has nothing left to Save, keeping its note Draft", () => {
     expect(
       workoutDraftsReducer(
         {

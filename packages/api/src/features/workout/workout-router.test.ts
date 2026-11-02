@@ -2,18 +2,19 @@ import type { RoutineSaveInput } from "@ankaa/core/features/routine/schemas/rout
 
 import { Database } from "@ankaa/database/database";
 import { exercise } from "@ankaa/database/schema/exercise";
+import { routine } from "@ankaa/database/schema/routine";
 import {
   workout,
+  workoutExercise,
   workoutExerciseRecordedSetSegment,
 } from "@ankaa/database/schema/workout";
 import { eq, sql } from "drizzle-orm";
-import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
-import * as Fiber from "effect/Fiber";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { TestRuntime } from "#/shared/testing/create-test-runtime.ts";
 
+import { beginTransaction } from "#/shared/testing/begin-transaction.ts";
 import { createSignedInCaller } from "#/shared/testing/create-signed-in-caller.ts";
 import { createTestRuntime } from "#/shared/testing/create-test-runtime.ts";
 import { waitForLockWait } from "#/shared/testing/wait-for-lock-wait.ts";
@@ -31,41 +32,47 @@ const PLANK_EXERCISE_ID = "019a0000-0000-7000-8000-000000000002";
 const BAND_PULL_APART_EXERCISE_ID = "019a0000-0000-7000-8000-000000000003";
 
 /**
- * Stops the Workout with `id` in a transaction that stays open until the
- * returned function runs, so a test can send a write while the stop holds
- * the Workout's row.
+ * Deletes the Routine with `id` in a transaction that stays open until the
+ * returned function runs, so a test can send a start while the deletion
+ * holds the Routine's row.
  */
-async function beginWorkoutStop({
+function beginRoutineDeletion({
   id,
   runtime,
 }: {
   id: string;
   runtime: TestRuntime;
 }) {
-  const workoutStopped = await runtime.runPromise(Deferred.make<boolean>());
-  const commitRequested = await runtime.runPromise(Deferred.make<boolean>());
-  const fiber = runtime.runFork(
-    Effect.gen(function* () {
-      const database = yield* Database;
+  return beginTransaction({
+    runtime,
+    write: (database) =>
+      database
+        .update(routine)
+        .set({ deletedAt: sql`now()` })
+        .where(eq(routine.id, id)),
+  });
+}
 
-      yield* database.transaction(() =>
-        Effect.gen(function* () {
-          yield* database
-            .update(workout)
-            .set({ endedAt: sql`now()` })
-            .where(eq(workout.id, id));
-          yield* Deferred.succeed(workoutStopped, true);
-          yield* Deferred.await(commitRequested);
-        }),
-      );
-    }),
-  );
-  await runtime.runPromise(Deferred.await(workoutStopped));
-
-  return async () => {
-    await runtime.runPromise(Deferred.succeed(commitRequested, true));
-    await runtime.runPromise(Fiber.join(fiber));
-  };
+/**
+ * Stops the Workout with `id` in a transaction that stays open until the
+ * returned function runs, so a test can send a write while the stop holds
+ * the Workout's row.
+ */
+function beginWorkoutStop({
+  id,
+  runtime,
+}: {
+  id: string;
+  runtime: TestRuntime;
+}) {
+  return beginTransaction({
+    runtime,
+    write: (database) =>
+      database
+        .update(workout)
+        .set({ endedAt: sql`now()` })
+        .where(eq(workout.id, id)),
+  });
 }
 
 function buildRoutineSaveInput({
@@ -176,6 +183,31 @@ function readSegmentCount({
         );
 
       return segments.length;
+    }),
+  );
+}
+
+function readWorkoutExercise({
+  id,
+  runtime,
+}: {
+  id: string;
+  runtime: TestRuntime;
+}) {
+  return runtime.runPromise(
+    Effect.gen(function* () {
+      const database = yield* Database;
+
+      const workoutExercises = yield* database
+        .select({
+          note: workoutExercise.note,
+          skipNote: workoutExercise.skipNote,
+          skipReason: workoutExercise.skipReason,
+        })
+        .from(workoutExercise)
+        .where(eq(workoutExercise.id, id));
+
+      return workoutExercises[0];
     }),
   );
 }
@@ -754,6 +786,35 @@ describe("workout.start", () => {
       cause: { _tag: "RoutineNotFoundError" },
       code: "NOT_FOUND",
     });
+  });
+
+  it("fails with NOT_FOUND and RoutineNotFoundError for a Workout started while a deletion of its Routine commits, and starts no Workout", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    await caller.routine.save(
+      buildRoutineSaveInput({
+        exerciseGroupId: "019a0000-0000-7000-8000-000000000271",
+        id: "019a0000-0000-7000-8000-000000000171",
+        name: "Push day",
+        routineExerciseId: "019a0000-0000-7000-8000-000000000371",
+      }),
+    );
+    const commitRoutineDeletion = await beginRoutineDeletion({
+      id: "019a0000-0000-7000-8000-000000000171",
+      runtime,
+    });
+
+    const workoutStart = caller.workout.start({
+      id: "019a0000-0000-7000-8000-000000000571",
+      routineId: "019a0000-0000-7000-8000-000000000171",
+    });
+    await waitForLockWait(runtime);
+    await commitRoutineDeletion();
+
+    await expect(workoutStart).rejects.toMatchObject({
+      cause: { _tag: "RoutineNotFoundError" },
+      code: "NOT_FOUND",
+    });
+    await expect(caller.workout.findInProgress()).resolves.toBeNull();
   });
 });
 
@@ -1419,7 +1480,7 @@ describe("workout.removeSet", () => {
   });
 });
 
-describe("workout.skipExercise", () => {
+describe("workout.saveSkip", () => {
   const runtime = createTestRuntime();
 
   beforeAll(async () => {
@@ -1430,7 +1491,7 @@ describe("workout.skipExercise", () => {
     await runtime.dispose();
   });
 
-  it("Saves the reason and the note of a skip on the Workout exercise, which workout.findInProgress returns", async () => {
+  it("Saves the reason and the note of a Skip on the Workout exercise, which workout.findInProgress returns", async () => {
     const caller = await createSignedInCaller({ runtime });
     const workoutExerciseId = await startBenchPressWorkout({
       caller,
@@ -1438,7 +1499,7 @@ describe("workout.skipExercise", () => {
       plannedSets: [WORKING_PLANNED_SET],
     });
 
-    await caller.workout.skipExercise({
+    await caller.workout.saveSkip({
       note: "Sore shoulder",
       reason: "pain",
       workoutExerciseId,
@@ -1455,7 +1516,7 @@ describe("workout.skipExercise", () => {
     });
   });
 
-  it("Saves a skip with a reason and no note", async () => {
+  it("Saves a Skip with a reason and no note", async () => {
     const caller = await createSignedInCaller({ runtime });
     const workoutExerciseId = await startBenchPressWorkout({
       caller,
@@ -1463,7 +1524,7 @@ describe("workout.skipExercise", () => {
       plannedSets: [WORKING_PLANNED_SET],
     });
 
-    await caller.workout.skipExercise({
+    await caller.workout.saveSkip({
       note: null,
       reason: "low_on_time",
       workoutExerciseId,
@@ -1489,7 +1550,7 @@ describe("workout.skipExercise", () => {
     });
 
     await expect(
-      caller.workout.skipExercise({
+      caller.workout.saveSkip({
         note: "Sore shoulder",
         reason: null,
         workoutExerciseId,
@@ -1516,7 +1577,7 @@ describe("workout.skipExercise", () => {
       workoutExerciseId,
     });
 
-    await caller.workout.skipExercise({
+    await caller.workout.saveSkip({
       note: null,
       reason: "low_energy",
       workoutExerciseId,
@@ -1553,7 +1614,7 @@ describe("workout.skipExercise", () => {
     await caller.workout.stop({ id: "019a0805-0000-7000-8000-000000000004" });
 
     await expect(
-      caller.workout.skipExercise({
+      caller.workout.saveSkip({
         note: null,
         reason: "pain",
         workoutExerciseId,
@@ -1574,7 +1635,7 @@ describe("workout.skipExercise", () => {
     const caller = await createSignedInCaller({ runtime });
 
     await expect(
-      caller.workout.skipExercise({
+      caller.workout.saveSkip({
         note: null,
         reason: "pain",
         workoutExerciseId: otherWorkoutExerciseId,
@@ -1586,6 +1647,35 @@ describe("workout.skipExercise", () => {
     await expect(otherCaller.workout.findInProgress()).resolves.toMatchObject({
       sections: { main: [{ exercises: [{ skipReason: null }] }] },
     });
+  });
+
+  it("fails with NOT_FOUND and WorkoutNotFoundError for a Skip Saved while a stop of its Workout commits, and Saves no Skip", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0807",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+    const commitStop = await beginWorkoutStop({
+      id: "019a0807-0000-7000-8000-000000000004",
+      runtime,
+    });
+
+    const skipSave = caller.workout.saveSkip({
+      note: "Sore shoulder",
+      reason: "pain",
+      workoutExerciseId,
+    });
+    await waitForLockWait(runtime);
+    await commitStop();
+
+    await expect(skipSave).rejects.toMatchObject({
+      cause: { _tag: "WorkoutNotFoundError" },
+      code: "NOT_FOUND",
+    });
+    await expect(
+      readWorkoutExercise({ id: workoutExerciseId, runtime }),
+    ).resolves.toMatchObject({ skipNote: null, skipReason: null });
   });
 });
 
@@ -1677,5 +1767,33 @@ describe("workout.saveNote", () => {
     await expect(otherCaller.workout.findInProgress()).resolves.toMatchObject({
       sections: { main: [{ exercises: [{ note: null }] }] },
     });
+  });
+
+  it("fails with NOT_FOUND and WorkoutNotFoundError for a note Saved while a stop of its Workout commits, and Saves no note", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0905",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+    const commitStop = await beginWorkoutStop({
+      id: "019a0905-0000-7000-8000-000000000004",
+      runtime,
+    });
+
+    const noteSave = caller.workout.saveNote({
+      note: "Felt strong today",
+      workoutExerciseId,
+    });
+    await waitForLockWait(runtime);
+    await commitStop();
+
+    await expect(noteSave).rejects.toMatchObject({
+      cause: { _tag: "WorkoutNotFoundError" },
+      code: "NOT_FOUND",
+    });
+    await expect(
+      readWorkoutExercise({ id: workoutExerciseId, runtime }),
+    ).resolves.toMatchObject({ note: null });
   });
 });

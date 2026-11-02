@@ -4,7 +4,7 @@ import { getWorkoutExerciseInProgress } from "#/features/workout/core/get-workou
 
 /**
  * Decides whether a Save may update a Workout exercise in place, such as its
- * note or its skip, given the Workout exercise with its Workout, or `null`
+ * note or its Skip, given the Workout exercise with its Workout, or `null`
  * when none has its id.
  */
 export function decideWorkoutExerciseUpdate({
