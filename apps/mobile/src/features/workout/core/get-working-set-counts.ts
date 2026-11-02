@@ -22,7 +22,7 @@ export function getWorkingSetCounts({
   const doneCount = Array.from(
     { length: recordedSetCount },
     (value, position) => getMatchingPlannedSet({ plannedSets, position }),
-  ).filter((plannedSet) => plannedSet.type === "working").length;
+  ).filter((plannedSet) => plannedSet?.type === "working").length;
   const plannedCount = plannedSets.filter(
     (plannedSet) => plannedSet.type === "working",
   ).length;

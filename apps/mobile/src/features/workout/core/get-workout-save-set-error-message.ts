@@ -1,5 +1,6 @@
 import type { SegmentCountInvalidError } from "@ankaa/core/features/workout/errors/segment-count-invalid-error";
 import type { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
+import type { SetNotPlannedError } from "@ankaa/core/features/workout/errors/set-not-planned-error";
 import type { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 
 import * as Match from "effect/Match";
@@ -13,6 +14,7 @@ export function getWorkoutSaveSetErrorMessage(
   error:
     | SegmentCountInvalidError
     | SegmentWeightNotAllowedError
+    | SetNotPlannedError
     | TrpcClientError
     | WorkoutNotFoundError,
 ) {
@@ -20,6 +22,7 @@ export function getWorkoutSaveSetErrorMessage(
     SegmentCountInvalidError: () => WORKOUT_MESSAGES.segmentCountInvalidError,
     SegmentWeightNotAllowedError: () =>
       WORKOUT_MESSAGES.segmentWeightNotAllowedError,
+    SetNotPlannedError: () => WORKOUT_MESSAGES.setNotPlannedError,
     TrpcClientError: (trpcClientError) =>
       getTrpcClientErrorMessage(trpcClientError),
     WorkoutNotFoundError: () => WORKOUT_MESSAGES.workoutNotFoundError,

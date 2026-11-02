@@ -5,6 +5,7 @@ import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/w
 import type { WorkoutSaveSkipInput } from "@ankaa/core/features/workout/schemas/workout-save-skip-input-schema";
 import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 
+import { SetNotPlannedError } from "@ankaa/core/features/workout/errors/set-not-planned-error";
 import {
   fireEvent,
   screen,
@@ -651,6 +652,36 @@ describe("WorkoutScreen", () => {
     ).toBeOnTheScreen();
   });
 
+  it("offers no row to record another Set once every planned Set of a Workout exercise is recorded", async () => {
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [
+                  {
+                    id: "01900000-0000-7000-8000-000000000301",
+                    segments: [{ amount: 8, weight: 60 }],
+                  },
+                ],
+              }),
+          },
+        }),
+      },
+    });
+
+    await screen.findByText("1 working set done, 0 left.");
+
+    expect(screen.getByText("Set 1")).toBeOnTheScreen();
+    expect(screen.queryByText("Set 2")).not.toBeOnTheScreen();
+    expect(screen.getAllByLabelText("Repetitions")).toHaveLength(1);
+  });
+
   it("removes any recorded Set through its Remove set", async () => {
     const removedInputs: WorkoutRemoveSetInput[] = [];
     let workoutInProgress = buildBenchPressWorkout({
@@ -774,6 +805,41 @@ describe("WorkoutScreen", () => {
     expect(screen.getByLabelText("Weight, in kilograms")).toHaveDisplayValue(
       "62.5",
     );
+  });
+
+  it("tells the User that every planned Set is already recorded when a Save fails with SetNotPlannedError, and keeps the Draft on the screen", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        crypto: fakeCryptoLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+            "workout.saveSet": () => {
+              throw new SetNotPlannedError();
+            },
+          },
+        }),
+      },
+    });
+    await user.type(await screen.findByLabelText("Repetitions"), "8");
+    await user.type(screen.getByLabelText("Weight, in kilograms"), "62.5");
+
+    await user.press(screen.getByRole("button", { name: "Save set" }));
+
+    expect(
+      await screen.findByText(
+        "This exercise has no more sets planned: you've already recorded every set it plans.",
+      ),
+    ).toBeOnTheScreen();
+    expect(screen.getByLabelText("Repetitions")).toHaveDisplayValue("8");
   });
 
   it("Saves the note that the User writes on a Workout exercise through Save note", async () => {

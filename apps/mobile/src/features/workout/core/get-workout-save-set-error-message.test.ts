@@ -1,5 +1,6 @@
 import { SegmentCountInvalidError } from "@ankaa/core/features/workout/errors/segment-count-invalid-error";
 import { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
+import { SetNotPlannedError } from "@ankaa/core/features/workout/errors/set-not-planned-error";
 import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 
 import { getWorkoutSaveSetErrorMessage } from "#/features/workout/core/get-workout-save-set-error-message.ts";
@@ -17,6 +18,12 @@ describe("getWorkoutSaveSetErrorMessage", () => {
       getWorkoutSaveSetErrorMessage(new SegmentWeightNotAllowedError()),
     ).toBe(
       "This exercise takes no weight: clear the weight and save the set again.",
+    );
+  });
+
+  it("tells the User that every planned Set is already recorded for SetNotPlannedError", () => {
+    expect(getWorkoutSaveSetErrorMessage(new SetNotPlannedError())).toBe(
+      "This exercise has no more sets planned: you've already recorded every set it plans.",
     );
   });
 

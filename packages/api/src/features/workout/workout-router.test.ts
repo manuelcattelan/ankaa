@@ -1209,6 +1209,51 @@ describe("workout.saveSet", () => {
     });
   });
 
+  it("fails with UNPROCESSABLE_CONTENT and SetNotPlannedError for a new Set past the last planned Set, and records nothing", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0610",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+    await caller.workout.saveSet({
+      id: "019a0610-0000-7000-8000-000000000101",
+      segments: [{ amount: 8, weight: 60 }],
+      weightUnit: "kilogram",
+      workoutExerciseId,
+    });
+
+    await expect(
+      caller.workout.saveSet({
+        id: "019a0610-0000-7000-8000-000000000102",
+        segments: [{ amount: 6, weight: 60 }],
+        weightUnit: "kilogram",
+        workoutExerciseId,
+      }),
+    ).rejects.toMatchObject({
+      cause: { _tag: "SetNotPlannedError" },
+      code: "UNPROCESSABLE_CONTENT",
+    });
+    await expect(caller.workout.findInProgress()).resolves.toMatchObject({
+      sections: {
+        main: [
+          {
+            exercises: [
+              {
+                recordedSets: [
+                  {
+                    id: "019a0610-0000-7000-8000-000000000101",
+                    segments: [{ amount: 8, weight: 60 }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
   it("fails with BAD_REQUEST for a Segment with no Amount", async () => {
     const caller = await createSignedInCaller({ runtime });
     const workoutExerciseId = await startBenchPressWorkout({
@@ -1299,7 +1344,11 @@ describe("workout.removeSet", () => {
     const workoutExerciseId = await startBenchPressWorkout({
       caller,
       idPrefix: "019a0701",
-      plannedSets: [WORKING_PLANNED_SET, WORKING_PLANNED_SET],
+      plannedSets: [
+        WORKING_PLANNED_SET,
+        WORKING_PLANNED_SET,
+        WORKING_PLANNED_SET,
+      ],
     });
     await caller.workout.saveSet({
       id: "019a0701-0000-7000-8000-000000000101",
@@ -1370,7 +1419,7 @@ describe("workout.removeSet", () => {
     const workoutExerciseId = await startBenchPressWorkout({
       caller,
       idPrefix: "019a0702",
-      plannedSets: [WORKING_PLANNED_SET],
+      plannedSets: [WORKING_PLANNED_SET, WORKING_PLANNED_SET],
     });
     await caller.workout.saveSet({
       id: "019a0702-0000-7000-8000-000000000101",

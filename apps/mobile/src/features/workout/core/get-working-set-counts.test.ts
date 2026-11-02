@@ -27,12 +27,12 @@ describe("getWorkingSetCounts", () => {
     ).toStrictEqual({ doneCount: 1, leftCount: 2 });
   });
 
-  it("counts a recorded Set past the last planned Set as done, with none left below 0", () => {
+  it("doesn't count a recorded Set past the last planned Set as done", () => {
     expect(
       getWorkingSetCounts({
         plannedSets: [WORKING_PLANNED_SET],
         recordedSetCount: 3,
       }),
-    ).toStrictEqual({ doneCount: 3, leftCount: 0 });
+    ).toStrictEqual({ doneCount: 1, leftCount: 0 });
   });
 });

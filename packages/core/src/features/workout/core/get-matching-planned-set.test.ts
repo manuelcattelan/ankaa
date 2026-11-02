@@ -35,32 +35,12 @@ describe("getMatchingPlannedSet", () => {
     });
   });
 
-  it("matches a recorded Set past the last planned Set with the last planned Set", () => {
+  it("matches no planned Set with a recorded Set past the last planned Set", () => {
     expect(
       getMatchingPlannedSet({
         plannedSets: [WARM_UP_PLANNED_SET, DROP_SET_PLANNED_SET],
-        position: 3,
+        position: 2,
       }),
-    ).toStrictEqual({
-      intensityTechnique: {
-        _tag: "DropSet",
-        segmentCount: 3,
-        weightPercentage: 20,
-      },
-      isToFailure: true,
-      tempo: "3-0-1-2",
-      type: "working",
-    });
-  });
-
-  it("matches a recorded Set of a Workout exercise with no planned Sets with a plain Working set", () => {
-    expect(
-      getMatchingPlannedSet({ plannedSets: [], position: 0 }),
-    ).toStrictEqual({
-      intensityTechnique: null,
-      isToFailure: false,
-      tempo: null,
-      type: "working",
-    });
+    ).toBeNull();
   });
 });

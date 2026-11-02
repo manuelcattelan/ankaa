@@ -76,6 +76,8 @@ export const WORKOUT_MESSAGES = {
   segmentLabel: (segmentNumber: number) => `Segment ${String(segmentNumber)}`,
   segmentWeightNotAllowedError:
     "This exercise takes no weight: clear the weight and save the set again.",
+  setNotPlannedError:
+    "This exercise has no more sets planned: you've already recorded every set it plans.",
   skipNoteLabel: "Why you skipped it",
   skipNoteWithoutReasonError:
     "This note needs a reason: pick why you skipped the exercise, or clear the note.",

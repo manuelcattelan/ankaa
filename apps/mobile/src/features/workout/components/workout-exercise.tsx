@@ -1,5 +1,4 @@
 import { WEIGHT_UNITS } from "@ankaa/core/features/workout/constants/weight";
-import { getMatchingPlannedSet } from "@ankaa/core/features/workout/core/get-matching-planned-set";
 import { useState } from "react";
 
 import type { WorkoutExercise as WorkoutExerciseValue } from "#/shared/workout.ts";
@@ -15,9 +14,9 @@ import { Text } from "#/shared/components/text.tsx";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 /**
- * Shows a Workout exercise with a row for each planned Set, each recorded
- * Set, and the next Set to record, whose weights are entered in the Weight
- * unit that the User picks for the Workout exercise.
+ * Shows a Workout exercise with a row for each planned Set, since it records
+ * no more Sets than it plans, whose weights are entered in the Weight unit
+ * that the User picks for the Workout exercise.
  */
 export function WorkoutExercise({
   canStartRest,
@@ -38,14 +37,6 @@ export function WorkoutExercise({
     plannedSets: workoutExercise.plannedSets,
     recordedSetCount: workoutExercise.recordedSets.length,
   });
-  const setCount = Math.max(
-    workoutExercise.plannedSets.length,
-    workoutExercise.recordedSets.length + 1,
-  );
-  const positions = Array.from(
-    { length: setCount },
-    (value, position) => position,
-  );
 
   return (
     <>
@@ -75,7 +66,7 @@ export function WorkoutExercise({
           selectedOption={weightUnit}
         />
       )}
-      {positions.map((position) => (
+      {workoutExercise.plannedSets.map((plannedSet, position) => (
         <WorkoutSet
           amountUnit={workoutExercise.amountUnit}
           canStartRest={canStartRest}
@@ -89,15 +80,7 @@ export function WorkoutExercise({
           exerciseId={workoutExercise.exerciseId}
           isRecordable={position <= workoutExercise.recordedSets.length}
           key={position}
-          plannedSet={{
-            ...getMatchingPlannedSet({
-              plannedSets: workoutExercise.plannedSets,
-              position,
-            }),
-            amount: workoutExercise.plannedSets[position]?.amount ?? null,
-            restSeconds:
-              workoutExercise.plannedSets[position]?.restSeconds ?? null,
-          }}
+          plannedSet={plannedSet}
           position={position}
           recordedSet={workoutExercise.recordedSets[position] ?? null}
           weightType={workoutExercise.weightType}

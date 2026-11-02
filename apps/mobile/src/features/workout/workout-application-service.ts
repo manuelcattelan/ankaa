@@ -1,5 +1,6 @@
 import type { SegmentCountInvalidError } from "@ankaa/core/features/workout/errors/segment-count-invalid-error";
 import type { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
+import type { SetNotPlannedError } from "@ankaa/core/features/workout/errors/set-not-planned-error";
 import type { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
 import type { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
@@ -57,6 +58,7 @@ export class WorkoutApplicationService extends Context.Service<
       void,
       | SegmentCountInvalidError
       | SegmentWeightNotAllowedError
+      | SetNotPlannedError
       | TrpcClientError
       | WorkoutNotFoundError
     >;

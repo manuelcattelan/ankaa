@@ -8,6 +8,7 @@ export function getWireErrorCode(wireError: WireError) {
     RoutineNotFoundError: () => "NOT_FOUND" as const,
     SegmentCountInvalidError: () => "UNPROCESSABLE_CONTENT" as const,
     SegmentWeightNotAllowedError: () => "UNPROCESSABLE_CONTENT" as const,
+    SetNotPlannedError: () => "UNPROCESSABLE_CONTENT" as const,
     WorkoutInProgressConflictError: () => "CONFLICT" as const,
     WorkoutNotFoundError: () => "NOT_FOUND" as const,
   });
