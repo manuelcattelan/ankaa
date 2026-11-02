@@ -10,6 +10,7 @@ import { routineNameFilter } from "#/features/routine/filters/routine-name-filte
 import { segmentCountFilter } from "#/features/routine/filters/segment-count-filter.ts";
 import { uniqueDaysFilter } from "#/features/routine/filters/unique-days-filter.ts";
 import { uniqueRoutineIdsFilter } from "#/features/routine/filters/unique-routine-ids-filter.ts";
+import { workingSetFilter } from "#/features/routine/filters/working-set-filter.ts";
 import { SET_TYPES } from "#/shared/constants/set-types.ts";
 import { amountFilter } from "#/shared/filters/amount-filter.ts";
 import { tempoFilter } from "#/shared/filters/tempo-filter.ts";
@@ -47,12 +48,12 @@ const routineExerciseSchema = Schema.Struct({
   id: idSchema,
   note: Schema.NullOr(Schema.String),
   sets: Schema.Array(routineExerciseSetSchema),
-});
+}).check(workingSetFilter);
 
 const mainRoutineExerciseSchema = Schema.Struct({
   ...routineExerciseSchema.fields,
   warmUpExercises: Schema.Array(routineExerciseSchema),
-});
+}).check(workingSetFilter);
 
 const exerciseGroupSchema = Schema.Struct({
   exercises: Schema.Array(routineExerciseSchema).check(

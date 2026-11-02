@@ -6,10 +6,12 @@ import type {
 } from "#/features/routine/core/routine-draft-reducer.ts";
 
 import { RoutineEditorSet } from "#/features/routine/components/routine-editor-set.tsx";
+import { routineExerciseFormSchema } from "#/features/routine/core/routine-exercise-form-schema.ts";
 import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
 import { Button } from "#/shared/components/button.tsx";
 import { TextField } from "#/shared/components/text-field.tsx";
 import { Text } from "#/shared/components/text.tsx";
+import { decodeForm } from "#/shared/core/decode-form.ts";
 import { useCreateId } from "#/shared/hooks/use-create-id.ts";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
@@ -33,6 +35,12 @@ export function RoutineEditorExercise({
   warmUpForExerciseName?: string;
 }) {
   const createId = useCreateId();
+
+  const routineExerciseFormDecoding = decodeForm({
+    hasSubmitted,
+    schema: routineExerciseFormSchema,
+    values: routineExercise,
+  });
 
   function handleAddSet() {
     dispatch({
@@ -73,6 +81,9 @@ export function RoutineEditorExercise({
           setNumber={setIndex + 1}
         />
       ))}
+      {routineExerciseFormDecoding.errorMessage === null ? null : (
+        <Text>{routineExerciseFormDecoding.errorMessage}</Text>
+      )}
       <Button onPress={handleAddSet} title={ROUTINE_MESSAGES.addSetButton} />
       {children}
       <Button

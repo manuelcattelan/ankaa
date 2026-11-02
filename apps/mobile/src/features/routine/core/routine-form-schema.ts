@@ -4,27 +4,24 @@ import { mainRoutineExerciseFilter } from "@ankaa/core/features/routine/filters/
 import { routineNameFilter } from "@ankaa/core/features/routine/filters/routine-name-filter";
 import { uniqueDaysFilter } from "@ankaa/core/features/routine/filters/unique-days-filter";
 import { uniqueRoutineIdsFilter } from "@ankaa/core/features/routine/filters/unique-routine-ids-filter";
+import { workingSetFilter } from "@ankaa/core/features/routine/filters/working-set-filter";
 import { idSchema } from "@ankaa/core/shared/schemas/id-schema";
 import * as Schema from "effect/Schema";
 
-import { routineExerciseSetFormSchema } from "#/features/routine/core/routine-exercise-set-form-schema.ts";
+import { routineExerciseFormSchema } from "#/features/routine/core/routine-exercise-form-schema.ts";
 import { ROUTINE_MESSAGES } from "#/features/routine/messages/routine-messages.ts";
-import { createNullableTextSchema } from "#/shared/core/create-nullable-text-schema.ts";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 
 export type RoutineDraft = typeof routineFormSchema.Encoded;
 
-const routineExerciseFormSchema = Schema.Struct({
-  exerciseId: idSchema,
-  id: idSchema,
-  note: createNullableTextSchema(Schema.String),
-  sets: Schema.Array(routineExerciseSetFormSchema),
-});
-
 const mainRoutineExerciseFormSchema = Schema.Struct({
   ...routineExerciseFormSchema.fields,
   warmUpExercises: Schema.Array(routineExerciseFormSchema),
-});
+}).check(
+  workingSetFilter.annotate({
+    message: ROUTINE_MESSAGES.workingSetMissingError,
+  }),
+);
 
 // Only a bug can leave an Exercise group empty or repeat an id, because the
 // editor creates both, so the User can only try again

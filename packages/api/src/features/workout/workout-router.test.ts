@@ -31,6 +31,15 @@ const PLANK_EXERCISE_ID = "019a0000-0000-7000-8000-000000000002";
 
 const BAND_PULL_APART_EXERCISE_ID = "019a0000-0000-7000-8000-000000000003";
 
+const WORKING_PLANNED_SET = {
+  amount: 8,
+  intensityTechnique: null,
+  isToFailure: false,
+  restSeconds: null,
+  tempo: null,
+  type: "working" as const,
+};
+
 /**
  * Deletes the Routine with `id` in a transaction that stays open until the
  * returned function runs, so a test can send a start while the deletion
@@ -80,13 +89,13 @@ function buildRoutineSaveInput({
   id,
   name,
   routineExerciseId,
-  sets = [],
+  sets,
 }: {
   exerciseGroupId: string;
   id: string;
   name: string;
   routineExerciseId: string;
-  sets?: RoutineSaveInput["sections"]["main"][number]["exercises"][number]["sets"];
+  sets: RoutineSaveInput["sections"]["main"][number]["exercises"][number]["sets"];
 }) {
   return {
     days: [],
@@ -387,6 +396,15 @@ describe("workout.start", () => {
                         tempo: null,
                         type: "warm_up",
                       },
+                      {
+                        amount: 15,
+                        id: "019a0000-0000-7000-8000-000000000406",
+                        intensityTechnique: null,
+                        isToFailure: false,
+                        restSeconds: null,
+                        tempo: null,
+                        type: "working",
+                      },
                     ],
                   },
                 ],
@@ -395,7 +413,17 @@ describe("workout.start", () => {
                 exerciseId: PLANK_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000304",
                 note: null,
-                sets: [],
+                sets: [
+                  {
+                    amount: 60,
+                    id: "019a0000-0000-7000-8000-000000000405",
+                    intensityTechnique: null,
+                    isToFailure: false,
+                    restSeconds: null,
+                    tempo: null,
+                    type: "working",
+                  },
+                ],
                 warmUpExercises: [],
               },
             ],
@@ -409,7 +437,17 @@ describe("workout.start", () => {
                 exerciseId: BAND_PULL_APART_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000305",
                 note: "Slowly",
-                sets: [],
+                sets: [
+                  {
+                    amount: 15,
+                    id: "019a0000-0000-7000-8000-000000000407",
+                    intensityTechnique: null,
+                    isToFailure: false,
+                    restSeconds: null,
+                    tempo: null,
+                    type: "working",
+                  },
+                ],
               },
             ],
             id: "019a0000-0000-7000-8000-000000000203",
@@ -513,6 +551,15 @@ describe("workout.start", () => {
                         tempo: null,
                         type: "warm_up",
                       },
+                      {
+                        amount: 15,
+                        id: generatedId,
+                        intensityTechnique: null,
+                        isToFailure: false,
+                        restSeconds: null,
+                        tempo: null,
+                        type: "working",
+                      },
                     ],
                     recordedSets: [],
                     skipNote: null,
@@ -530,7 +577,17 @@ describe("workout.start", () => {
                 id: generatedId,
                 note: null,
                 plannedNote: null,
-                plannedSets: [],
+                plannedSets: [
+                  {
+                    amount: 60,
+                    id: generatedId,
+                    intensityTechnique: null,
+                    isToFailure: false,
+                    restSeconds: null,
+                    tempo: null,
+                    type: "working",
+                  },
+                ],
                 recordedSets: [],
                 skipNote: null,
                 skipReason: null,
@@ -551,7 +608,17 @@ describe("workout.start", () => {
                 id: generatedId,
                 note: null,
                 plannedNote: "Slowly",
-                plannedSets: [],
+                plannedSets: [
+                  {
+                    amount: 15,
+                    id: generatedId,
+                    intensityTechnique: null,
+                    isToFailure: false,
+                    restSeconds: null,
+                    tempo: null,
+                    type: "working",
+                  },
+                ],
                 recordedSets: [],
                 skipNote: null,
                 skipReason: null,
@@ -575,6 +642,12 @@ describe("workout.start", () => {
         id: "019a0000-0000-7000-8000-000000000111",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000311",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000411",
+          },
+        ],
       }),
     );
     await caller.workout.start({
@@ -595,7 +668,17 @@ describe("workout.start", () => {
                 exerciseId: PLANK_EXERCISE_ID,
                 id: "019a0000-0000-7000-8000-000000000312",
                 note: "Brace",
-                sets: [],
+                sets: [
+                  {
+                    amount: 60,
+                    id: "019a0000-0000-7000-8000-000000000412",
+                    intensityTechnique: null,
+                    isToFailure: false,
+                    restSeconds: null,
+                    tempo: null,
+                    type: "working",
+                  },
+                ],
                 warmUpExercises: [],
               },
             ],
@@ -627,6 +710,12 @@ describe("workout.start", () => {
         id: "019a0000-0000-7000-8000-000000000121",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000321",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000421",
+          },
+        ],
       }),
     );
     await caller.workout.start({
@@ -651,6 +740,12 @@ describe("workout.start", () => {
         id: "019a0000-0000-7000-8000-000000000131",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000331",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000431",
+          },
+        ],
       }),
     );
     await caller.workout.start({
@@ -680,6 +775,12 @@ describe("workout.start", () => {
         id: "019a0000-0000-7000-8000-000000000141",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000341",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000441",
+          },
+        ],
       }),
     );
 
@@ -714,6 +815,12 @@ describe("workout.start", () => {
         id: "019a0000-0000-7000-8000-000000000143",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000343",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000443",
+          },
+        ],
       }),
     );
     await otherCaller.workout.start({
@@ -727,6 +834,12 @@ describe("workout.start", () => {
         id: "019a0000-0000-7000-8000-000000000144",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000344",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000444",
+          },
+        ],
       }),
     );
 
@@ -749,6 +862,12 @@ describe("workout.start", () => {
         id: "019a0000-0000-7000-8000-000000000151",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000351",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000451",
+          },
+        ],
       }),
     );
     const caller = await createSignedInCaller({ runtime });
@@ -773,6 +892,12 @@ describe("workout.start", () => {
         id: "019a0000-0000-7000-8000-000000000161",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000361",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000461",
+          },
+        ],
       }),
     );
     await caller.routine.delete({ id: "019a0000-0000-7000-8000-000000000161" });
@@ -796,6 +921,12 @@ describe("workout.start", () => {
         id: "019a0000-0000-7000-8000-000000000171",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000371",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000471",
+          },
+        ],
       }),
     );
     const commitRoutineDeletion = await beginRoutineDeletion({
@@ -837,6 +968,12 @@ describe("workout.findInProgress", () => {
         id: "019a0000-0000-7000-8000-000000000183",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000383",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000483",
+          },
+        ],
       }),
     );
     const timeBeforeStart = await readDatabaseTime(runtime);
@@ -864,6 +1001,12 @@ describe("workout.findInProgress", () => {
         id: "019a0000-0000-7000-8000-000000000181",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000381",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000481",
+          },
+        ],
       }),
     );
     await otherCaller.workout.start({
@@ -877,6 +1020,12 @@ describe("workout.findInProgress", () => {
         id: "019a0000-0000-7000-8000-000000000182",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000382",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000482",
+          },
+        ],
       }),
     );
     await caller.workout.start({
@@ -910,6 +1059,12 @@ describe("workout.stop", () => {
         id: "019a0000-0000-7000-8000-000000000191",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000391",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000491",
+          },
+        ],
       }),
     );
     await caller.workout.start({
@@ -930,6 +1085,12 @@ describe("workout.stop", () => {
         id: "019a0000-0000-7000-8000-000000000192",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000392",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000492",
+          },
+        ],
       }),
     );
     await caller.workout.start({
@@ -971,6 +1132,12 @@ describe("workout.stop", () => {
         id: "019a0000-0000-7000-8000-000000000194",
         name: "Push day",
         routineExerciseId: "019a0000-0000-7000-8000-000000000394",
+        sets: [
+          {
+            ...WORKING_PLANNED_SET,
+            id: "019a0000-0000-7000-8000-000000000494",
+          },
+        ],
       }),
     );
     await otherCaller.workout.start({
@@ -990,15 +1157,6 @@ describe("workout.stop", () => {
     });
   });
 });
-
-const WORKING_PLANNED_SET = {
-  amount: 8,
-  intensityTechnique: null,
-  isToFailure: false,
-  restSeconds: null,
-  tempo: null,
-  type: "working" as const,
-};
 
 describe("workout.saveSet", () => {
   const runtime = createTestRuntime();

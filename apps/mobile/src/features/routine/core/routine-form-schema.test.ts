@@ -43,7 +43,7 @@ const ROUTINE = {
                     isToFailure: false,
                     restSeconds: null,
                     tempo: null,
-                    type: "warm_up",
+                    type: "working",
                   },
                 ],
               },
@@ -119,7 +119,7 @@ const ROUTINE_DRAFT = {
                     isToFailure: false,
                     restSeconds: "",
                     tempo: "",
-                    type: "warm_up",
+                    type: "working",
                   },
                 ],
               },
@@ -291,6 +291,44 @@ describe("routineFormSchema", () => {
     ).toThrow(
       "This routine has no exercise in the main section: add an exercise to the main section.",
     );
+  });
+
+  it("rejects a main Routine exercise that plans only Warm-up sets with its message", () => {
+    expect(() => decodeRoutineDraft(withSetDraft({ type: "warm_up" }))).toThrow(
+      "This exercise has no working set: add a working set.",
+    );
+  });
+
+  it("rejects a Warm-up exercise that plans no Working set with its message", () => {
+    expect(() =>
+      decodeRoutineDraft({
+        ...ROUTINE_DRAFT,
+        sections: {
+          ...ROUTINE_DRAFT.sections,
+          main: [
+            {
+              exercises: [
+                {
+                  exerciseId: "01900000-0000-7000-8000-000000000001",
+                  id: "01900000-0000-7000-8000-000000000301",
+                  note: "",
+                  sets: [ROUTINE_SET_DRAFT],
+                  warmUpExercises: [
+                    {
+                      exerciseId: "01900000-0000-7000-8000-000000000003",
+                      id: "01900000-0000-7000-8000-000000000302",
+                      note: "",
+                      sets: [],
+                    },
+                  ],
+                },
+              ],
+              id: "01900000-0000-7000-8000-000000000201",
+            },
+          ],
+        },
+      }),
+    ).toThrow("This exercise has no working set: add a working set.");
   });
 
   it("rejects two nodes of the tree with the same id", () => {

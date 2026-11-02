@@ -70,4 +70,6 @@ export const ROUTINE_MESSAGES = {
     minimum: number;
   }) =>
     `This number isn't valid: enter a whole number from ${String(minimum)} to ${String(maximum)}.`,
+  workingSetMissingError:
+    "This exercise has no working set: add a working set.",
 };
