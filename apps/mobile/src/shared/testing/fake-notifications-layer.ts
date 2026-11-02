@@ -3,7 +3,7 @@ import * as Layer from "effect/Layer";
 
 import type {
   NotificationPermissionStatus,
-  ScheduledNotification,
+  NotificationRequest,
 } from "#/shared/services/notifications.ts";
 
 import { Notifications } from "#/shared/services/notifications.ts";
@@ -19,7 +19,7 @@ export function fakeNotificationsLayer({
   scheduledNotifications = [],
 }: {
   permissionRequests?: NotificationPermissionStatus[];
-  scheduledNotifications?: ScheduledNotification[];
+  scheduledNotifications?: NotificationRequest[];
 }) {
   return Layer.sync(Notifications, () => {
     let permissionStatus: NotificationPermissionStatus = "undetermined";
@@ -32,7 +32,7 @@ export function fakeNotificationsLayer({
       cancelScheduled: (identifier) =>
         Effect.sync(() => {
           const index = scheduledNotifications.findIndex(
-            (notification) => notification.identifier === identifier,
+            (request) => request.identifier === identifier,
           );
 
           if (index !== -1) {
@@ -45,9 +45,9 @@ export function fakeNotificationsLayer({
           permissionStatus = "granted";
           permissionRequests.push(permissionStatus);
         }),
-      schedule: (notification) =>
+      schedule: (request) =>
         Effect.sync(() => {
-          scheduledNotifications.push(notification);
+          scheduledNotifications.push(request);
         }),
     });
   });

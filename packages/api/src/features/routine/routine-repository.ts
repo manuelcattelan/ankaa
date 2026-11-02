@@ -45,6 +45,13 @@ const ROUTINE_EXERCISE_COLUMNS = {
   note: true,
 } as const;
 
+const ROUTINE_EXERCISE_SETS = {
+  sets: {
+    columns: { ...PLANNED_SET_COLUMNS, id: true },
+    orderBy: { position: "asc" },
+  },
+} as const;
+
 export class RoutineRepository extends Context.Service<
   RoutineRepository,
   {
@@ -117,19 +124,11 @@ export class RoutineRepository extends Context.Service<
                     columns: ROUTINE_EXERCISE_COLUMNS,
                     orderBy: { position: "asc" },
                     with: {
-                      sets: {
-                        columns: { ...PLANNED_SET_COLUMNS, id: true },
-                        orderBy: { position: "asc" },
-                      },
+                      ...ROUTINE_EXERCISE_SETS,
                       warmUpExercises: {
                         columns: ROUTINE_EXERCISE_COLUMNS,
                         orderBy: { position: "asc" },
-                        with: {
-                          sets: {
-                            columns: { ...PLANNED_SET_COLUMNS, id: true },
-                            orderBy: { position: "asc" },
-                          },
-                        },
+                        with: ROUTINE_EXERCISE_SETS,
                       },
                     },
                   },

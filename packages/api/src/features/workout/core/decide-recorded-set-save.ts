@@ -14,8 +14,8 @@ import { getWorkoutExerciseInProgress } from "#/features/workout/core/get-workou
  * Decides whether a Save may write a Set into a Workout exercise, given the
  * Workout exercise with its Workout, or `null` when none has its id. A Set
  * the Workout exercise already records is updated and keeps its position,
- * and a new Set is created at the next one. Its Segments must fit its matching planned Set, and
- * carry no weight when the Weight type is none.
+ * and a new Set is created at the next one. Its Segments must fit its
+ * matching planned Set, and carry no weight when the Weight type is none.
  */
 export function decideRecordedSetSave({
   input,

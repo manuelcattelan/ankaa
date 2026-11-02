@@ -490,7 +490,8 @@ export const vitestConfiguration = defineConfig([
   },
   {
     files: TYPE_TEST_FILES,
-    // A type test asserts through @ts-expect-error, which check-types checks.
+    // A type test asserts through @ts-expect-error, which check-types checks
+    // (https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-9.html#-ts-expect-error-comments).
     rules: { "vitest/expect-expect": "off" },
   },
 ]);

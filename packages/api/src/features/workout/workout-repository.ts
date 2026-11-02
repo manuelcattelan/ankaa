@@ -293,7 +293,8 @@ export class WorkoutRepository extends Context.Service<
       /**
        * Reads the Routine with `id` `FOR SHARE`, the one row a start locks
        * without changing it, so the start waits for a deletion of its
-       * Routine that is committing, and then sees it deleted.
+       * Routine that is committing, and then sees it deleted:
+       * https://github.com/manuelcattelan/ankaa/issues/133
        */
       const shareRoutine = Effect.fn("WorkoutRepository.shareRoutine")(
         function* ({ id }: { id: string }) {
@@ -314,53 +315,42 @@ export class WorkoutRepository extends Context.Service<
       const findWorkoutExerciseForUpdate = Effect.fn(
         "WorkoutRepository.findWorkoutExerciseForUpdate",
       )(function* ({ id }: { id: string }) {
-        const workoutExercises = yield* lockWorkoutExercise({ id });
-        const workoutExerciseRow = workoutExercises[0];
-
-        if (workoutExerciseRow === undefined) {
-          return null;
-        }
-
-        const lockedWorkout = yield* shareWorkout({
-          id: workoutExerciseRow.workoutId,
+        const lockedWorkoutExercise = yield* lockWorkoutExerciseWithWorkout({
+          id,
         });
 
-        return lockedWorkout === null ? null : { workout: lockedWorkout };
+        return lockedWorkoutExercise === null
+          ? null
+          : { workout: lockedWorkoutExercise.workout };
       });
 
       const findWorkoutExerciseForRecordedSetRemove = Effect.fn(
         "WorkoutRepository.findWorkoutExerciseForRecordedSetRemove",
       )(function* ({ id }: { id: string }) {
-        const workoutExercises = yield* lockWorkoutExercise({ id });
-        const workoutExerciseRow = workoutExercises[0];
+        const lockedWorkoutExercise = yield* lockWorkoutExerciseWithWorkout({
+          id,
+        });
 
-        if (workoutExerciseRow === undefined) {
+        if (lockedWorkoutExercise === null) {
           return null;
         }
 
-        const lockedWorkout = yield* shareWorkout({
-          id: workoutExerciseRow.workoutId,
-        });
         const recordedSets = yield* findRecordedSets({ workoutExerciseId: id });
 
-        return lockedWorkout === null
-          ? null
-          : { recordedSets, workout: lockedWorkout };
+        return { recordedSets, workout: lockedWorkoutExercise.workout };
       });
 
       const findWorkoutExerciseForRecordedSetSave = Effect.fn(
         "WorkoutRepository.findWorkoutExerciseForRecordedSetSave",
       )(function* ({ id }: { id: string }) {
-        const workoutExercises = yield* lockWorkoutExercise({ id });
-        const workoutExerciseRow = workoutExercises[0];
+        const lockedWorkoutExercise = yield* lockWorkoutExerciseWithWorkout({
+          id,
+        });
 
-        if (workoutExerciseRow === undefined) {
+        if (lockedWorkoutExercise === null) {
           return null;
         }
 
-        const lockedWorkout = yield* shareWorkout({
-          id: workoutExerciseRow.workoutId,
-        });
         const plannedSets = yield* database.query.workoutExercisePlannedSet
           .findMany({
             columns: { ...PLANNED_SET_COLUMNS, id: true },
@@ -370,11 +360,35 @@ export class WorkoutRepository extends Context.Service<
           .pipe(Effect.orDie);
         const recordedSets = yield* findRecordedSets({ workoutExerciseId: id });
 
+        return {
+          plannedSets: plannedSets.map(buildPlannedSet),
+          recordedSets,
+          weightType: lockedWorkoutExercise.weightType,
+          workout: lockedWorkoutExercise.workout,
+        };
+      });
+
+      /**
+       * Locks the Workout exercise with `id`, and then reads its Workout
+       * `FOR SHARE`, and gives null when either row doesn't exist.
+       */
+      const lockWorkoutExerciseWithWorkout = Effect.fn(
+        "WorkoutRepository.lockWorkoutExerciseWithWorkout",
+      )(function* ({ id }: { id: string }) {
+        const workoutExercises = yield* lockWorkoutExercise({ id });
+        const workoutExerciseRow = workoutExercises[0];
+
+        if (workoutExerciseRow === undefined) {
+          return null;
+        }
+
+        const lockedWorkout = yield* shareWorkout({
+          id: workoutExerciseRow.workoutId,
+        });
+
         return lockedWorkout === null
           ? null
           : {
-              plannedSets: plannedSets.map(buildPlannedSet),
-              recordedSets,
               weightType: workoutExerciseRow.weightType,
               workout: lockedWorkout,
             };
@@ -513,6 +527,16 @@ export class WorkoutRepository extends Context.Service<
         },
       );
 
+      const saveWeightUnit = Effect.fn("WorkoutRepository.saveWeightUnit")(
+        function* ({ input }: { input: WorkoutSaveSetInput }) {
+          yield* database
+            .update(workoutExercise)
+            .set({ weightUnit: input.weightUnit })
+            .where(eq(workoutExercise.id, input.workoutExerciseId))
+            .pipe(Effect.orDie);
+        },
+      );
+
       const createSet = Effect.fn("WorkoutRepository.createSet")(function* ({
         input,
         position,
@@ -520,11 +544,7 @@ export class WorkoutRepository extends Context.Service<
         input: WorkoutSaveSetInput;
         position: number;
       }) {
-        yield* database
-          .update(workoutExercise)
-          .set({ weightUnit: input.weightUnit })
-          .where(eq(workoutExercise.id, input.workoutExerciseId))
-          .pipe(Effect.orDie);
+        yield* saveWeightUnit({ input });
 
         yield* database
           .insert(workoutExerciseRecordedSet)
@@ -724,11 +744,7 @@ export class WorkoutRepository extends Context.Service<
       }: {
         input: WorkoutSaveSetInput;
       }) {
-        yield* database
-          .update(workoutExercise)
-          .set({ weightUnit: input.weightUnit })
-          .where(eq(workoutExercise.id, input.workoutExerciseId))
-          .pipe(Effect.orDie);
+        yield* saveWeightUnit({ input });
 
         yield* database
           .delete(workoutExerciseRecordedSetSegment)

@@ -50,11 +50,12 @@ export function ValidateOtpCodeForm({ email }: { email: string }) {
     schema: otpCodeFormSchema,
     values: { otpCode },
   });
-  const authenticationError = validateOtpCode.error ?? resendOtpCode.error;
+  const authenticationScreenError =
+    validateOtpCode.error ?? resendOtpCode.error;
   const otpCodeErrorMessage =
-    authenticationError === null
+    authenticationScreenError === null
       ? otpCodeFormDecoding.errorMessages.otpCode
-      : getAuthenticationScreenErrorMessage(authenticationError);
+      : getAuthenticationScreenErrorMessage(authenticationScreenError);
 
   function handleResendOtpCode() {
     setHasSubmitted(false);

@@ -65,7 +65,7 @@ export class WorkoutApplicationService extends Context.Service<
       input: WorkoutSaveSkipInput,
     ) => Effect.Effect<void, TrpcClientError | WorkoutNotFoundError>;
     readonly scheduleCountdownNotification: (
-      notification: Omit<ScheduledNotification, "channelId" | "identifier">,
+      notification: ScheduledNotification,
     ) => Effect.Effect<void>;
     readonly start: (
       input: WorkoutStartInput,
@@ -147,9 +147,7 @@ export class WorkoutApplicationService extends Context.Service<
        */
       const scheduleCountdownNotification = Effect.fn(
         "WorkoutApplicationService.scheduleCountdownNotification",
-      )(function* (
-        notification: Omit<ScheduledNotification, "channelId" | "identifier">,
-      ) {
+      )(function* (notification: ScheduledNotification) {
         const permissionStatus = yield* notifications.getPermissionStatus();
 
         if (permissionStatus === "undetermined") {
@@ -161,11 +159,11 @@ export class WorkoutApplicationService extends Context.Service<
           });
         }
 
-        yield* notifications.cancelScheduled(COUNTDOWN_NOTIFICATION_IDENTIFIER);
+        yield* cancelCountdownNotification();
         yield* notifications.schedule({
-          ...notification,
           channelId: COUNTDOWN_NOTIFICATION_CHANNEL_ID,
           identifier: COUNTDOWN_NOTIFICATION_IDENTIFIER,
+          notification,
         });
       });
 
@@ -191,7 +189,7 @@ export class WorkoutApplicationService extends Context.Service<
             trpc.workout.stop.mutate(input, { signal }),
           errors: WORKOUT_STOP_WIRE_ERRORS,
         });
-        yield* notifications.cancelScheduled(COUNTDOWN_NOTIFICATION_IDENTIFIER);
+        yield* cancelCountdownNotification();
       });
 
       return WorkoutApplicationService.of({

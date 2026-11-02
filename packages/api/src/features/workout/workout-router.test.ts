@@ -9,13 +9,12 @@ import {
   workoutExerciseRecordedSetSegment,
 } from "@ankaa/database/schema/workout";
 import { eq, sql } from "drizzle-orm";
-import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
-import * as Fiber from "effect/Fiber";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { TestRuntime } from "#/shared/testing/create-test-runtime.ts";
 
+import { beginTransaction } from "#/shared/testing/begin-transaction.ts";
 import { createSignedInCaller } from "#/shared/testing/create-signed-in-caller.ts";
 import { createTestRuntime } from "#/shared/testing/create-test-runtime.ts";
 import { waitForLockWait } from "#/shared/testing/wait-for-lock-wait.ts";
@@ -37,37 +36,21 @@ const BAND_PULL_APART_EXERCISE_ID = "019a0000-0000-7000-8000-000000000003";
  * returned function runs, so a test can send a start while the deletion
  * holds the Routine's row.
  */
-async function beginRoutineDeletion({
+function beginRoutineDeletion({
   id,
   runtime,
 }: {
   id: string;
   runtime: TestRuntime;
 }) {
-  const routineDeleted = await runtime.runPromise(Deferred.make<boolean>());
-  const commitRequested = await runtime.runPromise(Deferred.make<boolean>());
-  const fiber = runtime.runFork(
-    Effect.gen(function* () {
-      const database = yield* Database;
-
-      yield* database.transaction(() =>
-        Effect.gen(function* () {
-          yield* database
-            .update(routine)
-            .set({ deletedAt: sql`now()` })
-            .where(eq(routine.id, id));
-          yield* Deferred.succeed(routineDeleted, true);
-          yield* Deferred.await(commitRequested);
-        }),
-      );
-    }),
-  );
-  await runtime.runPromise(Deferred.await(routineDeleted));
-
-  return async () => {
-    await runtime.runPromise(Deferred.succeed(commitRequested, true));
-    await runtime.runPromise(Fiber.join(fiber));
-  };
+  return beginTransaction({
+    runtime,
+    write: (database) =>
+      database
+        .update(routine)
+        .set({ deletedAt: sql`now()` })
+        .where(eq(routine.id, id)),
+  });
 }
 
 /**
@@ -75,37 +58,21 @@ async function beginRoutineDeletion({
  * returned function runs, so a test can send a write while the stop holds
  * the Workout's row.
  */
-async function beginWorkoutStop({
+function beginWorkoutStop({
   id,
   runtime,
 }: {
   id: string;
   runtime: TestRuntime;
 }) {
-  const workoutStopped = await runtime.runPromise(Deferred.make<boolean>());
-  const commitRequested = await runtime.runPromise(Deferred.make<boolean>());
-  const fiber = runtime.runFork(
-    Effect.gen(function* () {
-      const database = yield* Database;
-
-      yield* database.transaction(() =>
-        Effect.gen(function* () {
-          yield* database
-            .update(workout)
-            .set({ endedAt: sql`now()` })
-            .where(eq(workout.id, id));
-          yield* Deferred.succeed(workoutStopped, true);
-          yield* Deferred.await(commitRequested);
-        }),
-      );
-    }),
-  );
-  await runtime.runPromise(Deferred.await(workoutStopped));
-
-  return async () => {
-    await runtime.runPromise(Deferred.succeed(commitRequested, true));
-    await runtime.runPromise(Fiber.join(fiber));
-  };
+  return beginTransaction({
+    runtime,
+    write: (database) =>
+      database
+        .update(workout)
+        .set({ endedAt: sql`now()` })
+        .where(eq(workout.id, id)),
+  });
 }
 
 function buildRoutineSaveInput({

@@ -3,13 +3,12 @@ import { Database } from "@ankaa/database/database";
 import { exercise } from "@ankaa/database/schema/exercise";
 import { routine } from "@ankaa/database/schema/routine";
 import { eq } from "drizzle-orm";
-import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
-import * as Fiber from "effect/Fiber";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { TestRuntime } from "#/shared/testing/create-test-runtime.ts";
 
+import { beginTransaction } from "#/shared/testing/begin-transaction.ts";
 import { createSignedInCaller } from "#/shared/testing/create-signed-in-caller.ts";
 import { createTestRuntime } from "#/shared/testing/create-test-runtime.ts";
 import { waitForLockWait } from "#/shared/testing/wait-for-lock-wait.ts";
@@ -25,34 +24,17 @@ const BAND_PULL_APART_EXERCISE_ID = "019a0000-0000-7000-8000-000000000003";
  * the returned function runs, so a test can Save a Routine with the same id
  * while that Routine isn't committed yet.
  */
-async function beginRoutineInsert({
+function beginRoutineInsert({
   routineRow,
   runtime,
 }: {
   routineRow: typeof routine.$inferInsert;
   runtime: TestRuntime;
 }) {
-  const routineInserted = await runtime.runPromise(Deferred.make<boolean>());
-  const commitRequested = await runtime.runPromise(Deferred.make<boolean>());
-  const fiber = runtime.runFork(
-    Effect.gen(function* () {
-      const database = yield* Database;
-
-      yield* database.transaction(() =>
-        Effect.gen(function* () {
-          yield* database.insert(routine).values(routineRow);
-          yield* Deferred.succeed(routineInserted, true);
-          yield* Deferred.await(commitRequested);
-        }),
-      );
-    }),
-  );
-  await runtime.runPromise(Deferred.await(routineInserted));
-
-  return async () => {
-    await runtime.runPromise(Deferred.succeed(commitRequested, true));
-    await runtime.runPromise(Fiber.join(fiber));
-  };
+  return beginTransaction({
+    runtime,
+    write: (database) => database.insert(routine).values(routineRow),
+  });
 }
 
 function buildRoutineSaveInput({

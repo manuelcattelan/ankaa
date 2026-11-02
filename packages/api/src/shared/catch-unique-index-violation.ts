@@ -23,19 +23,18 @@ export function catchUniqueIndexViolation<TError>({
     write: Effect.Effect<TSuccess, TQueryError, TServices>,
   ) =>
     Effect.catch(write, (queryError) => {
-      const [, error] =
-        Object.entries(errors).find(
-          ([index]) =>
-            Cause.isCause(queryError.cause) &&
-            Option.exists(
-              Cause.findErrorOption(queryError.cause),
-              (sqlError) =>
-                isSqlError(sqlError) &&
-                sqlError.reason._tag === "UniqueViolation" &&
-                sqlError.reason.constraint === index,
-            ),
-        ) ?? [];
+      const sqlError = Cause.isCause(queryError.cause)
+        ? Option.getOrNull(Cause.findErrorOption(queryError.cause))
+        : null;
+      const constraint =
+        isSqlError(sqlError) && sqlError.reason._tag === "UniqueViolation"
+          ? sqlError.reason.constraint
+          : null;
+      const error =
+        constraint !== null && Object.hasOwn(errors, constraint)
+          ? (errors[constraint] ?? null)
+          : null;
 
-      return error === undefined ? Effect.die(queryError) : Effect.fail(error);
+      return error === null ? Effect.die(queryError) : Effect.fail(error);
     });
 }

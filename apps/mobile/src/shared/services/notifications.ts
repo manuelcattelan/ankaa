@@ -6,10 +6,20 @@ import * as ExpoNotifications from "expo-notifications";
 export type NotificationPermissionStatus =
   `${ExpoNotifications.PermissionStatus}`;
 
-export type ScheduledNotification = {
-  body: string;
+/**
+ * A notification to schedule, with the channel and the identifier it's filed
+ * under, named after Expo's `NotificationRequest`, which `schedule` turns it
+ * into
+ * (https://docs.expo.dev/versions/v57.0.0/sdk/notifications/#notificationrequest).
+ */
+export type NotificationRequest = {
   channelId: string;
   identifier: string;
+  notification: ScheduledNotification;
+};
+
+export type ScheduledNotification = {
+  body: string;
   seconds: number;
   title: string;
 };
@@ -23,9 +33,7 @@ export class Notifications extends Context.Service<
     readonly requestPermission: (options: {
       channel: { id: string; name: string };
     }) => Effect.Effect<void>;
-    readonly schedule: (
-      notification: ScheduledNotification,
-    ) => Effect.Effect<void>;
+    readonly schedule: (request: NotificationRequest) => Effect.Effect<void>;
   }
 >()("@ankaa/mobile/shared/services/Notifications") {
   static readonly layer = Layer.effect(
@@ -83,19 +91,17 @@ export class Notifications extends Context.Service<
       }
 
       function schedule({
-        body,
         channelId,
         identifier,
-        seconds,
-        title,
-      }: ScheduledNotification) {
+        notification,
+      }: NotificationRequest) {
         return Effect.promise(() =>
           ExpoNotifications.scheduleNotificationAsync({
-            content: { body, title },
+            content: { body: notification.body, title: notification.title },
             identifier,
             trigger: {
               channelId,
-              seconds,
+              seconds: notification.seconds,
               type: ExpoNotifications.SchedulableTriggerInputTypes
                 .TIME_INTERVAL,
             },

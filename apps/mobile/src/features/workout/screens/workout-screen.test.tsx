@@ -15,7 +15,7 @@ import {
 import type { Exercise } from "#/shared/exercise.ts";
 import type {
   NotificationPermissionStatus,
-  ScheduledNotification,
+  NotificationRequest,
 } from "#/shared/services/notifications.ts";
 import type { Workout } from "#/shared/workout.ts";
 
@@ -1203,7 +1203,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("schedules a notification for the end of the Rest that the User starts", async () => {
-    const scheduledNotifications: ScheduledNotification[] = [];
+    const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
     renderScreen({
       initialUrl: "/workout",
@@ -1228,57 +1228,28 @@ describe("WorkoutScreen", () => {
     await waitFor(() => {
       expect(scheduledNotifications).toStrictEqual([
         {
-          body: "Start your next set.",
           channelId: "countdowns",
           identifier: "countdown",
-          seconds: 120,
-          title: "Your rest is over",
+          notification: {
+            body: "Start your next set.",
+            seconds: 120,
+            title: "Your rest is over",
+          },
         },
       ]);
     });
   });
 
   it("ends the Rest early and cancels its notification through Skip rest", async () => {
-    const scheduledNotifications: ScheduledNotification[] = [];
-    const user = userEvent.setup();
-    renderScreen({
-      initialUrl: "/workout",
-      testRuntimeLayers: {
-        authenticationClient: fakeSignedInAuthenticationClientLayer,
-        notifications: fakeNotificationsLayer({ scheduledNotifications }),
-        trpcClient: fakeTrpcClientLayer({
-          responses: {
-            "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () =>
-              buildBenchPressWorkout({
-                plannedSets: [WORKING_PLANNED_SET],
-                recordedSets: [],
-              }),
-          },
-        }),
-      },
-    });
-    await user.press(await screen.findByRole("button", { name: "Start rest" }));
-    await waitFor(() => {
-      expect(scheduledNotifications).toHaveLength(1);
-    });
-
-    await user.press(screen.getByRole("button", { name: "Skip rest" }));
-
-    await waitFor(() => {
-      expect(scheduledNotifications).toStrictEqual([]);
-    });
-    expect(screen.queryByText("Rest: 120 seconds left")).toBeNull();
-  });
-
-  it("cancels only the notification of the Rest, and keeps any other, when the User ends the Rest early", async () => {
-    const scheduledNotifications: ScheduledNotification[] = [
+    const scheduledNotifications: NotificationRequest[] = [
       {
-        body: "Another notification.",
         channelId: "other",
         identifier: "other",
-        seconds: 600,
-        title: "Another notification",
+        notification: {
+          body: "Another notification.",
+          seconds: 600,
+          title: "Another notification",
+        },
       },
     ];
     const user = userEvent.setup();
@@ -1309,18 +1280,21 @@ describe("WorkoutScreen", () => {
     await waitFor(() => {
       expect(scheduledNotifications).toStrictEqual([
         {
-          body: "Another notification.",
           channelId: "other",
           identifier: "other",
-          seconds: 600,
-          title: "Another notification",
+          notification: {
+            body: "Another notification.",
+            seconds: 600,
+            title: "Another notification",
+          },
         },
       ]);
     });
+    expect(screen.queryByText("Rest: 120 seconds left")).toBeNull();
   });
 
   it("cancels the notification of the countdown when the User stops the Workout", async () => {
-    const scheduledNotifications: ScheduledNotification[] = [];
+    const scheduledNotifications: NotificationRequest[] = [];
     let workoutInProgress: null | Workout = buildBenchPressWorkout({
       plannedSets: [WORKING_PLANNED_SET],
       recordedSets: [],
@@ -1356,7 +1330,7 @@ describe("WorkoutScreen", () => {
 
   it("replaces the countdown of an earlier countdown when the User starts another", async () => {
     const permissionRequests: NotificationPermissionStatus[] = [];
-    const scheduledNotifications: ScheduledNotification[] = [];
+    const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
     renderScreen({
       initialUrl: "/workout",
@@ -1400,7 +1374,7 @@ describe("WorkoutScreen", () => {
 
   it("replaces the notification of an earlier countdown when the User starts another", async () => {
     const permissionRequests: NotificationPermissionStatus[] = [];
-    const scheduledNotifications: ScheduledNotification[] = [];
+    const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
     renderScreen({
       initialUrl: "/workout",
@@ -1441,11 +1415,13 @@ describe("WorkoutScreen", () => {
     await waitFor(() => {
       expect(scheduledNotifications).toStrictEqual([
         {
-          body: "Start the next segment of your set.",
           channelId: "countdowns",
           identifier: "countdown",
-          seconds: 15,
-          title: "Your pause is over",
+          notification: {
+            body: "Start the next segment of your set.",
+            seconds: 15,
+            title: "Your pause is over",
+          },
         },
       ]);
     });
@@ -1453,7 +1429,7 @@ describe("WorkoutScreen", () => {
 
   it("asks for notification permission only once when the User starts a second countdown", async () => {
     const permissionRequests: NotificationPermissionStatus[] = [];
-    const scheduledNotifications: ScheduledNotification[] = [];
+    const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
     renderScreen({
       initialUrl: "/workout",
@@ -1492,7 +1468,9 @@ describe("WorkoutScreen", () => {
     await user.press(screen.getByRole("button", { name: "Start pause" }));
 
     await waitFor(() => {
-      expect(scheduledNotifications).toMatchObject([{ seconds: 15 }]);
+      expect(scheduledNotifications).toMatchObject([
+        { notification: { seconds: 15 } },
+      ]);
     });
     expect(permissionRequests).toStrictEqual(["granted"]);
   });

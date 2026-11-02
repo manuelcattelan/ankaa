@@ -32,7 +32,7 @@ const WORKOUT_EXERCISE = {
 const SEGMENT = { amount: 8, weight: 60 };
 
 describe("decideRecordedSetSave", () => {
-  it("creates a new Set at the position after the recorded Sets", () => {
+  it("allows the create of a new Set at the position after the recorded Sets", () => {
     expect(
       decideRecordedSetSave({
         input: { id: "set-2", segments: [SEGMENT, SEGMENT, SEGMENT] },
@@ -42,7 +42,7 @@ describe("decideRecordedSetSave", () => {
     ).toStrictEqual({ _tag: "RecordedSetCreateAllowed", position: 1 });
   });
 
-  it("updates a recorded Set Saved again", () => {
+  it("allows the update of a recorded Set Saved again", () => {
     expect(
       decideRecordedSetSave({
         input: { id: "set-1", segments: [SEGMENT] },

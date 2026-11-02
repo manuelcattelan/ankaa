@@ -96,6 +96,12 @@ const PRESSABLE_IMPORT = {
   name: "react-native",
 };
 
+const MOBILE_RESTRICTED_IMPORT_PATHS = [
+  MEMOIZATION_IMPORT,
+  WRAPPED_PRIMITIVES_IMPORT,
+  PRESSABLE_IMPORT,
+];
+
 // eslint-config-expo's react and import plugins still call context methods that
 // ESLint 10 removed (https://eslint.org/docs/latest/use/migrate-to-10.0.0), so
 // fixupConfigRules wraps them until Expo supports ESLint 10. It wraps every
@@ -185,7 +191,7 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
     },
     createRestrictedImportsConfiguration({
       files: JAVASCRIPT_FILES,
-      paths: [MEMOIZATION_IMPORT, WRAPPED_PRIMITIVES_IMPORT, PRESSABLE_IMPORT],
+      paths: MOBILE_RESTRICTED_IMPORT_PATHS,
       patterns: RESTRICTED_IMPORT_PATTERNS,
     }),
     {
@@ -202,7 +208,7 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
     createRestrictedImportsConfiguration({
       files: ["src/app/**"],
       ignores: ["src/app/_layout.tsx"],
-      paths: [MEMOIZATION_IMPORT, WRAPPED_PRIMITIVES_IMPORT, PRESSABLE_IMPORT],
+      paths: MOBILE_RESTRICTED_IMPORT_PATHS,
       patterns: [...RESTRICTED_IMPORT_PATTERNS, ROUTE_PACKAGE_IMPORT_PATTERN],
     }),
     createRestrictedImportsConfiguration({
@@ -241,7 +247,8 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
     },
     {
       files: TYPE_TEST_FILES,
-      // A type test asserts through @ts-expect-error, which check-types checks.
+      // A type test asserts through @ts-expect-error, which check-types checks
+      // (https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-9.html#-ts-expect-error-comments).
       rules: { "jest/expect-expect": "off" },
     },
   ]);
