@@ -72,6 +72,8 @@ describe("SignOutButton", () => {
     const scheduledNotifications: ScheduledNotification[] = [
       {
         body: "Start your next set.",
+        channelId: "countdowns",
+        identifier: "countdown",
         seconds: 120,
         title: "Your rest is over",
       },

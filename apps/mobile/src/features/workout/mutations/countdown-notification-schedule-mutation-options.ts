@@ -8,7 +8,7 @@ import { COUNTDOWN_NOTIFICATION_SCOPE } from "#/features/workout/constants/count
 import { WorkoutApplicationService } from "#/features/workout/workout-application-service.ts";
 
 const program = Effect.fn("countdownNotificationScheduleMutation")(function* (
-  notification: ScheduledNotification,
+  notification: Omit<ScheduledNotification, "channelId" | "identifier">,
 ) {
   const workoutApplicationService = yield* WorkoutApplicationService;
 
@@ -19,8 +19,9 @@ export function countdownNotificationScheduleMutationOptions(
   runtime: ApplicationRuntime,
 ) {
   return mutationOptions({
-    mutationFn: (notification: ScheduledNotification) =>
-      runtime.runPromise(program(notification)),
+    mutationFn: (
+      notification: Omit<ScheduledNotification, "channelId" | "identifier">,
+    ) => runtime.runPromise(program(notification)),
     scope: COUNTDOWN_NOTIFICATION_SCOPE,
   });
 }

@@ -29,6 +29,16 @@ export function fakeNotificationsLayer({
         Effect.sync(() => {
           scheduledNotifications.splice(0);
         }),
+      cancelScheduled: (identifier) =>
+        Effect.sync(() => {
+          const index = scheduledNotifications.findIndex(
+            (notification) => notification.identifier === identifier,
+          );
+
+          if (index !== -1) {
+            scheduledNotifications.splice(index, 1);
+          }
+        }),
       getPermissionStatus: () => Effect.sync(() => permissionStatus),
       requestPermission: () =>
         Effect.sync(() => {

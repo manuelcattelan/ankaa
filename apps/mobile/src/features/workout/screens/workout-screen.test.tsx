@@ -1229,6 +1229,8 @@ describe("WorkoutScreen", () => {
       expect(scheduledNotifications).toStrictEqual([
         {
           body: "Start your next set.",
+          channelId: "countdowns",
+          identifier: "countdown",
           seconds: 120,
           title: "Your rest is over",
         },
@@ -1267,6 +1269,54 @@ describe("WorkoutScreen", () => {
       expect(scheduledNotifications).toStrictEqual([]);
     });
     expect(screen.queryByText("Rest: 120 seconds left")).toBeNull();
+  });
+
+  it("cancels only the notification of the Rest, and keeps any other, when the User ends the Rest early", async () => {
+    const scheduledNotifications: ScheduledNotification[] = [
+      {
+        body: "Another notification.",
+        channelId: "other",
+        identifier: "other",
+        seconds: 600,
+        title: "Another notification",
+      },
+    ];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({ scheduledNotifications }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start rest" }));
+    await waitFor(() => {
+      expect(scheduledNotifications).toHaveLength(2);
+    });
+
+    await user.press(screen.getByRole("button", { name: "Skip rest" }));
+
+    await waitFor(() => {
+      expect(scheduledNotifications).toStrictEqual([
+        {
+          body: "Another notification.",
+          channelId: "other",
+          identifier: "other",
+          seconds: 600,
+          title: "Another notification",
+        },
+      ]);
+    });
   });
 
   it("cancels the notification of the countdown when the User stops the Workout", async () => {
@@ -1392,6 +1442,8 @@ describe("WorkoutScreen", () => {
       expect(scheduledNotifications).toStrictEqual([
         {
           body: "Start the next segment of your set.",
+          channelId: "countdowns",
+          identifier: "countdown",
           seconds: 15,
           title: "Your pause is over",
         },

@@ -24,7 +24,11 @@ export const WORKOUT_MESSAGES = {
       title: "Your pause is over",
     },
     rest: { body: "Start your next set.", title: "Your rest is over" },
-  } satisfies Record<Countdown["kind"], Omit<ScheduledNotification, "seconds">>,
+  } satisfies Record<
+    Countdown["kind"],
+    Omit<ScheduledNotification, "channelId" | "identifier" | "seconds">
+  >,
+  countdownNotificationChannelName: "Rest and pauses",
   countdownStatusLabels: {
     pause: (remainingSeconds: number) =>
       `Pause: ${formatCount({ count: remainingSeconds, ...SECONDS_UNIT })} left`,
