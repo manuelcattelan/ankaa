@@ -24,13 +24,25 @@ export const WORKOUT_MESSAGES = {
       title: "Your pause is over",
     },
     rest: { body: "Start your next set.", title: "Your rest is over" },
+    segmentTimer: {
+      body: "The planned seconds are filled in: save your set.",
+      title: "Your time is up",
+    },
   } satisfies Record<Countdown["kind"], Omit<ScheduledNotification, "seconds">>,
-  countdownNotificationChannelName: "Rest and pauses",
+  countdownLeadInEndNotification: {
+    body: "The timer is running.",
+    title: "Start your set",
+  } satisfies Omit<ScheduledNotification, "seconds">,
+  countdownLeadInStatusLabel: (remainingSeconds: number) =>
+    `Get into position: ${formatCount({ count: remainingSeconds, ...SECONDS_UNIT })} left`,
+  countdownNotificationChannelName: "Rest, pauses and timers",
   countdownStatusLabels: {
     pause: (remainingSeconds: number) =>
       `Pause: ${formatCount({ count: remainingSeconds, ...SECONDS_UNIT })} left`,
     rest: (remainingSeconds: number) =>
       `Rest: ${formatCount({ count: remainingSeconds, ...SECONDS_UNIT })} left`,
+    segmentTimer: (remainingSeconds: number) =>
+      `Timer: ${formatCount({ count: remainingSeconds, ...SECONDS_UNIT })} left`,
   } satisfies Record<Countdown["kind"], (remainingSeconds: number) => string>,
   draftsUnsavedError: (draftLabels: readonly string[]) =>
     `You haven't saved these: ${draftLabels.join("; ")}. Save them before you stop the workout.`,
@@ -96,6 +108,7 @@ export const WORKOUT_MESSAGES = {
     "This exercise is skipped: to record, change or remove a set, pick Not skipped and save the skip.",
   startPauseButton: "Start pause",
   startRestButton: "Start rest",
+  startSegmentTimerButton: "Start",
   startWorkoutButton: (routineName: string) => `Start ${routineName}`,
   stopWorkoutButton: "Stop workout",
   tempoDescription:

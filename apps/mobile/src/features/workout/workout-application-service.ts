@@ -31,14 +31,26 @@ import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.t
 import { Notifications } from "#/shared/services/notifications.ts";
 import { TrpcClient } from "#/shared/services/trpc-client.ts";
 
+/**
+ * The notifications of a countdown: one for its end, and one for the end of
+ * its lead-in when it has one.
+ */
+export type CountdownNotifications = {
+  end: ScheduledNotification;
+  leadInEnd: null | ScheduledNotification;
+};
+
 const COUNTDOWN_NOTIFICATION_CHANNEL_ID = "countdowns";
 
 /**
- * The identifier that the notification of a countdown is scheduled under, so
- * the Workout cancels only its own notification and leaves any other one
- * scheduled.
+ * The identifiers that the notifications of a countdown are scheduled under,
+ * one for the end of its lead-in and one for its end, so the Workout cancels
+ * only its own notifications and leaves any other one scheduled.
  */
-const COUNTDOWN_NOTIFICATION_IDENTIFIER = "countdown";
+const COUNTDOWN_NOTIFICATION_IDENTIFIERS = {
+  end: "countdown",
+  leadInEnd: "countdownLeadIn",
+};
 
 export class WorkoutApplicationService extends Context.Service<
   WorkoutApplicationService,
@@ -70,8 +82,8 @@ export class WorkoutApplicationService extends Context.Service<
     readonly saveSkip: (
       input: WorkoutSaveSkipInput,
     ) => Effect.Effect<void, TrpcClientError | WorkoutNotFoundError>;
-    readonly scheduleCountdownNotification: (
-      notification: ScheduledNotification,
+    readonly scheduleCountdownNotifications: (
+      countdownNotifications: CountdownNotifications,
     ) => Effect.Effect<void>;
     readonly start: (
       input: WorkoutStartInput,
@@ -90,10 +102,15 @@ export class WorkoutApplicationService extends Context.Service<
       const notifications = yield* Notifications;
       const trpcClient = yield* TrpcClient;
 
-      const cancelCountdownNotification = Effect.fn(
-        "WorkoutApplicationService.cancelCountdownNotification",
+      const cancelCountdownNotifications = Effect.fn(
+        "WorkoutApplicationService.cancelCountdownNotifications",
       )(function* () {
-        yield* notifications.cancelScheduled(COUNTDOWN_NOTIFICATION_IDENTIFIER);
+        yield* notifications.cancelScheduled(
+          COUNTDOWN_NOTIFICATION_IDENTIFIERS.leadInEnd,
+        );
+        yield* notifications.cancelScheduled(
+          COUNTDOWN_NOTIFICATION_IDENTIFIERS.end,
+        );
       });
 
       const findInProgress = Effect.fn(
@@ -148,12 +165,13 @@ export class WorkoutApplicationService extends Context.Service<
 
       /**
        * Asks for notification permission the first time a countdown starts,
-       * and replaces the notification of an earlier countdown with
-       * `notification`, so only one countdown ever notifies.
+       * and replaces the notifications of an earlier countdown with those of
+       * the countdown started, so only one countdown ever notifies. Both are
+       * scheduled at once, because the app may not run when its lead-in ends.
        */
-      const scheduleCountdownNotification = Effect.fn(
-        "WorkoutApplicationService.scheduleCountdownNotification",
-      )(function* (notification: ScheduledNotification) {
+      const scheduleCountdownNotifications = Effect.fn(
+        "WorkoutApplicationService.scheduleCountdownNotifications",
+      )(function* ({ end, leadInEnd }: CountdownNotifications) {
         const permissionStatus = yield* notifications.getPermissionStatus();
 
         if (permissionStatus === "undetermined") {
@@ -165,11 +183,20 @@ export class WorkoutApplicationService extends Context.Service<
           });
         }
 
-        yield* cancelCountdownNotification();
+        yield* cancelCountdownNotifications();
+
+        if (leadInEnd !== null) {
+          yield* notifications.schedule({
+            channelId: COUNTDOWN_NOTIFICATION_CHANNEL_ID,
+            identifier: COUNTDOWN_NOTIFICATION_IDENTIFIERS.leadInEnd,
+            notification: leadInEnd,
+          });
+        }
+
         yield* notifications.schedule({
           channelId: COUNTDOWN_NOTIFICATION_CHANNEL_ID,
-          identifier: COUNTDOWN_NOTIFICATION_IDENTIFIER,
-          notification,
+          identifier: COUNTDOWN_NOTIFICATION_IDENTIFIERS.end,
+          notification: end,
         });
       });
 
@@ -184,7 +211,7 @@ export class WorkoutApplicationService extends Context.Service<
       });
 
       /**
-       * Stops the Workout, then cancels the notification of its countdown,
+       * Stops the Workout, then cancels the notifications of its countdown,
        * which has nothing left to count down for.
        */
       const stop = Effect.fn("WorkoutApplicationService.stop")(function* (
@@ -195,7 +222,7 @@ export class WorkoutApplicationService extends Context.Service<
             trpc.workout.stop.mutate(input, { signal }),
           errors: WORKOUT_STOP_WIRE_ERRORS,
         });
-        yield* cancelCountdownNotification();
+        yield* cancelCountdownNotifications();
       });
 
       return WorkoutApplicationService.of({
@@ -204,7 +231,7 @@ export class WorkoutApplicationService extends Context.Service<
         saveNote,
         saveSet,
         saveSkip,
-        scheduleCountdownNotification,
+        scheduleCountdownNotifications,
         start,
         stop,
       });

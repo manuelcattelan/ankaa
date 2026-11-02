@@ -13,6 +13,7 @@ import { WorkoutPlannedSet } from "#/features/workout/components/workout-planned
 import { WorkoutSegment } from "#/features/workout/components/workout-segment.tsx";
 import { WorkoutSetCountdown } from "#/features/workout/components/workout-set-countdown.tsx";
 import { createRecordedSetDraft } from "#/features/workout/core/create-recorded-set-draft.ts";
+import { getSegmentTimerSegmentPosition } from "#/features/workout/core/get-segment-timer-segment-position.ts";
 import { getWorkoutRemoveSetErrorMessage } from "#/features/workout/core/get-workout-remove-set-error-message.ts";
 import { getWorkoutSaveSetErrorMessage } from "#/features/workout/core/get-workout-save-set-error-message.ts";
 import { isRecordedSetDraftSaved } from "#/features/workout/core/is-recorded-set-draft-saved.ts";
@@ -33,7 +34,9 @@ import { useRuntime } from "#/shared/hooks/use-runtime.ts";
  * lets the User fill in its Segments and Save it when it's a recorded Set or
  * the next one to record, and remove it when it's a recorded Set. While the
  * Workout exercise has a Skip, it shows a recorded Set's Segments read-only
- * and offers no Set to record.
+ * and offers no Set to record. When its Amounts are counted in seconds, it
+ * offers a Segment timer of the planned Amount while it can be recorded and
+ * has a Segment for the timer to fill.
  */
 export function WorkoutSet({
   amountUnit,
@@ -110,6 +113,10 @@ export function WorkoutSet({
   });
   const maximumSegmentCount = getMaximumSegmentCount(plannedSet);
   const hasSegments = isSkipped ? recordedSet !== null : isRecordable;
+  const segmentTimerSegmentPosition = getSegmentTimerSegmentPosition({
+    maximumSegmentCount,
+    segments: recordedSetDraft.segments,
+  });
   const statusMessage = getStatusMessage();
 
   function getStatusMessage() {
@@ -140,6 +147,26 @@ export function WorkoutSet({
             type: "changedRecordedSetDraft",
           },
     );
+  }
+
+  function handleEndSegmentTimer(seconds: number) {
+    if (segmentTimerSegmentPosition === null) {
+      return;
+    }
+
+    const segments =
+      segmentTimerSegmentPosition === recordedSetDraft.segments.length
+        ? [...recordedSetDraft.segments, { amount: "", weight: "" }]
+        : recordedSetDraft.segments;
+
+    handleChangeDraft({
+      ...recordedSetDraft,
+      segments: segments.map((segment, segmentPosition) =>
+        segmentPosition === segmentTimerSegmentPosition
+          ? { ...segment, amount: String(seconds) }
+          : segment,
+      ),
+    });
   }
 
   function handleRemoveSet(removedRecordedSet: { id: string }) {
@@ -262,8 +289,17 @@ export function WorkoutSet({
       ) : null}
       <WorkoutSetCountdown
         canStartRest={canStartRest}
+        onEndSegmentTimer={handleEndSegmentTimer}
         plannedSet={plannedSet}
         position={position}
+        segmentTimerSeconds={
+          amountUnit === "second" &&
+          isRecordable &&
+          !isSkipped &&
+          segmentTimerSegmentPosition !== null
+            ? plannedSet.amount
+            : null
+        }
         workoutExerciseId={workoutExerciseId}
       />
     </>

@@ -2,6 +2,7 @@ import { getCountdownRemainingSeconds } from "#/features/workout/core/get-countd
 
 const REST_COUNTDOWN = {
   kind: "rest" as const,
+  leadInSeconds: 0,
   position: 0,
   seconds: 120,
   startTime: 1_000_000,

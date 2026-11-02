@@ -32,8 +32,8 @@ const noExerciseNames: ReadonlyMap<string, string> = new Map();
 /**
  * Shows the User's Workout in progress, and keeps the Draft of every Set,
  * note and Skip that has something to Save, so stopping can be refused while
- * one has, and the one countdown of Rest or a Pause, which starting another
- * replaces.
+ * one has, and the one countdown of Rest, a Pause or a Segment timer, which
+ * starting another replaces.
  */
 export function WorkoutScreen() {
   const runtime = useRuntime();
@@ -51,7 +51,7 @@ export function WorkoutScreen() {
     ...exerciseListQueryOptions(runtime),
     select: getExerciseNames,
   });
-  const scheduleCountdownNotification = useMutation(
+  const scheduleCountdownNotifications = useMutation(
     countdownNotificationScheduleMutationOptions(runtime),
   );
 
@@ -95,9 +95,18 @@ export function WorkoutScreen() {
     startedCountdown: Omit<Countdown, "startTime">,
   ) {
     setCountdown({ ...startedCountdown, startTime: Date.now() });
-    scheduleCountdownNotification.mutate({
-      ...WORKOUT_MESSAGES.countdownEndNotifications[startedCountdown.kind],
-      seconds: startedCountdown.seconds,
+    scheduleCountdownNotifications.mutate({
+      end: {
+        ...WORKOUT_MESSAGES.countdownEndNotifications[startedCountdown.kind],
+        seconds: startedCountdown.leadInSeconds + startedCountdown.seconds,
+      },
+      leadInEnd:
+        startedCountdown.leadInSeconds === 0
+          ? null
+          : {
+              ...WORKOUT_MESSAGES.countdownLeadInEndNotification,
+              seconds: startedCountdown.leadInSeconds,
+            },
     });
   }
 

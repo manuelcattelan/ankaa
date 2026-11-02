@@ -8,7 +8,8 @@ import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.t
 import { Text } from "#/shared/components/text.tsx";
 
 /**
- * Shows the seconds left in `countdown`, read from the clock every second so
+ * Shows the seconds left in the lead-in of `countdown` while it lasts, then
+ * the seconds left in `countdown`, read from the clock every second so
  * the count stays right after the app comes back from the background, and
  * calls `onEnd` once it reaches 0.
  */
@@ -25,6 +26,7 @@ export function WorkoutCountdown({
     countdown,
     currentTime,
   });
+  const leadInRemainingSeconds = remainingSeconds - countdown.seconds;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -46,7 +48,11 @@ export function WorkoutCountdown({
 
   return (
     <Text>
-      {WORKOUT_MESSAGES.countdownStatusLabels[countdown.kind](remainingSeconds)}
+      {leadInRemainingSeconds > 0
+        ? WORKOUT_MESSAGES.countdownLeadInStatusLabel(leadInRemainingSeconds)
+        : WORKOUT_MESSAGES.countdownStatusLabels[countdown.kind](
+            remainingSeconds,
+          )}
     </Text>
   );
 }

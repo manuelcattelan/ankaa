@@ -261,6 +261,64 @@ function buildBenchPressWorkout({
   } satisfies Workout;
 }
 
+const PLANK_WORKOUT_EXERCISE_ID = "01900000-0000-7000-8000-000000000402";
+
+const PLANK_PLANNED_SET = {
+  amount: 60,
+  id: "01900000-0000-7000-8000-000000000403",
+  intensityTechnique: null,
+  isToFailure: false,
+  restSeconds: 90,
+  tempo: null,
+  type: "working" as const,
+};
+
+/**
+ * Builds a Workout in progress of one Plank, whose Amounts are counted in
+ * seconds, with its planned and recorded Sets, and its Skip reason, which is
+ * empty by default.
+ */
+function buildPlankWorkout({
+  plannedSets,
+  recordedSets,
+  skipReason = null,
+}: {
+  plannedSets: Workout["sections"]["main"][number]["exercises"][number]["plannedSets"];
+  recordedSets: Workout["sections"]["main"][number]["exercises"][number]["recordedSets"];
+  skipReason?: null | SkipReason;
+}) {
+  return {
+    id: "01900000-0000-7000-8000-000000000401",
+    sections: {
+      coolDown: [],
+      main: [
+        {
+          exercises: [
+            {
+              amountUnit: "second",
+              exerciseId: PLANK_EXERCISE_ID,
+              id: PLANK_WORKOUT_EXERCISE_ID,
+              note: null,
+              plannedNote: null,
+              plannedSets,
+              pyramidLabel: null,
+              recordedSets,
+              skipNote: null,
+              skipReason,
+              warmUpExercises: [],
+              weightType: "bodyweight",
+              weightUnit: "kilogram",
+            },
+          ],
+          id: "01900000-0000-7000-8000-000000000404",
+        },
+      ],
+      warmUp: [],
+    },
+    startedAt: "2026-10-29T09:00:00.000Z",
+  } satisfies Workout;
+}
+
 function getButton({ index, name }: { index: number; name: string }) {
   const button = screen.getAllByRole("button", { name }).at(index);
 
@@ -1722,5 +1780,394 @@ describe("WorkoutScreen", () => {
     expect(
       screen.getByRole("button", { name: "Start rest" }),
     ).toBeOnTheScreen();
+  });
+
+  it("offers Start on a Set of a Workout exercise counted in seconds", async () => {
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [PLANK_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+
+    expect(
+      await screen.findByRole("button", { name: "Start" }),
+    ).toBeOnTheScreen();
+  });
+
+  it("doesn't offer Start on a Set of a Workout exercise counted in Repetitions", async () => {
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+
+    await screen.findByRole("button", { name: "Save set" });
+
+    expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
+  });
+
+  it("schedules a notification for the end of a 5-second lead-in when the User starts a Segment timer", async () => {
+    const scheduledNotifications: NotificationRequest[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({ scheduledNotifications }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [PLANK_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+
+    await user.press(await screen.findByRole("button", { name: "Start" }));
+
+    await waitFor(() => {
+      expect(scheduledNotifications).toContainEqual({
+        channelId: "countdowns",
+        identifier: "countdownLeadIn",
+        notification: {
+          body: "The timer is running.",
+          seconds: 5,
+          title: "Start your set",
+        },
+      });
+    });
+    expect(
+      screen.getByText("Get into position: 5 seconds left"),
+    ).toBeOnTheScreen();
+  });
+
+  it("counts down the planned seconds of the Set once the lead-in of the Segment timer ends", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [PLANK_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start" }));
+
+    await advanceFakeTime(15_000);
+
+    expect(screen.getByText("Timer: 50 seconds left")).toBeOnTheScreen();
+  });
+
+  it("schedules a notification for the end of the planned seconds when the User starts a Segment timer", async () => {
+    const scheduledNotifications: NotificationRequest[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({ scheduledNotifications }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [PLANK_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+
+    await user.press(await screen.findByRole("button", { name: "Start" }));
+
+    await waitFor(() => {
+      expect(scheduledNotifications).toStrictEqual([
+        {
+          channelId: "countdowns",
+          identifier: "countdownLeadIn",
+          notification: {
+            body: "The timer is running.",
+            seconds: 5,
+            title: "Start your set",
+          },
+        },
+        {
+          channelId: "countdowns",
+          identifier: "countdown",
+          notification: {
+            body: "The planned seconds are filled in: save your set.",
+            seconds: 65,
+            title: "Your time is up",
+          },
+        },
+      ]);
+    });
+  });
+
+  it("fills the planned seconds into the first Segment with no Amount when the Segment timer reaches zero, and doesn't Save the Set", async () => {
+    const receivedPaths: string[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          receivedPaths,
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [PLANK_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start" }));
+
+    await advanceFakeTime(65_000);
+
+    expect(screen.getByLabelText("Seconds")).toHaveDisplayValue("60");
+    expect(receivedPaths).not.toContain("workout.saveSet");
+  });
+
+  it("adds a Segment and fills the planned seconds into it when every Segment has an Amount and the plan allows another", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [
+                  {
+                    ...PLANK_PLANNED_SET,
+                    intensityTechnique: {
+                      _tag: "RestPauseSet",
+                      pauseSeconds: 15,
+                      segmentCount: 2,
+                    },
+                  },
+                ],
+                recordedSets: [
+                  {
+                    id: "01900000-0000-7000-8000-000000000405",
+                    segments: [{ amount: 45, weight: null }],
+                  },
+                ],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start" }));
+
+    await advanceFakeTime(65_000);
+
+    expect(getField({ index: 0, label: "Seconds" })).toHaveDisplayValue("45");
+    expect(getField({ index: 1, label: "Seconds" })).toHaveDisplayValue("60");
+  });
+
+  it("doesn't offer Start on a Set whose Segments all have an Amount and whose plan allows no other", async () => {
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [PLANK_PLANNED_SET],
+                recordedSets: [
+                  {
+                    id: "01900000-0000-7000-8000-000000000405",
+                    segments: [{ amount: 45, weight: null }],
+                  },
+                ],
+              }),
+          },
+        }),
+      },
+    });
+
+    await screen.findByRole("button", { name: "Remove set" });
+
+    expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
+  });
+
+  it("offers Start only on the Sets that the User can record", async () => {
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [
+                  PLANK_PLANNED_SET,
+                  {
+                    ...PLANK_PLANNED_SET,
+                    id: "01900000-0000-7000-8000-000000000406",
+                  },
+                ],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+
+    await screen.findByRole("button", { name: "Save set" });
+
+    expect(screen.getAllByRole("button", { name: "Start" })).toHaveLength(1);
+  });
+
+  it("replaces a Segment timer and cancels its notifications when the User starts a Rest", async () => {
+    const scheduledNotifications: NotificationRequest[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({ scheduledNotifications }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [PLANK_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start" }));
+    await waitFor(() => {
+      expect(scheduledNotifications).toHaveLength(2);
+    });
+
+    await user.press(screen.getByRole("button", { name: "Start rest" }));
+
+    await waitFor(() => {
+      expect(scheduledNotifications).toStrictEqual([
+        {
+          channelId: "countdowns",
+          identifier: "countdown",
+          notification: {
+            body: "Start your next set.",
+            seconds: 90,
+            title: "Your rest is over",
+          },
+        },
+      ]);
+    });
+    expect(screen.getByText("Rest: 90 seconds left")).toBeOnTheScreen();
+    expect(screen.queryByText("Get into position: 5 seconds left")).toBeNull();
+  });
+
+  it("replaces a Rest and its notification when the User starts a Segment timer", async () => {
+    const scheduledNotifications: NotificationRequest[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        notifications: fakeNotificationsLayer({ scheduledNotifications }),
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [PLANK_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.press(await screen.findByRole("button", { name: "Start rest" }));
+    await waitFor(() => {
+      expect(scheduledNotifications).toHaveLength(1);
+    });
+
+    await user.press(screen.getByRole("button", { name: "Start" }));
+
+    await waitFor(() => {
+      expect(scheduledNotifications).toMatchObject([
+        { identifier: "countdownLeadIn", notification: { seconds: 5 } },
+        { identifier: "countdown", notification: { seconds: 65 } },
+      ]);
+    });
+    expect(
+      screen.getByText("Get into position: 5 seconds left"),
+    ).toBeOnTheScreen();
+    expect(screen.queryByText("Rest: 90 seconds left")).toBeNull();
+  });
+
+  it("doesn't offer Start on a Set of a Workout exercise that has a Skip", async () => {
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildPlankWorkout({
+                plannedSets: [PLANK_PLANNED_SET],
+                recordedSets: [],
+                skipReason: "pain",
+              }),
+          },
+        }),
+      },
+    });
+
+    await screen.findByRole("button", { name: "Save skip" });
+
+    expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
   });
 });
