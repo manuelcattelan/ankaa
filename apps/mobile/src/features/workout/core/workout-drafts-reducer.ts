@@ -37,7 +37,7 @@ type WorkoutExerciseDraftEntry<TDraft> = {
 
 /**
  * Keeps every Draft of a Workout that has something to Save: one per
- * position of a Workout exercise's Sets, and one note and one skip per
+ * position of a Workout exercise's Sets, and one note and one Skip per
  * Workout exercise.
  */
 export function workoutDraftsReducer(

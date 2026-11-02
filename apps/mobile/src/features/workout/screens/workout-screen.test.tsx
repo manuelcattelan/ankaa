@@ -2,7 +2,7 @@ import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-rea
 import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
 import type { WorkoutSaveNoteInput } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
-import type { WorkoutSkipExerciseInput } from "@ankaa/core/features/workout/schemas/workout-skip-exercise-input-schema";
+import type { WorkoutSaveSkipInput } from "@ankaa/core/features/workout/schemas/workout-save-skip-input-schema";
 import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 
 import {
@@ -208,7 +208,7 @@ const WORKING_PLANNED_SET = {
 
 /**
  * Builds a Workout in progress of one Bench Press (Barbell) with its planned
- * and recorded Sets, and its note and skip, which are empty by default.
+ * and recorded Sets, and its note and Skip, which are empty by default.
  */
 function buildBenchPressWorkout({
   note = null,
@@ -860,8 +860,8 @@ describe("WorkoutScreen", () => {
     expect(stoppedInputs).toStrictEqual([]);
   });
 
-  it("Saves the skip of a Workout exercise, with the reason the User picks and their note, through Save skip", async () => {
-    const skippedInputs: WorkoutSkipExerciseInput[] = [];
+  it("Saves the Skip of a Workout exercise, with the reason the User picks and their note, through Save skip", async () => {
+    const savedInputs: WorkoutSaveSkipInput[] = [];
     let workoutInProgress = buildBenchPressWorkout({
       plannedSets: [WORKING_PLANNED_SET],
       recordedSets: [],
@@ -875,8 +875,8 @@ describe("WorkoutScreen", () => {
           responses: {
             "exercise.list": () => EXERCISES,
             "workout.findInProgress": () => workoutInProgress,
-            "workout.skipExercise": (input) => {
-              skippedInputs.push(input);
+            "workout.saveSkip": (input) => {
+              savedInputs.push(input);
               workoutInProgress = buildBenchPressWorkout({
                 plannedSets: [WORKING_PLANNED_SET],
                 recordedSets: [],
@@ -899,7 +899,7 @@ describe("WorkoutScreen", () => {
     await user.press(screen.getByRole("button", { name: "Save skip" }));
 
     await waitFor(() => {
-      expect(skippedInputs).toStrictEqual([
+      expect(savedInputs).toStrictEqual([
         {
           note: "Sore shoulder",
           reason: "pain",
@@ -912,7 +912,7 @@ describe("WorkoutScreen", () => {
     );
   });
 
-  it("refuses to stop the Workout while a skip has a Draft the User hasn't Saved, naming its Workout exercise", async () => {
+  it("refuses to stop the Workout while a Skip has a Draft the User hasn't Saved, naming its Workout exercise", async () => {
     const stoppedInputs: WorkoutStopInput[] = [];
     const user = userEvent.setup();
     renderScreen({
@@ -948,7 +948,7 @@ describe("WorkoutScreen", () => {
     expect(stoppedInputs).toStrictEqual([]);
   });
 
-  it("refuses to Save a skip with a note and no reason, telling the User to pick a reason", async () => {
+  it("refuses to Save a Skip with a note and no reason, telling the User to pick a reason", async () => {
     const receivedPaths: string[] = [];
     const user = userEvent.setup();
     renderScreen({
@@ -980,7 +980,7 @@ describe("WorkoutScreen", () => {
         "This note needs a reason: pick why you skipped the exercise, or clear the note.",
       ),
     ).toBeOnTheScreen();
-    expect(receivedPaths).not.toContain("workout.skipExercise");
+    expect(receivedPaths).not.toContain("workout.saveSkip");
   });
 
   it("tells the User that Ankaa can't connect when a note's Save can't reach the server, and keeps the Draft on the screen", async () => {

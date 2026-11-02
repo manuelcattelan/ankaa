@@ -1419,7 +1419,7 @@ describe("workout.removeSet", () => {
   });
 });
 
-describe("workout.skipExercise", () => {
+describe("workout.saveSkip", () => {
   const runtime = createTestRuntime();
 
   beforeAll(async () => {
@@ -1430,7 +1430,7 @@ describe("workout.skipExercise", () => {
     await runtime.dispose();
   });
 
-  it("Saves the reason and the note of a skip on the Workout exercise, which workout.findInProgress returns", async () => {
+  it("Saves the reason and the note of a Skip on the Workout exercise, which workout.findInProgress returns", async () => {
     const caller = await createSignedInCaller({ runtime });
     const workoutExerciseId = await startBenchPressWorkout({
       caller,
@@ -1438,7 +1438,7 @@ describe("workout.skipExercise", () => {
       plannedSets: [WORKING_PLANNED_SET],
     });
 
-    await caller.workout.skipExercise({
+    await caller.workout.saveSkip({
       note: "Sore shoulder",
       reason: "pain",
       workoutExerciseId,
@@ -1455,7 +1455,7 @@ describe("workout.skipExercise", () => {
     });
   });
 
-  it("Saves a skip with a reason and no note", async () => {
+  it("Saves a Skip with a reason and no note", async () => {
     const caller = await createSignedInCaller({ runtime });
     const workoutExerciseId = await startBenchPressWorkout({
       caller,
@@ -1463,7 +1463,7 @@ describe("workout.skipExercise", () => {
       plannedSets: [WORKING_PLANNED_SET],
     });
 
-    await caller.workout.skipExercise({
+    await caller.workout.saveSkip({
       note: null,
       reason: "low_on_time",
       workoutExerciseId,
@@ -1489,7 +1489,7 @@ describe("workout.skipExercise", () => {
     });
 
     await expect(
-      caller.workout.skipExercise({
+      caller.workout.saveSkip({
         note: "Sore shoulder",
         reason: null,
         workoutExerciseId,
@@ -1516,7 +1516,7 @@ describe("workout.skipExercise", () => {
       workoutExerciseId,
     });
 
-    await caller.workout.skipExercise({
+    await caller.workout.saveSkip({
       note: null,
       reason: "low_energy",
       workoutExerciseId,
@@ -1553,7 +1553,7 @@ describe("workout.skipExercise", () => {
     await caller.workout.stop({ id: "019a0805-0000-7000-8000-000000000004" });
 
     await expect(
-      caller.workout.skipExercise({
+      caller.workout.saveSkip({
         note: null,
         reason: "pain",
         workoutExerciseId,
@@ -1574,7 +1574,7 @@ describe("workout.skipExercise", () => {
     const caller = await createSignedInCaller({ runtime });
 
     await expect(
-      caller.workout.skipExercise({
+      caller.workout.saveSkip({
         note: null,
         reason: "pain",
         workoutExerciseId: otherWorkoutExerciseId,

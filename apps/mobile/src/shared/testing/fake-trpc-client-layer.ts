@@ -14,7 +14,7 @@ import { routineSaveInputSchema } from "@ankaa/core/features/routine/schemas/rou
 import { workoutRemoveSetInputSchema } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
 import { workoutSaveNoteInputSchema } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import { workoutSaveSetInputSchema } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
-import { workoutSkipExerciseInputSchema } from "@ankaa/core/features/workout/schemas/workout-skip-exercise-input-schema";
+import { workoutSaveSkipInputSchema } from "@ankaa/core/features/workout/schemas/workout-save-skip-input-schema";
 import { workoutStartInputSchema } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
 import { workoutStopInputSchema } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 import { initTRPC, TRPCError } from "@trpc/server";
@@ -217,11 +217,11 @@ function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
           response: fakeTrpcResponses["workout.saveSet"],
         }),
       ),
-    "workout.skipExercise": t.procedure
-      .input(Schema.toStandardSchemaV1(workoutSkipExerciseInputSchema))
+    "workout.saveSkip": t.procedure
+      .input(Schema.toStandardSchemaV1(workoutSaveSkipInputSchema))
       .mutation(
         createFakeTrpcResolver({
-          response: fakeTrpcResponses["workout.skipExercise"],
+          response: fakeTrpcResponses["workout.saveSkip"],
         }),
       ),
     "workout.start": t.procedure

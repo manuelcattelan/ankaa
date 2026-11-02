@@ -6,11 +6,11 @@ import { useState } from "react";
 
 import type { SkipDraft } from "#/features/workout/core/skip-form-schema.ts";
 
-import { getWorkoutSkipExerciseErrorMessage } from "#/features/workout/core/get-workout-skip-exercise-error-message.ts";
+import { getWorkoutSaveSkipErrorMessage } from "#/features/workout/core/get-workout-save-skip-error-message.ts";
 import { skipFormSchema } from "#/features/workout/core/skip-form-schema.ts";
 import { useWorkoutContext } from "#/features/workout/hooks/use-workout-context.ts";
 import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
-import { workoutSkipExerciseMutationOptions } from "#/features/workout/mutations/workout-skip-exercise-mutation-options.ts";
+import { workoutSaveSkipMutationOptions } from "#/features/workout/mutations/workout-save-skip-mutation-options.ts";
 import { workoutFindInProgressQueryOptions } from "#/features/workout/queries/workout-find-in-progress-query-options.ts";
 import { Button } from "#/shared/components/button.tsx";
 import { PickerField } from "#/shared/components/picker-field.tsx";
@@ -29,8 +29,8 @@ const SKIP_REASON_OPTION_LABELS = {
 };
 
 /**
- * Lets the User mark a Workout exercise as skipped, with a reason and an
- * optional note, or as not skipped, and Save it through its own button.
+ * Lets the User give a Workout exercise a Skip, with a reason and an optional
+ * note, or clear it, and Save it through its own button.
  */
 export function WorkoutExerciseSkip({
   draft,
@@ -53,8 +53,8 @@ export function WorkoutExerciseSkip({
 
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const skipExercise = useMutation({
-    ...workoutSkipExerciseMutationOptions(runtime),
+  const saveSkip = useMutation({
+    ...workoutSaveSkipMutationOptions(runtime),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: workoutFindInProgressQueryOptions(runtime).queryKey,
@@ -74,8 +74,8 @@ export function WorkoutExerciseSkip({
   const statusMessage = getStatusMessage();
 
   function getStatusMessage() {
-    if (skipExercise.error !== null) {
-      return getWorkoutSkipExerciseErrorMessage(skipExercise.error);
+    if (saveSkip.error !== null) {
+      return getWorkoutSaveSkipErrorMessage(saveSkip.error);
     }
 
     return skipFormDecoding.errorMessage;
@@ -94,15 +94,15 @@ export function WorkoutExerciseSkip({
   }
 
   function handleSaveSkip() {
-    if (skipExercise.isPending) {
+    if (saveSkip.isPending) {
       return;
     }
 
     setHasSubmitted(true);
-    skipExercise.reset();
+    saveSkip.reset();
 
     if (skipFormDecoding.value !== null) {
-      skipExercise.mutate({ ...skipFormDecoding.value, workoutExerciseId });
+      saveSkip.mutate({ ...skipFormDecoding.value, workoutExerciseId });
     }
   }
 
@@ -129,7 +129,7 @@ export function WorkoutExerciseSkip({
         value={skipDraft.note}
       />
       <Button
-        isBusy={skipExercise.isPending}
+        isBusy={saveSkip.isPending}
         onPress={handleSaveSkip}
         title={WORKOUT_MESSAGES.saveSkipButton}
       />

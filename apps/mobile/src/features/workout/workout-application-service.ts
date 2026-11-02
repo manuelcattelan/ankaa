@@ -5,7 +5,7 @@ import type { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/w
 import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
 import type { WorkoutSaveNoteInput } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
-import type { WorkoutSkipExerciseInput } from "@ankaa/core/features/workout/schemas/workout-skip-exercise-input-schema";
+import type { WorkoutSaveSkipInput } from "@ankaa/core/features/workout/schemas/workout-save-skip-input-schema";
 import type { WorkoutStartInput } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
 import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 import type { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
@@ -13,7 +13,7 @@ import type { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not
 import { WORKOUT_REMOVE_SET_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-remove-set-wire-errors";
 import { WORKOUT_SAVE_NOTE_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-save-note-wire-errors";
 import { WORKOUT_SAVE_SET_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-save-set-wire-errors";
-import { WORKOUT_SKIP_EXERCISE_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-skip-exercise-wire-errors";
+import { WORKOUT_SAVE_SKIP_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-save-skip-wire-errors";
 import { WORKOUT_START_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-start-wire-errors";
 import { WORKOUT_STOP_WIRE_ERRORS } from "@ankaa/core/features/workout/errors/workout-stop-wire-errors";
 import * as Context from "effect/Context";
@@ -51,12 +51,12 @@ export class WorkoutApplicationService extends Context.Service<
       | TrpcClientError
       | WorkoutNotFoundError
     >;
+    readonly saveSkip: (
+      input: WorkoutSaveSkipInput,
+    ) => Effect.Effect<void, TrpcClientError | WorkoutNotFoundError>;
     readonly scheduleCountdownNotification: (
       notification: ScheduledNotification,
     ) => Effect.Effect<void>;
-    readonly skipExercise: (
-      input: WorkoutSkipExerciseInput,
-    ) => Effect.Effect<void, TrpcClientError | WorkoutNotFoundError>;
     readonly start: (
       input: WorkoutStartInput,
     ) => Effect.Effect<
@@ -120,12 +120,12 @@ export class WorkoutApplicationService extends Context.Service<
         });
       });
 
-      const skipExercise = Effect.fn("WorkoutApplicationService.skipExercise")(
-        function* (input: WorkoutSkipExerciseInput) {
+      const saveSkip = Effect.fn("WorkoutApplicationService.saveSkip")(
+        function* (input: WorkoutSaveSkipInput) {
           yield* trpcClient.request({
             call: ({ signal, trpc }) =>
-              trpc.workout.skipExercise.mutate(input, { signal }),
-            errors: WORKOUT_SKIP_EXERCISE_WIRE_ERRORS,
+              trpc.workout.saveSkip.mutate(input, { signal }),
+            errors: WORKOUT_SAVE_SKIP_WIRE_ERRORS,
           });
         },
       );
@@ -179,8 +179,8 @@ export class WorkoutApplicationService extends Context.Service<
         removeSet,
         saveNote,
         saveSet,
+        saveSkip,
         scheduleCountdownNotification,
-        skipExercise,
         start,
         stop,
       });

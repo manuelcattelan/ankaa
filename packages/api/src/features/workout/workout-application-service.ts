@@ -5,7 +5,7 @@ import type { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/w
 import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
 import type { WorkoutSaveNoteInput } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
-import type { WorkoutSkipExerciseInput } from "@ankaa/core/features/workout/schemas/workout-skip-exercise-input-schema";
+import type { WorkoutSaveSkipInput } from "@ankaa/core/features/workout/schemas/workout-save-skip-input-schema";
 import type { WorkoutStartInput } from "@ankaa/core/features/workout/schemas/workout-start-input-schema";
 import type { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 
@@ -43,8 +43,8 @@ export class WorkoutApplicationService extends Context.Service<
       | SegmentWeightNotAllowedError
       | WorkoutNotFoundError
     >;
-    readonly skipExercise: (options: {
-      input: WorkoutSkipExerciseInput;
+    readonly saveSkip: (options: {
+      input: WorkoutSaveSkipInput;
       userId: string;
     }) => Effect.Effect<void, WorkoutNotFoundError>;
     readonly start: (options: {
@@ -175,12 +175,12 @@ export class WorkoutApplicationService extends Context.Service<
         },
       );
 
-      const skipExercise = Effect.fn("WorkoutApplicationService.skipExercise")(
+      const saveSkip = Effect.fn("WorkoutApplicationService.saveSkip")(
         function* ({
           input,
           userId,
         }: {
-          input: WorkoutSkipExerciseInput;
+          input: WorkoutSaveSkipInput;
           userId: string;
         }) {
           yield* database
@@ -195,7 +195,7 @@ export class WorkoutApplicationService extends Context.Service<
                   decideWorkoutExerciseUpdate({ userId, workoutExercise }),
                   {
                     WorkoutExerciseUpdateAllowed: () =>
-                      workoutRepository.skipExercise({ input }),
+                      workoutRepository.saveSkip({ input }),
                     WorkoutNotFoundError: (error) => Effect.fail(error),
                   },
                 );
@@ -268,7 +268,7 @@ export class WorkoutApplicationService extends Context.Service<
         removeSet,
         saveNote,
         saveSet,
-        skipExercise,
+        saveSkip,
         start,
         stop,
       });

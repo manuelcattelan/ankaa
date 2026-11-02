@@ -1,6 +1,6 @@
 import type { WorkoutSaveNoteInput } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
-import type { WorkoutSkipExerciseInput } from "@ankaa/core/features/workout/schemas/workout-skip-exercise-input-schema";
+import type { WorkoutSaveSkipInput } from "@ankaa/core/features/workout/schemas/workout-save-skip-input-schema";
 import type { Section } from "@ankaa/core/shared/constants/sections";
 import type * as ExerciseDatabaseSchema from "@ankaa/database/schema/exercise";
 import type * as RoutineDatabaseSchema from "@ankaa/database/schema/routine";
@@ -187,8 +187,8 @@ export class WorkoutRepository extends Context.Service<
       input: WorkoutSaveSetInput;
       position: number;
     }) => Effect.Effect<void, WorkoutNotFoundError>;
-    readonly skipExercise: (options: {
-      input: WorkoutSkipExerciseInput;
+    readonly saveSkip: (options: {
+      input: WorkoutSaveSkipInput;
     }) => Effect.Effect<void>;
     readonly start: (options: {
       id: string;
@@ -559,15 +559,17 @@ export class WorkoutRepository extends Context.Service<
           .pipe(Effect.orDie);
       });
 
-      const skipExercise = Effect.fn("WorkoutRepository.skipExercise")(
-        function* ({ input }: { input: WorkoutSkipExerciseInput }) {
-          yield* database
-            .update(workoutExercise)
-            .set({ skipNote: input.note, skipReason: input.reason })
-            .where(eq(workoutExercise.id, input.workoutExerciseId))
-            .pipe(Effect.orDie);
-        },
-      );
+      const saveSkip = Effect.fn("WorkoutRepository.saveSkip")(function* ({
+        input,
+      }: {
+        input: WorkoutSaveSkipInput;
+      }) {
+        yield* database
+          .update(workoutExercise)
+          .set({ skipNote: input.note, skipReason: input.reason })
+          .where(eq(workoutExercise.id, input.workoutExerciseId))
+          .pipe(Effect.orDie);
+      });
 
       const start = Effect.fn("WorkoutRepository.start")(function* ({
         id,
@@ -741,7 +743,7 @@ export class WorkoutRepository extends Context.Service<
         removeSet,
         saveNote,
         saveSet,
-        skipExercise,
+        saveSkip,
         start,
         stop,
       });

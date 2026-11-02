@@ -32,7 +32,7 @@ const NO_EXERCISE_NAMES: ReadonlyMap<string, string> = new Map();
 
 /**
  * Shows the User's Workout in progress, and keeps the Draft of every Set,
- * note and skip that has something to Save, so stopping can be refused while
+ * note and Skip that has something to Save, so stopping can be refused while
  * one has, and the one countdown of Rest or a Pause, which starting another
  * replaces.
  */

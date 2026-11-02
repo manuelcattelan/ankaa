@@ -11,7 +11,7 @@ import { StatusMessage } from "#/shared/components/status-message.tsx";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
 /**
- * Stops the Workout in progress, and refuses to while any Set, note or skip
+ * Stops the Workout in progress, and refuses to while any Set, note or Skip
  * has a Draft left to Save, naming those rows in `unsavedDraftLabels`.
  */
 export function WorkoutStopButton({
