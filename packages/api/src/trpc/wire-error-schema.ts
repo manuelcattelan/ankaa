@@ -1,5 +1,6 @@
 import { AbsenceDateConflictError } from "@ankaa/core/features/absence/errors/absence-date-conflict-error";
 import { AbsenceDateInFutureError } from "@ankaa/core/features/absence/errors/absence-date-in-future-error";
+import { AbsenceNotFoundError } from "@ankaa/core/features/absence/errors/absence-not-found-error";
 import { RoutineNameConflictError } from "@ankaa/core/features/routine/errors/routine-name-conflict-error";
 import { SegmentCountInvalidError } from "@ankaa/core/features/workout/errors/segment-count-invalid-error";
 import { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
@@ -19,6 +20,7 @@ export type WireError = typeof wireErrorSchema.Type;
 export const wireErrorSchema = Schema.Union([
   AbsenceDateConflictError,
   AbsenceDateInFutureError,
+  AbsenceNotFoundError,
   RoutineNameConflictError,
   RoutineNotFoundError,
   SegmentCountInvalidError,

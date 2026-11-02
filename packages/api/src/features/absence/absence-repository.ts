@@ -1,3 +1,4 @@
+import type { AbsenceEditInput } from "@ankaa/core/features/absence/schemas/absence-edit-input-schema";
 import type { AbsenceRecordInput } from "@ankaa/core/features/absence/schemas/absence-record-input-schema";
 
 import { AbsenceDateConflictError } from "@ankaa/core/features/absence/errors/absence-date-conflict-error";
@@ -16,6 +17,12 @@ const ABSENCE_ROUTINE_ID_DATE_KEY = "absence_routine_id_date_key";
 export class AbsenceRepository extends Context.Service<
   AbsenceRepository,
   {
+    readonly edit: (options: {
+      input: AbsenceEditInput;
+    }) => Effect.Effect<void, AbsenceDateConflictError>;
+    readonly findForUpdate: (options: {
+      id: string;
+    }) => Effect.Effect<null | Pick<typeof absence.$inferSelect, "userId">>;
     readonly findRoutine: (options: {
       id: string;
     }) => Effect.Effect<null | Pick<
@@ -26,6 +33,7 @@ export class AbsenceRepository extends Context.Service<
       input: AbsenceRecordInput;
       userId: string;
     }) => Effect.Effect<void, AbsenceDateConflictError>;
+    readonly remove: (options: { id: string }) => Effect.Effect<void>;
   }
 >()("@ankaa/api/features/absence/AbsenceRepository") {
   static readonly layerNoDeps = Layer.effect(
@@ -33,10 +41,46 @@ export class AbsenceRepository extends Context.Service<
     Effect.gen(function* () {
       const database = yield* Database;
 
+      const edit = Effect.fn("AbsenceRepository.edit")(function* ({
+        input,
+      }: {
+        input: AbsenceEditInput;
+      }) {
+        yield* database
+          .update(absence)
+          .set({
+            date: input.date,
+            note: input.note,
+            reason: input.reason,
+            routineId: input.routineId,
+          })
+          .where(eq(absence.id, input.id))
+          .pipe(
+            catchUniqueIndexViolation({
+              errors: {
+                [ABSENCE_ROUTINE_ID_DATE_KEY]: new AbsenceDateConflictError(),
+              },
+            }),
+          );
+      });
+
+      const findForUpdate = Effect.fn("AbsenceRepository.findForUpdate")(
+        function* ({ id }: { id: string }) {
+          const absences = yield* database
+            .select({ userId: absence.userId })
+            .from(absence)
+            .where(eq(absence.id, id))
+            .for("update")
+            .pipe(Effect.orDie);
+
+          return absences[0] ?? null;
+        },
+      );
+
       /**
-       * Reads the Routine with `id` `FOR SHARE`, the one row a record locks
-       * without changing it, so the record waits for a deletion of its
-       * Routine that is committing, and then sees it deleted.
+       * Reads the Routine with `id` `FOR SHARE`, the one row a record or an
+       * edit locks without changing it, so the record or the edit waits for a
+       * deletion of its Routine that is committing, and then sees it deleted.
        */
       const findRoutine = Effect.fn("AbsenceRepository.findRoutine")(
         function* ({ id }: { id: string }) {
@@ -76,7 +120,24 @@ export class AbsenceRepository extends Context.Service<
           );
       });
 
-      return AbsenceRepository.of({ findRoutine, record });
+      const remove = Effect.fn("AbsenceRepository.remove")(function* ({
+        id,
+      }: {
+        id: string;
+      }) {
+        yield* database
+          .delete(absence)
+          .where(eq(absence.id, id))
+          .pipe(Effect.orDie);
+      });
+
+      return AbsenceRepository.of({
+        edit,
+        findForUpdate,
+        findRoutine,
+        record,
+        remove,
+      });
     }),
   );
 

@@ -1,4 +1,5 @@
 import type { AppRouter } from "@ankaa/api/trpc/app-router";
+import type { AbsenceEditInput } from "@ankaa/core/features/absence/schemas/absence-edit-input-schema";
 import type { AbsenceRecordInput } from "@ankaa/core/features/absence/schemas/absence-record-input-schema";
 import type {
   AnyMutationProcedure,
@@ -10,7 +11,9 @@ import type {
 } from "@trpc/server";
 
 import { errorFormatter } from "@ankaa/api/trpc/error-formatter";
+import { absenceEditInputSchema } from "@ankaa/core/features/absence/schemas/absence-edit-input-schema";
 import { absenceRecordInputSchema } from "@ankaa/core/features/absence/schemas/absence-record-input-schema";
+import { absenceRemoveInputSchema } from "@ankaa/core/features/absence/schemas/absence-remove-input-schema";
 import { routineDeleteInputSchema } from "@ankaa/core/features/routine/schemas/routine-delete-input-schema";
 import { routineSaveInputSchema } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
 import { workoutRemoveSetInputSchema } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
@@ -54,6 +57,7 @@ export type FakeTrpcResponses = {
  * types keep only the input that the client sends.
  */
 type FakeTrpcDecodedInputs = {
+  "absence.edit": AbsenceEditInput;
   "absence.record": AbsenceRecordInput;
 };
 
@@ -184,11 +188,25 @@ function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
   const t = initTRPC.create({ errorFormatter });
 
   const fakeTrpcProcedures: FakeTrpcProcedures = {
+    "absence.edit": t.procedure
+      .input(Schema.toStandardSchemaV1(absenceEditInputSchema))
+      .mutation(
+        createFakeTrpcResolver({
+          response: fakeTrpcResponses["absence.edit"],
+        }),
+      ),
     "absence.record": t.procedure
       .input(Schema.toStandardSchemaV1(absenceRecordInputSchema))
       .mutation(
         createFakeTrpcResolver({
           response: fakeTrpcResponses["absence.record"],
+        }),
+      ),
+    "absence.remove": t.procedure
+      .input(Schema.toStandardSchemaV1(absenceRemoveInputSchema))
+      .mutation(
+        createFakeTrpcResolver({
+          response: fakeTrpcResponses["absence.remove"],
         }),
       ),
     "exercise.list": t.procedure.query(
