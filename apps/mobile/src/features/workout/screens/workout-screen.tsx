@@ -28,7 +28,7 @@ const NO_WORKOUT_DRAFTS: WorkoutDrafts = {
   skips: [],
 };
 
-const NO_EXERCISE_NAMES: ReadonlyMap<string, string> = new Map();
+const noExerciseNames: ReadonlyMap<string, string> = new Map();
 
 /**
  * Shows the User's Workout in progress, and keeps the Draft of every Set,
@@ -60,7 +60,7 @@ export function WorkoutScreen() {
   );
 
   const workout = workoutInProgress.data ?? null;
-  const exerciseNamesById = exerciseNames.data ?? NO_EXERCISE_NAMES;
+  const exerciseNamesById = exerciseNames.data ?? noExerciseNames;
   const unsavedDraftLabels = [
     ...drafts.recordedSets.map((entry) =>
       WORKOUT_MESSAGES.unsavedSetLabel({

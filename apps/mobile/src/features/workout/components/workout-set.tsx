@@ -2,7 +2,7 @@ import type { WeightUnit } from "@ankaa/core/features/workout/constants/weight";
 import type { AmountUnit } from "@ankaa/core/shared/constants/amount";
 import type { WeightType } from "@ankaa/core/shared/constants/weight-types";
 
-import { getMaximumSegmentCount } from "@ankaa/core/features/workout/get-maximum-segment-count";
+import { getMaximumSegmentCount } from "@ankaa/core/features/workout/core/get-maximum-segment-count";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 

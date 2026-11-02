@@ -3,7 +3,7 @@ import type { WorkoutStartInput } from "@ankaa/core/features/workout/schemas/wor
 import { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
 import { screen, userEvent, waitFor } from "@testing-library/react-native";
 
-import type { Exercise } from "#/shared/exercise-application-service.ts";
+import type { Exercise } from "#/shared/exercise.ts";
 import type { Workout } from "#/shared/workout.ts";
 
 import { fakeAuthenticationClientLayer } from "#/shared/testing/fake-authentication-client-layer.ts";

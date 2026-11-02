@@ -9,7 +9,7 @@ import {
 } from "@testing-library/react-native";
 import { constUndefined } from "effect/Function";
 
-import type { Exercise } from "#/shared/exercise-application-service.ts";
+import type { Exercise } from "#/shared/exercise.ts";
 import type { FakeTrpcResponses } from "#/shared/testing/fake-trpc-client-layer.ts";
 
 import { fakeCryptoLayer } from "#/shared/testing/fake-crypto-layer.ts";

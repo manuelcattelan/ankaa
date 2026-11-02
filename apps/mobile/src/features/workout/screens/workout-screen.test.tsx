@@ -12,7 +12,7 @@ import {
   waitFor,
 } from "@testing-library/react-native";
 
-import type { Exercise } from "#/shared/exercise-application-service.ts";
+import type { Exercise } from "#/shared/exercise.ts";
 import type {
   NotificationPermissionStatus,
   ScheduledNotification,

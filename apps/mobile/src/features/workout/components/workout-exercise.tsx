@@ -1,5 +1,5 @@
 import { WEIGHT_UNITS } from "@ankaa/core/features/workout/constants/weight";
-import { getMatchingPlannedSet } from "@ankaa/core/features/workout/get-matching-planned-set";
+import { getMatchingPlannedSet } from "@ankaa/core/features/workout/core/get-matching-planned-set";
 import { useState } from "react";
 
 import type { WorkoutExercise as WorkoutExerciseValue } from "#/shared/workout.ts";

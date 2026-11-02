@@ -1,6 +1,6 @@
 import type { SetType } from "@ankaa/core/shared/constants/set-types";
 
-import { getMatchingPlannedSet } from "@ankaa/core/features/workout/get-matching-planned-set";
+import { getMatchingPlannedSet } from "@ankaa/core/features/workout/core/get-matching-planned-set";
 
 /**
  * Counts a Workout exercise's Working sets: done counts its recorded Sets

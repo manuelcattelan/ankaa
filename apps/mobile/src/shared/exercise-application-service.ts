@@ -1,17 +1,12 @@
-import type { AppRouter } from "@ankaa/api/trpc/app-router";
-import type { inferRouterOutputs } from "@trpc/server";
-
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import { constUndefined } from "effect/Function";
 import * as Layer from "effect/Layer";
 
 import type { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
+import type { Exercise } from "#/shared/exercise.ts";
 
 import { TrpcClient } from "#/shared/services/trpc-client.ts";
-
-export type Exercise =
-  inferRouterOutputs<AppRouter>["exercise"]["list"][number];
 
 export class ExerciseApplicationService extends Context.Service<
   ExerciseApplicationService,

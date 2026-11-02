@@ -13,6 +13,7 @@ import type { GooglePlayServicesMissingError } from "#/features/authentication/e
 import type { GoogleSignInInProgressError } from "#/features/authentication/errors/google-sign-in-in-progress-error.ts";
 
 import { getGoogleSignInError } from "#/features/authentication/core/get-google-sign-in-error.ts";
+import { googleIosClientIdSchema } from "#/features/authentication/core/google-ios-client-id-schema.ts";
 
 export class GoogleSignIn extends Context.Service<
   GoogleSignIn,
@@ -32,7 +33,10 @@ export class GoogleSignIn extends Context.Service<
     GoogleSignIn,
     Effect.gen(function* () {
       const googleSignInConfiguration = yield* Config.all({
-        iosClientId: Config.NonEmptyString("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID"),
+        iosClientId: Config.schema(
+          googleIosClientIdSchema,
+          "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID",
+        ),
         webClientId: Config.NonEmptyString("EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID"),
       });
 
