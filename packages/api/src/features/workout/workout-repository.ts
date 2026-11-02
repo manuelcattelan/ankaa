@@ -22,9 +22,10 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { buildIntensityTechnique } from "#/shared/build-intensity-technique.ts";
+import { buildPlannedSet } from "#/shared/build-planned-set.ts";
 import { buildSections } from "#/shared/build-sections.ts";
 import { catchUniqueIndexViolation } from "#/shared/catch-unique-index-violation.ts";
+import { PLANNED_SET_COLUMNS } from "#/shared/planned-set-columns.ts";
 
 type PlannedSetRow = Omit<
   typeof workoutExercisePlannedSet.$inferSelect,
@@ -88,18 +89,6 @@ type WorkoutOwnerRow = Pick<typeof workout.$inferSelect, "endedAt" | "userId">;
 const WORKOUT_IN_PROGRESS_INDEX = "workout_in_progress_idx";
 
 const RECORDED_SET_PRIMARY_KEY = "workout_exercise_recorded_set_pkey";
-
-const PLANNED_SET_COLUMNS = {
-  amount: true,
-  intensityTechnique: true,
-  isToFailure: true,
-  pauseSeconds: true,
-  restSeconds: true,
-  segmentCount: true,
-  tempo: true,
-  type: true,
-  weightPercentage: true,
-} as const;
 
 const ROUTINE_EXERCISE_COLUMNS = {
   exerciseId: true,
@@ -169,12 +158,7 @@ export class WorkoutRepository extends Context.Service<
     readonly findWorkoutExerciseForRecordedSetSave: (options: {
       id: string;
     }) => Effect.Effect<null | {
-      plannedSets: (Pick<
-        typeof workoutExercisePlannedSet.$inferSelect,
-        "isToFailure" | "tempo" | "type"
-      > & {
-        intensityTechnique: ReturnType<typeof buildIntensityTechnique>;
-      })[];
+      plannedSets: ReturnType<typeof buildPlannedSet>[];
       recordedSets: RecordedSetRow[];
       weightType: (typeof workoutExercise.$inferSelect)["weightType"];
       workout: WorkoutOwnerRow;
@@ -377,31 +361,19 @@ export class WorkoutRepository extends Context.Service<
         const lockedWorkout = yield* shareWorkout({
           id: workoutExerciseRow.workoutId,
         });
-        const plannedSets = yield* database
-          .select({
-            intensityTechnique: workoutExercisePlannedSet.intensityTechnique,
-            isToFailure: workoutExercisePlannedSet.isToFailure,
-            pauseSeconds: workoutExercisePlannedSet.pauseSeconds,
-            segmentCount: workoutExercisePlannedSet.segmentCount,
-            tempo: workoutExercisePlannedSet.tempo,
-            type: workoutExercisePlannedSet.type,
-            weightPercentage: workoutExercisePlannedSet.weightPercentage,
+        const plannedSets = yield* database.query.workoutExercisePlannedSet
+          .findMany({
+            columns: { ...PLANNED_SET_COLUMNS, id: true },
+            orderBy: { position: "asc" },
+            where: { workoutExerciseId: id },
           })
-          .from(workoutExercisePlannedSet)
-          .where(eq(workoutExercisePlannedSet.workoutExerciseId, id))
-          .orderBy(asc(workoutExercisePlannedSet.position))
           .pipe(Effect.orDie);
         const recordedSets = yield* findRecordedSets({ workoutExerciseId: id });
 
         return lockedWorkout === null
           ? null
           : {
-              plannedSets: plannedSets.map((plannedSet) => ({
-                intensityTechnique: buildIntensityTechnique(plannedSet),
-                isToFailure: plannedSet.isToFailure,
-                tempo: plannedSet.tempo,
-                type: plannedSet.type,
-              })),
+              plannedSets: plannedSets.map(buildPlannedSet),
               recordedSets,
               weightType: workoutExerciseRow.weightType,
               workout: lockedWorkout,
@@ -828,15 +800,7 @@ function buildWorkoutExercise(workoutExerciseRow: WorkoutExerciseRow) {
     id: workoutExerciseRow.id,
     note: workoutExerciseRow.note,
     plannedNote: workoutExerciseRow.plannedNote,
-    plannedSets: workoutExerciseRow.plannedSets.map((plannedSet) => ({
-      amount: plannedSet.amount,
-      id: plannedSet.id,
-      intensityTechnique: buildIntensityTechnique(plannedSet),
-      isToFailure: plannedSet.isToFailure,
-      restSeconds: plannedSet.restSeconds,
-      tempo: plannedSet.tempo,
-      type: plannedSet.type,
-    })),
+    plannedSets: workoutExerciseRow.plannedSets.map(buildPlannedSet),
     recordedSets: workoutExerciseRow.recordedSets,
     skipNote: workoutExerciseRow.skipNote,
     skipReason: workoutExerciseRow.skipReason,

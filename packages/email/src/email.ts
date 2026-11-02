@@ -14,7 +14,7 @@ import { buildEmailError } from "#/build-email-error.ts";
  * A call to the Resend client, given the client and the sender address that
  * the `RESEND_EMAIL_FROM` setting holds.
  */
-export type ResendCall<TData> = (client: {
+type ResendCall<TData> = (client: {
   from: string;
   resend: Resend;
 }) => Promise<{ data: null; error: object } | { data: TData; error: null }>;

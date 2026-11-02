@@ -1,6 +1,4 @@
 import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/days-of-week";
-import {} from "@ankaa/core/features/routine/constants/drop-set";
-import {} from "@ankaa/core/shared/constants/intensity-techniques";
 import { MINIMUM_POSITION } from "@ankaa/core/shared/constants/minimum-position";
 import { SECTIONS } from "@ankaa/core/shared/constants/sections";
 import { gte, inArray, isNull, sql } from "drizzle-orm";

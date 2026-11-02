@@ -3,6 +3,7 @@ import type { Section } from "@ankaa/core/shared/constants/sections";
 
 import { DAYS_OF_WEEK } from "@ankaa/core/features/routine/constants/days-of-week";
 import { RoutineNameConflictError } from "@ankaa/core/features/routine/errors/routine-name-conflict-error";
+import { INTENSITY_TECHNIQUE_VALUES } from "@ankaa/core/shared/constants/intensity-techniques";
 import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
 import { Database } from "@ankaa/database/database";
 import {
@@ -17,10 +18,10 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { buildIntensityTechnique } from "#/shared/build-intensity-technique.ts";
+import { buildPlannedSet } from "#/shared/build-planned-set.ts";
 import { buildSections } from "#/shared/build-sections.ts";
 import { catchUniqueIndexViolation } from "#/shared/catch-unique-index-violation.ts";
-import { encodeIntensityTechnique } from "#/shared/encode-intensity-technique.ts";
+import { PLANNED_SET_COLUMNS } from "#/shared/planned-set-columns.ts";
 
 type ListedRoutine = ReturnType<typeof buildRoutine>;
 
@@ -42,19 +43,6 @@ const ROUTINE_EXERCISE_COLUMNS = {
   exerciseId: true,
   id: true,
   note: true,
-} as const;
-
-const ROUTINE_EXERCISE_SET_COLUMNS = {
-  amount: true,
-  id: true,
-  intensityTechnique: true,
-  isToFailure: true,
-  pauseSeconds: true,
-  restSeconds: true,
-  segmentCount: true,
-  tempo: true,
-  type: true,
-  weightPercentage: true,
 } as const;
 
 export class RoutineRepository extends Context.Service<
@@ -130,7 +118,7 @@ export class RoutineRepository extends Context.Service<
                     orderBy: { position: "asc" },
                     with: {
                       sets: {
-                        columns: ROUTINE_EXERCISE_SET_COLUMNS,
+                        columns: { ...PLANNED_SET_COLUMNS, id: true },
                         orderBy: { position: "asc" },
                       },
                       warmUpExercises: {
@@ -138,7 +126,7 @@ export class RoutineRepository extends Context.Service<
                         orderBy: { position: "asc" },
                         with: {
                           sets: {
-                            columns: ROUTINE_EXERCISE_SET_COLUMNS,
+                            columns: { ...PLANNED_SET_COLUMNS, id: true },
                             orderBy: { position: "asc" },
                           },
                         },
@@ -295,15 +283,7 @@ function buildRoutineExercise(routineExerciseRow: RoutineExerciseRow) {
     exerciseId: routineExerciseRow.exerciseId,
     id: routineExerciseRow.id,
     note: routineExerciseRow.note,
-    sets: routineExerciseRow.sets.map((set) => ({
-      amount: set.amount,
-      id: set.id,
-      intensityTechnique: buildIntensityTechnique(set),
-      isToFailure: set.isToFailure,
-      restSeconds: set.restSeconds,
-      tempo: set.tempo,
-      type: set.type,
-    })),
+    sets: routineExerciseRow.sets.map(buildPlannedSet),
   };
 }
 
@@ -401,5 +381,29 @@ function buildRoutineRows(input: RoutineSaveInput) {
         warmUpForRoutineExerciseId,
       }),
     ),
+  };
+}
+
+/**
+ * Gives the columns that store the Intensity technique of a planned Set, the
+ * reverse of `buildIntensityTechnique`.
+ */
+function encodeIntensityTechnique(
+  intensityTechnique: RoutineSaveInput["sections"]["main"][number]["exercises"][number]["sets"][number]["intensityTechnique"],
+) {
+  return {
+    intensityTechnique:
+      intensityTechnique === null
+        ? null
+        : INTENSITY_TECHNIQUE_VALUES[intensityTechnique._tag],
+    pauseSeconds:
+      intensityTechnique?._tag === "RestPauseSet"
+        ? intensityTechnique.pauseSeconds
+        : null,
+    segmentCount: intensityTechnique?.segmentCount ?? null,
+    weightPercentage:
+      intensityTechnique?._tag === "DropSet"
+        ? intensityTechnique.weightPercentage
+        : null,
   };
 }

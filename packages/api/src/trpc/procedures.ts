@@ -16,5 +16,4 @@ const requireSession = t.middleware(({ ctx, next }) => {
 
 export const createCallerFactory = t.createCallerFactory;
 export const router = t.router;
-export const publicProcedure = t.procedure;
 export const protectedProcedure = t.procedure.use(requireSession);

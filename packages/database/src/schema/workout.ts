@@ -1,4 +1,3 @@
-import {} from "@ankaa/core/features/routine/constants/drop-set";
 import { SKIP_REASONS } from "@ankaa/core/features/workout/constants/skip-reasons";
 import {
   MAXIMUM_WEIGHT,
@@ -11,7 +10,6 @@ import {
   AMOUNT_UNITS,
   MINIMUM_AMOUNT,
 } from "@ankaa/core/shared/constants/amount";
-import {} from "@ankaa/core/shared/constants/intensity-techniques";
 import { MINIMUM_POSITION } from "@ankaa/core/shared/constants/minimum-position";
 import { SECTIONS } from "@ankaa/core/shared/constants/sections";
 import { WEIGHT_TYPES } from "@ankaa/core/shared/constants/weight-types";
