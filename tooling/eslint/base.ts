@@ -19,7 +19,9 @@ type RestrictedImportPattern = (typeof RESTRICTED_IMPORT_PATTERNS)[number];
 
 export const JAVASCRIPT_FILES = ["**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"];
 
-export const TEST_FILES = ["**/*.test.{ts,tsx}"];
+export const TYPE_TEST_FILES = ["**/*.test-d.ts"];
+
+export const TEST_FILES = ["**/*.test.{ts,tsx}", ...TYPE_TEST_FILES];
 
 const FILENAME_MATCH_EXPORT_EXEMPT_FILES = ["**/*.config.*", "**/*.d.ts"];
 
@@ -468,23 +470,30 @@ export const baseConfiguration = defineConfig([
   },
 ]);
 
-export const vitestConfiguration = defineConfig({
-  extends: [eslintPluginVitest.configs.recommended],
-  files: TEST_FILES,
-  rules: {
-    "no-restricted-syntax": [
-      "error",
-      ...RESTRICTED_SYNTAX,
-      ...TEST_RESTRICTED_SYNTAX,
-    ],
-    "vitest/max-nested-describe": ["error", { max: 1 }],
-    "vitest/no-conditional-in-test": "error",
-    "vitest/no-disabled-tests": "error",
-    "vitest/no-restricted-matchers": ["error", restrictedCallMatchers],
-    "vitest/no-restricted-vi-methods": ["error", RESTRICTED_MOCK_METHODS],
-    "vitest/require-top-level-describe": "error",
+export const vitestConfiguration = defineConfig([
+  {
+    extends: [eslintPluginVitest.configs.recommended],
+    files: TEST_FILES,
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        ...RESTRICTED_SYNTAX,
+        ...TEST_RESTRICTED_SYNTAX,
+      ],
+      "vitest/max-nested-describe": ["error", { max: 1 }],
+      "vitest/no-conditional-in-test": "error",
+      "vitest/no-disabled-tests": "error",
+      "vitest/no-restricted-matchers": ["error", restrictedCallMatchers],
+      "vitest/no-restricted-vi-methods": ["error", RESTRICTED_MOCK_METHODS],
+      "vitest/require-top-level-describe": "error",
+    },
   },
-});
+  {
+    files: TYPE_TEST_FILES,
+    // A type test asserts through @ts-expect-error, which check-types checks.
+    rules: { "vitest/expect-expect": "off" },
+  },
+]);
 
 export function createFeatureIsolationZone(featureName: string) {
   return {

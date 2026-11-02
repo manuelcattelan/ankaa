@@ -2,6 +2,7 @@
 paths:
   - "**/*.test.ts"
   - "**/*.test.tsx"
+  - "**/*.test-d.ts"
   - "**/testing/**"
 ---
 
@@ -12,6 +13,7 @@ These rules cover how tests are written and run in every workspace. Lint checks 
 ## Running tests
 
 - Run every test with `pnpm test` at the root. Turborepo runs each workspace's `test` script, and replays the cached result of a workspace whose inputs haven't changed.
+- Run the type tests with `pnpm check-types` at the root, because TypeScript checks them, and neither Vitest nor Jest runs a `.test-d.ts`.
 - Run one workspace's tests with `pnpm --filter <package> test`, and one file's with `pnpm --filter <package> test <path>`, such as `pnpm --filter @ankaa/core test src/shared/filters/tempo-filter.test.ts`. Write the path from the workspace's root, because the runner matches it against the paths inside the workspace, and a path from the repository's root finds no test.
 - Give a workspace a `test` script only once it has a test file, because Vitest fails a run that finds none.
 - Start Docker before you run the tests of a workspace whose Vitest configuration has the Postgres global setup, even to run one Core test there, because the global setup starts the database container whenever a test is queued. With Colima, set `DOCKER_HOST` to its socket, because Testcontainers doesn't read Docker contexts.
@@ -30,6 +32,7 @@ These rules cover how tests are written and run in every workspace. Lint checks 
 - Separate the given, the when and the then with blank lines, and write no comments inside a test, because its `it` states the behavior and its code shows it. When the then wraps the when, such as a call that must reject, write them as one statement. A setup helper follows the root's rule on comments.
 - Name each `describe` after the unit or procedure it tests, such as `describe("tempoFilter")` or `describe("routine.save")`, and let each `it` state one behavior in one sentence, such as `it("rejects a Routine name that another Routine of the User already has")`.
 - Put a test file next to the file whose export it calls, named after that file with `.test.ts`, or `.test.tsx` for a component.
+- Write a type test when a type enforces a rule, so a wrong use fails to compile, such as the list of Wire errors that `run` takes, or `FakeTrpcProcedures`. Put it next to the file whose export it checks, named after that file with `.test-d.ts`, and put each wrong use under a `@ts-expect-error -- <why it fails>` comment, the one comment a test may hold, because TypeScript reports the comment once the use compiles, so the comment is the assertion.
 - Write no test of its own for code without logic of its own, such as a constant, a Schema that adds no check, a route file, an Infrastructure Service, or Query options and Mutation options. Application Services and Repositories get no tests of their own either: procedure tests cover them on the server, and screen tests on mobile, so a refactoring below a procedure or a screen breaks no test ([Beck's Test Desiderata](https://testdesiderata.com/)).
 - Run an Effect in a test through the test Runtime, as the app does: `await runtime.runPromise(program)` for a success, `await runtime.runPromiseExit(program)` for a failure or a defect, checked against literal values, and `runtime.runFork(program)` followed by `await runtime.runPromise(Fiber.interrupt(fiber))` for an interruption.
 

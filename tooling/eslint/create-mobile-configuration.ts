@@ -21,6 +21,7 @@ import {
   rulesConfiguration,
   TEST_FILES,
   TEST_RESTRICTED_SYNTAX,
+  TYPE_TEST_FILES,
 } from "#/base.ts";
 
 const ACCESSIBILITY_PROPS_WITH_ARIA_ALIAS = [
@@ -237,6 +238,11 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
           ...TEST_RESTRICTED_SYNTAX,
         ],
       },
+    },
+    {
+      files: TYPE_TEST_FILES,
+      // A type test asserts through @ts-expect-error, which check-types checks.
+      rules: { "jest/expect-expect": "off" },
     },
   ]);
 }
