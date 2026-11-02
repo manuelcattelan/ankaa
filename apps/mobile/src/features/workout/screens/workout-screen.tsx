@@ -142,7 +142,7 @@ export function WorkoutScreen() {
             />
             <WorkoutStopButton
               unsavedDraftLabels={unsavedDraftLabels}
-              workoutId={workout.id}
+              workout={workout}
             />
           </WorkoutContext>
         )}

@@ -126,7 +126,7 @@ export const workoutRouter = router({
           const workoutApplicationService = yield* WorkoutApplicationService;
 
           yield* workoutApplicationService.stop({
-            id: input.id,
+            input,
             userId: ctx.session.user.id,
           });
         }),

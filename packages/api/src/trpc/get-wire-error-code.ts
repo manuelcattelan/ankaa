@@ -10,6 +10,7 @@ export function getWireErrorCode(wireError: WireError) {
     SegmentWeightNotAllowedError: () => "UNPROCESSABLE_CONTENT" as const,
     SetNotPlannedError: () => "UNPROCESSABLE_CONTENT" as const,
     SkipConflictError: () => "CONFLICT" as const,
+    SkipReasonMissingError: () => "UNPROCESSABLE_CONTENT" as const,
     WorkoutInProgressConflictError: () => "CONFLICT" as const,
     WorkoutNotFoundError: () => "NOT_FOUND" as const,
   });

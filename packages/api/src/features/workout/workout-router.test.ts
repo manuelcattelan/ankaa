@@ -835,7 +835,11 @@ describe("workout.start", () => {
       routineId: "019a0000-0000-7000-8000-000000000121",
     });
 
-    await caller.workout.stop({ id: "019a0000-0000-7000-8000-000000000521" });
+    await caller.workout.stop({
+      id: "019a0000-0000-7000-8000-000000000521",
+      note: null,
+      reason: "other",
+    });
     await expect(caller.workout.findInProgress()).resolves.toBeNull();
   });
 
@@ -1139,7 +1143,11 @@ describe("workout.findInProgress", () => {
       id: "019a0000-0000-7000-8000-000000000582",
       routineId: "019a0000-0000-7000-8000-000000000182",
     });
-    await caller.workout.stop({ id: "019a0000-0000-7000-8000-000000000582" });
+    await caller.workout.stop({
+      id: "019a0000-0000-7000-8000-000000000582",
+      note: null,
+      reason: "other",
+    });
 
     const workoutInProgress = await caller.workout.findInProgress();
 
@@ -1179,7 +1187,237 @@ describe("workout.stop", () => {
       routineId: "019a0000-0000-7000-8000-000000000191",
     });
 
-    await caller.workout.stop({ id: "019a0000-0000-7000-8000-000000000591" });
+    await caller.workout.stop({
+      id: "019a0000-0000-7000-8000-000000000591",
+      note: null,
+      reason: "other",
+    });
+
+    await expect(caller.workout.findInProgress()).resolves.toBeNull();
+  });
+
+  it("Skips with the stop's reason and note each Workout exercise not done, keeps every other Skip as it was, and stops the Workout", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    await caller.routine.save({
+      days: [],
+      id: "019a0595-0000-7000-8000-000000000001",
+      name: "Push day",
+      sections: {
+        coolDown: [],
+        main: [
+          {
+            exercises: [
+              {
+                exerciseId: BENCH_PRESS_EXERCISE_ID,
+                id: "019a0595-0000-7000-8000-000000000301",
+                note: null,
+                pyramidLabel: null,
+                sets: [
+                  {
+                    ...WORKING_PLANNED_SET,
+                    id: "019a0595-0000-7000-8000-000000000401",
+                    type: "warm_up",
+                  },
+                  {
+                    ...WORKING_PLANNED_SET,
+                    id: "019a0595-0000-7000-8000-000000000402",
+                  },
+                  {
+                    ...WORKING_PLANNED_SET,
+                    id: "019a0595-0000-7000-8000-000000000403",
+                  },
+                ],
+                warmUpExercises: [
+                  {
+                    exerciseId: BAND_PULL_APART_EXERCISE_ID,
+                    id: "019a0595-0000-7000-8000-000000000302",
+                    note: null,
+                    pyramidLabel: null,
+                    sets: [
+                      {
+                        ...WORKING_PLANNED_SET,
+                        id: "019a0595-0000-7000-8000-000000000404",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+            id: "019a0595-0000-7000-8000-000000000201",
+          },
+          {
+            exercises: [
+              {
+                exerciseId: PLANK_EXERCISE_ID,
+                id: "019a0595-0000-7000-8000-000000000303",
+                note: null,
+                pyramidLabel: null,
+                sets: [
+                  {
+                    ...WORKING_PLANNED_SET,
+                    id: "019a0595-0000-7000-8000-000000000405",
+                  },
+                ],
+                warmUpExercises: [],
+              },
+            ],
+            id: "019a0595-0000-7000-8000-000000000202",
+          },
+          {
+            exercises: [
+              {
+                exerciseId: BAND_PULL_APART_EXERCISE_ID,
+                id: "019a0595-0000-7000-8000-000000000304",
+                note: null,
+                pyramidLabel: null,
+                sets: [
+                  {
+                    ...WORKING_PLANNED_SET,
+                    id: "019a0595-0000-7000-8000-000000000406",
+                    type: "warm_up",
+                  },
+                  {
+                    ...WORKING_PLANNED_SET,
+                    id: "019a0595-0000-7000-8000-000000000407",
+                  },
+                ],
+                warmUpExercises: [],
+              },
+            ],
+            id: "019a0595-0000-7000-8000-000000000203",
+          },
+        ],
+        warmUp: [],
+      },
+    });
+    await caller.workout.start({
+      id: "019a0595-0000-7000-8000-000000000501",
+      routineId: "019a0595-0000-7000-8000-000000000001",
+    });
+    const workoutInProgress = await caller.workout.findInProgress();
+    const benchPressWorkoutExerciseId =
+      workoutInProgress?.sections.main[0]?.exercises[0]?.id ?? "";
+    const warmUpWorkoutExerciseId =
+      workoutInProgress?.sections.main[0]?.exercises[0]?.warmUpExercises[0]
+        ?.id ?? "";
+    const plankWorkoutExerciseId =
+      workoutInProgress?.sections.main[1]?.exercises[0]?.id ?? "";
+    const bandPullApartWorkoutExerciseId =
+      workoutInProgress?.sections.main[2]?.exercises[0]?.id ?? "";
+    await caller.workout.saveSet({
+      id: "019a0595-0000-7000-8000-000000000601",
+      segments: [{ amount: 12, weight: 40 }],
+      weightUnit: "kilogram",
+      workoutExerciseId: benchPressWorkoutExerciseId,
+    });
+    await caller.workout.saveSet({
+      id: "019a0595-0000-7000-8000-000000000602",
+      segments: [{ amount: 8, weight: 60 }],
+      weightUnit: "kilogram",
+      workoutExerciseId: benchPressWorkoutExerciseId,
+    });
+    await caller.workout.saveSkip({
+      note: "Sore wrist",
+      reason: "pain",
+      workoutExerciseId: plankWorkoutExerciseId,
+    });
+    await caller.workout.saveSet({
+      id: "019a0595-0000-7000-8000-000000000603",
+      segments: [{ amount: 15, weight: null }],
+      weightUnit: "kilogram",
+      workoutExerciseId: bandPullApartWorkoutExerciseId,
+    });
+    await caller.workout.saveSet({
+      id: "019a0595-0000-7000-8000-000000000604",
+      segments: [{ amount: 15, weight: null }],
+      weightUnit: "kilogram",
+      workoutExerciseId: bandPullApartWorkoutExerciseId,
+    });
+
+    await caller.workout.stop({
+      id: "019a0595-0000-7000-8000-000000000501",
+      note: "The gym is closing",
+      reason: "low_on_time",
+    });
+
+    await expect(caller.workout.findInProgress()).resolves.toBeNull();
+    await expect(
+      readWorkoutExercise({ id: benchPressWorkoutExerciseId, runtime }),
+    ).resolves.toStrictEqual({
+      note: null,
+      skipNote: "The gym is closing",
+      skipReason: "low_on_time",
+    });
+    await expect(
+      readWorkoutExercise({ id: warmUpWorkoutExerciseId, runtime }),
+    ).resolves.toStrictEqual({
+      note: null,
+      skipNote: "The gym is closing",
+      skipReason: "low_on_time",
+    });
+    await expect(
+      readWorkoutExercise({ id: plankWorkoutExerciseId, runtime }),
+    ).resolves.toStrictEqual({
+      note: null,
+      skipNote: "Sore wrist",
+      skipReason: "pain",
+    });
+    await expect(
+      readWorkoutExercise({ id: bandPullApartWorkoutExerciseId, runtime }),
+    ).resolves.toStrictEqual({ note: null, skipNote: null, skipReason: null });
+  });
+
+  it("fails with UNPROCESSABLE_CONTENT and SkipReasonMissingError for a stop with no reason while some Workout exercise isn't done, and neither Skips nor stops anything", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0596",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+
+    await expect(
+      caller.workout.stop({
+        id: "019a0596-0000-7000-8000-000000000004",
+        note: null,
+        reason: null,
+      }),
+    ).rejects.toMatchObject({
+      cause: { _tag: "SkipReasonMissingError" },
+      code: "UNPROCESSABLE_CONTENT",
+    });
+    await expect(caller.workout.findInProgress()).resolves.toMatchObject({
+      id: "019a0596-0000-7000-8000-000000000004",
+      sections: {
+        main: [
+          {
+            exercises: [
+              { id: workoutExerciseId, skipNote: null, skipReason: null },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
+  it("stops a Workout with no reason when every Workout exercise is done", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0597",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+    await caller.workout.saveSet({
+      id: "019a0597-0000-7000-8000-000000000101",
+      segments: [{ amount: 8, weight: 60 }],
+      weightUnit: "kilogram",
+      workoutExerciseId,
+    });
+
+    await caller.workout.stop({
+      id: "019a0597-0000-7000-8000-000000000004",
+      note: null,
+      reason: null,
+    });
 
     await expect(caller.workout.findInProgress()).resolves.toBeNull();
   });
@@ -1210,7 +1448,11 @@ describe("workout.stop", () => {
       runtime,
     });
 
-    await caller.workout.stop({ id: "019a0000-0000-7000-8000-000000000592" });
+    await caller.workout.stop({
+      id: "019a0000-0000-7000-8000-000000000592",
+      note: null,
+      reason: null,
+    });
 
     await expect(
       readWorkoutEndedAt({
@@ -1224,7 +1466,11 @@ describe("workout.stop", () => {
     const caller = await createSignedInCaller({ runtime });
 
     await expect(
-      caller.workout.stop({ id: "019a0000-0000-7000-8000-000000000593" }),
+      caller.workout.stop({
+        id: "019a0000-0000-7000-8000-000000000593",
+        note: null,
+        reason: null,
+      }),
     ).rejects.toMatchObject({
       cause: { _tag: "WorkoutNotFoundError" },
       code: "NOT_FOUND",
@@ -1254,7 +1500,11 @@ describe("workout.stop", () => {
     const caller = await createSignedInCaller({ runtime });
 
     await expect(
-      caller.workout.stop({ id: "019a0000-0000-7000-8000-000000000594" }),
+      caller.workout.stop({
+        id: "019a0000-0000-7000-8000-000000000594",
+        note: null,
+        reason: null,
+      }),
     ).rejects.toMatchObject({
       cause: { _tag: "WorkoutNotFoundError" },
       code: "NOT_FOUND",
@@ -1630,7 +1880,11 @@ describe("workout.saveSet", () => {
       idPrefix: "019a0608",
       plannedSets: [WORKING_PLANNED_SET],
     });
-    await caller.workout.stop({ id: "019a0608-0000-7000-8000-000000000004" });
+    await caller.workout.stop({
+      id: "019a0608-0000-7000-8000-000000000004",
+      note: null,
+      reason: "other",
+    });
 
     await expect(
       caller.workout.saveSet({
@@ -2053,7 +2307,11 @@ describe("workout.saveSkip", () => {
       idPrefix: "019a0805",
       plannedSets: [WORKING_PLANNED_SET],
     });
-    await caller.workout.stop({ id: "019a0805-0000-7000-8000-000000000004" });
+    await caller.workout.stop({
+      id: "019a0805-0000-7000-8000-000000000004",
+      note: null,
+      reason: "other",
+    });
 
     await expect(
       caller.workout.saveSkip({
@@ -2178,7 +2436,11 @@ describe("workout.saveNote", () => {
       idPrefix: "019a0903",
       plannedSets: [WORKING_PLANNED_SET],
     });
-    await caller.workout.stop({ id: "019a0903-0000-7000-8000-000000000004" });
+    await caller.workout.stop({
+      id: "019a0903-0000-7000-8000-000000000004",
+      note: null,
+      reason: "other",
+    });
 
     await expect(
       caller.workout.saveNote({ note: "Felt strong today", workoutExerciseId }),

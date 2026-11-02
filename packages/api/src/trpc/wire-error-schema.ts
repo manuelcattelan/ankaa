@@ -3,6 +3,7 @@ import { SegmentCountInvalidError } from "@ankaa/core/features/workout/errors/se
 import { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
 import { SetNotPlannedError } from "@ankaa/core/features/workout/errors/set-not-planned-error";
 import { SkipConflictError } from "@ankaa/core/features/workout/errors/skip-conflict-error";
+import { SkipReasonMissingError } from "@ankaa/core/features/workout/errors/skip-reason-missing-error";
 import { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
 import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-found-error";
@@ -20,6 +21,7 @@ export const wireErrorSchema = Schema.Union([
   SegmentWeightNotAllowedError,
   SetNotPlannedError,
   SkipConflictError,
+  SkipReasonMissingError,
   WorkoutInProgressConflictError,
   WorkoutNotFoundError,
 ]);

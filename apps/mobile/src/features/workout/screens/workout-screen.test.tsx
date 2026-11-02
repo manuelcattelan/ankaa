@@ -7,6 +7,7 @@ import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/work
 
 import { SetNotPlannedError } from "@ankaa/core/features/workout/errors/set-not-planned-error";
 import { SkipConflictError } from "@ankaa/core/features/workout/errors/skip-conflict-error";
+import { SkipReasonMissingError } from "@ankaa/core/features/workout/errors/skip-reason-missing-error";
 import {
   fireEvent,
   screen,
@@ -319,6 +320,22 @@ function buildPlankWorkout({
   } satisfies Workout;
 }
 
+/**
+ * Builds a Workout in progress of one Bench Press (Barbell) whose one planned
+ * Working set is recorded, so every Workout exercise is done.
+ */
+function buildDoneBenchPressWorkout() {
+  return buildBenchPressWorkout({
+    plannedSets: [WORKING_PLANNED_SET],
+    recordedSets: [
+      {
+        id: "01900000-0000-7000-8000-000000000205",
+        segments: [{ amount: 8, weight: 60 }],
+      },
+    ],
+  });
+}
+
 function getButton({ index, name }: { index: number; name: string }) {
   const button = screen.getAllByRole("button", { name }).at(index);
 
@@ -463,7 +480,7 @@ describe("WorkoutScreen", () => {
 
   it("stops the User's Workout in progress and takes them to the home screen, which offers to start a Workout again", async () => {
     const stoppedInputs: WorkoutStopInput[] = [];
-    let workoutInProgress: null | Workout = PUSH_DAY_WORKOUT;
+    let workoutInProgress: null | Workout = buildDoneBenchPressWorkout();
     const user = userEvent.setup();
     renderScreen({
       initialUrl: "/",
@@ -494,8 +511,134 @@ describe("WorkoutScreen", () => {
       await screen.findByRole("button", { name: "Start Push day" }),
     ).toBeOnTheScreen();
     expect(stoppedInputs).toStrictEqual([
-      { id: "01900000-0000-7000-8000-000000000101" },
+      { id: "01900000-0000-7000-8000-000000000201", note: null, reason: null },
     ]);
+  });
+
+  it("asks for the reason and the note of a Skip when the User stops with a Workout exercise not done, and sends them with the stop", async () => {
+    const stoppedInputs: WorkoutStopInput[] = [];
+    let workoutInProgress: null | Workout = buildBenchPressWorkout({
+      plannedSets: [WORKING_PLANNED_SET],
+      recordedSets: [],
+    });
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "routine.list": () => [PUSH_DAY_ROUTINE],
+            "workout.findInProgress": () => workoutInProgress,
+            "workout.stop": (input) => {
+              stoppedInputs.push(input);
+              workoutInProgress = null;
+            },
+          },
+        }),
+      },
+    });
+    await user.press(
+      await screen.findByRole("button", { name: "Stop workout" }),
+    );
+    fireEvent(
+      await screen.findByTestId("Why you're stopping early"),
+      "selectionChange",
+      { nativeEvent: { selection: "low_on_time" } },
+    );
+    await user.type(
+      screen.getByLabelText("Note on why you're stopping early"),
+      "The gym is closing",
+    );
+
+    await user.press(screen.getByRole("button", { name: "Stop workout" }));
+
+    expect(
+      await screen.findByRole("button", { name: "Start Push day" }),
+    ).toBeOnTheScreen();
+    expect(stoppedInputs).toStrictEqual([
+      {
+        id: "01900000-0000-7000-8000-000000000201",
+        note: "The gym is closing",
+        reason: "low_on_time",
+      },
+    ]);
+  });
+
+  it("stops without asking for a reason when every Workout exercise is done or has a Skip", async () => {
+    const stoppedInputs: WorkoutStopInput[] = [];
+    let workoutInProgress: null | Workout = buildBenchPressWorkout({
+      plannedSets: [WORKING_PLANNED_SET],
+      recordedSets: [],
+      skipReason: "pain",
+    });
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "routine.list": () => [PUSH_DAY_ROUTINE],
+            "workout.findInProgress": () => workoutInProgress,
+            "workout.stop": (input) => {
+              stoppedInputs.push(input);
+              workoutInProgress = null;
+            },
+          },
+        }),
+      },
+    });
+
+    await user.press(
+      await screen.findByRole("button", { name: "Stop workout" }),
+    );
+
+    expect(
+      await screen.findByRole("button", { name: "Start Push day" }),
+    ).toBeOnTheScreen();
+    expect(stoppedInputs).toStrictEqual([
+      { id: "01900000-0000-7000-8000-000000000201", note: null, reason: null },
+    ]);
+  });
+
+  it("tells the User to pick a reason when the server finds a Workout exercise not done at the stop, and asks for it", async () => {
+    let workoutInProgress = buildDoneBenchPressWorkout();
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () => workoutInProgress,
+            "workout.stop": () => {
+              workoutInProgress = buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              });
+              throw new SkipReasonMissingError();
+            },
+          },
+        }),
+      },
+    });
+
+    await user.press(
+      await screen.findByRole("button", { name: "Stop workout" }),
+    );
+
+    expect(
+      await screen.findByText(
+        "Some exercises aren't done: pick why you're stopping early, then stop the workout again.",
+      ),
+    ).toBeOnTheScreen();
+    expect(
+      await screen.findByTestId("Why you're stopping early"),
+    ).toBeOnTheScreen();
   });
 
   it("tells the User that Ankaa can't connect when a stop can't reach the server, and keeps the Workout on the screen", async () => {
@@ -507,7 +650,7 @@ describe("WorkoutScreen", () => {
         trpcClient: fakeTrpcClientLayer({
           responses: {
             "exercise.list": () => EXERCISES,
-            "workout.findInProgress": () => PUSH_DAY_WORKOUT,
+            "workout.findInProgress": () => buildDoneBenchPressWorkout(),
           },
           unreachablePaths: ["workout.stop"],
         }),
@@ -1573,10 +1716,7 @@ describe("WorkoutScreen", () => {
 
   it("cancels the notification of the countdown when the User stops the Workout", async () => {
     const scheduledNotifications: NotificationRequest[] = [];
-    let workoutInProgress: null | Workout = buildBenchPressWorkout({
-      plannedSets: [WORKING_PLANNED_SET],
-      recordedSets: [],
-    });
+    let workoutInProgress: null | Workout = buildDoneBenchPressWorkout();
     const user = userEvent.setup();
     renderScreen({
       initialUrl: "/workout",

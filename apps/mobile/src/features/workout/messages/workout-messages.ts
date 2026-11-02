@@ -51,6 +51,7 @@ export const WORKOUT_MESSAGES = {
       ? "Drop set"
       : `Drop set: take off ${String(weightPercentage)}% at each drop`,
   elapsedTimeStatus: (elapsedTime: string) => `Elapsed time: ${elapsedTime}`,
+  noStopSkipReasonLabel: "Pick a reason",
   noteLabel: "Note for this workout",
   notSkippedLabel: "Not skipped",
   plannedAmountLabels: {
@@ -104,12 +105,18 @@ export const WORKOUT_MESSAGES = {
     other: "Other",
     pain: "Pain",
   } satisfies Record<SkipReason, string>,
+  skipReasonMissingError:
+    "Some exercises aren't done: pick why you're stopping early, then stop the workout again.",
   skipStatus:
     "This exercise is skipped: to record, change or remove a set, pick Not skipped and save the skip.",
   startPauseButton: "Start pause",
   startRestButton: "Start rest",
   startSegmentTimerButton: "Start",
   startWorkoutButton: (routineName: string) => `Start ${routineName}`,
+  stopSkipNoteLabel: "Note on why you're stopping early",
+  stopSkipReasonLabel: "Why you're stopping early",
+  stopSkipStatus:
+    "Some exercises aren't done yet: pick why you're stopping early, then stop the workout again to mark them as skipped.",
   stopWorkoutButton: "Stop workout",
   tempoDescription:
     "The seconds for lowering, holding at the bottom, lifting and holding at the top. X means lifting as fast as you can.",

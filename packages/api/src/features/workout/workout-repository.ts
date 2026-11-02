@@ -1,3 +1,4 @@
+import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reasons";
 import type { WorkoutSaveNoteInput } from "@ankaa/core/features/workout/schemas/workout-save-note-input-schema";
 import type { WorkoutSaveSetInput } from "@ankaa/core/features/workout/schemas/workout-save-set-input-schema";
 import type { WorkoutSaveSkipInput } from "@ankaa/core/features/workout/schemas/workout-save-skip-input-schema";
@@ -116,6 +117,11 @@ const WORKOUT_EXERCISE_COLUMNS = {
   weightUnit: true,
 } as const;
 
+const STOPPED_WORKOUT_EXERCISE_RELATIONS = {
+  plannedSets: { columns: { type: true }, orderBy: { position: "asc" } },
+  recordedSets: { columns: { id: true } },
+} as const;
+
 const WORKOUT_EXERCISE_SETS = {
   plannedSets: {
     columns: { ...PLANNED_SET_COLUMNS, id: true },
@@ -143,9 +149,12 @@ export class WorkoutRepository extends Context.Service<
     readonly find: (options: {
       id: string;
     }) => Effect.Effect<null | Pick<typeof workout.$inferSelect, "userId">>;
-    readonly findForUpdate: (options: {
-      id: string;
-    }) => Effect.Effect<null | WorkoutOwnerRow>;
+    readonly findForStop: (options: { id: string }) => Effect.Effect<
+      | null
+      | (WorkoutOwnerRow & {
+          workoutExercises: ReturnType<typeof buildStoppedWorkoutExercise>[];
+        })
+    >;
     readonly findInProgress: (options: {
       userId: string;
     }) => Effect.Effect<null | ReturnType<typeof buildWorkout>>;
@@ -186,7 +195,14 @@ export class WorkoutRepository extends Context.Service<
       routine: StartedRoutineRow;
       userId: string;
     }) => Effect.Effect<void, WorkoutInProgressConflictError>;
-    readonly stop: (options: { id: string }) => Effect.Effect<void>;
+    readonly stop: (options: {
+      id: string;
+      skips: readonly {
+        note: null | string;
+        reason: SkipReason;
+        workoutExerciseId: string;
+      }[];
+    }) => Effect.Effect<void>;
     readonly updateSet: (options: {
       input: WorkoutSaveSetInput;
     }) => Effect.Effect<void>;
@@ -211,18 +227,98 @@ export class WorkoutRepository extends Context.Service<
         return workouts[0] ?? null;
       });
 
-      const findForUpdate = Effect.fn("WorkoutRepository.findForUpdate")(
+      /**
+       * Locks every Workout exercise of the Workout with `id`, then the
+       * Workout, and reads what its stop decides on, or gives null when the
+       * Workout doesn't exist. It locks the Workout exercises before the
+       * Workout, in the order that a write of a Set, a note or a Skip locks
+       * its Workout exercise and then its Workout, so a stop and such a write
+       * never wait for each other in a cycle:
+       * https://www.postgresql.org/docs/current/explicit-locking.html#LOCKING-DEADLOCKS
+       */
+      const findForStop = Effect.fn("WorkoutRepository.findForStop")(
         function* ({ id }: { id: string }) {
+          yield* lockWorkoutExercises({ workoutId: id });
+
           const workouts = yield* database
             .select({ endedAt: workout.endedAt, userId: workout.userId })
             .from(workout)
             .where(eq(workout.id, id))
             .for("update")
             .pipe(Effect.orDie);
+          const lockedWorkout = workouts[0];
 
-          return workouts[0] ?? null;
+          if (lockedWorkout === undefined) {
+            return null;
+          }
+
+          const exerciseGroups = yield* database.query.workoutExerciseGroup
+            .findMany({
+              columns: { id: true },
+              where: { workoutId: id },
+              with: {
+                exercises: {
+                  columns: { id: true, skipReason: true },
+                  with: {
+                    ...STOPPED_WORKOUT_EXERCISE_RELATIONS,
+                    warmUpExercises: {
+                      columns: { id: true, skipReason: true },
+                      with: STOPPED_WORKOUT_EXERCISE_RELATIONS,
+                    },
+                  },
+                },
+              },
+            })
+            .pipe(Effect.orDie);
+
+          return {
+            ...lockedWorkout,
+            workoutExercises: exerciseGroups
+              .flatMap((exerciseGroup) =>
+                exerciseGroup.exercises.flatMap((groupedExercise) => [
+                  groupedExercise,
+                  ...groupedExercise.warmUpExercises,
+                ]),
+              )
+              .map(buildStoppedWorkoutExercise),
+          };
         },
       );
+
+      /**
+       * Locks every Workout exercise of the Workout with `workoutId` for the
+       * write, in the order of their ids, which is the same in every stop.
+       */
+      const lockWorkoutExercises = Effect.fn(
+        "WorkoutRepository.lockWorkoutExercises",
+      )(function* ({ workoutId }: { workoutId: string }) {
+        const warmUpForWorkoutExercise = alias(
+          workoutExercise,
+          "warm_up_for_workout_exercise",
+        );
+
+        yield* database
+          .select({ id: workoutExercise.id })
+          .from(workoutExercise)
+          .leftJoin(
+            warmUpForWorkoutExercise,
+            eq(
+              warmUpForWorkoutExercise.id,
+              workoutExercise.warmUpForWorkoutExerciseId,
+            ),
+          )
+          .innerJoin(
+            workoutExerciseGroup,
+            eq(
+              workoutExerciseGroup.id,
+              sql`coalesce(${workoutExercise.workoutExerciseGroupId}, ${warmUpForWorkoutExercise.workoutExerciseGroupId})`,
+            ),
+          )
+          .where(eq(workoutExerciseGroup.workoutId, workoutId))
+          .orderBy(asc(workoutExercise.id))
+          .for("update", { of: workoutExercise })
+          .pipe(Effect.orDie);
+      });
 
       const findInProgress = Effect.fn("WorkoutRepository.findInProgress")(
         function* ({ userId }: { userId: string }) {
@@ -741,9 +837,26 @@ export class WorkoutRepository extends Context.Service<
 
       const stop = Effect.fn("WorkoutRepository.stop")(function* ({
         id,
+        skips,
       }: {
         id: string;
+        skips: readonly {
+          note: null | string;
+          reason: SkipReason;
+          workoutExerciseId: string;
+        }[];
       }) {
+        yield* Effect.forEach(
+          skips,
+          (skip) =>
+            database
+              .update(workoutExercise)
+              .set({ skipNote: skip.note, skipReason: skip.reason })
+              .where(eq(workoutExercise.id, skip.workoutExerciseId))
+              .pipe(Effect.orDie),
+          { discard: true },
+        );
+
         yield* database
           .update(workout)
           .set({ endedAt: sql`now()` })
@@ -774,7 +887,7 @@ export class WorkoutRepository extends Context.Service<
       return WorkoutRepository.of({
         createSet,
         find,
-        findForUpdate,
+        findForStop,
         findInProgress,
         findRoutine,
         findWorkoutExerciseForRecordedSetRemove,
@@ -835,6 +948,20 @@ function buildWorkoutExercise(workoutExerciseRow: WorkoutExerciseRow) {
     skipReason: workoutExerciseRow.skipReason,
     weightType: workoutExerciseRow.weightType,
     weightUnit: workoutExerciseRow.weightUnit,
+  };
+}
+
+function buildStoppedWorkoutExercise(stoppedWorkoutExerciseRow: {
+  id: string;
+  plannedSets: Pick<typeof workoutExercisePlannedSet.$inferSelect, "type">[];
+  recordedSets: { id: string }[];
+  skipReason: (typeof workoutExercise.$inferSelect)["skipReason"];
+}) {
+  return {
+    id: stoppedWorkoutExerciseRow.id,
+    plannedSets: stoppedWorkoutExerciseRow.plannedSets,
+    recordedSetCount: stoppedWorkoutExerciseRow.recordedSets.length,
+    skipReason: stoppedWorkoutExerciseRow.skipReason,
   };
 }
 

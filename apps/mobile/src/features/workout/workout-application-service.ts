@@ -2,6 +2,7 @@ import type { SegmentCountInvalidError } from "@ankaa/core/features/workout/erro
 import type { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
 import type { SetNotPlannedError } from "@ankaa/core/features/workout/errors/set-not-planned-error";
 import type { SkipConflictError } from "@ankaa/core/features/workout/errors/skip-conflict-error";
+import type { SkipReasonMissingError } from "@ankaa/core/features/workout/errors/skip-reason-missing-error";
 import type { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
 import type { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
@@ -93,7 +94,10 @@ export class WorkoutApplicationService extends Context.Service<
     >;
     readonly stop: (
       input: WorkoutStopInput,
-    ) => Effect.Effect<void, TrpcClientError | WorkoutNotFoundError>;
+    ) => Effect.Effect<
+      void,
+      SkipReasonMissingError | TrpcClientError | WorkoutNotFoundError
+    >;
   }
 >()("@ankaa/mobile/features/workout/WorkoutApplicationService") {
   static readonly layerNoDeps = Layer.effect(
