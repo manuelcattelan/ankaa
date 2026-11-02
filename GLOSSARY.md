@@ -28,7 +28,7 @@ Someone who has signed in to Ankaa at least once and whose [Account](#account) h
 
 A [Service](#service) that holds the business operations of a [Feature](#feature), such as [Saving](#save) a [Routine](#routine), and asks the [Core](#core) for every decision they need.
 
-- **Avoid**: use case
+- **Avoid**: use case, interactor
 - **Distinct from**: [Repository](#repository): a Repository reads and writes the database for a Feature's operations, and an Application Service decides, through the Core, what to write.
 
 ### Composition root
@@ -199,6 +199,8 @@ One of the three parts, done in order, that every [Routine](#routine) and [Worko
 
 A [User](#user)'s mark that a [Workout exercise](#workout-exercise) wasn't done as planned, with a reason (low on time, low energy, pain or other) and an optional note. The User can [Save](#save), change or clear it. It keeps the [Sets](#set) recorded for the Workout exercise, and the User clears it before recording more.
 
+- **Avoid**: skipped exercise
+
 ### Superset
 
 An [Exercise group](#exercise-group) of two or more [Routine exercises](#routine-exercise) or [Workout exercises](#workout-exercise), done by alternating them one [Set](#set) at a time, with [Rest](#rest) only after one Set of each.
@@ -328,54 +330,3 @@ What the weights of a [Workout exercise](#workout-exercise) are entered in: kilo
 A [Set](#set) done for the training its exercise is there for, rather than to prepare for it. A [Workout](#workout) counts its progress in Working sets only.
 
 - **Avoid**: work set, main set
-
-## Deprecated
-
-### Database query
-
-One Drizzle query of a server [Feature](#feature), in its own file in the `queries/` folder of that Feature: a plain async function over the database or a transaction, with no business branching. Only the [Interactors](#interactor) of the same Feature call it.
-
-- **Avoid**: data access object, DAO
-- **Distinct from**: [Query procedure](#query-procedure): a tRPC procedure that the mobile app calls to read data.
-- **Distinct from**: [Query options](#query-options): what TanStack Query uses on the mobile app to fetch and cache data.
-- **Deprecated**: retired by [#86 Rebuild Ankaa on one Core and Shell architecture, with redesigned Routines, Workouts and Account deletion](https://github.com/manuelcattelan/ankaa/issues/86); replaced by [Repository](#repository).
-
-### Interactor
-
-One business operation, such as saving a Workout, written as a standalone `Effect.fn` in its own file in the `interactors/` folder of a [Feature](#feature). It yields the [Services](#service) it needs, reads, asks the [Core](#core) to decide, and then writes. Robert C. Martin's interactors must not depend on the database, but ours are [Shell](#shell) programs, which on the server read and write through [Database queries](#database-query).
-
-- **Avoid**: use case
-- **Distinct from**: [Service](#service): a Service wraps an implementation that can be swapped, and an Interactor uses Services to carry out one operation.
-- **Deprecated**: retired by [#86 Rebuild Ankaa on one Core and Shell architecture, with redesigned Routines, Workouts and Account deletion](https://github.com/manuelcattelan/ankaa/issues/86); replaced by [Application Service](#application-service).
-
-### Query procedure
-
-A tRPC procedure, defined with `.query()`, that the mobile app calls to read data, as opposed to a mutation procedure, which changes data. Each server [Feature](#feature) defines its procedures in its `router.ts`.
-
-- **Avoid**: query route, read procedure
-- **Distinct from**: [Database query](#database-query): a server function that a Query procedure's [Interactor](#interactor) calls to read the database.
-- **Distinct from**: [Query options](#query-options): what TanStack Query uses on the mobile app to fetch and cache data.
-- **Deprecated**: retired by [#86 Rebuild Ankaa on one Core and Shell architecture, with redesigned Routines, Workouts and Account deletion](https://github.com/manuelcattelan/ankaa/issues/86).
-
-### Skipped exercise
-
-A [Workout exercise](#workout-exercise) the [User](#user) marked as not done as planned, with a reason: low on time, low energy, pain or other, and an optional note. It keeps any [Sets](#set) recorded before it was skipped.
-
-- **Avoid**: missed exercise, dropped exercise, abandoned exercise
-- **Deprecated**: retired by [#122 Bring the root glossary back in line with the code](https://github.com/manuelcattelan/ankaa/issues/122); replaced by [Skip](#skip).
-
-### Store
-
-To keep a [Workout](#workout) on the device, as its [Workout document](#workout-document), until its [Save](#save) succeeds, so no change is lost before the server has it.
-
-- **Avoid**: save locally, keep offline
-- **Distinct from**: [Save](#save): a Save sends the Workout to the server, and the device Stores it until that Save succeeds.
-- **Deprecated**: retired by [#86 Rebuild Ankaa on one Core and Shell architecture, with redesigned Routines, Workouts and Account deletion](https://github.com/manuelcattelan/ankaa/issues/86).
-
-### Workout document
-
-A [Workout](#workout) as the device [Stores](#store) it: everything recorded so far, with a version number that every change increases and the version of its last successful [Save](#save), so the device knows which changes the server doesn't have yet.
-
-- **Avoid**: local workout, workout draft, offline workout, cached workout
-- **Distinct from**: [Workout](#workout): the Workout is what the person does, and the Workout document is the copy of it that the device keeps.
-- **Deprecated**: retired by [#86 Rebuild Ankaa on one Core and Shell architecture, with redesigned Routines, Workouts and Account deletion](https://github.com/manuelcattelan/ankaa/issues/86).
