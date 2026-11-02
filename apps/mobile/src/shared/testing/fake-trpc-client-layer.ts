@@ -8,7 +8,7 @@ import type {
   TRPCQueryProcedure,
 } from "@trpc/server";
 
-import { wireErrorSchema } from "@ankaa/api/trpc/wire-error-schema";
+import { errorFormatter } from "@ankaa/api/trpc/error-formatter";
 import { routineDeleteInputSchema } from "@ankaa/core/features/routine/schemas/routine-delete-input-schema";
 import { routineSaveInputSchema } from "@ankaa/core/features/routine/schemas/routine-save-input-schema";
 import { workoutRemoveSetInputSchema } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
@@ -164,15 +164,7 @@ function createFakeTrpcResolver<TProcedure extends AnyProcedure>({
 }
 
 function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
-  const t = initTRPC.create({
-    errorFormatter: ({ error, shape }) => ({
-      ...shape,
-      data: {
-        ...shape.data,
-        wireError: encodeFakeWireError(error.cause),
-      },
-    }),
-  });
+  const t = initTRPC.create({ errorFormatter });
 
   const fakeTrpcProcedures: FakeTrpcProcedures = {
     "exercise.list": t.procedure.query(
@@ -249,12 +241,6 @@ function createFakeTrpcRouter(fakeTrpcResponses: FakeTrpcResponses) {
   };
 
   return t.router(fakeTrpcProcedures);
-}
-
-function encodeFakeWireError(cause: unknown) {
-  return Schema.is(wireErrorSchema)(cause)
-    ? Schema.encodeUnknownSync(wireErrorSchema)(cause)
-    : null;
 }
 
 function getFakeTrpcRequestPaths(fakeTrpcRequest: Request) {
