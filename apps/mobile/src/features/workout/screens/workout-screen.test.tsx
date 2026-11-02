@@ -1238,7 +1238,7 @@ describe("WorkoutScreen", () => {
     });
   });
 
-  it("ends the Rest and cancels its notification when the User skips it", async () => {
+  it("ends the Rest early and cancels its notification through Skip rest", async () => {
     const scheduledNotifications: ScheduledNotification[] = [];
     const user = userEvent.setup();
     renderScreen({

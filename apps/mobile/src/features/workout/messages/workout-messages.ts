@@ -3,7 +3,7 @@ import type { WeightUnit } from "@ankaa/core/features/workout/constants/weight";
 import type { AmountUnit } from "@ankaa/core/shared/constants/amount";
 import type { WeightType } from "@ankaa/core/shared/constants/weight-types";
 
-import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
+import type { Countdown } from "#/features/workout/core/countdown.ts";
 import type { ScheduledNotification } from "#/shared/services/notifications.ts";
 
 import { formatCount } from "#/shared/core/format-count.ts";
@@ -18,6 +18,7 @@ export const WORKOUT_MESSAGES = {
     repetition: "Repetitions",
     second: "Seconds",
   } satisfies Record<AmountUnit, string>,
+  cancelRestButton: "Skip rest",
   countdownEndNotifications: {
     pause: {
       body: "Start the next segment of your set.",
@@ -89,7 +90,6 @@ export const WORKOUT_MESSAGES = {
     other: "Other",
     pain: "Pain",
   } satisfies Record<SkipReason, string>,
-  skipRestButton: "Skip rest",
   startPauseButton: "Start pause",
   startRestButton: "Start rest",
   startWorkoutButton: (routineName: string) => `Start ${routineName}`,

@@ -1,6 +1,6 @@
 import { createContext } from "react";
 
-import type { Countdown } from "#/features/workout/core/get-countdown-remaining-seconds.ts";
+import type { Countdown } from "#/features/workout/core/countdown.ts";
 import type {
   WorkoutDrafts,
   WorkoutDraftsAction,
@@ -11,8 +11,8 @@ type WorkoutContextValue = {
   dispatch: (action: WorkoutDraftsAction) => void;
   drafts: WorkoutDrafts;
   exerciseNames: ReadonlyMap<string, string>;
+  onCancelCountdown: () => void;
   onEndCountdown: () => void;
-  onSkipCountdown: () => void;
   onStartCountdown: (countdown: Omit<Countdown, "startTime">) => void;
 };
 
