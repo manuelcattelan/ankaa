@@ -13,6 +13,7 @@ import { decodeForm } from "#/shared/core/decode-form.ts";
 export function WorkoutSegment({
   amountUnit,
   hasSubmitted,
+  isEditable,
   number,
   onChange,
   segment,
@@ -21,6 +22,7 @@ export function WorkoutSegment({
 }: {
   amountUnit: AmountUnit;
   hasSubmitted: boolean;
+  isEditable: boolean;
   number: null | number;
   onChange: (segment: SegmentDraft) => void;
   segment: SegmentDraft;
@@ -41,6 +43,7 @@ export function WorkoutSegment({
         <Text>{WORKOUT_MESSAGES.segmentLabel(number)}</Text>
       )}
       <TextField
+        editable={isEditable}
         errorMessage={amountErrorMessage}
         inputMode="numeric"
         label={WORKOUT_MESSAGES.amountLabels[amountUnit]}
@@ -51,6 +54,7 @@ export function WorkoutSegment({
       />
       {weightType === "none" ? null : (
         <TextField
+          editable={isEditable}
           errorMessage={weightErrorMessage}
           inputMode="decimal"
           label={WORKOUT_MESSAGES.weightLabels[weightUnit]}

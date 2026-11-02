@@ -153,6 +153,7 @@ export class WorkoutRepository extends Context.Service<
       id: string;
     }) => Effect.Effect<null | {
       recordedSets: RecordedSetRow[];
+      skipReason: (typeof workoutExercise.$inferSelect)["skipReason"];
       workout: WorkoutOwnerRow;
     }>;
     readonly findWorkoutExerciseForRecordedSetSave: (options: {
@@ -160,6 +161,7 @@ export class WorkoutRepository extends Context.Service<
     }) => Effect.Effect<null | {
       plannedSets: ReturnType<typeof buildPlannedSet>[];
       recordedSets: RecordedSetRow[];
+      skipReason: (typeof workoutExercise.$inferSelect)["skipReason"];
       weightType: (typeof workoutExercise.$inferSelect)["weightType"];
       workout: WorkoutOwnerRow;
     }>;
@@ -337,7 +339,11 @@ export class WorkoutRepository extends Context.Service<
 
         const recordedSets = yield* findRecordedSets({ workoutExerciseId: id });
 
-        return { recordedSets, workout: lockedWorkoutExercise.workout };
+        return {
+          recordedSets,
+          skipReason: lockedWorkoutExercise.skipReason,
+          workout: lockedWorkoutExercise.workout,
+        };
       });
 
       const findWorkoutExerciseForRecordedSetSave = Effect.fn(
@@ -363,6 +369,7 @@ export class WorkoutRepository extends Context.Service<
         return {
           plannedSets: plannedSets.map(buildPlannedSet),
           recordedSets,
+          skipReason: lockedWorkoutExercise.skipReason,
           weightType: lockedWorkoutExercise.weightType,
           workout: lockedWorkoutExercise.workout,
         };
@@ -389,6 +396,7 @@ export class WorkoutRepository extends Context.Service<
         return lockedWorkout === null
           ? null
           : {
+              skipReason: workoutExerciseRow.skipReason,
               weightType: workoutExerciseRow.weightType,
               workout: lockedWorkout,
             };
@@ -409,6 +417,7 @@ export class WorkoutRepository extends Context.Service<
 
         return yield* database
           .select({
+            skipReason: workoutExercise.skipReason,
             weightType: workoutExercise.weightType,
             workoutId: workoutExerciseGroup.workoutId,
           })

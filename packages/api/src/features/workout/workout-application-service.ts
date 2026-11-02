@@ -1,6 +1,7 @@
 import type { SegmentCountInvalidError } from "@ankaa/core/features/workout/errors/segment-count-invalid-error";
 import type { SegmentWeightNotAllowedError } from "@ankaa/core/features/workout/errors/segment-weight-not-allowed-error";
 import type { SetNotPlannedError } from "@ankaa/core/features/workout/errors/set-not-planned-error";
+import type { SkipConflictError } from "@ankaa/core/features/workout/errors/skip-conflict-error";
 import type { WorkoutInProgressConflictError } from "@ankaa/core/features/workout/errors/workout-in-progress-conflict-error";
 import type { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
@@ -30,7 +31,7 @@ export class WorkoutApplicationService extends Context.Service<
     readonly removeSet: (options: {
       input: WorkoutRemoveSetInput;
       userId: string;
-    }) => Effect.Effect<void, WorkoutNotFoundError>;
+    }) => Effect.Effect<void, SkipConflictError | WorkoutNotFoundError>;
     readonly saveNote: (options: {
       input: WorkoutSaveNoteInput;
       userId: string;
@@ -43,6 +44,7 @@ export class WorkoutApplicationService extends Context.Service<
       | SegmentCountInvalidError
       | SegmentWeightNotAllowedError
       | SetNotPlannedError
+      | SkipConflictError
       | WorkoutNotFoundError
     >;
     readonly saveSkip: (options: {
@@ -101,6 +103,7 @@ export class WorkoutApplicationService extends Context.Service<
                         id: outcome.id,
                         movedRecordedSets: outcome.movedRecordedSets,
                       }),
+                    SkipConflictError: (error) => Effect.fail(error),
                     WorkoutNotFoundError: (error) => Effect.fail(error),
                   },
                 );
@@ -171,6 +174,7 @@ export class WorkoutApplicationService extends Context.Service<
                     SegmentCountInvalidError: (error) => Effect.fail(error),
                     SegmentWeightNotAllowedError: (error) => Effect.fail(error),
                     SetNotPlannedError: (error) => Effect.fail(error),
+                    SkipConflictError: (error) => Effect.fail(error),
                     WorkoutNotFoundError: (error) => Effect.fail(error),
                   },
                 );

@@ -31,7 +31,9 @@ import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 /**
  * Shows one Set of a Workout exercise with its matching planned Set, and
  * lets the User fill in its Segments and Save it when it's a recorded Set or
- * the next one to record, and remove it when it's a recorded Set.
+ * the next one to record, and remove it when it's a recorded Set. While the
+ * Workout exercise has a Skip, it shows a recorded Set's Segments read-only
+ * and offers no Set to record.
  */
 export function WorkoutSet({
   amountUnit,
@@ -39,6 +41,7 @@ export function WorkoutSet({
   draft,
   exerciseId,
   isRecordable,
+  isSkipped,
   plannedSet,
   position,
   recordedSet,
@@ -51,6 +54,7 @@ export function WorkoutSet({
   draft: null | RecordedSetDraft;
   exerciseId: string;
   isRecordable: boolean;
+  isSkipped: boolean;
   plannedSet: Omit<PlannedSet, "id">;
   position: number;
   recordedSet: null | RecordedSet;
@@ -105,6 +109,7 @@ export function WorkoutSet({
     values: recordedSetDraft,
   });
   const maximumSegmentCount = getMaximumSegmentCount(plannedSet);
+  const hasSegments = isSkipped ? recordedSet !== null : isRecordable;
   const statusMessage = getStatusMessage();
 
   function getStatusMessage() {
@@ -182,12 +187,13 @@ export function WorkoutSet({
         plannedSet={plannedSet}
         setNumber={position + 1}
       />
-      {isRecordable ? (
+      {hasSegments ? (
         <>
           {recordedSetDraft.segments.map((segment, segmentPosition) => (
             <WorkoutSegment
               amountUnit={amountUnit}
               hasSubmitted={hasSubmitted}
+              isEditable={!isSkipped}
               key={segmentPosition}
               number={maximumSegmentCount === 1 ? null : segmentPosition + 1}
               onChange={(changedSegment) => {
@@ -206,7 +212,8 @@ export function WorkoutSet({
               weightUnit={weightUnit}
             />
           ))}
-          {recordedSetDraft.segments.length < maximumSegmentCount ? (
+          {!isSkipped &&
+          recordedSetDraft.segments.length < maximumSegmentCount ? (
             <Button
               onPress={() => {
                 handleChangeDraft({
@@ -220,7 +227,7 @@ export function WorkoutSet({
               title={WORKOUT_MESSAGES.addSegmentButton}
             />
           ) : null}
-          {recordedSetDraft.segments.length > 1 ? (
+          {!isSkipped && recordedSetDraft.segments.length > 1 ? (
             <Button
               onPress={() => {
                 handleChangeDraft({
@@ -234,12 +241,14 @@ export function WorkoutSet({
               title={WORKOUT_MESSAGES.removeSegmentButton}
             />
           ) : null}
-          <Button
-            isBusy={saveSet.isPending}
-            onPress={handleSaveSet}
-            title={WORKOUT_MESSAGES.saveSetButton}
-          />
-          {recordedSet === null ? null : (
+          {isSkipped ? null : (
+            <Button
+              isBusy={saveSet.isPending}
+              onPress={handleSaveSet}
+              title={WORKOUT_MESSAGES.saveSetButton}
+            />
+          )}
+          {isSkipped || recordedSet === null ? null : (
             <Button
               isBusy={removeSet.isPending}
               onPress={() => {

@@ -57,6 +57,9 @@ export function WorkoutExercise({
         </Text>
       )}
       <Text>{WORKOUT_MESSAGES.workingSetCounterStatus(workingSetCounts)}</Text>
+      {workoutExercise.skipReason === null ? null : (
+        <Text>{WORKOUT_MESSAGES.skipStatus}</Text>
+      )}
       {workoutExercise.weightType === "none" ? null : (
         <PickerField
           label={WORKOUT_MESSAGES.weightUnitLabel}
@@ -79,6 +82,7 @@ export function WorkoutExercise({
           }
           exerciseId={workoutExercise.exerciseId}
           isRecordable={position <= workoutExercise.recordedSets.length}
+          isSkipped={workoutExercise.skipReason !== null}
           key={position}
           plannedSet={plannedSet}
           position={position}

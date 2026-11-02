@@ -6,6 +6,7 @@ import type { WorkoutSaveSkipInput } from "@ankaa/core/features/workout/schemas/
 import type { WorkoutStopInput } from "@ankaa/core/features/workout/schemas/workout-stop-input-schema";
 
 import { SetNotPlannedError } from "@ankaa/core/features/workout/errors/set-not-planned-error";
+import { SkipConflictError } from "@ankaa/core/features/workout/errors/skip-conflict-error";
 import {
   fireEvent,
   screen,
@@ -1044,6 +1045,155 @@ describe("WorkoutScreen", () => {
     expect(
       await screen.findByText(
         "This note needs a reason: pick why you skipped the exercise, or clear the note.",
+      ),
+    ).toBeOnTheScreen();
+    expect(receivedPaths).not.toContain("workout.saveSkip");
+  });
+
+  it("shows the Sets of a Workout exercise with a Saved Skip read-only, telling the User to clear the Skip to change them", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET, WORKING_PLANNED_SET],
+                recordedSets: [
+                  {
+                    id: "01900000-0000-7000-8000-000000000301",
+                    segments: [{ amount: 8, weight: 60 }],
+                  },
+                ],
+                skipReason: "pain",
+              }),
+          },
+        }),
+      },
+    });
+
+    await user.type(await screen.findByLabelText("Repetitions"), "1");
+
+    expect(
+      screen.getByText(
+        "This exercise is skipped: to record, change or remove a set, pick Not skipped and save the skip.",
+      ),
+    ).toBeOnTheScreen();
+    expect(screen.getAllByLabelText("Repetitions")).toHaveLength(1);
+    expect(screen.getByLabelText("Repetitions")).toHaveDisplayValue("8");
+    expect(screen.getByLabelText("Weight, in kilograms")).toHaveDisplayValue(
+      "60",
+    );
+    expect(
+      screen.queryByRole("button", { name: "Save set" }),
+    ).not.toBeOnTheScreen();
+    expect(
+      screen.queryByRole("button", { name: "Remove set" }),
+    ).not.toBeOnTheScreen();
+  });
+
+  it("tells the User to clear the Skip when the server refuses a Set's Save because the Workout exercise has a Skip", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        crypto: fakeCryptoLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+            "workout.saveSet": () => {
+              throw new SkipConflictError();
+            },
+          },
+        }),
+      },
+    });
+    await user.type(await screen.findByLabelText("Repetitions"), "8");
+
+    await user.press(screen.getByRole("button", { name: "Save set" }));
+
+    expect(
+      await screen.findByText(
+        "This exercise is skipped, so its sets can't change: pick Not skipped, save the skip and try again.",
+      ),
+    ).toBeOnTheScreen();
+  });
+
+  it("tells the User to clear the Skip when the server refuses a Set's removal because the Workout exercise has a Skip", async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [
+                  {
+                    id: "01900000-0000-7000-8000-000000000301",
+                    segments: [{ amount: 8, weight: 60 }],
+                  },
+                ],
+              }),
+            "workout.removeSet": () => {
+              throw new SkipConflictError();
+            },
+          },
+        }),
+      },
+    });
+
+    await user.press(await screen.findByRole("button", { name: "Remove set" }));
+
+    expect(
+      await screen.findByText(
+        "This exercise is skipped, so its sets can't change: pick Not skipped, save the skip and try again.",
+      ),
+    ).toBeOnTheScreen();
+  });
+
+  it("refuses to Save a Skip while a Set of its Workout exercise has a Draft the User hasn't Saved, telling the User to Save or discard it", async () => {
+    const receivedPaths: string[] = [];
+    const user = userEvent.setup();
+    renderScreen({
+      initialUrl: "/workout",
+      testRuntimeLayers: {
+        authenticationClient: fakeSignedInAuthenticationClientLayer,
+        trpcClient: fakeTrpcClientLayer({
+          receivedPaths,
+          responses: {
+            "exercise.list": () => EXERCISES,
+            "workout.findInProgress": () =>
+              buildBenchPressWorkout({
+                plannedSets: [WORKING_PLANNED_SET],
+                recordedSets: [],
+              }),
+          },
+        }),
+      },
+    });
+    await user.type(await screen.findByLabelText("Repetitions"), "8");
+    fireEvent(screen.getByTestId("Skipped"), "selectionChange", {
+      nativeEvent: { selection: "low_energy" },
+    });
+
+    await user.press(screen.getByRole("button", { name: "Save skip" }));
+
+    expect(
+      await screen.findByText(
+        "You haven't saved some sets of this exercise: save or discard them before you save the skip.",
       ),
     ).toBeOnTheScreen();
     expect(receivedPaths).not.toContain("workout.saveSkip");

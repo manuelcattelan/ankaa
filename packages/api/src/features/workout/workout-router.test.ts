@@ -1412,6 +1412,86 @@ describe("workout.saveSet", () => {
     });
   });
 
+  it("fails with CONFLICT and SkipConflictError for a new Set in a Workout exercise with a Skip, and records no Set", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0611",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+    await caller.workout.saveSkip({
+      note: null,
+      reason: "pain",
+      workoutExerciseId,
+    });
+
+    await expect(
+      caller.workout.saveSet({
+        id: "019a0611-0000-7000-8000-000000000101",
+        segments: [{ amount: 8, weight: 60 }],
+        weightUnit: "kilogram",
+        workoutExerciseId,
+      }),
+    ).rejects.toMatchObject({
+      cause: { _tag: "SkipConflictError" },
+      code: "CONFLICT",
+    });
+    await expect(caller.workout.findInProgress()).resolves.toMatchObject({
+      sections: { main: [{ exercises: [{ recordedSets: [] }] }] },
+    });
+  });
+
+  it("fails with CONFLICT and SkipConflictError for a recorded Set Saved again in a Workout exercise with a Skip, and leaves the Set as it was", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0612",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+    await caller.workout.saveSet({
+      id: "019a0612-0000-7000-8000-000000000101",
+      segments: [{ amount: 8, weight: 60 }],
+      weightUnit: "kilogram",
+      workoutExerciseId,
+    });
+    await caller.workout.saveSkip({
+      note: null,
+      reason: "low_on_time",
+      workoutExerciseId,
+    });
+
+    await expect(
+      caller.workout.saveSet({
+        id: "019a0612-0000-7000-8000-000000000101",
+        segments: [{ amount: 5, weight: 50 }],
+        weightUnit: "pound",
+        workoutExerciseId,
+      }),
+    ).rejects.toMatchObject({
+      cause: { _tag: "SkipConflictError" },
+      code: "CONFLICT",
+    });
+    await expect(caller.workout.findInProgress()).resolves.toMatchObject({
+      sections: {
+        main: [
+          {
+            exercises: [
+              {
+                recordedSets: [
+                  {
+                    id: "019a0612-0000-7000-8000-000000000101",
+                    segments: [{ amount: 8, weight: 60 }],
+                  },
+                ],
+                weightUnit: "kilogram",
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
   it("fails with BAD_REQUEST for a Segment with no Amount", async () => {
     const caller = await createSignedInCaller({ runtime });
     const workoutExerciseId = await startBenchPressWorkout({
@@ -1608,6 +1688,54 @@ describe("workout.removeSet", () => {
             exercises: [
               {
                 recordedSets: [{ id: "019a0702-0000-7000-8000-000000000101" }],
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
+  it("fails with CONFLICT and SkipConflictError for a recorded Set of a Workout exercise with a Skip, and keeps the Set", async () => {
+    const caller = await createSignedInCaller({ runtime });
+    const workoutExerciseId = await startBenchPressWorkout({
+      caller,
+      idPrefix: "019a0705",
+      plannedSets: [WORKING_PLANNED_SET],
+    });
+    await caller.workout.saveSet({
+      id: "019a0705-0000-7000-8000-000000000101",
+      segments: [{ amount: 8, weight: 60 }],
+      weightUnit: "kilogram",
+      workoutExerciseId,
+    });
+    await caller.workout.saveSkip({
+      note: null,
+      reason: "other",
+      workoutExerciseId,
+    });
+
+    await expect(
+      caller.workout.removeSet({
+        id: "019a0705-0000-7000-8000-000000000101",
+        workoutExerciseId,
+      }),
+    ).rejects.toMatchObject({
+      cause: { _tag: "SkipConflictError" },
+      code: "CONFLICT",
+    });
+    await expect(caller.workout.findInProgress()).resolves.toMatchObject({
+      sections: {
+        main: [
+          {
+            exercises: [
+              {
+                recordedSets: [
+                  {
+                    id: "019a0705-0000-7000-8000-000000000101",
+                    segments: [{ amount: 8, weight: 60 }],
+                  },
+                ],
               },
             ],
           },

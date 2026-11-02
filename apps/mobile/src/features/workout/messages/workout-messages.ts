@@ -53,6 +53,8 @@ export const WORKOUT_MESSAGES = {
   plannedNoteLabel: (plannedNote: string) => `Routine note: ${plannedNote}`,
   recordedSetDraftInvalidError:
     "Some fields of this set aren't valid: correct the fields marked with an error.",
+  recordedSetDraftsUnsavedError:
+    "You haven't saved some sets of this exercise: save or discard them before you save the skip.",
   removeSegmentButton: "Remove segment",
   removeSetButton: "Remove set",
   restLabel: (restSeconds: number) =>
@@ -78,6 +80,8 @@ export const WORKOUT_MESSAGES = {
     "This exercise takes no weight: clear the weight and save the set again.",
   setNotPlannedError:
     "This exercise has no more sets planned: you've already recorded every set it plans.",
+  skipConflictError:
+    "This exercise is skipped, so its sets can't change: pick Not skipped, save the skip and try again.",
   skipNoteLabel: "Why you skipped it",
   skipNoteWithoutReasonError:
     "This note needs a reason: pick why you skipped the exercise, or clear the note.",
@@ -88,6 +92,8 @@ export const WORKOUT_MESSAGES = {
     other: "Other",
     pain: "Pain",
   } satisfies Record<SkipReason, string>,
+  skipStatus:
+    "This exercise is skipped: to record, change or remove a set, pick Not skipped and save the skip.",
   startPauseButton: "Start pause",
   startRestButton: "Start rest",
   startWorkoutButton: (routineName: string) => `Start ${routineName}`,

@@ -1,6 +1,7 @@
 import { SegmentCountInvalidError } from "#/features/workout/errors/segment-count-invalid-error.ts";
 import { SegmentWeightNotAllowedError } from "#/features/workout/errors/segment-weight-not-allowed-error.ts";
 import { SetNotPlannedError } from "#/features/workout/errors/set-not-planned-error.ts";
+import { SkipConflictError } from "#/features/workout/errors/skip-conflict-error.ts";
 import { WorkoutNotFoundError } from "#/features/workout/errors/workout-not-found-error.ts";
 
 /**
@@ -10,5 +11,6 @@ export const WORKOUT_SAVE_SET_WIRE_ERRORS = [
   SegmentCountInvalidError,
   SegmentWeightNotAllowedError,
   SetNotPlannedError,
+  SkipConflictError,
   WorkoutNotFoundError,
 ];

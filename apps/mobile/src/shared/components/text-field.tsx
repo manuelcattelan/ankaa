@@ -14,6 +14,7 @@ export function TextField({
   | "autoComplete"
   | "autoCorrect"
   | "autoFocus"
+  | "editable"
   | "enterKeyHint"
   | "inputMode"
   | "maxLength"

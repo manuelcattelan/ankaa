@@ -1,5 +1,7 @@
+import type { SkipReason } from "@ankaa/core/features/workout/constants/skip-reasons";
 import type { WorkoutRemoveSetInput } from "@ankaa/core/features/workout/schemas/workout-remove-set-input-schema";
 
+import { SkipConflictError } from "@ankaa/core/features/workout/errors/skip-conflict-error";
 import { WorkoutNotFoundError } from "@ankaa/core/features/workout/errors/workout-not-found-error";
 
 import { getWorkoutExerciseInProgress } from "#/features/workout/core/get-workout-exercise-in-progress.ts";
@@ -10,7 +12,7 @@ import { getWorkoutExerciseInProgress } from "#/features/workout/core/get-workou
  * removed one moves up one position, so it still matches the planned Set at
  * its position. Removing a Set the Workout exercise no longer records writes
  * nothing and succeeds, so a removal retried after a lost response never
- * removes a second Set.
+ * removes a second Set, even once a Skip keeps the other Sets as they are.
  */
 export function decideRecordedSetRemove({
   input,
@@ -21,6 +23,7 @@ export function decideRecordedSetRemove({
   userId: string;
   workoutExercise: null | {
     recordedSets: readonly { id: string; position: number }[];
+    skipReason: null | SkipReason;
     workout: { endedAt: Date | null; userId: string };
   };
 }) {
@@ -39,6 +42,10 @@ export function decideRecordedSetRemove({
 
   if (removedRecordedSet === undefined) {
     return { _tag: "RecordedSetAlreadyRemoved" as const };
+  }
+
+  if (workoutExerciseInProgress.skipReason !== null) {
+    return new SkipConflictError();
   }
 
   return {

@@ -30,7 +30,9 @@ const SKIP_REASON_OPTION_LABELS = {
 
 /**
  * Lets the User give a Workout exercise a Skip, with a reason and an optional
- * note, or clear it, and Save it through its own button.
+ * note, or clear it, and Save it through its own button, and refuses to while
+ * a Set of the Workout exercise has a Draft left to Save, which the Skip would
+ * keep from being Saved.
  */
 export function WorkoutExerciseSkip({
   draft,
@@ -53,6 +55,8 @@ export function WorkoutExerciseSkip({
 
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
+  const [hasRefusedSave, setHasRefusedSave] = useState(false);
+
   const saveSkip = useMutation({
     ...workoutSaveSkipMutationOptions(runtime),
     onSuccess: async () => {
@@ -71,9 +75,16 @@ export function WorkoutExerciseSkip({
     schema: skipFormSchema,
     values: skipDraft,
   });
+  const hasRecordedSetDrafts = workoutContext.drafts.recordedSets.some(
+    (entry) => entry.workoutExerciseId === workoutExerciseId,
+  );
   const statusMessage = getStatusMessage();
 
   function getStatusMessage() {
+    if (hasRefusedSave && hasRecordedSetDrafts) {
+      return WORKOUT_MESSAGES.recordedSetDraftsUnsavedError;
+    }
+
     if (saveSkip.error !== null) {
       return getWorkoutSaveSkipErrorMessage(saveSkip.error);
     }
@@ -100,6 +111,12 @@ export function WorkoutExerciseSkip({
 
     setHasSubmitted(true);
     saveSkip.reset();
+
+    if (hasRecordedSetDrafts) {
+      setHasRefusedSave(true);
+
+      return;
+    }
 
     if (skipFormDecoding.value !== null) {
       saveSkip.mutate({ ...skipFormDecoding.value, workoutExerciseId });
