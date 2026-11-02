@@ -40,8 +40,8 @@ Every name stands for a **concept**: a unit of meaning from the product, the arc
 
 - **Members.** A property, a method, or a key of an object parameter drops the concept that its object or function already names, because the code always reads it through that object ([Swift's guidelines](https://www.swift.org/documentation/api-design-guidelines/)). An export keeps its whole concept, because the code reads it alone.
 
-  🟢 `routine.name`, `routineRepository.save({ input, userId })`, `export function routineListQueryOptions`.<br>
-  🔴 `routine.routineName`, `routineRepository.saveRoutine({ routineSaveInput, userId })`, `export function listQueryOptions`.
+  🟢 `routine.name`, `routineRepository.create({ input, userId })`, `export function routineListQueryOptions`.<br>
+  🔴 `routine.routineName`, `routineRepository.createRoutine({ routineSaveInput, userId })`, `export function listQueryOptions`.
 
 - **Locals and parameters.** A local or parameter may take the name of a more general concept when no other value in its function belongs to that concept, because a narrow scope keeps a short name clear ([Feitelson](https://doi.org/10.1109/ICPC58990.2023.00037)). When two values do, each keeps the modifier that tells it apart.
 

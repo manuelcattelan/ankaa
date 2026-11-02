@@ -159,11 +159,13 @@ export class WorkoutApplicationService extends Context.Service<
                 yield* Match.valueTags(
                   decideRecordedSetSave({ input, userId, workoutExercise }),
                   {
-                    RecordedSetSaveAllowed: (outcome) =>
-                      workoutRepository.saveSet({
+                    RecordedSetCreateAllowed: (outcome) =>
+                      workoutRepository.createSet({
                         input,
                         position: outcome.position,
                       }),
+                    RecordedSetUpdateAllowed: () =>
+                      workoutRepository.updateSet({ input }),
                     SegmentCountInvalidError: (error) => Effect.fail(error),
                     SegmentWeightNotAllowedError: (error) => Effect.fail(error),
                     WorkoutNotFoundError: (error) => Effect.fail(error),

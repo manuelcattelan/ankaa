@@ -77,9 +77,10 @@ export class RoutineApplicationService extends Context.Service<
               });
 
               yield* Match.valueTags(decideRoutineSave({ routine, userId }), {
+                RoutineCreateAllowed: () =>
+                  routineRepository.create({ input, userId }),
                 RoutineNotFoundError: (error) => Effect.fail(error),
-                RoutineSaveAllowed: () =>
-                  routineRepository.save({ input, userId }),
+                RoutineUpdateAllowed: () => routineRepository.update({ input }),
               });
             }),
           )

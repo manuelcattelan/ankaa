@@ -87,6 +87,8 @@ type WorkoutOwnerRow = Pick<typeof workout.$inferSelect, "endedAt" | "userId">;
 
 const WORKOUT_IN_PROGRESS_INDEX = "workout_in_progress_idx";
 
+const RECORDED_SET_PRIMARY_KEY = "workout_exercise_recorded_set_pkey";
+
 const PLANNED_SET_COLUMNS = {
   amount: true,
   intensityTechnique: true,
@@ -142,6 +144,10 @@ const WORKOUT_EXERCISE_SETS = {
 export class WorkoutRepository extends Context.Service<
   WorkoutRepository,
   {
+    readonly createSet: (options: {
+      input: WorkoutSaveSetInput;
+      position: number;
+    }) => Effect.Effect<void, WorkoutNotFoundError>;
     readonly find: (options: {
       id: string;
     }) => Effect.Effect<null | Pick<typeof workout.$inferSelect, "userId">>;
@@ -183,10 +189,6 @@ export class WorkoutRepository extends Context.Service<
     readonly saveNote: (options: {
       input: WorkoutSaveNoteInput;
     }) => Effect.Effect<void>;
-    readonly saveSet: (options: {
-      input: WorkoutSaveSetInput;
-      position: number;
-    }) => Effect.Effect<void, WorkoutNotFoundError>;
     readonly saveSkip: (options: {
       input: WorkoutSaveSkipInput;
     }) => Effect.Effect<void>;
@@ -196,6 +198,9 @@ export class WorkoutRepository extends Context.Service<
       userId: string;
     }) => Effect.Effect<void, WorkoutInProgressConflictError>;
     readonly stop: (options: { id: string }) => Effect.Effect<void>;
+    readonly updateSet: (options: {
+      input: WorkoutSaveSetInput;
+    }) => Effect.Effect<void>;
   }
 >()("@ankaa/api/features/workout/WorkoutRepository") {
   static readonly layerNoDeps = Layer.effect(
@@ -496,7 +501,23 @@ export class WorkoutRepository extends Context.Service<
           .pipe(Effect.orDie);
       });
 
-      const saveSet = Effect.fn("WorkoutRepository.saveSet")(function* ({
+      const insertSegments = Effect.fn("WorkoutRepository.insertSegments")(
+        function* ({ input }: { input: WorkoutSaveSetInput }) {
+          yield* database
+            .insert(workoutExerciseRecordedSetSegment)
+            .values(
+              input.segments.map((segment, segmentPosition) => ({
+                amount: segment.amount,
+                position: segmentPosition,
+                weight: segment.weight,
+                workoutExerciseRecordedSetId: input.id,
+              })),
+            )
+            .pipe(Effect.orDie);
+        },
+      );
+
+      const createSet = Effect.fn("WorkoutRepository.createSet")(function* ({
         input,
         position,
       }: {
@@ -509,54 +530,22 @@ export class WorkoutRepository extends Context.Service<
           .where(eq(workoutExercise.id, input.workoutExerciseId))
           .pipe(Effect.orDie);
 
-        const savedSets = yield* database
+        yield* database
           .insert(workoutExerciseRecordedSet)
           .values({
             id: input.id,
             position,
             workoutExerciseId: input.workoutExerciseId,
           })
-          .onConflictDoUpdate({
-            set: { position },
-            // The Core reads only this Workout exercise's Sets, so this WHERE
-            // keeps an id that names a Set elsewhere, such as in another
-            // User's Workout, from moving that Set here: the upsert then
-            // returns no row. It guards a row the Core never read, so it
-            // repeats no check (https://github.com/manuelcattelan/ankaa/issues/86).
-            setWhere: eq(
-              workoutExerciseRecordedSet.workoutExerciseId,
-              input.workoutExerciseId,
-            ),
-            target: workoutExerciseRecordedSet.id,
-          })
-          .returning({ id: workoutExerciseRecordedSet.id })
-          .pipe(Effect.orDie);
+          .pipe(
+            catchUniqueIndexViolation({
+              errors: {
+                [RECORDED_SET_PRIMARY_KEY]: new WorkoutNotFoundError(),
+              },
+            }),
+          );
 
-        if (savedSets.length === 0) {
-          return yield* Effect.fail(new WorkoutNotFoundError());
-        }
-
-        yield* database
-          .delete(workoutExerciseRecordedSetSegment)
-          .where(
-            eq(
-              workoutExerciseRecordedSetSegment.workoutExerciseRecordedSetId,
-              input.id,
-            ),
-          )
-          .pipe(Effect.orDie);
-
-        yield* database
-          .insert(workoutExerciseRecordedSetSegment)
-          .values(
-            input.segments.map((segment, segmentPosition) => ({
-              amount: segment.amount,
-              position: segmentPosition,
-              weight: segment.weight,
-              workoutExerciseRecordedSetId: input.id,
-            })),
-          )
-          .pipe(Effect.orDie);
+        yield* insertSegments({ input });
       });
 
       const saveSkip = Effect.fn("WorkoutRepository.saveSkip")(function* ({
@@ -585,8 +574,10 @@ export class WorkoutRepository extends Context.Service<
           .values({ id, routineId: routine.id, userId })
           .pipe(
             catchUniqueIndexViolation({
-              error: new WorkoutInProgressConflictError(),
-              index: WORKOUT_IN_PROGRESS_INDEX,
+              errors: {
+                [WORKOUT_IN_PROGRESS_INDEX]:
+                  new WorkoutInProgressConflictError(),
+              },
             }),
           );
 
@@ -732,7 +723,32 @@ export class WorkoutRepository extends Context.Service<
           .pipe(Effect.orDie);
       });
 
+      const updateSet = Effect.fn("WorkoutRepository.updateSet")(function* ({
+        input,
+      }: {
+        input: WorkoutSaveSetInput;
+      }) {
+        yield* database
+          .update(workoutExercise)
+          .set({ weightUnit: input.weightUnit })
+          .where(eq(workoutExercise.id, input.workoutExerciseId))
+          .pipe(Effect.orDie);
+
+        yield* database
+          .delete(workoutExerciseRecordedSetSegment)
+          .where(
+            eq(
+              workoutExerciseRecordedSetSegment.workoutExerciseRecordedSetId,
+              input.id,
+            ),
+          )
+          .pipe(Effect.orDie);
+
+        yield* insertSegments({ input });
+      });
+
       return WorkoutRepository.of({
+        createSet,
         find,
         findForUpdate,
         findInProgress,
@@ -742,10 +758,10 @@ export class WorkoutRepository extends Context.Service<
         findWorkoutExerciseForUpdate,
         removeSet,
         saveNote,
-        saveSet,
         saveSkip,
         start,
         stop,
+        updateSet,
       });
     }),
   );

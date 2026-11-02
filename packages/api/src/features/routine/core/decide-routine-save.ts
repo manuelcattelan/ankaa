@@ -2,8 +2,9 @@ import { RoutineNotFoundError } from "@ankaa/core/shared/errors/routine-not-foun
 
 /**
  * Decides whether a Save may write the Routine, given the Routine with the
- * Saved id, or `null` when none has it yet. A Save creates the Routine or
- * updates the User's live one, and never revives a Routine the User deleted.
+ * Saved id, or `null` when none has it yet. A Save creates the Routine when
+ * none has its id, updates the User's live one, and never revives a Routine
+ * the User deleted.
  */
 export function decideRoutineSave({
   routine,
@@ -13,12 +14,12 @@ export function decideRoutineSave({
   userId: string;
 }) {
   if (routine === null) {
-    return { _tag: "RoutineSaveAllowed" as const };
+    return { _tag: "RoutineCreateAllowed" as const };
   }
 
   if (routine.userId !== userId || routine.deletedAt !== null) {
     return new RoutineNotFoundError();
   }
 
-  return { _tag: "RoutineSaveAllowed" as const };
+  return { _tag: "RoutineUpdateAllowed" as const };
 }

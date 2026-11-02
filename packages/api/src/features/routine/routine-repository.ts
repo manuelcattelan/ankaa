@@ -36,6 +36,8 @@ type RoutineExerciseSetRow = Omit<
 
 const ROUTINE_NAME_INDEX = "routine_live_name_idx";
 
+const ROUTINE_PRIMARY_KEY = "routine_pkey";
+
 const ROUTINE_EXERCISE_COLUMNS = {
   exerciseId: true,
   id: true,
@@ -58,6 +60,10 @@ const ROUTINE_EXERCISE_SET_COLUMNS = {
 export class RoutineRepository extends Context.Service<
   RoutineRepository,
   {
+    readonly create: (options: {
+      input: RoutineSaveInput;
+      userId: string;
+    }) => Effect.Effect<void, RoutineNameConflictError | RoutineNotFoundError>;
     readonly delete: (options: { id: string }) => Effect.Effect<void>;
     readonly findForUpdate: (options: {
       id: string;
@@ -68,10 +74,9 @@ export class RoutineRepository extends Context.Service<
     readonly list: (options: {
       userId: string;
     }) => Effect.Effect<ListedRoutine[]>;
-    readonly save: (options: {
+    readonly update: (options: {
       input: RoutineSaveInput;
-      userId: string;
-    }) => Effect.Effect<void, RoutineNameConflictError | RoutineNotFoundError>;
+    }) => Effect.Effect<void, RoutineNameConflictError>;
   }
 >()("@ankaa/api/features/routine/RoutineRepository") {
   static readonly layerNoDeps = Layer.effect(
@@ -149,39 +154,83 @@ export class RoutineRepository extends Context.Service<
         return routines.map(buildRoutine);
       });
 
-      const save = Effect.fn("RoutineRepository.save")(function* ({
+      const insertChildren = Effect.fn("RoutineRepository.insertChildren")(
+        function* ({ input }: { input: RoutineSaveInput }) {
+          const rows = buildRoutineRows(input);
+
+          if (rows.days.length > 0) {
+            yield* database
+              .insert(routineDay)
+              .values(rows.days)
+              .pipe(Effect.orDie);
+          }
+
+          if (rows.exerciseGroups.length > 0) {
+            yield* database
+              .insert(routineExerciseGroup)
+              .values(rows.exerciseGroups)
+              .pipe(Effect.orDie);
+          }
+
+          if (rows.exercises.length > 0) {
+            yield* database
+              .insert(routineExercise)
+              .values(rows.exercises)
+              .pipe(Effect.orDie);
+          }
+
+          if (rows.warmUpExercises.length > 0) {
+            yield* database
+              .insert(routineExercise)
+              .values(rows.warmUpExercises)
+              .pipe(Effect.orDie);
+          }
+
+          if (rows.sets.length > 0) {
+            yield* database
+              .insert(routineExerciseSet)
+              .values(rows.sets)
+              .pipe(Effect.orDie);
+          }
+        },
+      );
+
+      const create = Effect.fn("RoutineRepository.create")(function* ({
         input,
         userId,
       }: {
         input: RoutineSaveInput;
         userId: string;
       }) {
-        const rows = buildRoutineRows(input);
-
-        const savedRoutines = yield* database
+        yield* database
           .insert(routine)
           .values({ id: input.id, name: input.name, userId })
-          .onConflictDoUpdate({
-            set: { name: input.name },
-            // The Core decided on no Routine when none had this id yet, so
-            // this WHERE keeps a Routine of another User that took the id
-            // since from being overwritten: the upsert then returns no row.
-            // It guards a row the Core never read, so it repeats no check
-            // (https://github.com/manuelcattelan/ankaa/issues/86).
-            setWhere: eq(routine.userId, userId),
-            target: routine.id,
-          })
-          .returning({ id: routine.id })
           .pipe(
             catchUniqueIndexViolation({
-              error: new RoutineNameConflictError(),
-              index: ROUTINE_NAME_INDEX,
+              errors: {
+                [ROUTINE_NAME_INDEX]: new RoutineNameConflictError(),
+                [ROUTINE_PRIMARY_KEY]: new RoutineNotFoundError(),
+              },
             }),
           );
 
-        if (savedRoutines.length === 0) {
-          return yield* Effect.fail(new RoutineNotFoundError());
-        }
+        yield* insertChildren({ input });
+      });
+
+      const update = Effect.fn("RoutineRepository.update")(function* ({
+        input,
+      }: {
+        input: RoutineSaveInput;
+      }) {
+        yield* database
+          .update(routine)
+          .set({ name: input.name })
+          .where(eq(routine.id, input.id))
+          .pipe(
+            catchUniqueIndexViolation({
+              errors: { [ROUTINE_NAME_INDEX]: new RoutineNameConflictError() },
+            }),
+          );
 
         yield* database
           .delete(routineDay)
@@ -193,47 +242,15 @@ export class RoutineRepository extends Context.Service<
           .where(eq(routineExerciseGroup.routineId, input.id))
           .pipe(Effect.orDie);
 
-        if (rows.days.length > 0) {
-          yield* database
-            .insert(routineDay)
-            .values(rows.days)
-            .pipe(Effect.orDie);
-        }
-
-        if (rows.exerciseGroups.length > 0) {
-          yield* database
-            .insert(routineExerciseGroup)
-            .values(rows.exerciseGroups)
-            .pipe(Effect.orDie);
-        }
-
-        if (rows.exercises.length > 0) {
-          yield* database
-            .insert(routineExercise)
-            .values(rows.exercises)
-            .pipe(Effect.orDie);
-        }
-
-        if (rows.warmUpExercises.length > 0) {
-          yield* database
-            .insert(routineExercise)
-            .values(rows.warmUpExercises)
-            .pipe(Effect.orDie);
-        }
-
-        if (rows.sets.length > 0) {
-          yield* database
-            .insert(routineExerciseSet)
-            .values(rows.sets)
-            .pipe(Effect.orDie);
-        }
+        yield* insertChildren({ input });
       });
 
       return RoutineRepository.of({
+        create,
         delete: deleteRoutine,
         findForUpdate,
         list,
-        save,
+        update,
       });
     }),
   );

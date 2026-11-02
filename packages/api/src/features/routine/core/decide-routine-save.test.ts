@@ -4,19 +4,19 @@ import { describe, expect, it } from "vitest";
 import { decideRoutineSave } from "#/features/routine/core/decide-routine-save.ts";
 
 describe("decideRoutineSave", () => {
-  it("allows the Save of a Routine that doesn't exist yet", () => {
+  it("creates a Routine that doesn't exist yet", () => {
     expect(
       decideRoutineSave({ routine: null, userId: "user-1" }),
-    ).toStrictEqual({ _tag: "RoutineSaveAllowed" });
+    ).toStrictEqual({ _tag: "RoutineCreateAllowed" });
   });
 
-  it("allows the Save of a live Routine of the User", () => {
+  it("updates a live Routine of the User", () => {
     expect(
       decideRoutineSave({
         routine: { deletedAt: null, userId: "user-1" },
         userId: "user-1",
       }),
-    ).toStrictEqual({ _tag: "RoutineSaveAllowed" });
+    ).toStrictEqual({ _tag: "RoutineUpdateAllowed" });
   });
 
   it("fails with RoutineNotFoundError for a Routine of another User", () => {

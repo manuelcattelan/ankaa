@@ -928,6 +928,42 @@ describe("routine.save", () => {
     ]);
   });
 
+  it("fails with NOT_FOUND and RoutineNotFoundError when a Save of the same new Routine by the User commits while the Save runs, and leaves the first Save's Routine unchanged", async () => {
+    const testUser = await createTestUser(runtime);
+    const caller = await createSignedInCaller({ runtime, testUser });
+    const commitRoutineInsert = await beginRoutineInsert({
+      routineRow: {
+        id: "019a0000-0000-7000-8000-000000000166",
+        name: "Push day",
+        userId: testUser.user.id,
+      },
+      runtime,
+    });
+
+    const routineSave = caller.routine.save(
+      buildRoutineSaveInput({
+        exerciseGroupId: "019a0000-0000-7000-8000-000000000266",
+        id: "019a0000-0000-7000-8000-000000000166",
+        name: "Push day",
+        routineExerciseId: "019a0000-0000-7000-8000-000000000366",
+      }),
+    );
+    await waitForLockWait(runtime);
+    await commitRoutineInsert();
+
+    await expect(routineSave).rejects.toMatchObject({
+      cause: { _tag: "RoutineNotFoundError" },
+      code: "NOT_FOUND",
+    });
+    await expect(caller.routine.list()).resolves.toMatchObject([
+      {
+        id: "019a0000-0000-7000-8000-000000000166",
+        name: "Push day",
+        sections: { main: [] },
+      },
+    ]);
+  });
+
   it("fails with NOT_FOUND and RoutineNotFoundError for the id of a Routine the User deleted", async () => {
     const caller = await createSignedInCaller({ runtime });
     const routineSaveInput = buildRoutineSaveInput({

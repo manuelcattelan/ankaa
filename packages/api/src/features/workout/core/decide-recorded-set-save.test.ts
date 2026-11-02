@@ -32,24 +32,24 @@ const WORKOUT_EXERCISE = {
 const SEGMENT = { amount: 8, weight: 60 };
 
 describe("decideRecordedSetSave", () => {
-  it("allows the Save of a new Set at the position after the recorded Sets", () => {
+  it("creates a new Set at the position after the recorded Sets", () => {
     expect(
       decideRecordedSetSave({
         input: { id: "set-2", segments: [SEGMENT, SEGMENT, SEGMENT] },
         userId: "user-1",
         workoutExercise: WORKOUT_EXERCISE,
       }),
-    ).toStrictEqual({ _tag: "RecordedSetSaveAllowed", position: 1 });
+    ).toStrictEqual({ _tag: "RecordedSetCreateAllowed", position: 1 });
   });
 
-  it("allows the Save of a recorded Set again at its own position", () => {
+  it("updates a recorded Set Saved again", () => {
     expect(
       decideRecordedSetSave({
         input: { id: "set-1", segments: [SEGMENT] },
         userId: "user-1",
         workoutExercise: WORKOUT_EXERCISE,
       }),
-    ).toStrictEqual({ _tag: "RecordedSetSaveAllowed", position: 0 });
+    ).toStrictEqual({ _tag: "RecordedSetUpdateAllowed" });
   });
 
   it("allows a Set with an Intensity technique to have fewer Segments than planned", () => {
@@ -59,7 +59,7 @@ describe("decideRecordedSetSave", () => {
         userId: "user-1",
         workoutExercise: WORKOUT_EXERCISE,
       }),
-    ).toStrictEqual({ _tag: "RecordedSetSaveAllowed", position: 1 });
+    ).toStrictEqual({ _tag: "RecordedSetCreateAllowed", position: 1 });
   });
 
   it("allows a Set without weights in a Workout exercise whose Weight type is none", () => {
@@ -73,7 +73,7 @@ describe("decideRecordedSetSave", () => {
           weightType: "none",
         },
       }),
-    ).toStrictEqual({ _tag: "RecordedSetSaveAllowed", position: 1 });
+    ).toStrictEqual({ _tag: "RecordedSetCreateAllowed", position: 1 });
   });
 
   it("fails with SegmentCountInvalidError for a Set with more Segments than its planned Intensity technique", () => {
