@@ -18,6 +18,7 @@ These rules cover how tests are written and run in every workspace. Lint checks 
 - Give a workspace a `test` script only once it has a test file, because Vitest fails a run that finds none.
 - Start Docker before you run the tests of a workspace whose Vitest configuration has the Postgres global setup, even to run one Core test there, because the global setup starts the database container whenever a test is queued. With Colima, set `DOCKER_HOST` to its socket, because Testcontainers doesn't read Docker contexts.
 - The container outlives each run, so the next run starts faster, and runs started at the same time from several worktrees share it safely. The templates of old migrations and the databases of crashed runs stay in it. To reset it, run `docker rm -f $(docker ps -aq --filter label=ankaa.test-database)` while no test runs, and the next run creates a new one.
+- Keep the test container's PostgreSQL image pinned to an exact tag of production's major version, and bump its minor when convenient. Neon applies each new minor on its own and can't be pinned, while Testcontainers never pulls a newer image.
 
 ## Writing tests
 
