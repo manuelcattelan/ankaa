@@ -13,6 +13,7 @@ import fastify from "fastify";
 
 import { applicationPlugin } from "#/application-plugin.ts";
 import { createLoggerLayer } from "#/create-logger-layer.ts";
+import { getClientIpAddress } from "#/get-client-ip-address.ts";
 import { getUrlPath } from "#/get-url-path.ts";
 
 // Fastify's own request serializer logs the whole URL with its query string
@@ -22,7 +23,7 @@ const LOGGER_SERIALIZERS = {
   req: (request: FastifyRequest) => ({
     host: request.host,
     method: request.method,
-    remoteAddress: request.ip,
+    remoteAddress: getClientIpAddress(request),
     url: getUrlPath(request.url),
   }),
 };
@@ -47,11 +48,18 @@ const positiveIntegerSchema = Schema.Trim.pipe(
 
 const serverConfiguration = await Effect.runPromise(
   Config.all({
-    androidAppPackageName: Config.NonEmptyString("ANDROID_APP_PACKAGE_NAME"),
+    // Production leaves the Android settings unset, because Android
+    // distribution waits for its own effort
+    // (https://github.com/manuelcattelan/ankaa/issues/161), and development's
+    // fingerprint is React Native's public debug key, so any app signed with
+    // it could open the links of Account deletion.
+    androidAppPackageName: Config.NonEmptyString(
+      "ANDROID_APP_PACKAGE_NAME",
+    ).pipe(Config.withDefault(null)),
     androidAppSha256CertificateFingerprints: Config.Array(
       Schema.NonEmptyString,
       "ANDROID_APP_SHA256_CERTIFICATE_FINGERPRINTS",
-    ),
+    ).pipe(Config.withDefault(null)),
     appleAppBundleId: Config.NonEmptyString("APPLE_APP_BUNDLE_ID"),
     appleTeamId: Config.NonEmptyString("APPLE_TEAM_ID"),
     closeGraceDelayMilliseconds: Config.schema(

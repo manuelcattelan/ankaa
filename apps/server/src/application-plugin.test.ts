@@ -363,15 +363,17 @@ function sendOtpCodeRequests({
 }
 
 function sendRequestsUpToRateLimit({
+  headers = {},
   remoteAddress,
   server,
 }: {
+  headers?: Record<string, string>;
   remoteAddress: string;
   server: FastifyInstance;
 }) {
   return Promise.all(
     Array.from({ length: RATE_LIMIT_MAXIMUM_REQUEST_COUNT }, () =>
-      server.inject({ method: "GET", remoteAddress, url: "/health" }),
+      server.inject({ headers, method: "GET", remoteAddress, url: "/health" }),
     ),
   );
 }
@@ -1454,11 +1456,43 @@ describe("applicationPlugin", () => {
     ]);
   });
 
+  it("serves no /.well-known/assetlinks.json without the Android settings", async () => {
+    const iosOnlyServer = fastify();
+    await iosOnlyServer.register(applicationPlugin, {
+      androidAppPackageName: null,
+      androidAppSha256CertificateFingerprints: null,
+      appleAppBundleId: "app.ankaa.test",
+      appleTeamId: "ABCDE12345",
+      runtime,
+    });
+
+    const response = await iosOnlyServer.inject({
+      method: "GET",
+      url: "/.well-known/assetlinks.json",
+    });
+    await iosOnlyServer.close();
+
+    expect(response.statusCode).toBe(404);
+  });
+
   it("answers /health with the status ok", async () => {
     const response = await server.inject({ method: "GET", url: "/health" });
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toStrictEqual({ status: "ok" });
+  });
+
+  it("writes no log line for a request to /health", async () => {
+    const logLines: unknown[] = [];
+    const loggingServer = await createLoggingServer({
+      level: "info",
+      logLines,
+    });
+
+    await loggingServer.inject({ method: "GET", url: "/health" });
+    await loggingServer.close();
+
+    expect(logLines).toStrictEqual([]);
   });
 
   it("answers an unknown route with 404 and the method and URL of the request", async () => {
@@ -1529,6 +1563,53 @@ describe("applicationPlugin", () => {
     });
   });
 
+  it("passes better-auth the Fly-Client-IP header as the X-Forwarded-For header", async () => {
+    const forwardedForHeaders: (null | string)[] = [];
+    const authenticationServer = await createLoggingServer({
+      authentication: {
+        handleRequest: (request) =>
+          Effect.sync(() =>
+            forwardedForHeaders.push(request.headers.get("x-forwarded-for")),
+          ).pipe(Effect.as(new Response(null))),
+      },
+      level: "silent",
+      logLines: [],
+    });
+
+    await authenticationServer.inject({
+      headers: { "fly-client-ip": "198.51.100.12" },
+      method: "GET",
+      remoteAddress: "192.0.2.53",
+      url: "/api/auth/get-session",
+    });
+    await authenticationServer.close();
+
+    expect(forwardedForHeaders).toStrictEqual(["198.51.100.12"]);
+  });
+
+  it("passes better-auth the socket address as the X-Forwarded-For header of a request without a Fly-Client-IP header", async () => {
+    const forwardedForHeaders: (null | string)[] = [];
+    const authenticationServer = await createLoggingServer({
+      authentication: {
+        handleRequest: (request) =>
+          Effect.sync(() =>
+            forwardedForHeaders.push(request.headers.get("x-forwarded-for")),
+          ).pipe(Effect.as(new Response(null))),
+      },
+      level: "silent",
+      logLines: [],
+    });
+
+    await authenticationServer.inject({
+      method: "GET",
+      remoteAddress: "192.0.2.54",
+      url: "/api/auth/get-session",
+    });
+    await authenticationServer.close();
+
+    expect(forwardedForHeaders).toStrictEqual(["192.0.2.54"]);
+  });
+
   it("rejects a verification code request from an IP address that has already sent 3 in the last minute with 429 and the seconds to wait", async () => {
     const remoteAddress = "192.0.2.2";
 
@@ -1585,6 +1666,43 @@ describe("applicationPlugin", () => {
     });
 
     expect(response.statusCode).toBe(429);
+  });
+
+  it("counts the requests of each Fly-Client-IP header toward a limit of its own, even from one socket address", async () => {
+    const remoteAddress = "192.0.2.50";
+    await sendRequestsUpToRateLimit({
+      headers: { "fly-client-ip": "198.51.100.10" },
+      remoteAddress,
+      server,
+    });
+
+    const limitedResponse = await server.inject({
+      headers: { "fly-client-ip": "198.51.100.10" },
+      method: "GET",
+      remoteAddress,
+      url: "/health",
+    });
+    const response = await server.inject({
+      headers: { "fly-client-ip": "198.51.100.11" },
+      method: "GET",
+      remoteAddress,
+      url: "/health",
+    });
+
+    expect(limitedResponse.statusCode).toBe(429);
+    expect(response.statusCode).toBe(200);
+  });
+
+  it("counts a request without a Fly-Client-IP header toward the limit of its socket address", async () => {
+    await sendRequestsUpToRateLimit({ remoteAddress: "192.0.2.51", server });
+
+    const response = await server.inject({
+      method: "GET",
+      remoteAddress: "192.0.2.52",
+      url: "/health",
+    });
+
+    expect(response.statusCode).toBe(200);
   });
 
   it("rejects a request from an IP address that has already sent 1000 requests in the last minute with 429", async () => {

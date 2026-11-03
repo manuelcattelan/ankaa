@@ -3,15 +3,16 @@ import type { FastifyPluginCallback } from "fastify";
 import { ACCOUNT_DELETION_PATH } from "@ankaa/core/features/authentication/constants/account-deletion-path";
 
 export type WellKnownRouteOptions = {
-  androidAppPackageName: string;
-  androidAppSha256CertificateFingerprints: readonly string[];
+  androidAppPackageName: null | string;
+  androidAppSha256CertificateFingerprints: null | readonly string[];
   appleAppBundleId: string;
   appleTeamId: string;
 };
 
 /**
  * Serves the files that let the API host open the app: Apple's for Universal
- * Links and Google's for App Links, for account deletion links only.
+ * Links and, when both Android settings are set, Google's for App Links, for
+ * account deletion links only.
  */
 export const wellKnownRoute = ((
   server,
@@ -38,20 +39,26 @@ export const wellKnownRoute = ((
     }),
   );
 
-  // Android checks the signing certificate of the installed app against these
-  // fingerprints (https://developer.android.com/training/app-links/verify-android-applinks).
-  server.get("/assetlinks.json", async (request, reply) =>
-    reply.send([
-      {
-        relation: ["delegate_permission/common.handle_all_urls"],
-        target: {
-          namespace: "android_app",
-          ["package_name"]: androidAppPackageName,
-          ["sha256_cert_fingerprints"]: androidAppSha256CertificateFingerprints,
+  if (
+    androidAppPackageName !== null &&
+    androidAppSha256CertificateFingerprints !== null
+  ) {
+    // Android checks the signing certificate of the installed app against
+    // these fingerprints (https://developer.android.com/training/app-links/verify-android-applinks).
+    server.get("/assetlinks.json", async (request, reply) =>
+      reply.send([
+        {
+          relation: ["delegate_permission/common.handle_all_urls"],
+          target: {
+            namespace: "android_app",
+            ["package_name"]: androidAppPackageName,
+            ["sha256_cert_fingerprints"]:
+              androidAppSha256CertificateFingerprints,
+          },
         },
-      },
-    ]),
-  );
+      ]),
+    );
+  }
 
   done();
 }) satisfies FastifyPluginCallback<WellKnownRouteOptions>;
