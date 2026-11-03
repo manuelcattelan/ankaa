@@ -48,6 +48,10 @@ type SignInResponseBody = {
 const DELETE_ACCOUNT_LINK_PATTERN =
   /^http:\/\/localhost:3000\/delete-account\?token=[\da-z]{32}$/;
 
+// better-auth checks the origin of every request that carries a cookie, which
+// the mobile app sends as its scheme in expo-origin.
+const EXPO_ORIGIN_HEADERS = { "expo-origin": "ankaa://" };
+
 const OTP_CODE_PATTERN = /^\d{6}$/;
 
 const RATE_LIMIT_MAXIMUM_REQUEST_COUNT = 1000;
@@ -245,6 +249,7 @@ async function deleteAccount({
 }) {
   await server.inject({
     cookies,
+    headers: EXPO_ORIGIN_HEADERS,
     method: "POST",
     payload: {},
     url: "/api/auth/delete-user",
@@ -253,6 +258,7 @@ async function deleteAccount({
 
   return server.inject({
     cookies,
+    headers: EXPO_ORIGIN_HEADERS,
     method: "POST",
     payload: { token },
     url: "/api/auth/delete-user",
@@ -473,7 +479,10 @@ describe("applicationPlugin", () => {
   it("ends the session whose cookie /api/auth/sign-out carries, so /api/auth/get-session answers no session with that cookie", async () => {
     const testUser = await createTestUser(runtime);
     await server.inject({
-      headers: Object.fromEntries(testUser.headers),
+      headers: {
+        ...Object.fromEntries(testUser.headers),
+        ...EXPO_ORIGIN_HEADERS,
+      },
       method: "POST",
       url: "/api/auth/sign-out",
     });
@@ -499,6 +508,47 @@ describe("applicationPlugin", () => {
     ]);
 
     expect(sentEmails[0]?.text).toMatch(OTP_CODE_PATTERN);
+  });
+
+  it("sends the verification code when the request's expo-origin is the scheme of the development variant", async () => {
+    await server.inject({
+      headers: { "expo-origin": "ankaa-development://" },
+      method: "POST",
+      payload: { email: "development-variant@example.com", type: "sign-in" },
+      remoteAddress: "192.0.2.50",
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+
+    expect(sentEmails.at(-1)).toMatchObject({
+      to: "development-variant@example.com",
+    });
+  });
+
+  it("sends the verification code when the request's expo-origin is the scheme of the production variant", async () => {
+    await server.inject({
+      headers: { "expo-origin": "ankaa://" },
+      method: "POST",
+      payload: { email: "production-variant@example.com", type: "sign-in" },
+      remoteAddress: "192.0.2.51",
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+
+    expect(sentEmails.at(-1)).toMatchObject({
+      to: "production-variant@example.com",
+    });
+  });
+
+  it("rejects a verification code request whose expo-origin is another scheme with 403 and the code INVALID_ORIGIN", async () => {
+    const response = await server.inject({
+      headers: { "expo-origin": "other-app://" },
+      method: "POST",
+      payload: { email: "other-scheme@example.com", type: "sign-in" },
+      remoteAddress: "192.0.2.52",
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({ code: "INVALID_ORIGIN" });
   });
 
   it("stores the verification code it sends hashed", async () => {
@@ -1010,7 +1060,10 @@ describe("applicationPlugin", () => {
     const testUser = await createTestUser(runtime);
 
     await server.inject({
-      headers: Object.fromEntries(testUser.headers),
+      headers: {
+        ...Object.fromEntries(testUser.headers),
+        ...EXPO_ORIGIN_HEADERS,
+      },
       method: "POST",
       payload: {},
       url: "/api/auth/delete-user",
@@ -1035,7 +1088,10 @@ describe("applicationPlugin", () => {
     const caller = await createSignedInCaller({ runtime, testUser });
     await caller.routine.save(buildRoutineSaveInput(DELETED_ROUTINE_ID));
     await server.inject({
-      headers: Object.fromEntries(testUser.headers),
+      headers: {
+        ...Object.fromEntries(testUser.headers),
+        ...EXPO_ORIGIN_HEADERS,
+      },
       method: "POST",
       payload: {},
       url: "/api/auth/delete-user",
@@ -1043,7 +1099,10 @@ describe("applicationPlugin", () => {
     const token = /token=([\da-z]+)/.exec(String(sentEmails.at(-1)?.text))?.[1];
 
     const response = await server.inject({
-      headers: Object.fromEntries(testUser.headers),
+      headers: {
+        ...Object.fromEntries(testUser.headers),
+        ...EXPO_ORIGIN_HEADERS,
+      },
       method: "POST",
       payload: { token },
       url: "/api/auth/delete-user",
@@ -1075,7 +1134,10 @@ describe("applicationPlugin", () => {
       routineId: DELETED_WORKOUT_ROUTINE_ID,
     });
     await server.inject({
-      headers: Object.fromEntries(testUser.headers),
+      headers: {
+        ...Object.fromEntries(testUser.headers),
+        ...EXPO_ORIGIN_HEADERS,
+      },
       method: "POST",
       payload: {},
       url: "/api/auth/delete-user",
@@ -1083,7 +1145,10 @@ describe("applicationPlugin", () => {
     const token = /token=([\da-z]+)/.exec(String(sentEmails.at(-1)?.text))?.[1];
 
     const response = await server.inject({
-      headers: Object.fromEntries(testUser.headers),
+      headers: {
+        ...Object.fromEntries(testUser.headers),
+        ...EXPO_ORIGIN_HEADERS,
+      },
       method: "POST",
       payload: { token },
       url: "/api/auth/delete-user",
@@ -1104,7 +1169,10 @@ describe("applicationPlugin", () => {
     });
     await linkOwnerCaller.routine.save(buildRoutineSaveInput(KEPT_ROUTINE_ID));
     await server.inject({
-      headers: Object.fromEntries(linkOwner.headers),
+      headers: {
+        ...Object.fromEntries(linkOwner.headers),
+        ...EXPO_ORIGIN_HEADERS,
+      },
       method: "POST",
       payload: {},
       url: "/api/auth/delete-user",
@@ -1112,7 +1180,10 @@ describe("applicationPlugin", () => {
     const token = /token=([\da-z]+)/.exec(String(sentEmails.at(-1)?.text))?.[1];
 
     const response = await server.inject({
-      headers: Object.fromEntries(otherUser.headers),
+      headers: {
+        ...Object.fromEntries(otherUser.headers),
+        ...EXPO_ORIGIN_HEADERS,
+      },
       method: "POST",
       payload: { token },
       url: "/api/auth/delete-user",

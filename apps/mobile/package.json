@@ -53,7 +53,8 @@
     "typescript": "catalog:"
   },
   "imports": {
-    "#/*": "./src/*"
+    "#/*": "./src/*",
+    "#/app.config.ts": "./app.config.ts"
   },
   "jest": {
     "fakeTimers": {
