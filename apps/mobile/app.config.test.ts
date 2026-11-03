@@ -54,6 +54,20 @@ describe("appConfig", () => {
     ]);
   });
 
+  it("declares no non-exempt encryption with either APP_VARIANT", () => {
+    Object.assign(process.env, SETTINGS, { APP_VARIANT: "development" });
+    const developmentConfig = appConfig();
+    process.env.APP_VARIANT = "production";
+    const productionConfig = appConfig();
+
+    expect(developmentConfig).toMatchObject({
+      ios: { config: { usesNonExemptEncryption: false } },
+    });
+    expect(productionConfig).toMatchObject({
+      ios: { config: { usesNonExemptEncryption: false } },
+    });
+  });
+
   it("fails with APP_VARIANT set to neither variant", () => {
     Object.assign(process.env, SETTINGS, { APP_VARIANT: "staging" });
 

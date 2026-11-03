@@ -57,8 +57,29 @@ These steps run once, outside the repository, in this order.
 - **Actions settings**: require every action to be pinned to a full-length commit SHA, and require approval for workflow runs from all external contributors ([GitHub](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository)).
 - **Ruleset**: once a pull request has run `CI`, because GitHub offers only a check that ran in the last 7 days as required, create an active branch ruleset on the default branch with an empty bypass list. It restricts deletions, blocks force pushes, requires a pull request with 0 approvals and merge commits as its only merge method, and requires the status checks `quality` and `test` from GitHub Actions on a branch that is up to date before merging ([GitHub](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository)).
 
+## Setting up production
+
+These steps run once, outside the repository, in this order.
+
+- **Expo**: in the `ankaa-mobile` organization, create the project with `eas init` from the app's workspace, and set every setting of the app's `.env.example` in its `production` environment, with `APP_VARIANT` set to `production` and Plain text visibility, using `eas env:set` ([Environment variables](https://docs.expo.dev/eas/environment-variables/manage/)). Run the first `pnpm deploy:mobile` interactively. Let it create the distribution certificate and the provisioning profile, signing in to Apple when it asks ([Managed credentials](https://docs.expo.dev/app-signing/managed-credentials/)), and generate an App Store Connect API key with the App Manager role when it asks ([Submit iOS](https://docs.expo.dev/submit/ios/)).
+- **App Store Connect**: once the first deploy has created the app's record, set the app's Apple ID from App Information as `ascAppId` in the `production` submit profile, so later deploys skip signing in to Apple. Check that each tester is in an internal TestFlight group with automatic distribution. The first submission creates one as "Team (Expo)" when it can ([Add internal testers](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-internal-testers)).
+
+## Building the app
+
+- Make development builds locally with `expo run:ios`, and only production builds on EAS, because EAS's Free plan gives 15 iOS builds a month on a queue that can wait 90 minutes ([Expo](https://expo.dev/pricing)).
+- Keep `node` and `pnpm` in the EAS build profile equal to `devEngines` in the root `package.json`, because EAS ignores `devEngines` and its image ships older versions ([Expo](https://docs.expo.dev/build-reference/infrastructure/)).
+
 ## Checking pull requests
 
 - Every pull request against `main` runs `CI`, and it merges, with a merge commit, only once its `quality` and `test` jobs pass on a branch up to date with `main`. Nobody bypasses the ruleset, the maintainer included, because agents act with the maintainer's credentials.
 - When you rename a job that the ruleset requires, or add a job that must pass, change the ruleset's required checks in the same change, because the ruleset lives outside the repository, and a required check that no job reports leaves every pull request waiting.
 - Pin each action to a full commit SHA with its version in a comment, as in `uses: actions/checkout@<sha> # v7.0.1`, because a tag can move to other code, and the repository's settings fail every workflow that pins an action otherwise ([GitHub](https://docs.github.com/en/actions/reference/security/secure-use)).
+
+## Deploying the app
+
+- Deploy with `pnpm deploy:mobile` from the repository's root. EAS builds the app and submits it to TestFlight, where internal testers get it once Apple has processed it. The command returns once the project is uploaded, so follow the build on its EAS page.
+- Deploy only when the maintainer asks, because each deploy spends one of the 15 iOS builds that EAS's Free plan gives each month ([Expo](https://expo.dev/pricing)), and puts a build that calls the production server on the testers' phones.
+- When a change touches both the server and the app, deploy the server first, then the app from the same working tree, because the build calls the production server. An installed build may break after a server deploy until the next build is installed, so deploy the app right after a server change it depends on.
+- Deploy the app at least every 90 days, because a TestFlight build stops working 90 days after its upload ([Apple](https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview)).
+- Leave the app's `version` unchanged, because EAS numbers every build and no build goes live on the App Store.
+- Add a tester as an App Store Connect user, with a role that TestFlight accepts for internal testers, to the internal group, and as a test user of the `ankaa-production` Google project, because production's Google sign-in stays in Testing ([Apple](https://developer.apple.com/testflight/), [Google](https://support.google.com/cloud/answer/15549945)).

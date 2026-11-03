@@ -127,6 +127,12 @@ export default function appConfig() {
       bundleIdentifier: isDevelopmentVariant
         ? DEVELOPMENT_APPLICATION_ID
         : APPLICATION_ID,
+      // The app uses only the encryption that iOS itself provides, which is
+      // exempt from export compliance documentation, so TestFlight needs no
+      // answer for each build. This holds only while every cipher comes from
+      // the OS
+      // (https://developer.apple.com/documentation/security/complying-with-encryption-export-regulations).
+      config: { usesNonExemptEncryption: false },
       icon: "./assets/expo.icon",
       usesAppleSignIn: true,
     },

@@ -1,0 +1,18 @@
+{
+  "build": {
+    "production": {
+      "autoIncrement": true,
+      "environment": "production",
+      "node": "26.13.0",
+      "pnpm": "12.3.4"
+    }
+  },
+  "cli": {
+    "appVersionSource": "remote",
+    "promptToConfigurePushNotifications": false,
+    "version": ">= 27.3.0"
+  },
+  "submit": {
+    "production": {}
+  }
+}

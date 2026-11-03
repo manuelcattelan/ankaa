@@ -27,6 +27,7 @@
   "scripts": {
     "check-types": "turbo run check-types check-types:root",
     "check-types:root": "tsc --noEmit",
+    "deploy:mobile": "pnpm --filter @ankaa/mobile exec eas build --platform ios --profile production --auto-submit --no-wait",
     "dev": "turbo run dev",
     "dev:tunnel": "ngrok http 8080",
     "format": "prettier --check . --ignore-path .gitignore --ignore-path .prettierignore --ignore-path apps/mobile/.gitignore",
