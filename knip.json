@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignoreBinaries": ["ngrok"],
+  "ignoreBinaries": ["fly", "ngrok"],
   "ignoreDependencies": ["expo-updates", "pino-pretty", "shellcheck"],
   "ignoreIssues": {
     "packages/authentication/better-auth.config.ts": ["exports"]

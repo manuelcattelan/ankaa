@@ -61,6 +61,11 @@ These steps run once, outside the repository, in this order.
 
 These steps run once, outside the repository, in this order.
 
+- **Neon**: in Ankaa's project, name the root branch `production` and create the `development` branch from it. Reset `neondb_owner`'s password on both branches ([Manage roles](https://neon.com/docs/manage/roles)), then truncate every table in production's `public` and `authentication` schemas, leaving `drizzle` untouched.
+- **Apple Developer**: register the explicit App ID `app.ankaa`, named `ankaa-production`, with Sign in with Apple ([Register an App ID](https://developer.apple.com/help/account/identifiers/register-an-app-id)). Create a Sign in with Apple key named `ankaa-production`, with `app.ankaa` as its primary App ID ([Create a private key](https://developer.apple.com/help/account/capabilities/create-a-sign-in-with-apple-private-key/)).
+- **Google Cloud**: create the project `ankaa-production`, with its OAuth consent screen for external users, each tester added as a test user, and the app left in Testing, because publishing it needs Google's brand verification ([Google](https://support.google.com/cloud/answer/15549945)). Create a Web client and an iOS client for `app.ankaa` ([Create credentials](https://developers.google.com/workspace/guides/create-credentials)).
+- **Fly.io**: create the app with `fly apps create ankaa-server`, in an organization with a payment method ([Billing](https://docs.fly.io/about/billing)). Set every setting of `.env.example` with `fly secrets set` ([Secrets](https://docs.fly.io/apps/secrets)), except those in `[env]` in the server's `fly.toml` and those starting with `ANDROID_`. Then request the API host's certificate with `fly certs add api.ankaa.app` ([Custom domains](https://docs.fly.io/networking/custom-domain)).
+- **Vercel DNS**: in the `ankaa.app` zone, add the `api` CNAME and the `_acme-challenge` CNAME that `fly certs setup api.ankaa.app` prints ([Vercel](https://vercel.com/docs/domains/managing-dns-records)). The `api` record must be explicit, because the `*.ankaa.app` wildcard points every other subdomain at Vercel.
 - **Expo**: in the `ankaa-mobile` organization, create the project with `eas init` from the app's workspace, and set every setting of the app's `.env.example` in its `production` environment, with `APP_VARIANT` set to `production` and Plain text visibility, using `eas env:set` ([Environment variables](https://docs.expo.dev/eas/environment-variables/manage/)). Run the first `pnpm deploy:mobile` interactively. Let it create the distribution certificate and the provisioning profile, signing in to Apple when it asks ([Managed credentials](https://docs.expo.dev/app-signing/managed-credentials/)), and generate an App Store Connect API key with the App Manager role when it asks ([Submit iOS](https://docs.expo.dev/submit/ios/)).
 - **App Store Connect**: once the first deploy has created the app's record, set the app's Apple ID from App Information as `ascAppId` in the `production` submit profile, so later deploys skip signing in to Apple. Check that each tester is in an internal TestFlight group with automatic distribution. The first submission creates one as "Team (Expo)" when it can ([Add internal testers](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-internal-testers)).
 
@@ -74,6 +79,12 @@ These steps run once, outside the repository, in this order.
 - Every pull request against `main` runs `CI`, and it merges, with a merge commit, only once its `quality` and `test` jobs pass on a branch up to date with `main`. Nobody bypasses the ruleset, the maintainer included, because agents act with the maintainer's credentials.
 - When you rename a job that the ruleset requires, or add a job that must pass, change the ruleset's required checks in the same change, because the ruleset lives outside the repository, and a required check that no job reports leaves every pull request waiting.
 - Pin each action to a full commit SHA with its version in a comment, as in `uses: actions/checkout@<sha> # v7.0.1`, because a tag can move to other code, and the repository's settings fail every workflow that pins an action otherwise ([GitHub](https://docs.github.com/en/actions/reference/security/secure-use)).
+
+## Deploying the server
+
+- Deploy with `pnpm deploy:server` from the repository's root, because the image builds from the whole monorepo. Fly.io builds the image on its own builder, so Docker needn't run locally.
+- Deploy, or change the Fly.io app, its secrets or its certificate, only when the maintainer asks. A deploy changes production, and it runs every new migration and the seed against production's database before the new version starts.
+- Undo a bad deploy by deploying code without the bad change, such as `main` or a revert of it, so there's a single way to deploy. Migrations have no down step, so an older image would run on the new schema anyway.
 
 ## Deploying the app
 
