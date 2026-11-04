@@ -183,7 +183,6 @@ export default function appConfig() {
         },
       ],
       "expo-secure-store",
-      ["expo-build-properties", { ios: { enableSceneSupport: true } }],
       "expo-apple-authentication",
       ["@react-native-google-signin/google-signin", { iosUrlScheme }],
       [

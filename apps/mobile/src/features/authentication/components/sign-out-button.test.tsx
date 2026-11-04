@@ -18,7 +18,7 @@ describe("SignOutButton", () => {
     const user = userEvent.setup();
     let currentSession: null | typeof signedInSession = signedInSession;
 
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -44,7 +44,7 @@ describe("SignOutButton", () => {
     const googleSignInCalls: string[] = [];
     const user = userEvent.setup();
     let currentSession: null | typeof signedInSession = signedInSession;
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -83,7 +83,7 @@ describe("SignOutButton", () => {
     const stoppedInputs: WorkoutStopInput[] = [];
     const user = userEvent.setup();
     let currentSession: null | typeof signedInSession = signedInSession;
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({

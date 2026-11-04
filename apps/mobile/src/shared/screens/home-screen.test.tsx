@@ -52,14 +52,18 @@ async function openAbsenceRecordForm({
       name: "Record absence from Push day",
     }),
   );
-  fireEvent(screen.getByTestId("Why you couldn't train"), "selectionChange", {
-    nativeEvent: { selection: "pain" },
-  });
+  await fireEvent(
+    screen.getByTestId("Why you couldn't train"),
+    "selectionChange",
+    {
+      nativeEvent: { selection: "pain" },
+    },
+  );
 }
 
 describe("HomeScreen", () => {
   it("lists each Routine of the User", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -75,7 +79,7 @@ describe("HomeScreen", () => {
   });
 
   it("offers to resume the User's Workout in progress instead of starting a Workout from a Routine", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -100,7 +104,7 @@ describe("HomeScreen", () => {
     const startedInputs: WorkoutStartInput[] = [];
     let workoutInProgress: null | Workout = null;
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -135,7 +139,7 @@ describe("HomeScreen", () => {
   it("tells the User that a Workout is already in progress when another device started one first, and offers to resume it", async () => {
     let workoutInProgress: null | Workout = null;
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -170,7 +174,7 @@ describe("HomeScreen", () => {
 
   it("tells the User that Ankaa can't connect when a start can't reach the server, and keeps offering the start", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -200,7 +204,7 @@ describe("HomeScreen", () => {
   });
 
   it("tells the User that Ankaa can't connect when the server can't be reached", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -218,7 +222,7 @@ describe("HomeScreen", () => {
   it("disables Delete account, and shows it busy, while the request to delete the Account waits for its answer", async () => {
     const user = userEvent.setup();
     const deleteUserResponse = Promise.withResolvers<Response>();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -241,7 +245,7 @@ describe("HomeScreen", () => {
   it("tells the User to check their email once the server answers the request to delete the Account", async () => {
     const user = userEvent.setup();
     const deleteUserResponse = Promise.withResolvers<Response>();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -268,7 +272,7 @@ describe("HomeScreen", () => {
   it("enables Delete account again once the server answers the request to delete the Account", async () => {
     const user = userEvent.setup();
     const deleteUserResponse = Promise.withResolvers<Response>();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -297,7 +301,7 @@ describe("HomeScreen", () => {
 
   it("offers each Routine an Absence next to its start, also while a Workout is in progress, with today's date selected", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -327,7 +331,7 @@ describe("HomeScreen", () => {
   it("records an Absence with the Routine, the day picked where the device is, the reason, the note and the device's time zone", async () => {
     const recordedInputs: AbsenceRecordInput[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -345,9 +349,13 @@ describe("HomeScreen", () => {
     });
     jest.setSystemTime(new Date("2026-11-01T20:00:00.000Z"));
     await openAbsenceRecordForm({ user });
-    fireEvent(screen.getByTestId("Day you couldn't train"), "dateChange", {
-      nativeEvent: { date: "2026-10-29T14:00:00.000Z" },
-    });
+    await fireEvent(
+      screen.getByTestId("Day you couldn't train"),
+      "dateChange",
+      {
+        nativeEvent: { date: "2026-10-29T14:00:00.000Z" },
+      },
+    );
     await user.type(screen.getByLabelText("Note"), "Sore shoulder");
 
     await user.press(screen.getByRole("button", { name: "Record absence" }));
@@ -369,7 +377,7 @@ describe("HomeScreen", () => {
   it("refuses to record an Absence on a day after today where the device is, and sends nothing", async () => {
     const receivedPaths: string[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -385,9 +393,13 @@ describe("HomeScreen", () => {
     });
     jest.setSystemTime(new Date("2026-11-01T20:00:00.000Z"));
     await openAbsenceRecordForm({ user });
-    fireEvent(screen.getByTestId("Day you couldn't train"), "dateChange", {
-      nativeEvent: { date: "2026-11-02T14:00:00.000Z" },
-    });
+    await fireEvent(
+      screen.getByTestId("Day you couldn't train"),
+      "dateChange",
+      {
+        nativeEvent: { date: "2026-11-02T14:00:00.000Z" },
+      },
+    );
 
     await user.press(screen.getByRole("button", { name: "Record absence" }));
 
@@ -401,7 +413,7 @@ describe("HomeScreen", () => {
 
   it("tells the User that they already recorded an Absence when the Routine has one on that day", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -429,7 +441,7 @@ describe("HomeScreen", () => {
 
   it("tells the User that the day hasn't come yet when the server finds the day in the future", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -457,7 +469,7 @@ describe("HomeScreen", () => {
 
   it("tells the User that the Routine doesn't exist anymore when the server can't find it", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,

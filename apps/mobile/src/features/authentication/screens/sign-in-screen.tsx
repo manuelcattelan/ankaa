@@ -54,7 +54,7 @@ export function SignInScreen({
 
   function handleSignInWithApple() {
     // Apple's native button takes no disabled state
-    // (https://docs.expo.dev/versions/v57.0.0/sdk/apple-authentication/#appleauthenticationbutton).
+    // (https://docs.expo.dev/versions/v58.0.0/sdk/apple-authentication/#appleauthenticationbutton).
     if (isSignInPending) {
       return;
     }

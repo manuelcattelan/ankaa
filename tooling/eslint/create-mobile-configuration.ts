@@ -163,6 +163,13 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
           "error",
           { basePath, zones: [...featureIsolationZones, routeZone] },
         ],
+        // eslint-config-expo enables import/namespace, which repeats a check
+        // that TypeScript itself makes
+        // (https://typescript-eslint.io/troubleshooting/typed-linting/performance/#eslint-plugin-import),
+        // and since SDK 58 compiles enums as `export var X = function (X) {…}({})`
+        // it misses every enum of expo-notifications re-exported through
+        // `export *`, such as `AndroidImportance`.
+        "import/namespace": "off",
         "no-restricted-syntax": [
           "error",
           ...RESTRICTED_SYNTAX,

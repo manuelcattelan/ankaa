@@ -8,7 +8,7 @@ describe("WithEmailScreen", () => {
   it("shows a validation message when the email address isn't valid", async () => {
     const user = userEvent.setup();
 
-    renderScreen({ initialUrl: "/sign-in/with-email" });
+    await renderScreen({ initialUrl: "/sign-in/with-email" });
 
     await user.type(
       await screen.findByLabelText("Email address"),
@@ -29,7 +29,7 @@ describe("WithEmailScreen", () => {
   it("shows no validation message before the first submit", async () => {
     const user = userEvent.setup();
 
-    renderScreen({ initialUrl: "/sign-in/with-email" });
+    await renderScreen({ initialUrl: "/sign-in/with-email" });
 
     await user.type(
       await screen.findByLabelText("Email address"),
@@ -46,7 +46,7 @@ describe("WithEmailScreen", () => {
   it("clears the validation message as soon as the User corrects the email address", async () => {
     const user = userEvent.setup();
 
-    renderScreen({ initialUrl: "/sign-in/with-email" });
+    await renderScreen({ initialUrl: "/sign-in/with-email" });
 
     await user.type(
       await screen.findByLabelText("Email address"),
@@ -74,7 +74,7 @@ describe("WithEmailScreen", () => {
     const announcedMessages: string[] = [];
     const user = userEvent.setup();
 
-    renderScreen({
+    await renderScreen({
       initialUrl: "/sign-in/with-email",
       testRuntimeLayers: {
         accessibility: fakeAccessibilityLayer(announcedMessages),
@@ -102,7 +102,7 @@ describe("WithEmailScreen", () => {
   it("requests a verification code and moves on to entering it when the email address is valid", async () => {
     const user = userEvent.setup();
 
-    renderScreen({
+    await renderScreen({
       initialUrl: "/sign-in/with-email",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({

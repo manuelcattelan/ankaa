@@ -5,7 +5,7 @@ import { renderScreen } from "#/testing/render-screen.tsx";
 
 describe("NotFoundScreen", () => {
   it("tells the User that the screen they opened doesn't exist", async () => {
-    renderScreen({ initialUrl: "/screen-that-does-not-exist" });
+    await renderScreen({ initialUrl: "/screen-that-does-not-exist" });
 
     expect(
       await screen.findByText("This screen doesn't exist."),
@@ -15,7 +15,7 @@ describe("NotFoundScreen", () => {
   it("takes the User to the home screen when they press the button to go home", async () => {
     const user = userEvent.setup();
 
-    renderScreen({
+    await renderScreen({
       initialUrl: "/screen-that-does-not-exist",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
