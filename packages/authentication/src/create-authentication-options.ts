@@ -169,8 +169,7 @@ export function createAuthenticationOptions({
       google: { clientId: [googleWebClientId, googleIosClientId] },
     },
     trustedOrigins: [
-      `${APPLICATION_SCHEMES.development}://`,
-      `${APPLICATION_SCHEMES.production}://`,
+      ...Object.values(APPLICATION_SCHEMES).map((scheme) => `${scheme}://`),
       ...(nodeEnvironment === "development" ? DEVELOPMENT_TRUSTED_ORIGINS : []),
     ],
     user: {

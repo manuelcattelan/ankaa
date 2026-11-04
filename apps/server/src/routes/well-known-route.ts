@@ -3,25 +3,22 @@ import type { FastifyPluginCallback } from "fastify";
 import { ACCOUNT_DELETION_PATH } from "@ankaa/core/features/authentication/constants/account-deletion-path";
 
 export type WellKnownRouteOptions = {
-  androidAppPackageName: null | string;
-  androidAppSha256CertificateFingerprints: null | readonly string[];
+  android: null | {
+    packageName: string;
+    sha256CertificateFingerprints: readonly string[];
+  };
   appleAppBundleId: string;
   appleTeamId: string;
 };
 
 /**
  * Serves the files that let the API host open the app: Apple's for Universal
- * Links and, when both Android settings are set, Google's for App Links, for
+ * Links and, when the Android settings are set, Google's for App Links, for
  * account deletion links only.
  */
 export const wellKnownRoute = ((
   server,
-  {
-    androidAppPackageName,
-    androidAppSha256CertificateFingerprints,
-    appleAppBundleId,
-    appleTeamId,
-  },
+  { android, appleAppBundleId, appleTeamId },
   done,
 ) => {
   // iOS reads this file without an extension, as JSON, and only from this
@@ -39,10 +36,7 @@ export const wellKnownRoute = ((
     }),
   );
 
-  if (
-    androidAppPackageName !== null &&
-    androidAppSha256CertificateFingerprints !== null
-  ) {
+  if (android !== null) {
     // Android checks the signing certificate of the installed app against
     // these fingerprints (https://developer.android.com/training/app-links/verify-android-applinks).
     server.get("/assetlinks.json", async (request, reply) =>
@@ -51,9 +45,8 @@ export const wellKnownRoute = ((
           relation: ["delegate_permission/common.handle_all_urls"],
           target: {
             namespace: "android_app",
-            ["package_name"]: androidAppPackageName,
-            ["sha256_cert_fingerprints"]:
-              androidAppSha256CertificateFingerprints,
+            ["package_name"]: android.packageName,
+            ["sha256_cert_fingerprints"]: android.sha256CertificateFingerprints,
           },
         },
       ]),

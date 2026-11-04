@@ -48,8 +48,10 @@ type SignInResponseBody = {
 const DELETE_ACCOUNT_LINK_PATTERN =
   /^http:\/\/localhost:3000\/delete-account\?token=[\da-z]{32}$/;
 
-// better-auth checks the origin of every request that carries a cookie, which
-// the mobile app sends as its scheme in expo-origin.
+// better-auth checks the origin of every request that carries a cookie
+// (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/better-auth/src/api/middlewares/origin-check.ts#L231-L251),
+// which the mobile app sends as its scheme in expo-origin
+// (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/expo/src/index.ts#L44-L57).
 const EXPO_ORIGIN_HEADERS = { "expo-origin": "ankaa://" };
 
 const OTP_CODE_PATTERN = /^\d{6}$/;
@@ -96,10 +98,12 @@ const UUID_V7_PATTERN =
   /^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/;
 
 const WELL_KNOWN_FILE_SETTINGS = {
-  androidAppPackageName: "app.ankaa.test",
-  androidAppSha256CertificateFingerprints: [
-    "14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5",
-  ],
+  android: {
+    packageName: "app.ankaa.test",
+    sha256CertificateFingerprints: [
+      "14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5",
+    ],
+  },
   appleAppBundleId: "app.ankaa.test",
   appleTeamId: "ABCDE12345",
 };
@@ -127,16 +131,16 @@ const session = {
  * Builds a server whose `Authentication` does only what `authentication`
  * implements, and fails loudly otherwise, whose Application Services are the
  * real ones over a database that doesn't exist, so every query dies, and
- * whose log lines at `level` go to `logLines`.
+ * whose log lines at `level`, silent unless given, go to `logLines`.
  */
 async function createLoggingServer({
   authentication = {},
-  level,
-  logLines,
+  level = "silent",
+  logLines = [],
 }: {
   authentication?: Layer.PartialEffectful<Authentication["Service"]>;
-  level: string;
-  logLines: unknown[];
+  level?: string;
+  logLines?: unknown[];
 }) {
   const layer = Layer.mergeAll(
     Layer.mock(Authentication, authentication),
@@ -175,6 +179,23 @@ async function createLoggingServer({
   });
 
   return server;
+}
+
+/**
+ * Builds a server whose `Authentication` records into `forwardedForHeaders`
+ * the X-Forwarded-For header of every request that better-auth handles.
+ */
+function createForwardedForRecordingServer(
+  forwardedForHeaders: (null | string)[],
+) {
+  return createLoggingServer({
+    authentication: {
+      handleRequest: (request) =>
+        Effect.sync(() =>
+          forwardedForHeaders.push(request.headers.get("x-forwarded-for")),
+        ).pipe(Effect.as(new Response(null))),
+    },
+  });
 }
 
 async function createSocialProviderServer({
@@ -263,6 +284,10 @@ async function deleteAccount({
     payload: { token },
     url: "/api/auth/delete-user",
   });
+}
+
+function buildSignedInAppHeaders(sessionHeaders: Headers) {
+  return { ...Object.fromEntries(sessionHeaders), ...EXPO_ORIGIN_HEADERS };
 }
 
 function buildRoutineSaveInput(id: string) {
@@ -479,10 +504,7 @@ describe("applicationPlugin", () => {
   it("ends the session whose cookie /api/auth/sign-out carries, so /api/auth/get-session answers no session with that cookie", async () => {
     const testUser = await createTestUser(runtime);
     await server.inject({
-      headers: {
-        ...Object.fromEntries(testUser.headers),
-        ...EXPO_ORIGIN_HEADERS,
-      },
+      headers: buildSignedInAppHeaders(testUser.headers),
       method: "POST",
       url: "/api/auth/sign-out",
     });
@@ -1060,10 +1082,7 @@ describe("applicationPlugin", () => {
     const testUser = await createTestUser(runtime);
 
     await server.inject({
-      headers: {
-        ...Object.fromEntries(testUser.headers),
-        ...EXPO_ORIGIN_HEADERS,
-      },
+      headers: buildSignedInAppHeaders(testUser.headers),
       method: "POST",
       payload: {},
       url: "/api/auth/delete-user",
@@ -1088,10 +1107,7 @@ describe("applicationPlugin", () => {
     const caller = await createSignedInCaller({ runtime, testUser });
     await caller.routine.save(buildRoutineSaveInput(DELETED_ROUTINE_ID));
     await server.inject({
-      headers: {
-        ...Object.fromEntries(testUser.headers),
-        ...EXPO_ORIGIN_HEADERS,
-      },
+      headers: buildSignedInAppHeaders(testUser.headers),
       method: "POST",
       payload: {},
       url: "/api/auth/delete-user",
@@ -1099,10 +1115,7 @@ describe("applicationPlugin", () => {
     const token = /token=([\da-z]+)/.exec(String(sentEmails.at(-1)?.text))?.[1];
 
     const response = await server.inject({
-      headers: {
-        ...Object.fromEntries(testUser.headers),
-        ...EXPO_ORIGIN_HEADERS,
-      },
+      headers: buildSignedInAppHeaders(testUser.headers),
       method: "POST",
       payload: { token },
       url: "/api/auth/delete-user",
@@ -1134,10 +1147,7 @@ describe("applicationPlugin", () => {
       routineId: DELETED_WORKOUT_ROUTINE_ID,
     });
     await server.inject({
-      headers: {
-        ...Object.fromEntries(testUser.headers),
-        ...EXPO_ORIGIN_HEADERS,
-      },
+      headers: buildSignedInAppHeaders(testUser.headers),
       method: "POST",
       payload: {},
       url: "/api/auth/delete-user",
@@ -1145,10 +1155,7 @@ describe("applicationPlugin", () => {
     const token = /token=([\da-z]+)/.exec(String(sentEmails.at(-1)?.text))?.[1];
 
     const response = await server.inject({
-      headers: {
-        ...Object.fromEntries(testUser.headers),
-        ...EXPO_ORIGIN_HEADERS,
-      },
+      headers: buildSignedInAppHeaders(testUser.headers),
       method: "POST",
       payload: { token },
       url: "/api/auth/delete-user",
@@ -1169,10 +1176,7 @@ describe("applicationPlugin", () => {
     });
     await linkOwnerCaller.routine.save(buildRoutineSaveInput(KEPT_ROUTINE_ID));
     await server.inject({
-      headers: {
-        ...Object.fromEntries(linkOwner.headers),
-        ...EXPO_ORIGIN_HEADERS,
-      },
+      headers: buildSignedInAppHeaders(linkOwner.headers),
       method: "POST",
       payload: {},
       url: "/api/auth/delete-user",
@@ -1180,10 +1184,7 @@ describe("applicationPlugin", () => {
     const token = /token=([\da-z]+)/.exec(String(sentEmails.at(-1)?.text))?.[1];
 
     const response = await server.inject({
-      headers: {
-        ...Object.fromEntries(otherUser.headers),
-        ...EXPO_ORIGIN_HEADERS,
-      },
+      headers: buildSignedInAppHeaders(otherUser.headers),
       method: "POST",
       payload: { token },
       url: "/api/auth/delete-user",
@@ -1269,8 +1270,6 @@ describe("applicationPlugin", () => {
       authentication: {
         getSession: () => Effect.succeed(session),
       },
-      level: "silent",
-      logLines: [],
     });
 
     const response = await failingServer.inject({
@@ -1530,10 +1529,8 @@ describe("applicationPlugin", () => {
   it("serves no /.well-known/assetlinks.json without the Android settings", async () => {
     const iosOnlyServer = fastify();
     await iosOnlyServer.register(applicationPlugin, {
-      androidAppPackageName: null,
-      androidAppSha256CertificateFingerprints: null,
-      appleAppBundleId: "app.ankaa.test",
-      appleTeamId: "ABCDE12345",
+      ...WELL_KNOWN_FILE_SETTINGS,
+      android: null,
       runtime,
     });
 
@@ -1636,16 +1633,8 @@ describe("applicationPlugin", () => {
 
   it("passes better-auth the Fly-Client-IP header as the X-Forwarded-For header", async () => {
     const forwardedForHeaders: (null | string)[] = [];
-    const authenticationServer = await createLoggingServer({
-      authentication: {
-        handleRequest: (request) =>
-          Effect.sync(() =>
-            forwardedForHeaders.push(request.headers.get("x-forwarded-for")),
-          ).pipe(Effect.as(new Response(null))),
-      },
-      level: "silent",
-      logLines: [],
-    });
+    const authenticationServer =
+      await createForwardedForRecordingServer(forwardedForHeaders);
 
     await authenticationServer.inject({
       headers: { "fly-client-ip": "198.51.100.12" },
@@ -1660,16 +1649,8 @@ describe("applicationPlugin", () => {
 
   it("passes better-auth the socket address as the X-Forwarded-For header of a request without a Fly-Client-IP header", async () => {
     const forwardedForHeaders: (null | string)[] = [];
-    const authenticationServer = await createLoggingServer({
-      authentication: {
-        handleRequest: (request) =>
-          Effect.sync(() =>
-            forwardedForHeaders.push(request.headers.get("x-forwarded-for")),
-          ).pipe(Effect.as(new Response(null))),
-      },
-      level: "silent",
-      logLines: [],
-    });
+    const authenticationServer =
+      await createForwardedForRecordingServer(forwardedForHeaders);
 
     await authenticationServer.inject({
       method: "GET",
@@ -1740,7 +1721,7 @@ describe("applicationPlugin", () => {
   });
 
   it("counts the requests of each Fly-Client-IP header toward a limit of its own, even from one socket address", async () => {
-    const remoteAddress = "192.0.2.50";
+    const remoteAddress = "192.0.2.60";
     await sendRequestsUpToRateLimit({
       headers: { "fly-client-ip": "198.51.100.10" },
       remoteAddress,
@@ -1765,11 +1746,11 @@ describe("applicationPlugin", () => {
   });
 
   it("counts a request without a Fly-Client-IP header toward the limit of its socket address", async () => {
-    await sendRequestsUpToRateLimit({ remoteAddress: "192.0.2.51", server });
+    await sendRequestsUpToRateLimit({ remoteAddress: "192.0.2.61", server });
 
     const response = await server.inject({
       method: "GET",
-      remoteAddress: "192.0.2.52",
+      remoteAddress: "192.0.2.62",
       url: "/health",
     });
 

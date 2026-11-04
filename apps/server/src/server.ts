@@ -53,13 +53,13 @@ const serverConfiguration = await Effect.runPromise(
     // (https://github.com/manuelcattelan/ankaa/issues/161), and development's
     // fingerprint is React Native's public debug key, so any app signed with
     // it could open the links of Account deletion.
-    androidAppPackageName: Config.NonEmptyString(
-      "ANDROID_APP_PACKAGE_NAME",
-    ).pipe(Config.withDefault(null)),
-    androidAppSha256CertificateFingerprints: Config.Array(
-      Schema.NonEmptyString,
-      "ANDROID_APP_SHA256_CERTIFICATE_FINGERPRINTS",
-    ).pipe(Config.withDefault(null)),
+    android: Config.all({
+      packageName: Config.NonEmptyString("ANDROID_APP_PACKAGE_NAME"),
+      sha256CertificateFingerprints: Config.Array(
+        Schema.NonEmptyString,
+        "ANDROID_APP_SHA256_CERTIFICATE_FINGERPRINTS",
+      ),
+    }).pipe(Config.withDefault(null)),
     appleAppBundleId: Config.NonEmptyString("APPLE_APP_BUNDLE_ID"),
     appleTeamId: Config.NonEmptyString("APPLE_TEAM_ID"),
     closeGraceDelayMilliseconds: Config.schema(
@@ -94,9 +94,7 @@ try {
 }
 
 await server.register(applicationPlugin, {
-  androidAppPackageName: serverConfiguration.androidAppPackageName,
-  androidAppSha256CertificateFingerprints:
-    serverConfiguration.androidAppSha256CertificateFingerprints,
+  android: serverConfiguration.android,
   appleAppBundleId: serverConfiguration.appleAppBundleId,
   appleTeamId: serverConfiguration.appleTeamId,
   runtime,
