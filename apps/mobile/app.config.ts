@@ -3,6 +3,7 @@ import type { ExpoConfig } from "expo/config";
 import { ACCOUNT_DELETION_PATH } from "@ankaa/core/features/authentication/constants/account-deletion-path";
 import { APPLICATION_SCHEMES } from "@ankaa/core/features/authentication/constants/application-schemes";
 import * as Schema from "effect/Schema";
+import * as Struct from "effect/Struct";
 
 import {
   GOOGLE_IOS_CLIENT_ID_SUFFIX,
@@ -10,12 +11,45 @@ import {
 } from "./src/features/authentication/core/google-ios-client-id-schema.ts";
 import { apiUrlSchema } from "./src/shared/core/api-url-schema.ts";
 
+type AppVariantConfig = {
+  addGeneratedScheme: boolean;
+  associatedDomainSuffix: string;
+  bundleIdentifier: string;
+  name: string;
+  scheme: string;
+};
+
 const APPLICATION_ID = "app.ankaa";
-const DEVELOPMENT_APPLICATION_ID = "app.ankaa.development";
-const APPLICATION_SLUG = "ankaa";
-const APP_VARIANTS = ["development", "production"] as const;
-const EAS_PROJECT_ID = "4cab2d0d-aa34-4dcf-a7a3-f553e3cd99c2";
-const OWNER = "ankaa-mobile";
+
+/**
+ * What each variant of the app sets differently in the app config.
+ */
+const APP_VARIANT_CONFIGS = {
+  development: {
+    addGeneratedScheme: true,
+    associatedDomainSuffix: "?mode=developer",
+    bundleIdentifier: "app.ankaa.development",
+    name: "Ankaa Dev",
+    scheme: APPLICATION_SCHEMES.development,
+  },
+  production: {
+    addGeneratedScheme: false,
+    associatedDomainSuffix: "",
+    bundleIdentifier: APPLICATION_ID,
+    name: "Ankaa",
+    scheme: APPLICATION_SCHEMES.production,
+  },
+} satisfies Record<keyof typeof APPLICATION_SCHEMES, AppVariantConfig>;
+
+/**
+ * The fields that identify the project to EAS, which every app config
+ * returns.
+ */
+const PROJECT_IDENTITY = {
+  extra: { eas: { projectId: "4cab2d0d-aa34-4dcf-a7a3-f553e3cd99c2" } },
+  owner: "ankaa-mobile",
+  slug: "ankaa",
+};
 
 const SPLASH_IMAGE_WIDTH = 76;
 
@@ -52,19 +86,17 @@ export default function appConfig() {
   // APP_VARIANT the config decodes nothing and returns only that identity
   // (https://github.com/expo/eas-cli/blob/0a274a6fefd5e8142db68b0e2c07e6da98978049/packages/eas-cli/src/build/evaluateConfigWithEnvVarsAsync.ts#L27-L34).
   if (process.env.APP_VARIANT === undefined) {
-    return {
-      extra: { eas: { projectId: EAS_PROJECT_ID } },
-      owner: OWNER,
-      slug: APPLICATION_SLUG,
-    };
+    return { ...PROJECT_IDENTITY };
   }
 
-  const appVariant = decodeSetting({
-    name: "APP_VARIANT",
-    schema: Schema.Literals(APP_VARIANTS),
-    value: process.env.APP_VARIANT,
-  });
-  const isDevelopmentVariant = appVariant === "development";
+  const appVariantConfig =
+    APP_VARIANT_CONFIGS[
+      decodeSetting({
+        name: "APP_VARIANT",
+        schema: Schema.Literals(Struct.keys(APP_VARIANT_CONFIGS)),
+        value: process.env.APP_VARIANT,
+      })
+    ];
 
   const googleIosClientId = decodeSetting({
     name: "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID",
@@ -94,6 +126,7 @@ export default function appConfig() {
   const apiHost = new URL(apiUrl).host;
 
   return {
+    ...PROJECT_IDENTITY,
     android: {
       adaptiveIcon: {
         backgroundColor: "#E6F4FE",
@@ -122,17 +155,12 @@ export default function appConfig() {
       reactCompiler: true,
       typedRoutes: true,
     },
-    extra: { eas: { projectId: EAS_PROJECT_ID } },
     icon: "./assets/images/icon.png",
     ios: {
       associatedDomains: [
-        isDevelopmentVariant
-          ? `applinks:${apiHost}?mode=developer`
-          : `applinks:${apiHost}`,
+        `applinks:${apiHost}${appVariantConfig.associatedDomainSuffix}`,
       ],
-      bundleIdentifier: isDevelopmentVariant
-        ? DEVELOPMENT_APPLICATION_ID
-        : APPLICATION_ID,
+      bundleIdentifier: appVariantConfig.bundleIdentifier,
       // The app uses only the encryption that iOS itself provides, which is
       // exempt from export compliance documentation, so TestFlight needs no
       // answer for each build. This holds only while every cipher comes from
@@ -142,7 +170,7 @@ export default function appConfig() {
       icon: "./assets/expo.icon",
       usesAppleSignIn: true,
     },
-    name: isDevelopmentVariant ? "Ankaa Dev" : "Ankaa",
+    name: appVariantConfig.name,
     orientation: "portrait",
     plugins: [
       "expo-router",
@@ -158,10 +186,12 @@ export default function appConfig() {
       ["expo-build-properties", { ios: { enableSceneSupport: true } }],
       "expo-apple-authentication",
       ["@react-native-google-signin/google-signin", { iosUrlScheme }],
-      ["expo-dev-client", { addGeneratedScheme: isDevelopmentVariant }],
+      [
+        "expo-dev-client",
+        { addGeneratedScheme: appVariantConfig.addGeneratedScheme },
+      ],
     ],
-    scheme: APPLICATION_SCHEMES[appVariant],
-    slug: APPLICATION_SLUG,
+    scheme: appVariantConfig.scheme,
     userInterfaceStyle: "automatic",
     version: "1.0.0",
     web: {

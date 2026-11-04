@@ -33,10 +33,12 @@ describe("appConfig", () => {
       name: "Ankaa Dev",
       scheme: "ankaa-development",
     });
-    expect(config.plugins).toContainEqual([
-      "expo-dev-client",
-      { addGeneratedScheme: true },
-    ]);
+    expect(config).toHaveProperty(
+      "plugins",
+      expect.arrayContaining([
+        ["expo-dev-client", { addGeneratedScheme: true }],
+      ]),
+    );
   });
 
   it("returns the production variant with APP_VARIANT set to production", () => {
@@ -52,37 +54,55 @@ describe("appConfig", () => {
       name: "Ankaa",
       scheme: "ankaa",
     });
-    expect(config.plugins).toContainEqual([
-      "expo-dev-client",
-      { addGeneratedScheme: false },
-    ]);
+    expect(config).toHaveProperty(
+      "plugins",
+      expect.arrayContaining([
+        ["expo-dev-client", { addGeneratedScheme: false }],
+      ]),
+    );
   });
 
-  it("declares no non-exempt encryption with either APP_VARIANT", () => {
+  it("declares no non-exempt encryption with APP_VARIANT set to development", () => {
     Object.assign(process.env, SETTINGS, { APP_VARIANT: "development" });
-    const developmentConfig = appConfig();
-    process.env.APP_VARIANT = "production";
-    const productionConfig = appConfig();
 
-    expect(developmentConfig).toMatchObject({
-      ios: { config: { usesNonExemptEncryption: false } },
-    });
-    expect(productionConfig).toMatchObject({
+    const config = appConfig();
+
+    expect(config).toMatchObject({
       ios: { config: { usesNonExemptEncryption: false } },
     });
   });
 
-  it("names the EAS project with either APP_VARIANT", () => {
-    Object.assign(process.env, SETTINGS, { APP_VARIANT: "development" });
-    const developmentConfig = appConfig();
-    process.env.APP_VARIANT = "production";
-    const productionConfig = appConfig();
+  it("declares no non-exempt encryption with APP_VARIANT set to production", () => {
+    Object.assign(process.env, SETTINGS, { APP_VARIANT: "production" });
 
-    expect(developmentConfig).toMatchObject({
-      extra: { eas: { projectId: "4cab2d0d-aa34-4dcf-a7a3-f553e3cd99c2" } },
+    const config = appConfig();
+
+    expect(config).toMatchObject({
+      ios: { config: { usesNonExemptEncryption: false } },
     });
-    expect(productionConfig).toMatchObject({
+  });
+
+  it("names the slug, the owner and the EAS project with APP_VARIANT set to development", () => {
+    Object.assign(process.env, SETTINGS, { APP_VARIANT: "development" });
+
+    const config = appConfig();
+
+    expect(config).toMatchObject({
       extra: { eas: { projectId: "4cab2d0d-aa34-4dcf-a7a3-f553e3cd99c2" } },
+      owner: "ankaa-mobile",
+      slug: "ankaa",
+    });
+  });
+
+  it("names the slug, the owner and the EAS project with APP_VARIANT set to production", () => {
+    Object.assign(process.env, SETTINGS, { APP_VARIANT: "production" });
+
+    const config = appConfig();
+
+    expect(config).toMatchObject({
+      extra: { eas: { projectId: "4cab2d0d-aa34-4dcf-a7a3-f553e3cd99c2" } },
+      owner: "ankaa-mobile",
+      slug: "ankaa",
     });
   });
 
