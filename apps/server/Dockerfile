@@ -1,4 +1,6 @@
-FROM node:26-slim AS base
+ARG NODE_IMAGE=node:26-slim
+
+FROM ${NODE_IMAGE} AS base
 # Node.js no longer ships Corepack, so pnpm comes from its own image, then
 # switches to the version that `devEngines` pins (https://pnpm.io/docker).
 COPY --from=ghcr.io/pnpm/pnpm:12 /opt/pnpm /opt/pnpm
@@ -7,7 +9,9 @@ WORKDIR /app
 
 FROM base AS prune
 COPY . .
-RUN pnpm dlx turbo@2 prune @ankaa/server --docker
+# The version that `pnpm-lock.yaml` resolves for the root's `turbo`, so the
+# prune is reproducible.
+RUN pnpm dlx turbo@2.10.12 prune @ankaa/server --docker
 
 FROM base AS install
 COPY --from=prune /app/out/json/ .
@@ -17,7 +21,7 @@ COPY --from=prune /app/out/json/ .
 RUN pnpm install --frozen-lockfile --prod --filter-prod "@ankaa/server..."
 COPY --from=prune /app/out/full/ .
 
-FROM node:26-slim
+FROM ${NODE_IMAGE}
 WORKDIR /app
 COPY --from=install /app .
 USER node
