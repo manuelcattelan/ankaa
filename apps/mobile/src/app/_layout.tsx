@@ -88,6 +88,6 @@ function createQueryClient() {
   return new QueryClient();
 }
 
-function getNavigationTheme(colorScheme: ColorSchemeName) {
+function getNavigationTheme(colorScheme: ColorSchemeName | null) {
   return colorScheme === "dark" ? DarkTheme : DefaultTheme;
 }

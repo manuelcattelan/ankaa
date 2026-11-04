@@ -100,7 +100,7 @@ async function openNewRoutineScreen({
   unreachablePaths?: (keyof FakeTrpcResponses)[];
 }) {
   const user = userEvent.setup();
-  renderScreen({
+  await renderScreen({
     initialUrl: "/",
     testRuntimeLayers: {
       authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -149,9 +149,13 @@ describe("NewRoutineScreen", () => {
     );
     await screen.findByText("Warm-up for Bench Press (Barbell)");
     await user.type(screen.getByLabelText("Repetitions or seconds"), "8");
-    fireEvent(screen.getByTestId("Intensity technique"), "selectionChange", {
-      nativeEvent: { selection: "drop_set" },
-    });
+    await fireEvent(
+      screen.getByTestId("Intensity technique"),
+      "selectionChange",
+      {
+        nativeEvent: { selection: "drop_set" },
+      },
+    );
     await user.type(
       await screen.findByLabelText("Segments, the first included"),
       "3",

@@ -15,10 +15,10 @@ import { renderScreen } from "#/testing/render-screen.tsx";
  * sign out, recording the path, and the body of a deletion, of each request
  * into `authenticationRequests`.
  */
-function renderSignedInDeletion(authenticationRequests: unknown[]) {
+async function renderSignedInDeletion(authenticationRequests: unknown[]) {
   let currentSession: null | typeof signedInSession = signedInSession;
 
-  renderScreen({
+  await renderScreen({
     initialUrl: "/delete-account?token=deletion-token-1",
     testRuntimeLayers: {
       authenticationClient: fakeAuthenticationClientLayer({
@@ -49,14 +49,14 @@ function renderSignedInDeletion(authenticationRequests: unknown[]) {
  * path, and the body of a deletion, of each later request into
  * `authenticationRequests`.
  */
-function renderSignedOutDeletion({
+async function renderSignedOutDeletion({
   authenticationRequests,
   receivedSignInRequests,
 }: {
   authenticationRequests: unknown[];
   receivedSignInRequests: Request[];
 }) {
-  renderScreen({
+  await renderScreen({
     initialUrl: "/delete-account?token=deletion-token-2",
     testRuntimeLayers: {
       appleSignIn: fakeAppleSignInLayer({
@@ -90,7 +90,7 @@ function renderSignedOutDeletion({
 describe("DeleteAccountScreen", () => {
   it("deletes the Account of the link's token, then signs the User out", async () => {
     const authenticationRequests: unknown[] = [];
-    renderSignedInDeletion(authenticationRequests);
+    await renderSignedInDeletion(authenticationRequests);
 
     await waitFor(() => {
       expect(authenticationRequests).toStrictEqual([
@@ -101,7 +101,7 @@ describe("DeleteAccountScreen", () => {
   });
 
   it("tells the User on the sign-in screen that their account has been deleted", async () => {
-    renderSignedInDeletion([]);
+    await renderSignedInDeletion([]);
 
     expect(
       await screen.findByText("Your account has been deleted."),
@@ -112,7 +112,7 @@ describe("DeleteAccountScreen", () => {
   });
 
   it("tells the User how to get a new link when the server rejects the link's token as expired, used or another User's", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/delete-account?token=deletion-token-3",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -135,7 +135,7 @@ describe("DeleteAccountScreen", () => {
 
   it("tells the User how to get a new link, and sends no deletion request that would email another one, when the link has no token", async () => {
     const deleteUserRequests: Request[] = [];
-    renderScreen({
+    await renderScreen({
       initialUrl: "/delete-account",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -161,7 +161,7 @@ describe("DeleteAccountScreen", () => {
   });
 
   it("tells the User that Ankaa can't connect when the server can't be reached", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/delete-account?token=deletion-token-4",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -182,7 +182,7 @@ describe("DeleteAccountScreen", () => {
 
   it("sends a signed-out User to sign in first, deleting nothing yet", async () => {
     const authenticationRequests: unknown[] = [];
-    renderSignedOutDeletion({
+    await renderSignedOutDeletion({
       authenticationRequests,
       receivedSignInRequests: [],
     });
@@ -196,10 +196,13 @@ describe("DeleteAccountScreen", () => {
   it("deletes the Account of the link's token once the signed-out User signs in", async () => {
     const authenticationRequests: unknown[] = [];
     const receivedSignInRequests: Request[] = [];
-    renderSignedOutDeletion({ authenticationRequests, receivedSignInRequests });
+    await renderSignedOutDeletion({
+      authenticationRequests,
+      receivedSignInRequests,
+    });
     const appleSignInButton = await screen.findByTestId("apple-sign-in-button");
 
-    fireEvent.press(appleSignInButton);
+    await fireEvent.press(appleSignInButton);
 
     await waitFor(() => {
       expect(authenticationRequests).toStrictEqual([

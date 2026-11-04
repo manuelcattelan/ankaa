@@ -25,12 +25,16 @@ export function RootNavigator() {
     return null;
   }
 
+  // A guard that fails redirects to the navigator's first accessible route
+  // unless it names its own, and the (authentication) group has no index, so
+  // each guard names the screen it redirects to
+  // (https://docs.expo.dev/router/migrate/sdk-57-to-58/).
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={hasSession}>
+      <Stack.Protected guard={hasSession} redirectTo="/sign-in">
         <Stack.Screen name="(application)" />
       </Stack.Protected>
-      <Stack.Protected guard={!hasSession}>
+      <Stack.Protected guard={!hasSession} redirectTo="/">
         <Stack.Screen name="(authentication)" />
       </Stack.Protected>
       <Stack.Screen name="delete-account" />

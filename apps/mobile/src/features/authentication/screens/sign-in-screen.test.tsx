@@ -32,13 +32,13 @@ const GOOGLE_SIGN_IN_RESPONSE: SignInResponse = {
 
 describe("SignInScreen", () => {
   it("shows Apple sign-in on iOS without asking the device whether it offers it", async () => {
-    renderScreen({ initialUrl: "/sign-in" });
+    await renderScreen({ initialUrl: "/sign-in" });
 
     expect(await screen.findByTestId("apple-sign-in-button")).toBeOnTheScreen();
   });
 
   it("signs the User in with Apple and opens the home screen", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         appleSignIn: fakeAppleSignInLayer({
@@ -51,7 +51,7 @@ describe("SignInScreen", () => {
       },
     });
 
-    fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
+    await fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
 
     expect(
       await screen.findByRole("button", { name: "Sign out" }),
@@ -60,7 +60,7 @@ describe("SignInScreen", () => {
 
   it("sends the server the authorization code of the Apple sign-in with the sign-in", async () => {
     const receivedSignInRequests: Request[] = [];
-    renderScreen({
+    await renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         appleSignIn: fakeAppleSignInLayer({
@@ -79,7 +79,7 @@ describe("SignInScreen", () => {
       },
     });
 
-    fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
+    await fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
 
     await screen.findByRole("button", { name: "Sign out" });
 
@@ -93,7 +93,7 @@ describe("SignInScreen", () => {
   it("announces no error when the User cancels Apple sign-in", async () => {
     const announcedMessages: string[] = [];
 
-    renderScreen({
+    await renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         accessibility: fakeAccessibilityLayer(announcedMessages),
@@ -102,7 +102,7 @@ describe("SignInScreen", () => {
       },
     });
 
-    fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
+    await fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
 
     await advanceFakeTime(1000);
 
@@ -110,7 +110,7 @@ describe("SignInScreen", () => {
   });
 
   it("leaves the sign-in buttons enabled and shows no error when the User cancels Apple sign-in", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         appleSignIn: fakeAppleSignInLayer({}),
@@ -118,7 +118,7 @@ describe("SignInScreen", () => {
       },
     });
 
-    fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
+    await fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
     await advanceFakeTime(1000);
 
     expect(screen.getByTestId("google-sign-in-button")).toBeEnabled();
@@ -131,7 +131,7 @@ describe("SignInScreen", () => {
   });
 
   it("tells the User that the account can't be linked when the server can't link the Apple sign-in to the User with the same email address", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         appleSignIn: fakeAppleSignInLayer({
@@ -148,7 +148,7 @@ describe("SignInScreen", () => {
       },
     });
 
-    fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
+    await fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
 
     expect(
       await screen.findByText(
@@ -158,7 +158,7 @@ describe("SignInScreen", () => {
   });
 
   it("tells the User that something went wrong, not that Ankaa can't connect, when Apple returns no identity token", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         appleSignIn: fakeAppleSignInLayer({
@@ -171,7 +171,7 @@ describe("SignInScreen", () => {
       },
     });
 
-    fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
+    await fireEvent.press(await screen.findByTestId("apple-sign-in-button"));
 
     expect(
       await screen.findByText("Something went wrong: try again."),
@@ -180,7 +180,7 @@ describe("SignInScreen", () => {
 
   it("leaves the sign-in buttons enabled and shows no error when the User cancels Google sign-in", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         googleSignIn: fakeGoogleSignInLayer({
@@ -204,7 +204,7 @@ describe("SignInScreen", () => {
   it("signs the User in with Google and opens the home screen", async () => {
     const user = userEvent.setup();
 
-    renderScreen({
+    await renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer(
@@ -226,7 +226,7 @@ describe("SignInScreen", () => {
   it("sends the server the authorization code of the Google sign-in with the sign-in", async () => {
     const receivedSignInRequests: Request[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer(
@@ -261,7 +261,7 @@ describe("SignInScreen", () => {
   it("shows an error message when the server rejects the Google sign-in", async () => {
     const user = userEvent.setup();
 
-    renderScreen({
+    await renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -293,7 +293,7 @@ describe("SignInScreen", () => {
     const announcedMessages: string[] = [];
     const user = userEvent.setup();
 
-    renderScreen({
+    await renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         accessibility: fakeAccessibilityLayer(announcedMessages),
@@ -327,7 +327,7 @@ describe("SignInScreen", () => {
   it("opens the email screen when the User continues with an email address", async () => {
     const user = userEvent.setup();
 
-    renderScreen({ initialUrl: "/sign-in" });
+    await renderScreen({ initialUrl: "/sign-in" });
 
     await user.press(
       await screen.findByRole("link", { name: "Continue with email address" }),
@@ -337,7 +337,7 @@ describe("SignInScreen", () => {
   });
 
   it("tells the User that Ankaa can't connect when the server can't be reached", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({

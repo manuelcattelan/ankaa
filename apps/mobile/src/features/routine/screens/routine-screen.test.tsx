@@ -53,7 +53,7 @@ const REVERSE_PYRAMID_PUSH_DAY_ROUTINE: Routine = {
 
 describe("RoutineScreen", () => {
   it("opens the Routine of a link to it for a signed-in User, not the home screen", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: `/routines/${PUSH_DAY_ROUTINE.id}`,
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -74,7 +74,7 @@ describe("RoutineScreen", () => {
   it("Saves the edits that the User makes to the Routine, keeping its ids", async () => {
     const user = userEvent.setup();
     const savedInputs: RoutineSaveInput[] = [];
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -141,7 +141,7 @@ describe("RoutineScreen", () => {
     const user = userEvent.setup();
     const savedInputs: RoutineSaveInput[] = [];
     let routines: Routine[] = [PUSH_DAY_ROUTINE];
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -159,7 +159,7 @@ describe("RoutineScreen", () => {
     });
     await user.press(await screen.findByRole("link", { name: "Push day" }));
 
-    fireEvent(await screen.findByTestId("Pyramid"), "selectionChange", {
+    await fireEvent(await screen.findByTestId("Pyramid"), "selectionChange", {
       nativeEvent: { selection: "reverse_pyramid" },
     });
     await user.press(screen.getByRole("button", { name: "Save routine" }));
@@ -181,7 +181,7 @@ describe("RoutineScreen", () => {
   it("takes the User back to their Routines, without the Routine, once they delete it", async () => {
     const user = userEvent.setup();
     let routines: Routine[] = [PUSH_DAY_ROUTINE];
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -211,7 +211,7 @@ describe("RoutineScreen", () => {
 
   it("tells the User that the Routine doesn't exist anymore when the server fails with RoutineNotFoundError", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -241,7 +241,7 @@ describe("RoutineScreen", () => {
   it("takes the User to the sign-in screen when the server rejects the delete as unauthorized because it revoked their session", async () => {
     const user = userEvent.setup();
     let currentSession: null | typeof signedInSession = signedInSession;
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({

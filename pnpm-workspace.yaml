@@ -20,6 +20,7 @@ catalog:
   typescript: ~6.0.3
   vitest: ^5.0.5
 allowBuilds:
+  "@parcel/watcher": false
   cpu-features: false
   esbuild: true
   protobufjs: false

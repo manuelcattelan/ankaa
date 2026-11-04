@@ -12,7 +12,7 @@ describe("ValidateOtpCodeScreen", () => {
   it("shows a validation message when the verification code is incomplete", async () => {
     const user = userEvent.setup();
 
-    renderScreen({ initialUrl: VALIDATE_OTP_CODE_URL });
+    await renderScreen({ initialUrl: VALIDATE_OTP_CODE_URL });
 
     await user.type(await screen.findByLabelText("Verification code"), "12345");
 
@@ -28,7 +28,7 @@ describe("ValidateOtpCodeScreen", () => {
   it("shows no validation message before the first submit", async () => {
     const user = userEvent.setup();
 
-    renderScreen({ initialUrl: VALIDATE_OTP_CODE_URL });
+    await renderScreen({ initialUrl: VALIDATE_OTP_CODE_URL });
 
     await user.type(await screen.findByLabelText("Verification code"), "12345");
 
@@ -42,7 +42,7 @@ describe("ValidateOtpCodeScreen", () => {
   it("clears the validation message as soon as the User completes the verification code", async () => {
     const user = userEvent.setup();
 
-    renderScreen({ initialUrl: VALIDATE_OTP_CODE_URL });
+    await renderScreen({ initialUrl: VALIDATE_OTP_CODE_URL });
 
     await user.type(await screen.findByLabelText("Verification code"), "12345");
 
@@ -64,7 +64,7 @@ describe("ValidateOtpCodeScreen", () => {
   it("signs the User in and opens the home screen when the server accepts the verification code", async () => {
     const user = userEvent.setup();
 
-    renderScreen({
+    await renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer(
@@ -88,7 +88,7 @@ describe("ValidateOtpCodeScreen", () => {
   it("shows an error message when the server rejects the verification code as incorrect", async () => {
     const user = userEvent.setup();
 
-    renderScreen({
+    await renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -118,7 +118,7 @@ describe("ValidateOtpCodeScreen", () => {
   it("shows how many seconds the User must wait when the server rate-limits the sign-in", async () => {
     const user = userEvent.setup();
 
-    renderScreen({
+    await renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -146,7 +146,7 @@ describe("ValidateOtpCodeScreen", () => {
   it("tells the User to request a new verification code when the server rejects it as expired", async () => {
     const user = userEvent.setup();
 
-    renderScreen({
+    await renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -176,7 +176,7 @@ describe("ValidateOtpCodeScreen", () => {
   it("tells the User to request a new verification code when the server rejects too many attempts", async () => {
     const user = userEvent.setup();
 
-    renderScreen({
+    await renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -207,7 +207,7 @@ describe("ValidateOtpCodeScreen", () => {
     const otpCodeRequestBodies: unknown[] = [];
     const user = userEvent.setup();
 
-    renderScreen({
+    await renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -236,7 +236,7 @@ describe("ValidateOtpCodeScreen", () => {
   it("disables resending the verification code while its request is in flight", async () => {
     const user = userEvent.setup();
 
-    renderScreen({
+    await renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({
@@ -260,7 +260,7 @@ describe("ValidateOtpCodeScreen", () => {
   it("lets the User resend the verification code again once the previous request is answered", async () => {
     const user = userEvent.setup();
 
-    renderScreen({
+    await renderScreen({
       initialUrl: VALIDATE_OTP_CODE_URL,
       testRuntimeLayers: {
         authenticationClient: fakeAuthenticationClientLayer({

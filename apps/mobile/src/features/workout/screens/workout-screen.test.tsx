@@ -304,7 +304,7 @@ function buildWorkout({
  * `receivedPaths` and the notifications it schedules into
  * `scheduledNotifications`.
  */
-function renderPlankWorkoutScreen({
+async function renderPlankWorkoutScreen({
   plannedSets = [PLANK_PLANNED_SET],
   receivedPaths = [],
   recordedSets = [],
@@ -317,7 +317,7 @@ function renderPlankWorkoutScreen({
   scheduledNotifications?: NotificationRequest[];
   skipReason?: null | SkipReason;
 }) {
-  renderScreen({
+  await renderScreen({
     initialUrl: "/workout",
     testRuntimeLayers: {
       authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -378,7 +378,7 @@ function getField({ index, label }: { index: number; label: string }) {
 
 describe("WorkoutScreen", () => {
   it("shows the User's Workout in progress, with its Sections, Supersets, Warm-up exercises, notes and planned Sets", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -426,7 +426,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("shows the Pyramid label of a labelled Workout exercise once, under its name, and none for an unlabelled one", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -451,7 +451,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("counts the time elapsed since the Workout started up as time passes", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -477,7 +477,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("tells the User how to enter the weight of a Workout exercise, by its Weight type", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -504,7 +504,7 @@ describe("WorkoutScreen", () => {
     const stoppedInputs: WorkoutStopInput[] = [];
     let workoutInProgress: null | Workout = buildDoneBenchPressWorkout();
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -545,7 +545,7 @@ describe("WorkoutScreen", () => {
       workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
     });
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -565,7 +565,7 @@ describe("WorkoutScreen", () => {
     await user.press(
       await screen.findByRole("button", { name: "Stop workout" }),
     );
-    fireEvent(
+    await fireEvent(
       await screen.findByTestId("Why you're stopping early"),
       "selectionChange",
       { nativeEvent: { selection: "low_on_time" } },
@@ -598,7 +598,7 @@ describe("WorkoutScreen", () => {
       workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
     });
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -631,7 +631,7 @@ describe("WorkoutScreen", () => {
   it("tells the User to pick a reason when the server finds a Workout exercise not done at the stop, and asks for it", async () => {
     let workoutInProgress = buildDoneBenchPressWorkout();
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -668,7 +668,7 @@ describe("WorkoutScreen", () => {
 
   it("tells the User that Ankaa can't connect when a stop can't reach the server, and keeps the Workout on the screen", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -695,7 +695,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("tells the User they have no Workout in progress when none is", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -721,7 +721,7 @@ describe("WorkoutScreen", () => {
       workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
     });
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -768,7 +768,7 @@ describe("WorkoutScreen", () => {
   it("Saves the Weight unit that the User picks with the Set", async () => {
     const savedInputs: WorkoutSaveSetInput[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -789,9 +789,13 @@ describe("WorkoutScreen", () => {
         }),
       },
     });
-    fireEvent(await screen.findByTestId("Weight unit"), "selectionChange", {
-      nativeEvent: { selection: "pound" },
-    });
+    await fireEvent(
+      await screen.findByTestId("Weight unit"),
+      "selectionChange",
+      {
+        nativeEvent: { selection: "pound" },
+      },
+    );
     await user.type(screen.getByLabelText("Repetitions"), "8");
     await user.type(screen.getByLabelText("Weight, in pounds"), "135");
 
@@ -812,7 +816,7 @@ describe("WorkoutScreen", () => {
   it("Saves a Drop set with the Segments the User adds, up to its planned Segment count", async () => {
     const savedInputs: WorkoutSaveSetInput[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -877,7 +881,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("counts the recorded Working sets as done and the planned ones left, leaving out Warm-up sets", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -915,7 +919,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("offers no row to record another Set once every planned Set of a Workout exercise is recorded", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -962,7 +966,7 @@ describe("WorkoutScreen", () => {
       workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
     });
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1005,7 +1009,7 @@ describe("WorkoutScreen", () => {
   it("refuses to stop the Workout while a Set has a Draft the User hasn't Saved, naming that Set", async () => {
     const stoppedInputs: WorkoutStopInput[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1039,7 +1043,7 @@ describe("WorkoutScreen", () => {
 
   it("tells the User that Ankaa can't connect when a Save can't reach the server, and keeps the Draft on the screen", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1076,7 +1080,7 @@ describe("WorkoutScreen", () => {
 
   it("tells the User that every planned Set is already recorded when a Save fails with SetNotPlannedError, and keeps the Draft on the screen", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1118,7 +1122,7 @@ describe("WorkoutScreen", () => {
       workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
     });
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1162,7 +1166,7 @@ describe("WorkoutScreen", () => {
   it("refuses to stop the Workout while a note has a Draft the User hasn't Saved, naming its Workout exercise", async () => {
     const stoppedInputs: WorkoutStopInput[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1205,7 +1209,7 @@ describe("WorkoutScreen", () => {
       workoutExercise: BENCH_PRESS_WORKOUT_EXERCISE,
     });
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1227,7 +1231,7 @@ describe("WorkoutScreen", () => {
         }),
       },
     });
-    fireEvent(await screen.findByTestId("Skipped"), "selectionChange", {
+    await fireEvent(await screen.findByTestId("Skipped"), "selectionChange", {
       nativeEvent: { selection: "pain" },
     });
     await user.type(
@@ -1254,7 +1258,7 @@ describe("WorkoutScreen", () => {
   it("refuses to stop the Workout while a Skip has a Draft the User hasn't Saved, naming its Workout exercise", async () => {
     const stoppedInputs: WorkoutStopInput[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1274,7 +1278,7 @@ describe("WorkoutScreen", () => {
         }),
       },
     });
-    fireEvent(await screen.findByTestId("Skipped"), "selectionChange", {
+    await fireEvent(await screen.findByTestId("Skipped"), "selectionChange", {
       nativeEvent: { selection: "low_on_time" },
     });
 
@@ -1291,7 +1295,7 @@ describe("WorkoutScreen", () => {
   it("refuses to Save a Skip with a note and no reason, telling the User to pick a reason", async () => {
     const receivedPaths: string[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1326,7 +1330,7 @@ describe("WorkoutScreen", () => {
 
   it("shows the Sets of a Workout exercise with a Saved Skip read-only, telling the User to clear the Skip to change them", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1372,7 +1376,7 @@ describe("WorkoutScreen", () => {
 
   it("tells the User to clear the Skip when the server refuses a Set's Save because the Workout exercise has a Skip", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1406,7 +1410,7 @@ describe("WorkoutScreen", () => {
 
   it("tells the User to clear the Skip when the server refuses a Set's removal because the Workout exercise has a Skip", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1444,7 +1448,7 @@ describe("WorkoutScreen", () => {
   it("refuses to Save a Skip while a Set of its Workout exercise has a Draft the User hasn't Saved, telling the User to Save or discard it", async () => {
     const receivedPaths: string[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1463,7 +1467,7 @@ describe("WorkoutScreen", () => {
       },
     });
     await user.type(await screen.findByLabelText("Repetitions"), "8");
-    fireEvent(screen.getByTestId("Skipped"), "selectionChange", {
+    await fireEvent(screen.getByTestId("Skipped"), "selectionChange", {
       nativeEvent: { selection: "low_energy" },
     });
 
@@ -1479,7 +1483,7 @@ describe("WorkoutScreen", () => {
 
   it("tells the User that Ankaa can't connect when a note's Save can't reach the server, and keeps the Draft on the screen", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1516,7 +1520,7 @@ describe("WorkoutScreen", () => {
 
   it("counts down the planned Rest of a Set when the User starts it under that Set, and adds no Set", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1544,7 +1548,7 @@ describe("WorkoutScreen", () => {
 
   it("offers Start rest only under the Sets of a Superset's last exercise", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1613,7 +1617,7 @@ describe("WorkoutScreen", () => {
 
   it("counts down a Pause of a Rest-pause set under its own label when the User starts it", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1650,7 +1654,7 @@ describe("WorkoutScreen", () => {
 
   it("doesn't ask for notification permission when the Workout screen opens", async () => {
     const permissionRequests: NotificationPermissionStatus[] = [];
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1677,7 +1681,7 @@ describe("WorkoutScreen", () => {
   it("asks for notification permission when the User starts a countdown for the first time", async () => {
     const permissionRequests: NotificationPermissionStatus[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1706,7 +1710,7 @@ describe("WorkoutScreen", () => {
   it("schedules a notification for the end of the Rest that the User starts", async () => {
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1744,7 +1748,7 @@ describe("WorkoutScreen", () => {
 
   it("offers no way to skip a Rest that the User starts", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1772,7 +1776,7 @@ describe("WorkoutScreen", () => {
     const scheduledNotifications: NotificationRequest[] = [];
     let workoutInProgress: null | Workout = buildDoneBenchPressWorkout();
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1804,7 +1808,7 @@ describe("WorkoutScreen", () => {
     const permissionRequests: NotificationPermissionStatus[] = [];
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1849,7 +1853,7 @@ describe("WorkoutScreen", () => {
     const permissionRequests: NotificationPermissionStatus[] = [];
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1905,7 +1909,7 @@ describe("WorkoutScreen", () => {
     const permissionRequests: NotificationPermissionStatus[] = [];
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1952,7 +1956,7 @@ describe("WorkoutScreen", () => {
 
   it("ends the countdown when its time is up, and offers to start it again", async () => {
     const user = userEvent.setup();
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -1981,7 +1985,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("offers Start on a Set of a Workout exercise counted in seconds", async () => {
-    renderPlankWorkoutScreen({});
+    await renderPlankWorkoutScreen({});
 
     expect(
       await screen.findByRole("button", { name: "Start" }),
@@ -1989,7 +1993,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("doesn't offer Start on a Set of a Workout exercise counted in Repetitions", async () => {
-    renderScreen({
+    await renderScreen({
       initialUrl: "/workout",
       testRuntimeLayers: {
         authenticationClient: fakeSignedInAuthenticationClientLayer,
@@ -2015,7 +2019,7 @@ describe("WorkoutScreen", () => {
   it("schedules a notification for the end of a 5-second lead-in when the User starts a Segment timer", async () => {
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderPlankWorkoutScreen({ scheduledNotifications });
+    await renderPlankWorkoutScreen({ scheduledNotifications });
 
     await user.press(await screen.findByRole("button", { name: "Start" }));
 
@@ -2037,7 +2041,7 @@ describe("WorkoutScreen", () => {
 
   it("counts down the planned seconds of the Set once the lead-in of the Segment timer ends", async () => {
     const user = userEvent.setup();
-    renderPlankWorkoutScreen({});
+    await renderPlankWorkoutScreen({});
     await user.press(await screen.findByRole("button", { name: "Start" }));
 
     await advanceFakeTime(15_000);
@@ -2048,7 +2052,7 @@ describe("WorkoutScreen", () => {
   it("schedules a notification for the end of the planned seconds when the User starts a Segment timer", async () => {
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderPlankWorkoutScreen({ scheduledNotifications });
+    await renderPlankWorkoutScreen({ scheduledNotifications });
 
     await user.press(await screen.findByRole("button", { name: "Start" }));
 
@@ -2079,7 +2083,7 @@ describe("WorkoutScreen", () => {
   it("fills the planned seconds into the first Segment with no Amount when the Segment timer reaches zero, and doesn't Save the Set", async () => {
     const receivedPaths: string[] = [];
     const user = userEvent.setup();
-    renderPlankWorkoutScreen({ receivedPaths });
+    await renderPlankWorkoutScreen({ receivedPaths });
     await user.press(await screen.findByRole("button", { name: "Start" }));
 
     await advanceFakeTime(65_000);
@@ -2091,7 +2095,7 @@ describe("WorkoutScreen", () => {
   it("keeps counting the seconds past zero of a Segment timer, and fills in the total held when the User stops it, without Saving the Set", async () => {
     const receivedPaths: string[] = [];
     const user = userEvent.setup();
-    renderPlankWorkoutScreen({ receivedPaths });
+    await renderPlankWorkoutScreen({ receivedPaths });
     await user.press(await screen.findByRole("button", { name: "Start" }));
 
     await advanceFakeTime(77_000);
@@ -2107,7 +2111,7 @@ describe("WorkoutScreen", () => {
   it("fills in the seconds held and cancels the notification for zero when the User stops a Segment timer before zero", async () => {
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderPlankWorkoutScreen({ scheduledNotifications });
+    await renderPlankWorkoutScreen({ scheduledNotifications });
     await user.press(await screen.findByRole("button", { name: "Start" }));
     await waitFor(() => {
       expect(scheduledNotifications).toHaveLength(2);
@@ -2125,7 +2129,7 @@ describe("WorkoutScreen", () => {
 
   it("counts up from zero once the lead-in ends on a Set with no planned Amount, and fills in the seconds counted when the User stops it", async () => {
     const user = userEvent.setup();
-    renderPlankWorkoutScreen({
+    await renderPlankWorkoutScreen({
       plannedSets: [{ ...PLANK_PLANNED_SET, amount: null }],
     });
     await user.press(await screen.findByRole("button", { name: "Start" }));
@@ -2146,7 +2150,7 @@ describe("WorkoutScreen", () => {
   it("schedules only the notification for the end of the lead-in when the User starts a Segment timer on a Set with no planned Amount", async () => {
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderPlankWorkoutScreen({
+    await renderPlankWorkoutScreen({
       plannedSets: [{ ...PLANK_PLANNED_SET, amount: null }],
       scheduledNotifications,
     });
@@ -2170,7 +2174,7 @@ describe("WorkoutScreen", () => {
 
   it("adds a Segment and fills the planned seconds into it when every Segment has an Amount and the plan allows another", async () => {
     const user = userEvent.setup();
-    renderPlankWorkoutScreen({
+    await renderPlankWorkoutScreen({
       plannedSets: [
         {
           ...PLANK_PLANNED_SET,
@@ -2197,7 +2201,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("doesn't offer Start on a Set whose Segments all have an Amount and whose plan allows no other", async () => {
-    renderPlankWorkoutScreen({
+    await renderPlankWorkoutScreen({
       recordedSets: [
         {
           id: "01900000-0000-7000-8000-000000000405",
@@ -2212,7 +2216,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("offers Start only on the Sets that the User can record", async () => {
-    renderPlankWorkoutScreen({
+    await renderPlankWorkoutScreen({
       plannedSets: [
         PLANK_PLANNED_SET,
         {
@@ -2230,7 +2234,7 @@ describe("WorkoutScreen", () => {
   it("replaces a Segment timer and cancels its notifications when the User starts a Rest", async () => {
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderPlankWorkoutScreen({ scheduledNotifications });
+    await renderPlankWorkoutScreen({ scheduledNotifications });
     await user.press(await screen.findByRole("button", { name: "Start" }));
     await waitFor(() => {
       expect(scheduledNotifications).toHaveLength(2);
@@ -2258,7 +2262,7 @@ describe("WorkoutScreen", () => {
   it("replaces a Rest and its notification when the User starts a Segment timer", async () => {
     const scheduledNotifications: NotificationRequest[] = [];
     const user = userEvent.setup();
-    renderPlankWorkoutScreen({ scheduledNotifications });
+    await renderPlankWorkoutScreen({ scheduledNotifications });
     await user.press(await screen.findByRole("button", { name: "Start rest" }));
     await waitFor(() => {
       expect(scheduledNotifications).toHaveLength(1);
@@ -2279,7 +2283,7 @@ describe("WorkoutScreen", () => {
   });
 
   it("doesn't offer Start on a Set of a Workout exercise that has a Skip", async () => {
-    renderPlankWorkoutScreen({ skipReason: "pain" });
+    await renderPlankWorkoutScreen({ skipReason: "pain" });
 
     await screen.findByRole("button", { name: "Save skip" });
 
