@@ -1,14 +1,11 @@
 import childProcess from "node:child_process";
-import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { escapeIdentifier } from "pg";
-import { describe, expect, inject, it, onTestFinished } from "vitest";
+import { describe, expect, it, onTestFinished } from "vitest";
 
-import { dropDatabase } from "#/testing/drop-database.ts";
-import { getDatabaseUrl } from "#/testing/get-database-url.ts";
+import { createTestDatabase } from "#/testing/create-test-database.ts";
+import { dropTestDatabase } from "#/testing/drop-test-database.ts";
 import { queryDatabase } from "#/testing/query-database.ts";
-import "#/testing/provided-context.ts";
 
 const execFile = promisify(childProcess.execFile);
 
@@ -17,25 +14,11 @@ const migrateProductionPath = fileURLToPath(
 );
 
 async function createEmptyDatabase() {
-  const name = `ankaa_test_${randomUUID().replaceAll("-", "")}`;
+  const testDatabase = await createTestDatabase();
 
-  await queryDatabase({
-    execute: (postgresClient) =>
-      postgresClient.query(`CREATE DATABASE ${escapeIdentifier(name)}`),
-    url: inject("postgresMaintenanceDatabaseUrl"),
-  });
+  onTestFinished(() => dropTestDatabase(testDatabase.name));
 
-  onTestFinished(() =>
-    queryDatabase({
-      execute: (postgresClient) => dropDatabase({ name, postgresClient }),
-      url: inject("postgresMaintenanceDatabaseUrl"),
-    }),
-  );
-
-  return getDatabaseUrl({
-    name,
-    postgresServerUrl: inject("postgresMaintenanceDatabaseUrl"),
-  });
+  return testDatabase.url;
 }
 
 async function query({
