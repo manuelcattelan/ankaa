@@ -25,6 +25,8 @@ jobs:
         if: ${{ !cancelled() }}
       - run: pnpm check-types --continue
         if: ${{ !cancelled() }}
+      - run: pnpm --filter @ankaa/mobile exec expo install --check
+        if: ${{ !cancelled() }}
 
   test:
     runs-on: ubuntu-latest

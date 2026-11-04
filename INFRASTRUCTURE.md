@@ -8,6 +8,7 @@ paths:
   - "apps/mobile/eas.json"
   - "apps/server/Dockerfile"
   - "apps/server/fly.toml"
+  - "renovate.json"
 ---
 
 # Infrastructure
@@ -56,6 +57,8 @@ These steps run once, outside the repository, in this order.
 - **Repository settings**: allow merge commits only, and let a pull request's branch be updated from `main`, with `gh repo edit --enable-merge-commit --enable-squash-merge=false --enable-rebase-merge=false --allow-update-branch` ([GitHub](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges)).
 - **Actions settings**: require every action to be pinned to a full-length commit SHA, and require approval for workflow runs from all external contributors ([GitHub](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository)).
 - **Ruleset**: once a pull request has run `CI`, because GitHub offers only a check that ran in the last 7 days as required, create an active branch ruleset on the default branch with an empty bypass list. It restricts deletions, blocks force pushes, requires a pull request with 0 approvals and merge commits as its only merge method, and requires the status checks `quality` and `test` from GitHub Actions on a branch that is up to date before merging ([GitHub](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository)).
+- **Renovate**: install the [Mend Renovate app](https://github.com/apps/renovate) on Ankaa only, never on all repositories, because it would put every other repository of the account into onboarding. The app reads the committed `renovate.json`, so it opens no onboarding pull request and there's nothing to merge ([Renovate](https://docs.renovatebot.com/config-overview/#onboarding)).
+- **Dependabot**: turn on Dependabot alerts, which give Renovate its vulnerability data, and leave Dependabot security updates off, because Renovate lists those fixes instead ([Renovate](https://docs.renovatebot.com/configuration-options/#vulnerabilityalerts)).
 
 ## Setting up production
 
@@ -79,6 +82,11 @@ These steps run once, outside the repository, in this order.
 - Every pull request against `main` runs `CI`, and it merges, with a merge commit, only once its `quality` and `test` jobs pass on a branch up to date with `main`. Nobody bypasses the ruleset, the maintainer included, because agents act with the maintainer's credentials.
 - When you rename a job that the ruleset requires, or add a job that must pass, change the ruleset's required checks in the same change, because the ruleset lives outside the repository, and a required check that no job reports leaves every pull request waiting.
 - Pin each action to a full commit SHA with its version in a comment, as in `uses: actions/checkout@<sha> # v7.0.1`, because a tag can move to other code, and the repository's settings fail every workflow that pins an action otherwise ([GitHub](https://docs.github.com/en/actions/reference/security/secure-use)).
+
+## Updating dependencies
+
+- Renovate lists every outdated dependency and every fix for a known vulnerability on its Dependency Dashboard issue, and opens a pull request only for an update whose checkbox the maintainer ticks, because the maintainer upgrades in Claude sessions, whose branches Renovate's own pull requests would conflict with ([Renovate](https://docs.renovatebot.com/configuration-options/#dependencydashboardapproval)).
+- In an upgrade session, follow Expo's upgrade procedure, its skills and the versions it recommends for the mobile app's packages, even when Renovate lists a newer version, because Renovate doesn't know which versions work with an Expo SDK ([Expo](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/)). CI's `quality` job runs `expo install --check`, and fails when a package that Expo manages is off the version the SDK sets.
 
 ## Deploying the server
 

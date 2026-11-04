@@ -26,3 +26,4 @@ allowBuilds:
   protobufjs: false
   ssh2: false
   unrs-resolver: true
+pmOnFail: ignore
