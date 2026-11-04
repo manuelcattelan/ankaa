@@ -187,12 +187,14 @@ export const RESTRICTED_SYNTAX = [
   },
 ];
 
+export const RELATIVE_IMPORT_PATTERN = {
+  message:
+    "Import your workspace's own files through #/ instead of a relative path, so every import of a file reads the same.",
+  regex: String.raw`^\.\.?(?:/|$)`,
+};
+
 export const RESTRICTED_IMPORT_PATTERNS = [
-  {
-    message:
-      "Import your workspace's own files through #/ instead of a relative path, so every import of a file reads the same.",
-    regex: String.raw`^\.\.?(?:/|$)`,
-  },
+  RELATIVE_IMPORT_PATTERN,
   {
     caseSensitive: true,
     message:

@@ -14,6 +14,7 @@ import {
   createRestrictedImportsConfiguration,
   getFeatureNames,
   JAVASCRIPT_FILES,
+  RELATIVE_IMPORT_PATTERN,
   RESTRICTED_IMPORT_PATTERNS,
   RESTRICTED_MOCK_METHODS,
   RESTRICTED_SYNTAX,
@@ -193,6 +194,22 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
       files: JAVASCRIPT_FILES,
       paths: MOBILE_RESTRICTED_IMPORT_PATHS,
       patterns: RESTRICTED_IMPORT_PATTERNS,
+    }),
+    // EAS evaluates app.config.ts through `expo config`, and through
+    // @expo/config in its own process when that fails
+    // (https://github.com/expo/eas-cli/blob/156e38eb54c9156202786c97fcb64c110430fe53/packages/build-tools/src/utils/appConfig.ts#L24-L36),
+    // and the build log shows both ran under the build image's Node 22, not
+    // the version in eas.json. Node accepts `imports` specifiers that start
+    // with #/ only from v24.14.0 and v25.4.0
+    // (https://nodejs.org/api/packages.html#imports,
+    // https://github.com/nodejs/node/pull/60864), so app.config.ts imports
+    // the app's files by relative path.
+    createRestrictedImportsConfiguration({
+      files: ["app.config.ts"],
+      paths: MOBILE_RESTRICTED_IMPORT_PATHS,
+      patterns: RESTRICTED_IMPORT_PATTERNS.filter(
+        (pattern) => pattern !== RELATIVE_IMPORT_PATTERN,
+      ),
     }),
     {
       files: ["src/app/**"],

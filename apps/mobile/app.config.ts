@@ -7,8 +7,8 @@ import * as Schema from "effect/Schema";
 import {
   GOOGLE_IOS_CLIENT_ID_SUFFIX,
   googleIosClientIdSchema,
-} from "#/features/authentication/core/google-ios-client-id-schema.ts";
-import { apiUrlSchema } from "#/shared/core/api-url-schema.ts";
+} from "./src/features/authentication/core/google-ios-client-id-schema.ts";
+import { apiUrlSchema } from "./src/shared/core/api-url-schema.ts";
 
 const APPLICATION_ID = "app.ankaa";
 const DEVELOPMENT_APPLICATION_ID = "app.ankaa.development";
