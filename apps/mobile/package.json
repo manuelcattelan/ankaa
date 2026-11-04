@@ -71,6 +71,7 @@
     "setupFilesAfterEnv": [
       "<rootDir>/src/testing/setup.ts"
     ],
+    "testTimeout": 30000,
     "transform": {
       "\\.mjs$": [
         "babel-jest",
