@@ -1,3 +1,4 @@
+import { APPLICATION_SCHEMES } from "@ankaa/core/features/authentication/constants/application-schemes";
 import * as Layer from "effect/Layer";
 
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
@@ -32,6 +33,7 @@ export function fakeAuthenticationClientLayer(
               ...fakeAuthenticationResponses,
             },
           }),
+        scheme: APPLICATION_SCHEMES.development,
         storage: {
           getItem: (key) => authenticationStorageItems.get(key) ?? null,
           getItemAsync: (key) =>

@@ -53,7 +53,8 @@
     "typescript": "catalog:"
   },
   "imports": {
-    "#/*": "./src/*"
+    "#/*": "./src/*",
+    "#/app.config.ts": "./app.config.ts"
   },
   "jest": {
     "fakeTimers": {
@@ -70,6 +71,7 @@
     "setupFilesAfterEnv": [
       "<rootDir>/src/testing/setup.ts"
     ],
+    "testTimeout": 30000,
     "transform": {
       "\\.mjs$": [
         "babel-jest",

@@ -35,7 +35,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "migrate": "DOTENV_CONFIG_PATH=../../.env drizzle-kit migrate",
-    "seed": "node --env-file-if-exists=../../.env src/seed.ts",
+    "migrate:production": "node src/migrate-production.ts",
+    "seed": "node --env-file-if-exists=../../.env src/seed-development.ts",
     "test": "vitest run"
   },
   "type": "module"

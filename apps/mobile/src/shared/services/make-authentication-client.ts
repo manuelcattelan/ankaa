@@ -1,6 +1,5 @@
 import type { ExpoClientStorage } from "@better-auth/expo/client";
 
-import { APPLICATION_SCHEME } from "@ankaa/core/features/authentication/constants/application-scheme";
 import { expoClient } from "@better-auth/expo/client";
 import { emailOTPClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
@@ -47,6 +46,7 @@ type AuthenticationResponse<TData> =
 type MakeAuthenticationClientOptions = {
   apiUrl: string;
   fetch: AuthenticationFetch;
+  scheme: string;
   storage: ExpoClientStorage;
 };
 
@@ -55,15 +55,16 @@ const APPLICATION_SLUG = "ankaa";
 /**
  * Builds the implementation of the `AuthenticationClient` Service over the
  * better-auth client, so the Service's Layer and the Fake in
- * `#/shared/testing/` run the same client and differ only in its fetch and
- * storage.
+ * `#/shared/testing/` run the same client and differ only in the values they
+ * pass it, such as its fetch and storage.
  */
 export function makeAuthenticationClient({
   apiUrl,
   fetch,
+  scheme,
   storage,
 }: MakeAuthenticationClientOptions) {
-  const authClient = buildAuthClient({ apiUrl, fetch, storage });
+  const authClient = buildAuthClient({ apiUrl, fetch, scheme, storage });
 
   function request<TData, TErrors extends readonly Schema.Decoder<unknown>[]>({
     call,
@@ -112,6 +113,7 @@ export function makeAuthenticationClient({
 function buildAuthClient({
   apiUrl,
   fetch,
+  scheme,
   storage,
 }: MakeAuthenticationClientOptions) {
   return createAuthClient({
@@ -119,7 +121,7 @@ function buildAuthClient({
     fetchOptions: { customFetchImpl: fetch },
     plugins: [
       expoClient({
-        scheme: APPLICATION_SCHEME,
+        scheme,
         storage,
         storagePrefix: APPLICATION_SLUG,
       }),

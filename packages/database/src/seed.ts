@@ -1,7 +1,4 @@
-import * as PgClient from "@effect/sql-pg/PgClient";
-import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
 
 import { Database } from "#/database.ts";
 import {
@@ -40,60 +37,52 @@ const EXERCISE_SEEDS: ExerciseSeed[] = [
   },
 ];
 
-const databaseLayer = Database.layerNoDeps.pipe(
-  Layer.provide(
-    PgClient.layerConfig({ url: Config.Redacted("DATABASE_URL_DIRECT") }),
-  ),
-);
+export const seed = Effect.gen(function* () {
+  const database = yield* Database;
 
-await Effect.runPromise(
-  Effect.gen(function* () {
-    const database = yield* Database;
-
-    yield* database.transaction((tx) =>
-      Effect.gen(function* () {
-        for (const exerciseSeed of EXERCISE_SEEDS) {
-          yield* tx
-            .insert(exercise)
-            .values({
+  yield* database.transaction((tx) =>
+    Effect.gen(function* () {
+      for (const exerciseSeed of EXERCISE_SEEDS) {
+        yield* tx
+          .insert(exercise)
+          .values({
+            amountUnit: exerciseSeed.amountUnit,
+            id: exerciseSeed.id,
+            name: exerciseSeed.name,
+            weightType: exerciseSeed.weightType,
+          })
+          .onConflictDoUpdate({
+            set: {
               amountUnit: exerciseSeed.amountUnit,
-              id: exerciseSeed.id,
               name: exerciseSeed.name,
               weightType: exerciseSeed.weightType,
+            },
+            target: exercise.id,
+          });
+
+        for (const exerciseMuscleGroupSeed of exerciseSeed.muscleGroups) {
+          yield* tx
+            .insert(exerciseMuscleGroup)
+            .values({
+              ...exerciseMuscleGroupSeed,
+              exerciseId: exerciseSeed.id,
             })
             .onConflictDoUpdate({
-              set: {
-                amountUnit: exerciseSeed.amountUnit,
-                name: exerciseSeed.name,
-                weightType: exerciseSeed.weightType,
-              },
-              target: exercise.id,
+              set: { role: exerciseMuscleGroupSeed.role },
+              target: [
+                exerciseMuscleGroup.exerciseId,
+                exerciseMuscleGroup.muscleGroup,
+              ],
             });
-
-          for (const exerciseMuscleGroupSeed of exerciseSeed.muscleGroups) {
-            yield* tx
-              .insert(exerciseMuscleGroup)
-              .values({
-                ...exerciseMuscleGroupSeed,
-                exerciseId: exerciseSeed.id,
-              })
-              .onConflictDoUpdate({
-                set: { role: exerciseMuscleGroupSeed.role },
-                target: [
-                  exerciseMuscleGroup.exerciseId,
-                  exerciseMuscleGroup.muscleGroup,
-                ],
-              });
-          }
-
-          for (const exerciseEquipmentSeed of exerciseSeed.equipment) {
-            yield* tx
-              .insert(exerciseEquipment)
-              .values({ ...exerciseEquipmentSeed, exerciseId: exerciseSeed.id })
-              .onConflictDoNothing();
-          }
         }
-      }),
-    );
-  }).pipe(Effect.provide(databaseLayer)),
-);
+
+        for (const exerciseEquipmentSeed of exerciseSeed.equipment) {
+          yield* tx
+            .insert(exerciseEquipment)
+            .values({ ...exerciseEquipmentSeed, exerciseId: exerciseSeed.id })
+            .onConflictDoNothing();
+        }
+      }
+    }),
+  );
+});

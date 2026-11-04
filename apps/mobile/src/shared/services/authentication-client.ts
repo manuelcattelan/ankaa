@@ -1,9 +1,9 @@
-import type * as Schema from "effect/Schema";
-
 import * as Config from "effect/Config";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Schema from "effect/Schema";
+import constants from "expo-constants";
 import * as ExpoSecureStore from "expo-secure-store";
 
 import type { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
@@ -38,11 +38,18 @@ export class AuthenticationClient extends Context.Service<
     AuthenticationClient,
     Effect.gen(function* () {
       const apiUrl = yield* Config.schema(apiUrlSchema, "EXPO_PUBLIC_API_URL");
+      // APP_VARIANT picks the scheme when the app config is evaluated, and
+      // only the app config that the build embeds reaches the app
+      // (https://docs.expo.dev/workflow/configuration/#reading-configuration-values-in-your-app).
+      const scheme = yield* Schema.decodeUnknownEffect(Schema.String)(
+        constants.expoConfig?.scheme,
+      );
 
       return AuthenticationClient.of(
         makeAuthenticationClient({
           apiUrl,
           fetch,
+          scheme,
           storage: {
             getItem: (key) =>
               ExpoSecureStore.getItem(key, SECURE_STORE_OPTIONS),

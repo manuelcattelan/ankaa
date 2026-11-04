@@ -48,6 +48,12 @@ type SignInResponseBody = {
 const DELETE_ACCOUNT_LINK_PATTERN =
   /^http:\/\/localhost:3000\/delete-account\?token=[\da-z]{32}$/;
 
+// better-auth checks the origin of every request that carries a cookie
+// (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/better-auth/src/api/middlewares/origin-check.ts#L231-L251),
+// which the mobile app sends as its scheme in expo-origin
+// (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/expo/src/index.ts#L44-L57).
+const EXPO_ORIGIN_HEADERS = { "expo-origin": "ankaa://" };
+
 const OTP_CODE_PATTERN = /^\d{6}$/;
 
 const RATE_LIMIT_MAXIMUM_REQUEST_COUNT = 1000;
@@ -92,10 +98,12 @@ const UUID_V7_PATTERN =
   /^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/;
 
 const WELL_KNOWN_FILE_SETTINGS = {
-  androidAppPackageName: "app.ankaa.test",
-  androidAppSha256CertificateFingerprints: [
-    "14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5",
-  ],
+  android: {
+    packageName: "app.ankaa.test",
+    sha256CertificateFingerprints: [
+      "14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5",
+    ],
+  },
   appleAppBundleId: "app.ankaa.test",
   appleTeamId: "ABCDE12345",
 };
@@ -123,16 +131,16 @@ const session = {
  * Builds a server whose `Authentication` does only what `authentication`
  * implements, and fails loudly otherwise, whose Application Services are the
  * real ones over a database that doesn't exist, so every query dies, and
- * whose log lines at `level` go to `logLines`.
+ * whose log lines at `level`, silent unless given, go to `logLines`.
  */
 async function createLoggingServer({
   authentication = {},
-  level,
-  logLines,
+  level = "silent",
+  logLines = [],
 }: {
   authentication?: Layer.PartialEffectful<Authentication["Service"]>;
-  level: string;
-  logLines: unknown[];
+  level?: string;
+  logLines?: unknown[];
 }) {
   const layer = Layer.mergeAll(
     Layer.mock(Authentication, authentication),
@@ -171,6 +179,23 @@ async function createLoggingServer({
   });
 
   return server;
+}
+
+/**
+ * Builds a server whose `Authentication` records into `forwardedForHeaders`
+ * the X-Forwarded-For header of every request that better-auth handles.
+ */
+function createForwardedForRecordingServer(
+  forwardedForHeaders: (null | string)[],
+) {
+  return createLoggingServer({
+    authentication: {
+      handleRequest: (request) =>
+        Effect.sync(() =>
+          forwardedForHeaders.push(request.headers.get("x-forwarded-for")),
+        ).pipe(Effect.as(new Response(null))),
+    },
+  });
 }
 
 async function createSocialProviderServer({
@@ -245,6 +270,7 @@ async function deleteAccount({
 }) {
   await server.inject({
     cookies,
+    headers: EXPO_ORIGIN_HEADERS,
     method: "POST",
     payload: {},
     url: "/api/auth/delete-user",
@@ -253,10 +279,15 @@ async function deleteAccount({
 
   return server.inject({
     cookies,
+    headers: EXPO_ORIGIN_HEADERS,
     method: "POST",
     payload: { token },
     url: "/api/auth/delete-user",
   });
+}
+
+function buildSignedInAppHeaders(sessionHeaders: Headers) {
+  return { ...Object.fromEntries(sessionHeaders), ...EXPO_ORIGIN_HEADERS };
 }
 
 function buildRoutineSaveInput(id: string) {
@@ -363,15 +394,17 @@ function sendOtpCodeRequests({
 }
 
 function sendRequestsUpToRateLimit({
+  headers = {},
   remoteAddress,
   server,
 }: {
+  headers?: Record<string, string>;
   remoteAddress: string;
   server: FastifyInstance;
 }) {
   return Promise.all(
     Array.from({ length: RATE_LIMIT_MAXIMUM_REQUEST_COUNT }, () =>
-      server.inject({ method: "GET", remoteAddress, url: "/health" }),
+      server.inject({ headers, method: "GET", remoteAddress, url: "/health" }),
     ),
   );
 }
@@ -471,7 +504,7 @@ describe("applicationPlugin", () => {
   it("ends the session whose cookie /api/auth/sign-out carries, so /api/auth/get-session answers no session with that cookie", async () => {
     const testUser = await createTestUser(runtime);
     await server.inject({
-      headers: Object.fromEntries(testUser.headers),
+      headers: buildSignedInAppHeaders(testUser.headers),
       method: "POST",
       url: "/api/auth/sign-out",
     });
@@ -497,6 +530,47 @@ describe("applicationPlugin", () => {
     ]);
 
     expect(sentEmails[0]?.text).toMatch(OTP_CODE_PATTERN);
+  });
+
+  it("sends the verification code when the request's expo-origin is the scheme of the development variant", async () => {
+    await server.inject({
+      headers: { "expo-origin": "ankaa-development://" },
+      method: "POST",
+      payload: { email: "development-variant@example.com", type: "sign-in" },
+      remoteAddress: "192.0.2.50",
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+
+    expect(sentEmails.at(-1)).toMatchObject({
+      to: "development-variant@example.com",
+    });
+  });
+
+  it("sends the verification code when the request's expo-origin is the scheme of the production variant", async () => {
+    await server.inject({
+      headers: { "expo-origin": "ankaa://" },
+      method: "POST",
+      payload: { email: "production-variant@example.com", type: "sign-in" },
+      remoteAddress: "192.0.2.51",
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+
+    expect(sentEmails.at(-1)).toMatchObject({
+      to: "production-variant@example.com",
+    });
+  });
+
+  it("rejects a verification code request whose expo-origin is another scheme with 403 and the code INVALID_ORIGIN", async () => {
+    const response = await server.inject({
+      headers: { "expo-origin": "other-app://" },
+      method: "POST",
+      payload: { email: "other-scheme@example.com", type: "sign-in" },
+      remoteAddress: "192.0.2.52",
+      url: "/api/auth/email-otp/send-verification-otp",
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({ code: "INVALID_ORIGIN" });
   });
 
   it("stores the verification code it sends hashed", async () => {
@@ -1008,7 +1082,7 @@ describe("applicationPlugin", () => {
     const testUser = await createTestUser(runtime);
 
     await server.inject({
-      headers: Object.fromEntries(testUser.headers),
+      headers: buildSignedInAppHeaders(testUser.headers),
       method: "POST",
       payload: {},
       url: "/api/auth/delete-user",
@@ -1033,7 +1107,7 @@ describe("applicationPlugin", () => {
     const caller = await createSignedInCaller({ runtime, testUser });
     await caller.routine.save(buildRoutineSaveInput(DELETED_ROUTINE_ID));
     await server.inject({
-      headers: Object.fromEntries(testUser.headers),
+      headers: buildSignedInAppHeaders(testUser.headers),
       method: "POST",
       payload: {},
       url: "/api/auth/delete-user",
@@ -1041,7 +1115,7 @@ describe("applicationPlugin", () => {
     const token = /token=([\da-z]+)/.exec(String(sentEmails.at(-1)?.text))?.[1];
 
     const response = await server.inject({
-      headers: Object.fromEntries(testUser.headers),
+      headers: buildSignedInAppHeaders(testUser.headers),
       method: "POST",
       payload: { token },
       url: "/api/auth/delete-user",
@@ -1073,7 +1147,7 @@ describe("applicationPlugin", () => {
       routineId: DELETED_WORKOUT_ROUTINE_ID,
     });
     await server.inject({
-      headers: Object.fromEntries(testUser.headers),
+      headers: buildSignedInAppHeaders(testUser.headers),
       method: "POST",
       payload: {},
       url: "/api/auth/delete-user",
@@ -1081,7 +1155,7 @@ describe("applicationPlugin", () => {
     const token = /token=([\da-z]+)/.exec(String(sentEmails.at(-1)?.text))?.[1];
 
     const response = await server.inject({
-      headers: Object.fromEntries(testUser.headers),
+      headers: buildSignedInAppHeaders(testUser.headers),
       method: "POST",
       payload: { token },
       url: "/api/auth/delete-user",
@@ -1102,7 +1176,7 @@ describe("applicationPlugin", () => {
     });
     await linkOwnerCaller.routine.save(buildRoutineSaveInput(KEPT_ROUTINE_ID));
     await server.inject({
-      headers: Object.fromEntries(linkOwner.headers),
+      headers: buildSignedInAppHeaders(linkOwner.headers),
       method: "POST",
       payload: {},
       url: "/api/auth/delete-user",
@@ -1110,7 +1184,7 @@ describe("applicationPlugin", () => {
     const token = /token=([\da-z]+)/.exec(String(sentEmails.at(-1)?.text))?.[1];
 
     const response = await server.inject({
-      headers: Object.fromEntries(otherUser.headers),
+      headers: buildSignedInAppHeaders(otherUser.headers),
       method: "POST",
       payload: { token },
       url: "/api/auth/delete-user",
@@ -1196,8 +1270,6 @@ describe("applicationPlugin", () => {
       authentication: {
         getSession: () => Effect.succeed(session),
       },
-      level: "silent",
-      logLines: [],
     });
 
     const response = await failingServer.inject({
@@ -1454,11 +1526,41 @@ describe("applicationPlugin", () => {
     ]);
   });
 
+  it("serves no /.well-known/assetlinks.json without the Android settings", async () => {
+    const iosOnlyServer = fastify();
+    await iosOnlyServer.register(applicationPlugin, {
+      ...WELL_KNOWN_FILE_SETTINGS,
+      android: null,
+      runtime,
+    });
+
+    const response = await iosOnlyServer.inject({
+      method: "GET",
+      url: "/.well-known/assetlinks.json",
+    });
+    await iosOnlyServer.close();
+
+    expect(response.statusCode).toBe(404);
+  });
+
   it("answers /health with the status ok", async () => {
     const response = await server.inject({ method: "GET", url: "/health" });
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toStrictEqual({ status: "ok" });
+  });
+
+  it("writes no log line for a request to /health", async () => {
+    const logLines: unknown[] = [];
+    const loggingServer = await createLoggingServer({
+      level: "info",
+      logLines,
+    });
+
+    await loggingServer.inject({ method: "GET", url: "/health" });
+    await loggingServer.close();
+
+    expect(logLines).toStrictEqual([]);
   });
 
   it("answers an unknown route with 404 and the method and URL of the request", async () => {
@@ -1529,6 +1631,37 @@ describe("applicationPlugin", () => {
     });
   });
 
+  it("passes better-auth the Fly-Client-IP header as the X-Forwarded-For header", async () => {
+    const forwardedForHeaders: (null | string)[] = [];
+    const authenticationServer =
+      await createForwardedForRecordingServer(forwardedForHeaders);
+
+    await authenticationServer.inject({
+      headers: { "fly-client-ip": "198.51.100.12" },
+      method: "GET",
+      remoteAddress: "192.0.2.53",
+      url: "/api/auth/get-session",
+    });
+    await authenticationServer.close();
+
+    expect(forwardedForHeaders).toStrictEqual(["198.51.100.12"]);
+  });
+
+  it("passes better-auth the socket address as the X-Forwarded-For header of a request without a Fly-Client-IP header", async () => {
+    const forwardedForHeaders: (null | string)[] = [];
+    const authenticationServer =
+      await createForwardedForRecordingServer(forwardedForHeaders);
+
+    await authenticationServer.inject({
+      method: "GET",
+      remoteAddress: "192.0.2.54",
+      url: "/api/auth/get-session",
+    });
+    await authenticationServer.close();
+
+    expect(forwardedForHeaders).toStrictEqual(["192.0.2.54"]);
+  });
+
   it("rejects a verification code request from an IP address that has already sent 3 in the last minute with 429 and the seconds to wait", async () => {
     const remoteAddress = "192.0.2.2";
 
@@ -1585,6 +1718,43 @@ describe("applicationPlugin", () => {
     });
 
     expect(response.statusCode).toBe(429);
+  });
+
+  it("counts the requests of each Fly-Client-IP header toward a limit of its own, even from one socket address", async () => {
+    const remoteAddress = "192.0.2.60";
+    await sendRequestsUpToRateLimit({
+      headers: { "fly-client-ip": "198.51.100.10" },
+      remoteAddress,
+      server,
+    });
+
+    const limitedResponse = await server.inject({
+      headers: { "fly-client-ip": "198.51.100.10" },
+      method: "GET",
+      remoteAddress,
+      url: "/health",
+    });
+    const response = await server.inject({
+      headers: { "fly-client-ip": "198.51.100.11" },
+      method: "GET",
+      remoteAddress,
+      url: "/health",
+    });
+
+    expect(limitedResponse.statusCode).toBe(429);
+    expect(response.statusCode).toBe(200);
+  });
+
+  it("counts a request without a Fly-Client-IP header toward the limit of its socket address", async () => {
+    await sendRequestsUpToRateLimit({ remoteAddress: "192.0.2.61", server });
+
+    const response = await server.inject({
+      method: "GET",
+      remoteAddress: "192.0.2.62",
+      url: "/health",
+    });
+
+    expect(response.statusCode).toBe(200);
   });
 
   it("rejects a request from an IP address that has already sent 1000 requests in the last minute with 429", async () => {

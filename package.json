@@ -27,6 +27,8 @@
   "scripts": {
     "check-types": "turbo run check-types check-types:root",
     "check-types:root": "tsc --noEmit",
+    "deploy:mobile": "pnpm --filter @ankaa/mobile exec eas build --platform ios --profile production --auto-submit --no-wait",
+    "deploy:server": "fly deploy --config apps/server/fly.toml",
     "dev": "turbo run dev",
     "dev:tunnel": "ngrok http 8080",
     "format": "prettier --check . --ignore-path .gitignore --ignore-path .prettierignore --ignore-path apps/mobile/.gitignore",
@@ -34,7 +36,8 @@
     "lint": "turbo run lint lint:root",
     "lint:fix": "turbo run lint:fix lint:fix:root",
     "lint:fix:root": "eslint . --fix",
-    "lint:root": "eslint . && git ls-files -z --cached --others --exclude-standard -- '*.sh' | xargs -0 -r shellcheck && EXPO_PUBLIC_API_URL=https://placeholder.invalid EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=placeholder.apps.googleusercontent.com DATABASE_URL_DIRECT=postgresql://placeholder.invalid/ankaa knip --treat-config-hints-as-errors --include-entry-exports && EXPO_PUBLIC_API_URL=https://placeholder.invalid EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=placeholder.apps.googleusercontent.com DATABASE_URL_DIRECT=postgresql://placeholder.invalid/ankaa knip --production --strict",
+    "lint:knip": "export APP_VARIANT=development EXPO_PUBLIC_API_URL=https://placeholder.invalid EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=placeholder.apps.googleusercontent.com DATABASE_URL_DIRECT=postgresql://placeholder.invalid/ankaa && knip --treat-config-hints-as-errors --include-entry-exports && knip --production --strict",
+    "lint:root": "eslint . && git ls-files -z --cached --others --exclude-standard -- '*.sh' | xargs -0 -r shellcheck && pnpm lint:knip",
     "test": "turbo run test"
   },
   "type": "module"

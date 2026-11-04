@@ -6,6 +6,8 @@ import { Authentication } from "@ankaa/authentication/authentication";
 import { fromNodeHeaders } from "better-auth/node";
 import * as Effect from "effect/Effect";
 
+import { getClientIpAddress } from "#/get-client-ip-address.ts";
+
 type AuthenticationRouteOptions = { runtime: ApplicationRuntime };
 
 export const authenticationRoute = ((server, { runtime }, done) => {
@@ -19,10 +21,11 @@ export const authenticationRoute = ((server, { runtime }, done) => {
       const webRequest = new Request(url.toString(), {
         // better-auth limits requests per client IP, read from this header
         // (https://www.better-auth.com/docs/concepts/rate-limit), so it must
-        // hold the address Fastify trusts, never one the client sent.
+        // hold the address that `getClientIpAddress` reads, never one the
+        // client sent.
         headers: fromNodeHeaders({
           ...request.headers,
-          "x-forwarded-for": request.ip,
+          "x-forwarded-for": getClientIpAddress(request),
         }),
         method: request.method,
         ...(request.body === undefined || request.body === null

@@ -3,7 +3,7 @@ import type { DB } from "@better-auth/drizzle-adapter/relations-v2";
 import type { BetterAuthOptions } from "better-auth";
 
 import { ACCOUNT_DELETION_PATH } from "@ankaa/core/features/authentication/constants/account-deletion-path";
-import { APPLICATION_SCHEME } from "@ankaa/core/features/authentication/constants/application-scheme";
+import { APPLICATION_SCHEMES } from "@ankaa/core/features/authentication/constants/application-schemes";
 import { AUTHORIZATION_CODE_HEADER_NAME } from "@ankaa/core/features/authentication/constants/authorization-code-header-name";
 import { OTP_CODE_LENGTH } from "@ankaa/core/features/authentication/constants/otp-code-length";
 import * as AuthenticationDatabaseSchema from "@ankaa/database/schema/authentication";
@@ -67,7 +67,14 @@ export function createAuthenticationOptions({
   }) => Promise<void>;
 }) {
   return {
-    advanced: { database: { generateId: "uuid" } },
+    advanced: {
+      database: { generateId: "uuid" },
+      // better-auth skips its origin check when NODE_ENV is test unless told
+      // otherwise, and the check must hold in every environment, so tests
+      // see which origins it trusts
+      // (https://github.com/better-auth/better-auth/blob/v1.7.5/packages/better-auth/src/context/create-context.ts).
+      disableOriginCheck: false,
+    },
     baseURL: baseUrl,
     database: drizzleAdapter(database, {
       provider: "pg",
@@ -162,7 +169,7 @@ export function createAuthenticationOptions({
       google: { clientId: [googleWebClientId, googleIosClientId] },
     },
     trustedOrigins: [
-      `${APPLICATION_SCHEME}://`,
+      ...Object.values(APPLICATION_SCHEMES).map((scheme) => `${scheme}://`),
       ...(nodeEnvironment === "development" ? DEVELOPMENT_TRUSTED_ORIGINS : []),
     ],
     user: {
