@@ -13,6 +13,10 @@
     "version": ">= 27.3.0"
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "ascAppId": "6830538824"
+      }
+    }
   }
 }
