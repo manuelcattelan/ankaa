@@ -26,3 +26,7 @@ allowBuilds:
   protobufjs: false
   ssh2: false
   unrs-resolver: true
+# Keeps pnpm from writing the lockfile's packageManagerDependencies document,
+# because GitHub's dependency graph can't read a two-document lockfile
+# (https://pnpm.io/lockfile, https://docs.github.com/en/code-security/dependabot/ecosystems-supported-by-dependabot/supported-ecosystems-and-repositories#pnpm).
+pmOnFail: ignore
