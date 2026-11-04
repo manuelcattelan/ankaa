@@ -27,6 +27,7 @@
   "scripts": {
     "check-types": "turbo run check-types check-types:root",
     "check-types:root": "tsc --noEmit",
+    "check-versions:mobile": "pnpm --filter @ankaa/mobile exec expo install --check",
     "deploy:mobile": "pnpm --filter @ankaa/mobile exec eas build --platform ios --profile production --auto-submit --no-wait",
     "deploy:server": "fly deploy --config apps/server/fly.toml",
     "dev": "turbo run dev",
