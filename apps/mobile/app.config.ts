@@ -14,6 +14,7 @@ const APPLICATION_ID = "app.ankaa";
 const DEVELOPMENT_APPLICATION_ID = "app.ankaa.development";
 const APPLICATION_SLUG = "ankaa";
 const APP_VARIANTS = ["development", "production"] as const;
+const EAS_PROJECT_ID = "4cab2d0d-aa34-4dcf-a7a3-f553e3cd99c2";
 const OWNER = "ankaa-mobile";
 
 const SPLASH_IMAGE_WIDTH = 76;
@@ -51,7 +52,11 @@ export default function appConfig() {
   // APP_VARIANT the config decodes nothing and returns only that identity
   // (https://github.com/expo/eas-cli/blob/0a274a6fefd5e8142db68b0e2c07e6da98978049/packages/eas-cli/src/build/evaluateConfigWithEnvVarsAsync.ts#L27-L34).
   if (process.env.APP_VARIANT === undefined) {
-    return { owner: OWNER, slug: APPLICATION_SLUG };
+    return {
+      extra: { eas: { projectId: EAS_PROJECT_ID } },
+      owner: OWNER,
+      slug: APPLICATION_SLUG,
+    };
   }
 
   const appVariant = decodeSetting({
@@ -117,6 +122,7 @@ export default function appConfig() {
       reactCompiler: true,
       typedRoutes: true,
     },
+    extra: { eas: { projectId: EAS_PROJECT_ID } },
     icon: "./assets/images/icon.png",
     ios: {
       associatedDomains: [
