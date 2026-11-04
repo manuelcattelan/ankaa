@@ -39,7 +39,8 @@ export class AuthenticationClient extends Context.Service<
     Effect.gen(function* () {
       const apiUrl = yield* Config.schema(apiUrlSchema, "EXPO_PUBLIC_API_URL");
       // APP_VARIANT picks the scheme when the app config is evaluated, and
-      // only the app config that the build embeds reaches the app.
+      // only the app config that the build embeds reaches the app
+      // (https://docs.expo.dev/workflow/configuration/#reading-configuration-values-in-your-app).
       const scheme = yield* Schema.decodeUnknownEffect(Schema.String)(
         constants.expoConfig?.scheme,
       );
