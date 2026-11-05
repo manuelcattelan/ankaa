@@ -3,15 +3,15 @@
     "@ankaa/api": "workspace:*",
     "@ankaa/authentication": "workspace:*",
     "@ankaa/core": "workspace:*",
-    "@fastify/helmet": "^13.1.1",
-    "@fastify/rate-limit": "^11.2.0",
-    "@fastify/under-pressure": "^9.2.0",
+    "@fastify/helmet": "^13.2.0",
+    "@fastify/rate-limit": "^11.2.2",
+    "@fastify/under-pressure": "^9.2.1",
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",
     "close-with-grace": "^2.5.0",
     "effect": "catalog:",
-    "fastify": "^5.12.1",
-    "fastify-plugin": "^6.0.0"
+    "fastify": "^5.12.8",
+    "fastify-plugin": "^6.0.1"
   },
   "devDependencies": {
     "@ankaa/database": "workspace:*",
