@@ -9,7 +9,7 @@
     "prettier": "catalog:",
     "prettier-plugin-sh": "^0.20.2",
     "shellcheck": "^4.1.0",
-    "turbo": "^2.10.12",
+    "turbo": "^2.11.10",
     "typescript": "catalog:"
   },
   "devEngines": {

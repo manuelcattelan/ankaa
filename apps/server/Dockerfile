@@ -11,7 +11,7 @@ FROM base AS prune
 COPY . .
 # The version that `pnpm-lock.yaml` resolves for the root's `turbo`, so the
 # prune is reproducible.
-RUN pnpm dlx turbo@2.10.12 prune @ankaa/server --docker
+RUN pnpm dlx turbo@2.11.10 prune @ankaa/server --docker
 
 FROM base AS install
 COPY --from=prune /app/out/json/ .
