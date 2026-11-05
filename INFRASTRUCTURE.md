@@ -86,6 +86,7 @@ These steps run once, outside the repository, in this order.
 ## Updating dependencies
 
 - Renovate lists every outdated dependency and every fix for a known vulnerability on its Dependency Dashboard issue, and opens a pull request only for an update whose checkbox the maintainer ticks, because the maintainer upgrades with an agent, whose branches Renovate's own pull requests would conflict with ([Renovate](https://docs.renovatebot.com/configuration-options/#dependencydashboardapproval)).
+- Upgrade the dependencies the Dependency Dashboard lists with the `/bump` skill, because it holds the upgrade procedure, and never tick a checkbox on the dashboard, because Renovate then opens its own pull request.
 - When you upgrade, follow Expo's upgrade procedure, its skills and the versions it recommends for the mobile app's packages, even when Renovate lists a newer version, because Renovate doesn't know which versions work with an Expo SDK ([Expo](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/)).
 
 ## Deploying the server

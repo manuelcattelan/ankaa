@@ -6,4 +6,5 @@ node_modules/
 .claude/*
 !.claude/hooks/
 !.claude/rules/
+!.claude/skills/
 !.claude/settings.json
