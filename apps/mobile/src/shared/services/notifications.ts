@@ -7,13 +7,11 @@ export type NotificationPermissionStatus =
   `${ExpoNotifications.PermissionStatus}`;
 
 /**
- * A notification to schedule, with the channel and the identifier it's filed
- * under, named after Expo's `NotificationRequest`, which `schedule` turns it
- * into
+ * A notification to schedule, with the identifier it's filed under, named
+ * after Expo's `NotificationRequest`, which `schedule` turns it into
  * (https://docs.expo.dev/versions/v58.0.0/sdk/notifications/#notificationrequest).
  */
 export type NotificationRequest = {
-  channelId: string;
   identifier: string;
   notification: ScheduledNotification;
 };
@@ -30,9 +28,7 @@ export class Notifications extends Context.Service<
     readonly cancelAllScheduled: () => Effect.Effect<void>;
     readonly cancelScheduled: (identifier: string) => Effect.Effect<void>;
     readonly getPermissionStatus: () => Effect.Effect<NotificationPermissionStatus>;
-    readonly requestPermission: (options: {
-      channel: { id: string; name: string };
-    }) => Effect.Effect<void>;
+    readonly requestPermission: () => Effect.Effect<void>;
     readonly schedule: (request: NotificationRequest) => Effect.Effect<void>;
   }
 >()("@ankaa/mobile/shared/services/Notifications") {
@@ -72,35 +68,18 @@ export class Notifications extends Context.Service<
         });
       }
 
-      // Android 13 shows the permission prompt only once the app has created
-      // a notification channel, and iOS has no channels, so there the call
-      // does nothing
-      // (https://docs.expo.dev/versions/v58.0.0/sdk/notifications/).
-      function requestPermission({
-        channel,
-      }: {
-        channel: { id: string; name: string };
-      }) {
-        return Effect.promise(async () => {
-          await ExpoNotifications.setNotificationChannelAsync(channel.id, {
-            importance: ExpoNotifications.AndroidImportance.HIGH,
-            name: channel.name,
-          });
-          await ExpoNotifications.requestPermissionsAsync();
-        });
+      function requestPermission() {
+        return Effect.promise(() =>
+          ExpoNotifications.requestPermissionsAsync(),
+        ).pipe(Effect.asVoid);
       }
 
-      function schedule({
-        channelId,
-        identifier,
-        notification,
-      }: NotificationRequest) {
+      function schedule({ identifier, notification }: NotificationRequest) {
         return Effect.promise(() =>
           ExpoNotifications.scheduleNotificationAsync({
             content: { body: notification.body, title: notification.title },
             identifier,
             trigger: {
-              channelId,
               seconds: notification.seconds,
               type: ExpoNotifications.SchedulableTriggerInputTypes
                 .TIME_INTERVAL,

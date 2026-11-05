@@ -29,11 +29,8 @@ import type { CountdownNotifications } from "#/features/workout/core/countdown-n
 import type { TrpcClientError } from "#/shared/errors/trpc-client-error.ts";
 import type { Workout } from "#/shared/workout.ts";
 
-import { WORKOUT_MESSAGES } from "#/features/workout/messages/workout-messages.ts";
 import { Notifications } from "#/shared/services/notifications.ts";
 import { TrpcClient } from "#/shared/services/trpc-client.ts";
-
-const COUNTDOWN_NOTIFICATION_CHANNEL_ID = "countdowns";
 
 /**
  * The identifiers that the notifications of a countdown are scheduled under,
@@ -178,12 +175,7 @@ export class WorkoutApplicationService extends Context.Service<
         const permissionStatus = yield* notifications.getPermissionStatus();
 
         if (permissionStatus === "undetermined") {
-          yield* notifications.requestPermission({
-            channel: {
-              id: COUNTDOWN_NOTIFICATION_CHANNEL_ID,
-              name: WORKOUT_MESSAGES.countdownNotificationChannelName,
-            },
-          });
+          yield* notifications.requestPermission();
         }
 
         yield* cancelCountdownNotifications();
@@ -196,7 +188,6 @@ export class WorkoutApplicationService extends Context.Service<
             return notification === null
               ? Effect.void
               : notifications.schedule({
-                  channelId: COUNTDOWN_NOTIFICATION_CHANNEL_ID,
                   identifier: COUNTDOWN_NOTIFICATION_IDENTIFIERS[key],
                   notification,
                 });

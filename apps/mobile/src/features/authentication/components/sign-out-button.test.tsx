@@ -71,7 +71,6 @@ describe("SignOutButton", () => {
   it("cancels the scheduled notification of a countdown when the User signs out, and leaves their Workout in progress", async () => {
     const scheduledNotifications: NotificationRequest[] = [
       {
-        channelId: "countdowns",
         identifier: "countdown",
         notification: {
           body: "Start your next set.",

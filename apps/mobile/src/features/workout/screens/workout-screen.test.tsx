@@ -1734,7 +1734,6 @@ describe("WorkoutScreen", () => {
     await waitFor(() => {
       expect(scheduledNotifications).toStrictEqual([
         {
-          channelId: "countdowns",
           identifier: "countdown",
           notification: {
             body: "Start your next set.",
@@ -1893,7 +1892,6 @@ describe("WorkoutScreen", () => {
     await waitFor(() => {
       expect(scheduledNotifications).toStrictEqual([
         {
-          channelId: "countdowns",
           identifier: "countdown",
           notification: {
             body: "Start the next segment of your set.",
@@ -2025,7 +2023,6 @@ describe("WorkoutScreen", () => {
 
     await waitFor(() => {
       expect(scheduledNotifications).toContainEqual({
-        channelId: "countdowns",
         identifier: "countdownLeadIn",
         notification: {
           body: "The timer is running.",
@@ -2059,7 +2056,6 @@ describe("WorkoutScreen", () => {
     await waitFor(() => {
       expect(scheduledNotifications).toStrictEqual([
         {
-          channelId: "countdowns",
           identifier: "countdownLeadIn",
           notification: {
             body: "The timer is running.",
@@ -2068,7 +2064,6 @@ describe("WorkoutScreen", () => {
           },
         },
         {
-          channelId: "countdowns",
           identifier: "countdown",
           notification: {
             body: "The planned seconds are filled in: save your set.",
@@ -2160,7 +2155,6 @@ describe("WorkoutScreen", () => {
     await waitFor(() => {
       expect(scheduledNotifications).toStrictEqual([
         {
-          channelId: "countdowns",
           identifier: "countdownLeadIn",
           notification: {
             body: "The timer is running.",
@@ -2245,7 +2239,6 @@ describe("WorkoutScreen", () => {
     await waitFor(() => {
       expect(scheduledNotifications).toStrictEqual([
         {
-          channelId: "countdowns",
           identifier: "countdown",
           notification: {
             body: "Start your next set.",
