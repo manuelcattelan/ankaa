@@ -5,7 +5,7 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "jiti": "catalog:",
-    "knip": "^6.43.0",
+    "knip": "^6.44.1",
     "prettier": "catalog:",
     "prettier-plugin-sh": "^0.20.2",
     "shellcheck": "^4.1.0",
