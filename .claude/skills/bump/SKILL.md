@@ -1,0 +1,57 @@
+---
+name: bump
+description: Upgrades the dependencies that Renovate's Dependency Dashboard issue lists, vulnerability fixes included, on one branch, following Expo's procedure for the mobile app. Use when the maintainer asks to upgrade, bump or update dependencies.
+disable-model-invocation: true
+---
+
+# Bump
+
+Upgrade every update that the Dependency Dashboard lists. Read `INFRASTRUCTURE.md` first: its **Updating dependencies** section holds the rules this skill applies, and spec [#186](https://github.com/manuelcattelan/ankaa/issues/186) holds their reasons.
+
+## Read the dashboard
+
+Renovate keeps one [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) issue that lists every update it found. Because `renovate.json` sets [`dependencyDashboardApproval`](https://docs.renovatebot.com/configuration-options/#dependencydashboardapproval) at the top level and under [`vulnerabilityAlerts`](https://docs.renovatebot.com/configuration-options/#vulnerabilityalerts), Renovate holds every update there for approval, vulnerability fixes included, instead of opening a pull request. Find the issue, then read it:
+
+```sh
+gh issue list --author "app/renovate" --search "Dependency Dashboard in:title" --state open
+gh issue view <number>
+```
+
+- **Pending Approval** lists the updates to make. An entry that ends in `[security]` fixes a known vulnerability: make it even when the rest of the session stops short.
+- **Pending Status Checks** lists releases still inside Renovate's 3-day `minimumReleaseAge`. Skip them, because they move to Pending Approval once they're old enough.
+- **Abandoned Dependencies** lists packages with no release for a long time. Don't replace one: tell the maintainer, because replacing a dependency is the maintainer's decision.
+- **Detected Dependencies** is the inventory of every dependency and where it's declared. Use it to find each file that a package's version lives in.
+
+Never tick a checkbox and never edit or close the issue. A ticked checkbox makes Renovate open its own branch and pull request, which would conflict with this branch. An entry leaves the dashboard by itself once Renovate's next run sees the upgrade on `main`.
+
+## Upgrade
+
+Work on one branch from the tip of `main`, and commit each group of packages that moves together, such as one Expo SDK, one monorepo or the GitHub Actions, as its own commit, so a break bisects to one group.
+
+For every update, whatever its size, read its release notes, changelog or migration guide from the old version to the new one, and adapt the code to everything that changed, such as a breaking change, a deprecation or a new default, following the repository's `AGENTS.md` files and their glossary terms, because a minor or patch release can also change what the code relies on.
+
+### The mobile app
+
+Expo decides the versions of the mobile app's packages, and its versions win over Renovate's. Renovate doesn't know which versions work with an Expo SDK.
+
+- When the dashboard lists a newer `expo`, upgrade one SDK at a time, following [Expo's upgrade walkthrough](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/) and the `expo-upgrade` skill from [Expo Skills](https://github.com/expo/skills) when it's installed:
+  1. `pnpm --filter @ankaa/mobile add expo@^<next SDK>`
+  2. `pnpm --filter @ankaa/mobile exec expo install --fix`
+  3. `cd apps/mobile && pnpm dlx expo-doctor`, from the workspace, because Expo Doctor runs `npx expo config`, which fails from the repository's root
+
+  Then read that SDK's changelog and upgrade guide, and Expo Router's migration guide, and adapt the code to every breaking change.
+
+- Install every other mobile package with `pnpm --filter @ankaa/mobile exec expo install <package>@<version>`, as `apps/mobile/AGENTS.md` requires.
+- Leave a dashboard entry whose version is above what the SDK allows, such as a `react-native-*` version a later SDK pins, and tell the maintainer. It stays on the dashboard until a later SDK allows it.
+- pnpm waits 1 day before it installs a new release. When `expo install --fix` asks for a version younger than that, stop and tell the maintainer to run the session again the next day, and never lower `minimumReleaseAge`.
+- When a package with native code changes, or the SDK does, build the app with `pnpm --filter @ankaa/mobile exec expo prebuild --clean` and `pnpm --filter @ankaa/mobile exec expo run:ios --no-bundler`, because CI doesn't build it, and a version off the SDK can pass every test and still break the native build.
+
+### Everything else
+
+- Move an npm dependency where its version lives, then run `pnpm install`: in the pnpm `catalog:` of `pnpm-workspace.yaml` when the workspaces refer to it as `catalog:`, so they all move together, and in the `package.json` that declares it otherwise. A catalog dependency the mobile app shares with the server, such as `effect`, tRPC or better-auth, must still pass the mobile app's checks.
+- Move a GitHub Action to the commit of its new tag, with the version in its comment, as `INFRASTRUCTURE.md` requires. Take the SHA from `gh api repos/<owner>/<repository>/commits/<tag> --jq .sha`.
+- Move Node.js or pnpm in every place that names it in the same commit: `devEngines` in the root `package.json`, the build profile in `apps/mobile/eas.json`, and the images in `apps/server/Dockerfile`, because EAS ignores `devEngines`.
+
+Keep `pnpm-lock.yaml` one YAML document. If a `packageManagerDependencies` document comes back at its top, `pmOnFail: ignore` has been lost from `pnpm-workspace.yaml`, and GitHub's dependency graph, and with it Renovate's vulnerability data, stops reading the lockfile.
+
+When an upgrade breaks something you can't fix within the session, revert that group, leave its entry on the dashboard, and tell the maintainer what broke.
