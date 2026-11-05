@@ -1,7 +1,6 @@
 import { OTP_CODE_LENGTH } from "@ankaa/core/features/authentication/constants/otp-code-length";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { Platform } from "react-native";
 
 import { getAuthenticationScreenErrorMessage } from "#/features/authentication/core/get-authentication-screen-error-message.ts";
 import { isOtpCodeRejection } from "#/features/authentication/core/is-otp-code-rejection.ts";
@@ -96,10 +95,7 @@ export function ValidateOtpCodeForm({ email }: { email: string }) {
   return (
     <ScrollView>
       <TextField
-        autoComplete={Platform.select({
-          android: "email-otp",
-          default: "one-time-code",
-        })}
+        autoComplete="one-time-code"
         autoCorrect={false}
         autoFocus
         enterKeyHint="done"

@@ -34,7 +34,6 @@ export const WORKOUT_MESSAGES = {
   } satisfies Omit<ScheduledNotification, "seconds">,
   countdownLeadInStatusLabel: (remainingSeconds: number) =>
     `Get into position: ${formatCount({ count: remainingSeconds, ...SECONDS_UNIT })} left`,
-  countdownNotificationChannelName: "Rest, pauses and timers",
   countdownStatusLabels: {
     pause: (remainingSeconds: number) =>
       `Pause: ${formatCount({ count: remainingSeconds, ...SECONDS_UNIT })} left`,

@@ -31,6 +31,7 @@ describe("appConfig", () => {
         bundleIdentifier: "app.ankaa.development",
       },
       name: "Ankaa Dev",
+      platforms: ["ios"],
       scheme: "ankaa-development",
     });
     expect(config).toHaveProperty(
@@ -52,6 +53,7 @@ describe("appConfig", () => {
         bundleIdentifier: "app.ankaa",
       },
       name: "Ankaa",
+      platforms: ["ios"],
       scheme: "ankaa",
     });
     expect(config).toHaveProperty(

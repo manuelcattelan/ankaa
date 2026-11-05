@@ -4,6 +4,8 @@ These rules cover what the code, ESLint, TypeScript and Prettier can't show. Lin
 
 Before you work in a workspace, read its `AGENTS.md`. Before you write or change a test, read `TESTING.md` at the root of the repository. Before you add or change a setting, or anything that CI, hosting or a deploy runs, read `INFRASTRUCTURE.md`.
 
+Ankaa targets iOS only for now. Android comes later and web isn't planned, so write no Android or web code, config, settings or assets in any workspace.
+
 When a change makes a document wrong, update the document in the same change. Don't add a rule to these documents on your own: a rule enters them from a spec, or from a suggestion the maintainer accepts.
 
 ## Structure

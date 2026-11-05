@@ -2,7 +2,6 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import type { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
 import type { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
 
 import { addAuthorizationCodeHeader } from "#/features/authentication/core/add-authorization-code-header.ts";
@@ -54,7 +53,6 @@ export class AuthenticationApplicationService extends Context.Service<
       | AccountNotLinkedError
       | AuthenticationClientError
       | EmailNotSharedError
-      | GooglePlayServicesMissingError
       | RateLimitedError
     >;
     readonly signInWithOtpCode: (options: {
@@ -150,8 +148,6 @@ export class AuthenticationApplicationService extends Context.Service<
         "AuthenticationApplicationService.signInWithGoogle",
       )(
         function* () {
-          yield* googleSignIn.checkPlayServices();
-
           const signInResponse = yield* googleSignIn.signIn();
 
           if (signInResponse.type !== "success") {

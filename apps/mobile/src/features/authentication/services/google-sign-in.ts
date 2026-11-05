@@ -9,7 +9,6 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import type { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
 import type { GoogleSignInInProgressError } from "#/features/authentication/errors/google-sign-in-in-progress-error.ts";
 
 import { getGoogleSignInError } from "#/features/authentication/core/get-google-sign-in-error.ts";
@@ -18,13 +17,9 @@ import { googleIosClientIdSchema } from "#/features/authentication/core/google-i
 export class GoogleSignIn extends Context.Service<
   GoogleSignIn,
   {
-    readonly checkPlayServices: () => Effect.Effect<
-      boolean,
-      GooglePlayServicesMissingError | GoogleSignInInProgressError
-    >;
     readonly signIn: () => Effect.Effect<
       SignInResponse,
-      GooglePlayServicesMissingError | GoogleSignInInProgressError
+      GoogleSignInInProgressError
     >;
     readonly signOut: () => Effect.Effect<void>;
   }
@@ -48,12 +43,10 @@ export class GoogleSignIn extends Context.Service<
         offlineAccess: true,
       });
 
-      function checkPlayServices() {
-        return Effect.promise(() => GoogleSignin.hasPlayServices()).pipe(
-          Effect.catchDefect(failWithGoogleSignInError),
-        );
-      }
-
+      // The library's examples call `hasPlayServices()` before `signIn()`, but
+      // `GoogleSignin.hasPlayServices` always resolves `true` on iOS, so the
+      // Service skips the check
+      // (https://github.com/react-native-google-signin/google-signin).
       function signIn() {
         return Effect.promise(() => GoogleSignin.signIn()).pipe(
           Effect.catchDefect(failWithGoogleSignInError),
@@ -64,7 +57,7 @@ export class GoogleSignIn extends Context.Service<
         return Effect.promise(() => GoogleSignin.signOut());
       }
 
-      return GoogleSignIn.of({ checkPlayServices, signIn, signOut });
+      return GoogleSignIn.of({ signIn, signOut });
     }),
   );
 }
@@ -73,7 +66,6 @@ function failWithGoogleSignInError(defect: unknown) {
   const googleSignInError = getGoogleSignInError({
     defect,
     inProgressCode: statusCodes.IN_PROGRESS,
-    playServicesNotAvailableCode: statusCodes.PLAY_SERVICES_NOT_AVAILABLE,
   });
 
   return googleSignInError === null

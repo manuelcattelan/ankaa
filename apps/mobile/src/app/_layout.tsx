@@ -9,7 +9,7 @@ import * as Context from "effect/Context";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { AppState, Platform, useColorScheme } from "react-native";
+import { AppState, useColorScheme } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -42,10 +42,6 @@ export default function RootLayout() {
   const [queryClient] = useState(createQueryClient);
 
   useEffect(() => {
-    if (Platform.OS === "web") {
-      return;
-    }
-
     const subscription = AppState.addEventListener(
       "change",
       (appStateStatus) => {

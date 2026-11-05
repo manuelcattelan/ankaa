@@ -1,5 +1,4 @@
 import { getAuthenticationScreenErrorMessage } from "#/features/authentication/core/get-authentication-screen-error-message.ts";
-import { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
 import { AccountNotLinkedError } from "#/shared/errors/account-not-linked-error.ts";
 import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
 import { DeleteAccountTokenInvalidError } from "#/shared/errors/delete-account-token-invalid-error.ts";
@@ -84,14 +83,6 @@ describe("getAuthenticationScreenErrorMessage", () => {
   it("returns the email not shared message for an EmailNotSharedError", () => {
     expect(getAuthenticationScreenErrorMessage(new EmailNotSharedError())).toBe(
       "The selected provider didn't share your email address: try another sign-in method.",
-    );
-  });
-
-  it("returns the missing Google Play services message for a GooglePlayServicesMissingError", () => {
-    expect(
-      getAuthenticationScreenErrorMessage(new GooglePlayServicesMissingError()),
-    ).toBe(
-      "Google Play services aren't installed on this device: try another sign-in method.",
     );
   });
 });

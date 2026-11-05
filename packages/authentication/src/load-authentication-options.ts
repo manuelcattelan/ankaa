@@ -150,7 +150,7 @@ export const loadAuthenticationOptions = Effect.fn("loadAuthenticationOptions")(
         // The link stays plain text, which Resend never rewrites for click
         // tracking (https://resend.com/docs/dashboard/domains/tracking),
         // because only a link to the API host itself opens the app through
-        // Universal Links and App Links.
+        // Universal Links.
         sendEmailWithoutWaiting({
           subject: "Confirm deleting your Ankaa account",
           text: url,

@@ -19,12 +19,6 @@ export function fakeGoogleSignInLayer({
   return Layer.succeed(
     GoogleSignIn,
     GoogleSignIn.of({
-      checkPlayServices: () =>
-        Effect.sync(() => {
-          receivedCalls.push("checkPlayServices");
-
-          return true;
-        }),
       signIn: () =>
         Effect.suspend(() => {
           receivedCalls.push("signIn");

@@ -15,8 +15,6 @@ export const AUTHENTICATION_MESSAGES = {
   emailLabel: "Email address",
   emailNotSharedError:
     "The selected provider didn't share your email address: try another sign-in method.",
-  googlePlayServicesMissingError:
-    "Google Play services aren't installed on this device: try another sign-in method.",
   otpCodeAttemptsExceededError:
     "Too many incorrect attempts: resend the verification code and try again.",
   otpCodeExpiredError:

@@ -1,6 +1,5 @@
 import type { ExpoConfig } from "expo/config";
 
-import { ACCOUNT_DELETION_PATH } from "@ankaa/core/features/authentication/constants/account-deletion-path";
 import { APPLICATION_SCHEMES } from "@ankaa/core/features/authentication/constants/application-schemes";
 import * as Schema from "effect/Schema";
 import * as Struct from "effect/Struct";
@@ -19,8 +18,6 @@ type AppVariantConfig = {
   scheme: string;
 };
 
-const APPLICATION_ID = "app.ankaa";
-
 /**
  * What each variant of the app sets differently in the app config.
  */
@@ -35,7 +32,7 @@ const APP_VARIANT_CONFIGS = {
   production: {
     addGeneratedScheme: false,
     associatedDomainSuffix: "",
-    bundleIdentifier: APPLICATION_ID,
+    bundleIdentifier: "app.ankaa",
     name: "Ankaa",
     scheme: APPLICATION_SCHEMES.production,
   },
@@ -106,15 +103,12 @@ export default function appConfig() {
 
   const iosUrlScheme = `com.googleusercontent.apps.${googleIosClientId.slice(0, -GOOGLE_IOS_CLIENT_ID_SUFFIX.length)}`;
 
-  // Account deletion links open the app through Universal Links and App Links on
-  // the API's own host, which in development is the ngrok domain that
+  // Account deletion links open the app through Universal Links on the API's
+  // own host, which in development is the ngrok domain that
   // EXPO_PUBLIC_API_URL points to. `?mode=developer` lets a development build
   // associate with that domain without Apple's CDN, once Developer Mode and
   // Associated Domains Development are on in the device's settings
-  // (https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.associated-domains),
-  // and Android verifies the domain against the debug key's fingerprint in the
-  // server's assetlinks.json
-  // (https://developer.android.com/training/app-links/verify-android-applinks).
+  // (https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.associated-domains).
   // The production variant drops `?mode=developer`, which never works in a
   // TestFlight or App Store build, so iOS fetches the server's
   // apple-app-site-association file through Apple's CDN.
@@ -127,30 +121,6 @@ export default function appConfig() {
 
   return {
     ...PROJECT_IDENTITY,
-    android: {
-      adaptiveIcon: {
-        backgroundColor: "#E6F4FE",
-        backgroundImage: "./assets/images/android-icon-background.png",
-        foregroundImage: "./assets/images/android-icon-foreground.png",
-        monochromeImage: "./assets/images/android-icon-monochrome.png",
-      },
-      intentFilters: [
-        {
-          action: "VIEW",
-          autoVerify: true,
-          category: ["BROWSABLE", "DEFAULT"],
-          data: [
-            {
-              host: apiHost,
-              pathPrefix: ACCOUNT_DELETION_PATH,
-              scheme: "https",
-            },
-          ],
-        },
-      ],
-      package: APPLICATION_ID,
-      predictiveBackGestureEnabled: false,
-    },
     experiments: {
       reactCompiler: true,
       typedRoutes: true,
@@ -172,6 +142,7 @@ export default function appConfig() {
     },
     name: appVariantConfig.name,
     orientation: "portrait",
+    platforms: ["ios"],
     plugins: [
       "expo-router",
       [
@@ -193,9 +164,5 @@ export default function appConfig() {
     scheme: appVariantConfig.scheme,
     userInterfaceStyle: "automatic",
     version: "1.0.0",
-    web: {
-      favicon: "./assets/images/favicon.png",
-      output: "static",
-    },
   } satisfies ExpoConfig;
 }
