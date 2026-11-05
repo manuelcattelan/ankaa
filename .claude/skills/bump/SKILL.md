@@ -1,13 +1,12 @@
 ---
 name: bump
 description: Upgrades the dependencies that Renovate's Dependency Dashboard issue lists, vulnerability fixes included, on one branch and pull request, following Expo's procedure for the mobile app. Use when the maintainer asks to upgrade, bump or update dependencies.
-argument-hint: "[packages to limit the upgrade to]"
 disable-model-invocation: true
 ---
 
 # Bump
 
-Upgrade every update that the Dependency Dashboard lists, or only the packages in `$ARGUMENTS` when it names any. Read `INFRASTRUCTURE.md` first: its **Updating dependencies** section holds the rules this skill applies, and spec [#186](https://github.com/manuelcattelan/ankaa/issues/186) holds their reasons.
+Upgrade every update that the Dependency Dashboard lists. Read `INFRASTRUCTURE.md` first: its **Updating dependencies** section holds the rules this skill applies, and spec [#186](https://github.com/manuelcattelan/ankaa/issues/186) holds their reasons.
 
 ## Read the dashboard
 
