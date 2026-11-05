@@ -5,8 +5,8 @@ import { Text } from "#/shared/components/text.tsx";
 import { useAnnounceMessage } from "#/shared/hooks/use-announce-message.ts";
 
 /**
- * Shows a status and announces each one it shows, because `aria-live` works
- * only on Android (https://reactnative.dev/docs/accessibility#aria-live-android).
+ * Shows a status and announces each one it shows, because iOS ignores
+ * `aria-live` (https://reactnative.dev/docs/accessibility).
  */
 export function StatusMessage({ message }: { message: null | string }) {
   const announceMessage = useAnnounceMessage();

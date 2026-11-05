@@ -1,7 +1,7 @@
 import { GoogleSigninButton } from "@react-native-google-signin/google-signin";
 import { useMutation } from "@tanstack/react-query";
 import * as ExpoAppleAuthentication from "expo-apple-authentication";
-import { Platform, StyleSheet, useColorScheme } from "react-native";
+import { StyleSheet, useColorScheme } from "react-native";
 
 import { ACCOUNT_DELETED_SEARCH_PARAMETERS } from "#/features/authentication/constants/account-deleted-search-parameters.ts";
 import { getAuthenticationScreenErrorMessage } from "#/features/authentication/core/get-authentication-screen-error-message.ts";
@@ -73,22 +73,20 @@ export function SignInScreen({
   return (
     <ScrollView>
       <StatusMessage message={statusMessage} />
-      {Platform.OS === "ios" ? (
-        <ExpoAppleAuthentication.AppleAuthenticationButton
-          buttonStyle={
-            colorScheme === "dark"
-              ? ExpoAppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-              : ExpoAppleAuthentication.AppleAuthenticationButtonStyle.BLACK
-          }
-          buttonType={
-            ExpoAppleAuthentication.AppleAuthenticationButtonType.CONTINUE
-          }
-          cornerRadius={APPLE_BUTTON_CORNER_RADIUS}
-          onPress={handleSignInWithApple}
-          style={styles.appleButton}
-          testID="apple-sign-in-button"
-        />
-      ) : null}
+      <ExpoAppleAuthentication.AppleAuthenticationButton
+        buttonStyle={
+          colorScheme === "dark"
+            ? ExpoAppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+            : ExpoAppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+        }
+        buttonType={
+          ExpoAppleAuthentication.AppleAuthenticationButtonType.CONTINUE
+        }
+        cornerRadius={APPLE_BUTTON_CORNER_RADIUS}
+        onPress={handleSignInWithApple}
+        style={styles.appleButton}
+        testID="apple-sign-in-button"
+      />
       <GoogleSigninButton
         color={
           colorScheme === "dark"

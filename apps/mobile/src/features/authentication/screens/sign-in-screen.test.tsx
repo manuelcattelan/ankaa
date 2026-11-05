@@ -223,6 +223,29 @@ describe("SignInScreen", () => {
     ).toBeOnTheScreen();
   });
 
+  it("goes straight to the Google sign-in sheet when the User signs in with Google", async () => {
+    const googleSignInCalls: string[] = [];
+    const user = userEvent.setup();
+    await renderScreen({
+      initialUrl: "/sign-in",
+      testRuntimeLayers: {
+        authenticationClient: fakeAuthenticationClientLayer(
+          createFakeSignInResponses({ signInPath: "/sign-in/social" }),
+        ),
+        googleSignIn: fakeGoogleSignInLayer({
+          receivedCalls: googleSignInCalls,
+          signInResponse: GOOGLE_SIGN_IN_RESPONSE,
+        }),
+      },
+    });
+
+    await user.press(await screen.findByTestId("google-sign-in-button"));
+
+    await screen.findByRole("button", { name: "Sign out" });
+
+    expect(googleSignInCalls).toStrictEqual(["signIn"]);
+  });
+
   it("sends the server the authorization code of the Google sign-in with the sign-in", async () => {
     const receivedSignInRequests: Request[] = [];
     const user = userEvent.setup();

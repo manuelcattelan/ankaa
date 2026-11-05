@@ -1,7 +1,6 @@
 import * as Match from "effect/Match";
 import * as Schema from "effect/Schema";
 
-import { GooglePlayServicesMissingError } from "#/features/authentication/errors/google-play-services-missing-error.ts";
 import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/authentication-messages.ts";
 import { AccountNotLinkedError } from "#/shared/errors/account-not-linked-error.ts";
 import { AuthenticationClientError } from "#/shared/errors/authentication-client-error.ts";
@@ -20,7 +19,6 @@ const authenticationScreenErrorSchema = Schema.Union([
   DeleteAccountTokenInvalidError,
   EmailInvalidError,
   EmailNotSharedError,
-  GooglePlayServicesMissingError,
   OtpCodeAttemptsExceededError,
   OtpCodeExpiredError,
   OtpCodeInvalidError,
@@ -48,8 +46,6 @@ export function getAuthenticationScreenErrorMessage(
       AUTHENTICATION_MESSAGES.deleteAccountTokenInvalidError,
     EmailInvalidError: () => AUTHENTICATION_MESSAGES.emailInvalidError,
     EmailNotSharedError: () => AUTHENTICATION_MESSAGES.emailNotSharedError,
-    GooglePlayServicesMissingError: () =>
-      AUTHENTICATION_MESSAGES.googlePlayServicesMissingError,
     OtpCodeAttemptsExceededError: () =>
       AUTHENTICATION_MESSAGES.otpCodeAttemptsExceededError,
     OtpCodeExpiredError: () => AUTHENTICATION_MESSAGES.otpCodeExpiredError,
