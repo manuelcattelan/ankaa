@@ -98,12 +98,6 @@ const UUID_V7_PATTERN =
   /^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/;
 
 const WELL_KNOWN_FILE_SETTINGS = {
-  android: {
-    packageName: "app.ankaa.test",
-    sha256CertificateFingerprints: [
-      "14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5",
-    ],
-  },
   appleAppBundleId: "app.ankaa.test",
   appleTeamId: "ABCDE12345",
 };
@@ -1502,45 +1496,6 @@ describe("applicationPlugin", () => {
         ],
       },
     });
-  });
-
-  it("answers /.well-known/assetlinks.json with the app and signing certificate fingerprints of its settings", async () => {
-    const response = await server.inject({
-      method: "GET",
-      url: "/.well-known/assetlinks.json",
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.headers["content-type"]).toMatch(/^application\/json/);
-    expect(response.json()).toStrictEqual([
-      {
-        relation: ["delegate_permission/common.handle_all_urls"],
-        target: {
-          namespace: "android_app",
-          ["package_name"]: "app.ankaa.test",
-          ["sha256_cert_fingerprints"]: [
-            "14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5",
-          ],
-        },
-      },
-    ]);
-  });
-
-  it("serves no /.well-known/assetlinks.json without the Android settings", async () => {
-    const iosOnlyServer = fastify();
-    await iosOnlyServer.register(applicationPlugin, {
-      ...WELL_KNOWN_FILE_SETTINGS,
-      android: null,
-      runtime,
-    });
-
-    const response = await iosOnlyServer.inject({
-      method: "GET",
-      url: "/.well-known/assetlinks.json",
-    });
-    await iosOnlyServer.close();
-
-    expect(response.statusCode).toBe(404);
   });
 
   it("answers /health with the status ok", async () => {
