@@ -1,2684 +1,1750 @@
 {
-  "version": "8",
+  "type": "diff",
+  "version": "9",
   "dialect": "postgres",
   "id": "83a03aca-e293-4a01-ab6e-7ecaf30543c2",
   "prevIds": [
     "4c37cb2e-a4bc-4f83-8660-ea0f595ed39a"
   ],
-  "ddl": [
-    {
-      "name": "authentication",
-      "entityType": "schemas"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "account",
-      "entityType": "tables",
-      "schema": "authentication"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "session",
-      "entityType": "tables",
-      "schema": "authentication"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "user",
-      "entityType": "tables",
-      "schema": "authentication"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "verification",
-      "entityType": "tables",
-      "schema": "authentication"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "exercise",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "exercise_equipment",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "exercise_muscle_group",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "routine",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "routine_day",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "routine_exercise",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "routine_exercise_set",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "workout",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "workout_exercise",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "workout_exercise_set",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "workout_exercise_set_segment",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "access_token",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "account"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "access_token_expires_at",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "account"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "account_id",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "account"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "account"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "uuidv7()",
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "account"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id_token",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "account"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "password",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "account"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "provider_id",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "account"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "refresh_token",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "account"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "refresh_token_expires_at",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "account"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "scope",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "account"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "account"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "user_id",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "account"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "session"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "expires_at",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "session"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "uuidv7()",
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "session"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "ip_address",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "session"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "token",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "session"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "session"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "user_agent",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "session"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "user_id",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "session"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "user"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "email",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "user"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "false",
-      "generated": null,
-      "identity": null,
-      "name": "email_verified",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "user"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "uuidv7()",
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "user"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "image",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "user"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "name",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "user"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "user"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "verification"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "expires_at",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "verification"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "uuidv7()",
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "verification"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "identifier",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "verification"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "verification"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "value",
-      "entityType": "columns",
-      "schema": "authentication",
-      "table": "verification"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "amount_unit",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "exercise"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "exercise"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "uuidv7()",
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "exercise"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "name",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "exercise"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "exercise"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "weight_type",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "exercise"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "equipment",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "exercise_equipment"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "exercise_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "exercise_equipment"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "exercise_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "exercise_muscle_group"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "muscle_group",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "exercise_muscle_group"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "role",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "exercise_muscle_group"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "uuidv7()",
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "deleted_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "name",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "user_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_day"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "uuidv7()",
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_day"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_day"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "day_of_week",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_day"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "routine_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_day"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "uuidv7()",
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "exercise_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "note",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "position",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "routine_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "section",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "superset",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "warm_up_for_routine_exercise_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "uuidv7()",
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "amount",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "drop_set_segment_count",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "drop_set_weight_percentage",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "false",
-      "generated": null,
-      "identity": null,
-      "name": "is_to_failure",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "position",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "rest_pause_rest_seconds",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "rest_pause_segment_count",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "rest_seconds",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "routine_exercise_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "set_type",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "tempo",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "variation",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "uuidv7()",
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "ended_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "routine_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "started_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "user_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "version",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "uuidv7()",
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "amount_unit",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "exercise_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "note",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "position",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "section",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "skip_reason",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "skip_reason_note",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "superset",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "warm_up_for_workout_exercise_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "weight_type",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "workout_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "uuidv7()",
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "is_to_failure",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "position",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "set_type",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "tempo",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "variation",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "workout_exercise_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "uuidv7()",
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "amount",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "position",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "weight_unit",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
-    },
-    {
-      "type": "numeric(6,2)",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "weight_value",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "workout_exercise_set_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "user_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+  "footprints": [
+    {
+      "statementType": "create_schema",
+      "statementTarget": [
+        "schema",
+        "authentication"
       ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "account_user_id_idx",
-      "entityType": "indexes",
-      "schema": "authentication",
-      "table": "account"
+      "writes": [
+        "s|sch|authentication",
+        "n|sch|authentication",
+        "e|sch|authentication"
+      ]
     },
     {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "user_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "authentication",
+        "account"
       ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "session_user_id_idx",
-      "entityType": "indexes",
-      "schema": "authentication",
-      "table": "session"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "identifier",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+      "writes": [
+        "s|tbl|authentication.account",
+        "n|tbl|authentication.account",
+        "e|tbl|authentication.account",
+        "n|rel|authentication.account",
+        "n|type|authentication.account",
+        "n|rel|authentication.account_pkey"
       ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "verification_identifier_idx",
-      "entityType": "indexes",
-      "schema": "authentication",
-      "table": "verification"
+      "reads": [
+        "n|sch|authentication"
+      ]
     },
     {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "user_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "name",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "authentication",
+        "session"
       ],
-      "isUnique": true,
-      "where": "(\"deleted_at\" is null)",
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "routine_user_id_name_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "routine"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "user_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+      "writes": [
+        "s|tbl|authentication.session",
+        "n|tbl|authentication.session",
+        "e|tbl|authentication.session",
+        "n|rel|authentication.session",
+        "n|type|authentication.session",
+        "n|rel|authentication.session_pkey",
+        "n|rel|authentication.session_token_key"
       ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "routine_user_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "routine"
+      "reads": [
+        "n|sch|authentication"
+      ]
     },
     {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "exercise_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "authentication",
+        "user"
       ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "routine_exercise_exercise_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "warm_up_for_routine_exercise_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+      "writes": [
+        "s|tbl|authentication.user",
+        "n|tbl|authentication.user",
+        "e|tbl|authentication.user",
+        "n|rel|authentication.user",
+        "n|type|authentication.user",
+        "n|rel|authentication.user_pkey",
+        "n|rel|authentication.user_email_key"
       ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "routine_exercise_warm_up_for_routine_exercise_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "routine_exercise"
+      "reads": [
+        "n|sch|authentication"
+      ]
     },
     {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "user_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "authentication",
+        "verification"
       ],
-      "isUnique": true,
-      "where": "(\"ended_at\" is null)",
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "workout_in_progress_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "workout"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "user_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+      "writes": [
+        "s|tbl|authentication.verification",
+        "n|tbl|authentication.verification",
+        "e|tbl|authentication.verification",
+        "n|rel|authentication.verification",
+        "n|type|authentication.verification",
+        "n|rel|authentication.verification_pkey"
       ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "workout_user_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "workout"
+      "reads": [
+        "n|sch|authentication"
+      ]
     },
     {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "routine_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "auth",
+        "account"
       ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "workout_routine_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "workout"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "exercise_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+      "writes": [
+        "s|fk|auth.account.account_user_id_user_id_fkey",
+        "n|fk|auth.account.account_user_id_user_id_fkey",
+        "e|fk|auth.account.account_user_id_user_id_fkey",
+        "n|con|auth.account.account_user_id_user_id_fkey"
       ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "workout_exercise_exercise_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "workout_exercise"
+      "reads": [
+        "n|tbl|auth.account",
+        "n|sch|auth",
+        "e|col|auth.account.user_id"
+      ]
     },
     {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "warm_up_for_workout_exercise_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "auth",
+        "session"
       ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "workout_exercise_warm_up_for_workout_exercise_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "workout_exercise"
+      "writes": [
+        "s|fk|auth.session.session_user_id_user_id_fkey",
+        "n|fk|auth.session.session_user_id_user_id_fkey",
+        "e|fk|auth.session.session_user_id_user_id_fkey",
+        "n|con|auth.session.session_user_id_user_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|auth.session",
+        "n|sch|auth",
+        "e|col|auth.session.user_id"
+      ]
     },
     {
-      "nameExplicit": true,
-      "columns": [
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "routine"
+      ],
+      "writes": [
+        "s|fk|public.routine.routine_user_id_fkey",
+        "n|fk|public.routine.routine_user_id_fkey",
+        "e|fk|public.routine.routine_user_id_fkey",
+        "n|con|public.routine.routine_user_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.routine",
+        "n|sch|public",
+        "e|col|public.routine.user_id"
+      ]
+    },
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "workout"
+      ],
+      "writes": [
+        "s|fk|public.workout.workout_user_id_fkey",
+        "n|fk|public.workout.workout_user_id_fkey",
+        "e|fk|public.workout.workout_user_id_fkey",
+        "n|con|public.workout.workout_user_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.workout",
+        "n|sch|public",
+        "e|col|public.workout.user_id"
+      ]
+    },
+    {
+      "statementType": "drop_table",
+      "statementTarget": [
+        "table",
+        "auth",
+        "account"
+      ],
+      "writes": [
+        "s|tbl|auth.account",
+        "n|tbl|auth.account",
+        "e|tbl|auth.account",
+        "n|rel|auth.account",
+        "n|type|auth.account"
+      ],
+      "reads": [
+        "n|sch|auth"
+      ]
+    },
+    {
+      "statementType": "drop_table",
+      "statementTarget": [
+        "table",
+        "auth",
+        "session"
+      ],
+      "writes": [
+        "s|tbl|auth.session",
+        "n|tbl|auth.session",
+        "e|tbl|auth.session",
+        "n|rel|auth.session",
+        "n|type|auth.session"
+      ],
+      "reads": [
+        "n|sch|auth"
+      ]
+    },
+    {
+      "statementType": "drop_table",
+      "statementTarget": [
+        "table",
+        "auth",
+        "user"
+      ],
+      "writes": [
+        "s|tbl|auth.user",
+        "n|tbl|auth.user",
+        "e|tbl|auth.user",
+        "n|rel|auth.user",
+        "n|type|auth.user"
+      ],
+      "reads": [
+        "n|sch|auth"
+      ]
+    },
+    {
+      "statementType": "drop_table",
+      "statementTarget": [
+        "table",
+        "auth",
+        "verification"
+      ],
+      "writes": [
+        "s|tbl|auth.verification",
+        "n|tbl|auth.verification",
+        "e|tbl|auth.verification",
+        "n|rel|auth.verification",
+        "n|type|auth.verification"
+      ],
+      "reads": [
+        "n|sch|auth"
+      ]
+    },
+    {
+      "statementType": "rename_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "exercise_muscle_group",
+        "muscle_group_role"
+      ],
+      "writes": [
+        "s|col|public.exercise_muscle_group.muscle_group_role",
+        "n|col|public.exercise_muscle_group.muscle_group_role",
+        "s|col|public.exercise_muscle_group.role",
+        "n|col|public.exercise_muscle_group.role"
+      ],
+      "reads": [
+        "n|tbl|public.exercise_muscle_group",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_unique",
+      "statementTarget": [
+        "table",
+        "public",
+        "exercise_equipment"
+      ],
+      "writes": [
+        "s|uq|public.exercise_equipment.exercise_equipment_exercise_id_equipment_key",
+        "n|uq|public.exercise_equipment.exercise_equipment_exercise_id_equipment_key",
+        "e|uq|public.exercise_equipment.exercise_equipment_exercise_id_equipment_key",
+        "n|con|public.exercise_equipment.exercise_equipment_exercise_id_equipment_key",
+        "n|rel|public.exercise_equipment_exercise_id_equipment_key"
+      ],
+      "reads": [
+        "n|tbl|public.exercise_equipment",
+        "n|sch|public",
+        "e|col|public.exercise_equipment.exercise_id",
+        "e|col|public.exercise_equipment.equipment"
+      ],
+      "sharedWrites": [
+        "e|uniqueness|public.exercise_equipment.equipment.exercise_id"
+      ]
+    },
+    {
+      "statementType": "drop_unique",
+      "statementTarget": [
+        "table",
+        "public",
+        "exercise_muscle_group"
+      ],
+      "writes": [
+        "s|uq|public.exercise_muscle_group.exercise_muscle_group_exercise_id_muscle_group_key",
+        "n|uq|public.exercise_muscle_group.exercise_muscle_group_exercise_id_muscle_group_key",
+        "e|uq|public.exercise_muscle_group.exercise_muscle_group_exercise_id_muscle_group_key",
+        "n|con|public.exercise_muscle_group.exercise_muscle_group_exercise_id_muscle_group_key",
+        "n|rel|public.exercise_muscle_group_exercise_id_muscle_group_key"
+      ],
+      "reads": [
+        "n|tbl|public.exercise_muscle_group",
+        "n|sch|public",
+        "e|col|public.exercise_muscle_group.exercise_id",
+        "e|col|public.exercise_muscle_group.muscle_group"
+      ],
+      "sharedWrites": [
+        "e|uniqueness|public.exercise_muscle_group.exercise_id.muscle_group"
+      ]
+    },
+    {
+      "statementType": "rename_constraint",
+      "statementTarget": [
+        "table",
+        "public",
+        "exercise_muscle_group"
+      ],
+      "writes": [
+        "s|ck|public.exercise_muscle_group.exercise_muscle_group_muscle_group_role_check",
+        "n|ck|public.exercise_muscle_group.exercise_muscle_group_muscle_group_role_check",
+        "n|con|public.exercise_muscle_group.exercise_muscle_group_muscle_group_role_check",
+        "s|ck|public.exercise_muscle_group.exercise_muscle_group_role_check",
+        "n|ck|public.exercise_muscle_group.exercise_muscle_group_role_check",
+        "n|con|public.exercise_muscle_group.exercise_muscle_group_role_check"
+      ],
+      "reads": [
+        "n|tbl|public.exercise_muscle_group",
+        "n|sch|public",
+        "e|col|public.exercise_muscle_group.role"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "exercise_muscle_group",
+        "created_at"
+      ],
+      "writes": [
+        "s|col|public.exercise_muscle_group.created_at",
+        "n|col|public.exercise_muscle_group.created_at",
+        "e|col|public.exercise_muscle_group.created_at"
+      ],
+      "reads": [
+        "n|tbl|public.exercise_muscle_group",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "exercise_muscle_group",
+        "id"
+      ],
+      "writes": [
+        "s|col|public.exercise_muscle_group.id",
+        "n|col|public.exercise_muscle_group.id",
+        "e|col|public.exercise_muscle_group.id"
+      ],
+      "reads": [
+        "n|tbl|public.exercise_muscle_group",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "exercise_muscle_group",
+        "updated_at"
+      ],
+      "writes": [
+        "s|col|public.exercise_muscle_group.updated_at",
+        "n|col|public.exercise_muscle_group.updated_at",
+        "e|col|public.exercise_muscle_group.updated_at"
+      ],
+      "reads": [
+        "n|tbl|public.exercise_muscle_group",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "exercise_equipment",
+        "created_at"
+      ],
+      "writes": [
+        "s|col|public.exercise_equipment.created_at",
+        "n|col|public.exercise_equipment.created_at",
+        "e|col|public.exercise_equipment.created_at"
+      ],
+      "reads": [
+        "n|tbl|public.exercise_equipment",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "exercise_equipment",
+        "id"
+      ],
+      "writes": [
+        "s|col|public.exercise_equipment.id",
+        "n|col|public.exercise_equipment.id",
+        "e|col|public.exercise_equipment.id"
+      ],
+      "reads": [
+        "n|tbl|public.exercise_equipment",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "exercise_equipment",
+        "updated_at"
+      ],
+      "writes": [
+        "s|col|public.exercise_equipment.updated_at",
+        "n|col|public.exercise_equipment.updated_at",
+        "e|col|public.exercise_equipment.updated_at"
+      ],
+      "reads": [
+        "n|tbl|public.exercise_equipment",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_pk",
+      "statementTarget": [
+        "table",
+        "public",
+        "exercise_equipment"
+      ],
+      "writes": [
+        "s|pk|public.exercise_equipment"
+      ],
+      "reads": [
+        "n|tbl|public.exercise_equipment",
+        "n|sch|public",
+        "n|col|public.exercise_equipment.exercise_id",
+        "n|col|public.exercise_equipment.equipment"
+      ],
+      "sharedWrites": [
+        "e|uniqueness|public.exercise_equipment.id"
+      ]
+    },
+    {
+      "statementType": "alter_pk",
+      "statementTarget": [
+        "table",
+        "public",
+        "exercise_muscle_group"
+      ],
+      "writes": [
+        "s|pk|public.exercise_muscle_group"
+      ],
+      "reads": [
+        "n|tbl|public.exercise_muscle_group",
+        "n|sch|public",
+        "n|col|public.exercise_muscle_group.exercise_id",
+        "n|col|public.exercise_muscle_group.muscle_group"
+      ],
+      "sharedWrites": [
+        "e|uniqueness|public.exercise_muscle_group.id"
+      ]
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "routine",
         "user_id"
       ],
-      "schemaTo": "authentication",
-      "tableTo": "user",
-      "columnsTo": [
-        "id"
+      "writes": [
+        "s|colprop|public.routine.user_id.type",
+        "s|colprop|public.routine.user_id.default"
       ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "account_user_id_fkey",
-      "entityType": "fks",
-      "schema": "authentication",
-      "table": "account"
+      "reads": [
+        "n|tbl|public.routine",
+        "n|sch|public",
+        "n|col|public.routine.user_id"
+      ],
+      "sqlHash": "2fd257eb9246a6b6"
     },
     {
-      "nameExplicit": true,
-      "columns": [
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "workout",
         "user_id"
       ],
-      "schemaTo": "authentication",
-      "tableTo": "user",
-      "columnsTo": [
-        "id"
+      "writes": [
+        "s|colprop|public.workout.user_id.type",
+        "s|colprop|public.workout.user_id.default"
       ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "session_user_id_fkey",
-      "entityType": "fks",
-      "schema": "authentication",
-      "table": "session"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "exercise_id"
+      "reads": [
+        "n|tbl|public.workout",
+        "n|sch|public",
+        "n|col|public.workout.user_id"
       ],
-      "schemaTo": "public",
-      "tableTo": "exercise",
-      "columnsTo": [
-        "id"
+      "sqlHash": "3838e5e768443494"
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "authentication",
+        "account",
+        "account_user_id_idx"
       ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "exercise_equipment_exercise_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "exercise_equipment"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "exercise_id"
+      "writes": [
+        "s|idx|authentication.account_user_id_idx",
+        "n|idx|authentication.account_user_id_idx",
+        "e|idx|authentication.account_user_id_idx",
+        "n|rel|authentication.account_user_id_idx"
       ],
-      "schemaTo": "public",
-      "tableTo": "exercise",
-      "columnsTo": [
-        "id"
+      "reads": [
+        "n|tbl|authentication.account",
+        "n|sch|authentication",
+        "n|col|authentication.account.user_id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "authentication",
+        "session",
+        "session_user_id_idx"
       ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "exercise_muscle_group_exercise_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "exercise_muscle_group"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "routine_id"
+      "writes": [
+        "s|idx|authentication.session_user_id_idx",
+        "n|idx|authentication.session_user_id_idx",
+        "e|idx|authentication.session_user_id_idx",
+        "n|rel|authentication.session_user_id_idx"
       ],
-      "schemaTo": "public",
-      "tableTo": "routine",
-      "columnsTo": [
-        "id"
+      "reads": [
+        "n|tbl|authentication.session",
+        "n|sch|authentication",
+        "n|col|authentication.session.user_id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "authentication",
+        "verification",
+        "verification_identifier_idx"
       ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "routine_day_routine_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "routine_day"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "exercise_id"
+      "writes": [
+        "s|idx|authentication.verification_identifier_idx",
+        "n|idx|authentication.verification_identifier_idx",
+        "e|idx|authentication.verification_identifier_idx",
+        "n|rel|authentication.verification_identifier_idx"
       ],
-      "schemaTo": "public",
-      "tableTo": "exercise",
-      "columnsTo": [
-        "id"
+      "reads": [
+        "n|tbl|authentication.verification",
+        "n|sch|authentication",
+        "n|col|authentication.verification.identifier"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "authentication",
+        "account"
       ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "RESTRICT",
-      "name": "routine_exercise_exercise_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "routine_id"
+      "writes": [
+        "s|fk|authentication.account.account_user_id_fkey",
+        "n|fk|authentication.account.account_user_id_fkey",
+        "e|fk|authentication.account.account_user_id_fkey",
+        "n|con|authentication.account.account_user_id_fkey"
       ],
-      "schemaTo": "public",
-      "tableTo": "routine",
-      "columnsTo": [
-        "id"
+      "reads": [
+        "n|tbl|authentication.account",
+        "n|sch|authentication",
+        "n|tbl|authentication.user",
+        "n|sch|authentication",
+        "n|col|authentication.account.user_id",
+        "n|col|authentication.user.id",
+        "e|uniqueness|authentication.user.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "authentication",
+        "session"
       ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "routine_exercise_routine_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "warm_up_for_routine_exercise_id"
+      "writes": [
+        "s|fk|authentication.session.session_user_id_fkey",
+        "n|fk|authentication.session.session_user_id_fkey",
+        "e|fk|authentication.session.session_user_id_fkey",
+        "n|con|authentication.session.session_user_id_fkey"
       ],
-      "schemaTo": "public",
-      "tableTo": "routine_exercise",
-      "columnsTo": [
-        "id"
+      "reads": [
+        "n|tbl|authentication.session",
+        "n|sch|authentication",
+        "n|tbl|authentication.user",
+        "n|sch|authentication",
+        "n|col|authentication.session.user_id",
+        "n|col|authentication.user.id",
+        "e|uniqueness|authentication.user.id"
+      ]
+    },
+    {
+      "statementType": "alter_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "exercise_muscle_group"
       ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "routine_exercise_warm_up_for_routine_exercise_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "routine_exercise_id"
+      "writes": [
+        "s|ck|public.exercise_muscle_group.exercise_muscle_group_role_check"
       ],
-      "schemaTo": "public",
-      "tableTo": "routine_exercise",
-      "columnsTo": [
-        "id"
+      "reads": [
+        "n|tbl|public.exercise_muscle_group",
+        "n|sch|public",
+        "n|col|public.exercise_muscle_group.role"
       ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "routine_exercise_set_routine_exercise_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "routine_exercise_set"
+      "sqlHash": "e0ccef38d46538e0"
     },
     {
-      "nameExplicit": true,
-      "columns": [
-        "routine_id"
+      "statementType": "drop_schema",
+      "statementTarget": [
+        "schema",
+        "auth"
       ],
-      "schemaTo": "public",
-      "tableTo": "routine",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "RESTRICT",
-      "name": "workout_routine_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "workout"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "exercise_id"
-      ],
-      "schemaTo": "public",
-      "tableTo": "exercise",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "RESTRICT",
-      "name": "workout_exercise_exercise_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "workout_id"
-      ],
-      "schemaTo": "public",
-      "tableTo": "workout",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "workout_exercise_workout_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "warm_up_for_workout_exercise_id"
-      ],
-      "schemaTo": "public",
-      "tableTo": "workout_exercise",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "workout_exercise_warm_up_for_workout_exercise_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "workout_exercise_id"
-      ],
-      "schemaTo": "public",
-      "tableTo": "workout_exercise",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "workout_exercise_set_workout_exercise_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "workout_exercise_set_id"
-      ],
-      "schemaTo": "public",
-      "tableTo": "workout_exercise_set",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "workout_exercise_set_segment_workout_exercise_set_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": true,
-      "name": "account_pkey",
-      "entityType": "pks",
-      "schema": "authentication",
-      "table": "account"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": true,
-      "name": "session_pkey",
-      "entityType": "pks",
-      "schema": "authentication",
-      "table": "session"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": true,
-      "name": "user_pkey",
-      "entityType": "pks",
-      "schema": "authentication",
-      "table": "user"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": true,
-      "name": "verification_pkey",
-      "entityType": "pks",
-      "schema": "authentication",
-      "table": "verification"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": true,
-      "name": "exercise_pkey",
-      "entityType": "pks",
-      "schema": "public",
-      "table": "exercise"
-    },
-    {
-      "columns": [
-        "exercise_id",
-        "equipment"
-      ],
-      "nameExplicit": true,
-      "name": "exercise_equipment_pkey",
-      "entityType": "pks",
-      "schema": "public",
-      "table": "exercise_equipment"
-    },
-    {
-      "columns": [
-        "exercise_id",
-        "muscle_group"
-      ],
-      "nameExplicit": true,
-      "name": "exercise_muscle_group_pkey",
-      "entityType": "pks",
-      "schema": "public",
-      "table": "exercise_muscle_group"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "routine_pkey",
-      "schema": "public",
-      "table": "routine",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "routine_day_pkey",
-      "schema": "public",
-      "table": "routine_day",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "routine_exercise_pkey",
-      "schema": "public",
-      "table": "routine_exercise",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "routine_exercise_set_pkey",
-      "schema": "public",
-      "table": "routine_exercise_set",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "workout_pkey",
-      "schema": "public",
-      "table": "workout",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "workout_exercise_pkey",
-      "schema": "public",
-      "table": "workout_exercise",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "workout_exercise_set_pkey",
-      "schema": "public",
-      "table": "workout_exercise_set",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "workout_exercise_set_segment_pkey",
-      "schema": "public",
-      "table": "workout_exercise_set_segment",
-      "entityType": "pks"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "routine_id",
-        "day_of_week"
-      ],
-      "nullsNotDistinct": false,
-      "name": "routine_day_routine_id_day_of_week_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "routine_day"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "routine_id",
-        "position"
-      ],
-      "nullsNotDistinct": false,
-      "name": "routine_exercise_routine_id_position_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "routine_exercise_id",
-        "position"
-      ],
-      "nullsNotDistinct": false,
-      "name": "routine_exercise_set_routine_exercise_id_position_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "workout_id",
-        "position"
-      ],
-      "nullsNotDistinct": false,
-      "name": "workout_exercise_workout_id_position_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "workout_exercise_id",
-        "position"
-      ],
-      "nullsNotDistinct": false,
-      "name": "workout_exercise_set_workout_exercise_id_position_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "workout_exercise_set_id",
-        "position"
-      ],
-      "nullsNotDistinct": false,
-      "name": "workout_exercise_set_segment_position_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "token"
-      ],
-      "nullsNotDistinct": false,
-      "name": "session_token_key",
-      "schema": "authentication",
-      "table": "session",
-      "entityType": "uniques"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "email"
-      ],
-      "nullsNotDistinct": false,
-      "name": "user_email_key",
-      "schema": "authentication",
-      "table": "user",
-      "entityType": "uniques"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "name"
-      ],
-      "nullsNotDistinct": false,
-      "name": "exercise_name_key",
-      "schema": "public",
-      "table": "exercise",
-      "entityType": "uniques"
-    },
-    {
-      "value": "\"amount_unit\" in ('repetition', 'second')",
-      "name": "exercise_amount_unit_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "exercise"
-    },
-    {
-      "value": "\"weight_type\" in ('total', 'single', 'bodyweight', 'assisted', 'none')",
-      "name": "exercise_weight_type_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "exercise"
-    },
-    {
-      "value": "\"equipment\" in ('barbell', 'bench', 'rack')",
-      "name": "exercise_equipment_equipment_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "exercise_equipment"
-    },
-    {
-      "value": "\"muscle_group\" in ('chest', 'triceps', 'front_deltoid')",
-      "name": "exercise_muscle_group_muscle_group_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "exercise_muscle_group"
-    },
-    {
-      "value": "\"role\" in ('primary', 'secondary')",
-      "name": "exercise_muscle_group_role_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "exercise_muscle_group"
-    },
-    {
-      "value": "\"day_of_week\" in ('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday')",
-      "name": "routine_day_day_of_week_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_day"
-    },
-    {
-      "value": "\"section\" in ('warm_up', 'main', 'cool_down')",
-      "name": "routine_exercise_section_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "value": "\"position\" >= 0",
-      "name": "routine_exercise_position_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_exercise"
-    },
-    {
-      "value": "\"set_type\" in ('warm_up', 'working')",
-      "name": "routine_exercise_set_set_type_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "value": "\"variation\" in ('rest_pause', 'drop_set')",
-      "name": "routine_exercise_set_variation_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "value": "\"tempo\" ~ '^[0-9]{1,2}-[0-9]{1,2}-([0-9]{1,2}|X)-[0-9]{1,2}$'",
-      "name": "routine_exercise_set_tempo_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "value": "\"position\" >= 0",
-      "name": "routine_exercise_set_position_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "value": "\"amount\" >= 1",
-      "name": "routine_exercise_set_amount_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "value": "\"rest_seconds\" >= 1",
-      "name": "routine_exercise_set_rest_seconds_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "value": "\"rest_pause_rest_seconds\" >= 1",
-      "name": "routine_exercise_set_rest_pause_rest_seconds_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "value": "\"rest_pause_segment_count\" >= 2",
-      "name": "routine_exercise_set_rest_pause_segment_count_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "value": "\"drop_set_segment_count\" >= 2",
-      "name": "routine_exercise_set_drop_set_segment_count_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "value": "\"drop_set_weight_percentage\" between 1 and 99",
-      "name": "routine_exercise_set_drop_set_weight_percentage_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "value": "case when \"variation\" = 'rest_pause' then \"rest_pause_rest_seconds\" is not null and \"rest_pause_segment_count\" is not null else \"rest_pause_rest_seconds\" is null and \"rest_pause_segment_count\" is null end",
-      "name": "routine_exercise_set_rest_pause_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "value": "case when \"variation\" = 'drop_set' then \"drop_set_segment_count\" is not null else \"drop_set_segment_count\" is null and \"drop_set_weight_percentage\" is null end",
-      "name": "routine_exercise_set_drop_set_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "routine_exercise_set"
-    },
-    {
-      "value": "\"amount_unit\" in ('repetition', 'second')",
-      "name": "workout_exercise_amount_unit_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "value": "\"weight_type\" in ('total', 'single', 'bodyweight', 'assisted', 'none')",
-      "name": "workout_exercise_weight_type_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "value": "\"section\" in ('warm_up', 'main', 'cool_down')",
-      "name": "workout_exercise_section_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "value": "\"skip_reason\" in ('low_on_time', 'low_energy', 'pain', 'other')",
-      "name": "workout_exercise_skip_reason_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "value": "\"position\" >= 0",
-      "name": "workout_exercise_position_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "value": "\"skip_reason\" is not null or \"skip_reason_note\" is null",
-      "name": "workout_exercise_skip_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise"
-    },
-    {
-      "value": "\"set_type\" in ('warm_up', 'working')",
-      "name": "workout_exercise_set_set_type_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "value": "\"variation\" in ('rest_pause', 'drop_set')",
-      "name": "workout_exercise_set_variation_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "value": "\"tempo\" ~ '^[0-9]{1,2}-[0-9]{1,2}-([0-9]{1,2}|X)-[0-9]{1,2}$'",
-      "name": "workout_exercise_set_tempo_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "value": "\"position\" >= 0",
-      "name": "workout_exercise_set_position_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise_set"
-    },
-    {
-      "value": "\"weight_unit\" in ('kilogram', 'pound')",
-      "name": "workout_exercise_set_segment_weight_unit_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
-    },
-    {
-      "value": "\"position\" >= 0",
-      "name": "workout_exercise_set_segment_position_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
-    },
-    {
-      "value": "\"amount\" >= 1",
-      "name": "workout_exercise_set_segment_amount_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
-    },
-    {
-      "value": "\"weight_value\" >= 0.01",
-      "name": "workout_exercise_set_segment_weight_value_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
-    },
-    {
-      "value": "\"weight_value\" is null or \"weight_unit\" is not null",
-      "name": "workout_exercise_set_segment_weight_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "workout_exercise_set_segment"
+      "writes": [
+        "s|sch|auth",
+        "n|sch|auth",
+        "e|sch|auth"
+      ]
     }
   ],
-  "renames": [
-    "public.exercise_muscle_group.muscle_group_role->public.exercise_muscle_group.role",
-    "public.exercise_muscle_group.exercise_muscle_group_muscle_group_role_check->public.exercise_muscle_group.exercise_muscle_group_role_check"
+  "deltas": [
+    {
+      "op": "rename",
+      "key": "columns\u0000[\"public\",\"exercise_muscle_group\",\"muscle_group_role\"]",
+      "set": {
+        "name": "role"
+      }
+    },
+    {
+      "op": "rename",
+      "key": "checks\u0000[\"public\",\"exercise_muscle_group\",\"exercise_muscle_group_muscle_group_role_check\"]",
+      "set": {
+        "name": "exercise_muscle_group_role_check"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "name": "authentication",
+        "entityType": "schemas"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "name": "account",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "name": "session",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "name": "user",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "name": "verification",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "access_token",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "access_token_expires_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "account_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "uuidv7()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "id_token",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "password",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "provider_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "refresh_token",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "refresh_token_expires_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "scope",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "user_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "session",
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "session",
+        "name": "expires_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "session",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "uuidv7()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "session",
+        "name": "ip_address",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "session",
+        "name": "token",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "session",
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "session",
+        "name": "user_agent",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "session",
+        "name": "user_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "user",
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "user",
+        "name": "email",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "user",
+        "name": "email_verified",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "user",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "uuidv7()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "user",
+        "name": "image",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "user",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "user",
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "verification",
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "verification",
+        "name": "expires_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "verification",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "uuidv7()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "verification",
+        "name": "identifier",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "verification",
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "verification",
+        "name": "value",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "account_user_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "user_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "session",
+        "name": "session_user_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "user_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "verification",
+        "name": "verification_identifier_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "identifier",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "account_user_id_fkey",
+        "nameExplicit": true,
+        "columns": [
+          "user_id"
+        ],
+        "schemaTo": "authentication",
+        "tableTo": "user",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "session",
+        "name": "session_user_id_fkey",
+        "nameExplicit": true,
+        "columns": [
+          "user_id"
+        ],
+        "schemaTo": "authentication",
+        "tableTo": "user",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "account",
+        "name": "account_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": true,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "session",
+        "name": "session_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": true,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "user",
+        "name": "user_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": true,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "verification",
+        "name": "verification_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": true,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "session",
+        "name": "session_token_key",
+        "nameExplicit": true,
+        "columns": [
+          "token"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "authentication",
+        "table": "user",
+        "name": "user_email_key",
+        "nameExplicit": true,
+        "columns": [
+          "email"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "schemas\u0000[\"auth\"]"
+    },
+    {
+      "op": "drop",
+      "key": "tables\u0000[\"auth\",\"account\"]"
+    },
+    {
+      "op": "drop",
+      "key": "tables\u0000[\"auth\",\"session\"]"
+    },
+    {
+      "op": "drop",
+      "key": "tables\u0000[\"auth\",\"user\"]"
+    },
+    {
+      "op": "drop",
+      "key": "tables\u0000[\"auth\",\"verification\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"account\",\"id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"account\",\"account_id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"account\",\"provider_id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"account\",\"user_id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"account\",\"access_token\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"account\",\"refresh_token\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"account\",\"id_token\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"account\",\"access_token_expires_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"account\",\"refresh_token_expires_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"account\",\"scope\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"account\",\"password\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"account\",\"created_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"account\",\"updated_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"session\",\"id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"session\",\"expires_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"session\",\"token\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"session\",\"created_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"session\",\"updated_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"session\",\"ip_address\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"session\",\"user_agent\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"session\",\"user_id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"user\",\"id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"user\",\"name\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"user\",\"email\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"user\",\"email_verified\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"user\",\"image\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"user\",\"created_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"user\",\"updated_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"verification\",\"id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"verification\",\"identifier\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"verification\",\"value\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"verification\",\"expires_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"verification\",\"created_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"auth\",\"verification\",\"updated_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"exercise_equipment\",\"created_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"exercise_equipment\",\"id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"exercise_equipment\",\"updated_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"exercise_muscle_group\",\"created_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"exercise_muscle_group\",\"id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"exercise_muscle_group\",\"updated_at\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"auth\",\"account_userId_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"auth\",\"session_userId_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"auth\",\"verification_identifier_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"auth\",\"account\",\"account_user_id_user_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"auth\",\"session\",\"session_user_id_user_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"routine\",\"routine_user_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"workout\",\"workout_user_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "pks\u0000[\"auth\",\"account\",\"account_pkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "pks\u0000[\"auth\",\"session\",\"session_pkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "pks\u0000[\"auth\",\"user\",\"user_pkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "pks\u0000[\"auth\",\"verification\",\"verification_pkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "uniques\u0000[\"auth\",\"session\",\"session_token_key\"]"
+    },
+    {
+      "op": "drop",
+      "key": "uniques\u0000[\"auth\",\"user\",\"user_email_key\"]"
+    },
+    {
+      "op": "drop",
+      "key": "uniques\u0000[\"public\",\"exercise_equipment\",\"exercise_equipment_exercise_id_equipment_key\"]"
+    },
+    {
+      "op": "drop",
+      "key": "uniques\u0000[\"public\",\"exercise_muscle_group\",\"exercise_muscle_group_exercise_id_muscle_group_key\"]"
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"routine\",\"user_id\"]",
+      "set": {
+        "type": "uuid"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"workout\",\"user_id\"]",
+      "set": {
+        "type": "uuid"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "pks\u0000[\"public\",\"exercise\",\"exercise_pkey\"]",
+      "set": {
+        "nameExplicit": true
+      }
+    },
+    {
+      "op": "alter",
+      "key": "pks\u0000[\"public\",\"exercise_equipment\",\"exercise_equipment_pkey\"]",
+      "set": {
+        "columns": [
+          "exercise_id",
+          "equipment"
+        ],
+        "nameExplicit": true
+      }
+    },
+    {
+      "op": "alter",
+      "key": "pks\u0000[\"public\",\"exercise_muscle_group\",\"exercise_muscle_group_pkey\"]",
+      "set": {
+        "columns": [
+          "exercise_id",
+          "muscle_group"
+        ],
+        "nameExplicit": true
+      }
+    },
+    {
+      "op": "alter",
+      "key": "uniques\u0000[\"public\",\"exercise\",\"exercise_name_key\"]",
+      "set": {
+        "nameExplicit": true
+      }
+    },
+    {
+      "op": "alter",
+      "key": "checks\u0000[\"public\",\"exercise_muscle_group\",\"exercise_muscle_group_role_check\"]",
+      "set": {
+        "value": "\"role\" in ('primary', 'secondary')"
+      }
+    }
   ]
 }
