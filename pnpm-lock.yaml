@@ -13,11 +13,11 @@ catalogs:
       specifier: ^1.7.15
       version: 1.7.16
     '@trpc/client':
-      specifier: 11.19.0
-      version: 11.19.0
+      specifier: 11.22.1
+      version: 11.22.1
     '@trpc/server':
-      specifier: 11.19.0
-      version: 11.19.0
+      specifier: 11.22.1
+      version: 11.22.1
     '@types/node':
       specifier: ^26.4.1
       version: 26.4.1
@@ -112,10 +112,10 @@ importers:
         version: 5.105.3(@types/react@19.3.0)(react@19.3.0)
       '@trpc/client':
         specifier: 'catalog:'
-        version: 11.19.0(@trpc/server@11.19.0(typescript@6.0.3))(typescript@6.0.3)
+        version: 11.22.1(@trpc/server@11.22.1(typescript@6.0.3))(typescript@6.0.3)
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.19.0(typescript@6.0.3)
+        version: 11.22.1(typescript@6.0.3)
       better-auth:
         specifier: 'catalog:'
         version: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7))(pg@8.23.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@5.0.5(@types/node@26.4.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1)))
@@ -263,7 +263,7 @@ importers:
         version: 9.2.1
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.19.0(typescript@6.0.3)
+        version: 11.22.1(typescript@6.0.3)
       better-auth:
         specifier: 'catalog:'
         version: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(jsdom@20.0.3(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))
@@ -324,7 +324,7 @@ importers:
         version: link:../database
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.19.0(typescript@6.0.3)
+        version: 11.22.1(typescript@6.0.3)
       better-auth:
         specifier: 'catalog:'
         version: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(jsdom@20.0.3(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))
@@ -3057,15 +3057,15 @@ packages:
     resolution: {integrity: sha512-HqmEUIGRJ5fSXchkVgR5F7qn48bDBzv0kWj/Kfu5e6uci4UlEeng4331LnBkWffb++Ei3FOVLxo8JJWMFBDMeQ==}
     engines: {node: '>= 10'}
 
-  '@trpc/client@11.19.0':
-    resolution: {integrity: sha512-0MKkPq6MejsKB5Opca1Rl22KVIaqo2+A1EiXyZ8EGUsl9TLrPdpGn+Usux20TZKFwnSC2+wI/WilqNJaP4ODfw==}
+  '@trpc/client@11.22.1':
+    resolution: {integrity: sha512-flkAwF8bzzNCVJ5xcTMS+Az6Go/XK30ZIOGT94UJBYAmMq1w2tY7gk7+CIMiRUdvHzOYAVPitX2H+20qcIIomA==}
     hasBin: true
     peerDependencies:
-      '@trpc/server': 11.19.0
+      '@trpc/server': 11.22.1
       typescript: '>=5.7.2'
 
-  '@trpc/server@11.19.0':
-    resolution: {integrity: sha512-7C1goiDurz82yFKtZUbEzjXd0Rg/jyisaIZQhdvus+1l7E6mwcEYZXjZ1US/HF8kOyz1LERL8UN3bcboJtjcyQ==}
+  '@trpc/server@11.22.1':
+    resolution: {integrity: sha512-9SjWTS5iwENHOVPqpTjm0I1Os/CtuT6p8kDlovyEm00pXhpHX55tQM2vszJTEpcQhm/JfUz4ut/7Y9JZZQZo6A==}
     hasBin: true
     peerDependencies:
       typescript: '>=5.7.2'
@@ -11472,12 +11472,12 @@ snapshots:
   '@tootallnate/once@2.0.1':
     optional: true
 
-  '@trpc/client@11.19.0(@trpc/server@11.19.0(typescript@6.0.3))(typescript@6.0.3)':
+  '@trpc/client@11.22.1(@trpc/server@11.22.1(typescript@6.0.3))(typescript@6.0.3)':
     dependencies:
-      '@trpc/server': 11.19.0(typescript@6.0.3)
+      '@trpc/server': 11.22.1(typescript@6.0.3)
       typescript: 6.0.3
 
-  '@trpc/server@11.19.0(typescript@6.0.3)':
+  '@trpc/server@11.22.1(typescript@6.0.3)':
     dependencies:
       typescript: 6.0.3
 
