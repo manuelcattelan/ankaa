@@ -10,7 +10,7 @@ Upgrade every update that the Dependency Dashboard lists. Read `INFRASTRUCTURE.m
 
 ## Read the dashboard
 
-Find the open issue that the Renovate app keeps, then read it:
+Renovate keeps one [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) issue that lists every update it found. Because `renovate.json` sets [`dependencyDashboardApproval`](https://docs.renovatebot.com/configuration-options/#dependencydashboardapproval) at the top level and under [`vulnerabilityAlerts`](https://docs.renovatebot.com/configuration-options/#vulnerabilityalerts), Renovate holds every update there for approval, vulnerability fixes included, instead of opening a pull request. Find the issue, then read it:
 
 ```sh
 gh issue list --author "app/renovate" --search "Dependency Dashboard in:title" --state open
@@ -27,6 +27,8 @@ Never tick a checkbox and never edit or close the issue. A ticked checkbox makes
 ## Upgrade
 
 Work on one branch from the tip of `main`, and commit each group of packages that moves together, such as one Expo SDK, one monorepo or the GitHub Actions, as its own commit, so a break bisects to one group.
+
+For every update, whatever its size, read its release notes, changelog or migration guide from the old version to the new one, and adapt the code to everything that changed, such as a breaking change, a deprecation or a new default, following the repository's `AGENTS.md` files and their glossary terms, because a minor or patch release can also change what the code relies on.
 
 ### The mobile app
 
@@ -46,11 +48,9 @@ Expo decides the versions of the mobile app's packages, and its versions win ove
 
 ### Everything else
 
-- Move a dependency in the pnpm `catalog:` of `pnpm-workspace.yaml`, never in a workspace's `package.json`, so every workspace that refers to it moves together. A catalog dependency the mobile app shares with the server, such as `effect`, tRPC or better-auth, must still pass the mobile app's checks.
-- Move any other npm dependency in the `package.json` that declares it, then run `pnpm install`.
+- Move an npm dependency where its version lives, then run `pnpm install`: in the pnpm `catalog:` of `pnpm-workspace.yaml` when the workspaces refer to it as `catalog:`, so they all move together, and in the `package.json` that declares it otherwise. A catalog dependency the mobile app shares with the server, such as `effect`, tRPC or better-auth, must still pass the mobile app's checks.
 - Move a GitHub Action to the commit of its new tag, with the version in its comment, as `INFRASTRUCTURE.md` requires. Take the SHA from `gh api repos/<owner>/<repository>/commits/<tag> --jq .sha`.
 - Move Node.js or pnpm in every place that names it in the same commit: `devEngines` in the root `package.json`, the build profile in `apps/mobile/eas.json`, and the images in `apps/server/Dockerfile`, because EAS ignores `devEngines`.
-- For each major version, read its release notes or migration guide and adapt the code to its breaking changes, following the repository's `AGENTS.md` files and their glossary terms.
 
 Keep `pnpm-lock.yaml` one YAML document. If a `packageManagerDependencies` document comes back at its top, `pmOnFail: ignore` has been lost from `pnpm-workspace.yaml`, and GitHub's dependency graph, and with it Renovate's vulnerability data, stops reading the lockfile.
 
