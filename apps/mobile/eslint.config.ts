@@ -3,5 +3,5 @@ import { defineConfig } from "eslint/config";
 
 export default defineConfig([
   createMobileConfiguration({ basePath: import.meta.dirname }),
-  { ignores: ["dist/*", "ios/*", "android/*", ".expo/*", "expo-env.d.ts"] },
+  { ignores: ["dist/*", "ios/*", ".expo/*", "expo-env.d.ts"] },
 ]);
