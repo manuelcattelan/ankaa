@@ -18,8 +18,6 @@ type AppVariantConfig = {
   scheme: string;
 };
 
-const APPLICATION_ID = "app.ankaa";
-
 /**
  * What each variant of the app sets differently in the app config.
  */
@@ -34,7 +32,7 @@ const APP_VARIANT_CONFIGS = {
   production: {
     addGeneratedScheme: false,
     associatedDomainSuffix: "",
-    bundleIdentifier: APPLICATION_ID,
+    bundleIdentifier: "app.ankaa",
     name: "Ankaa",
     scheme: APPLICATION_SCHEMES.production,
   },

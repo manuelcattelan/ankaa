@@ -14,11 +14,7 @@ export function getGoogleSignInError({
   defect: unknown;
   inProgressCode: string;
 }) {
-  if (!Predicate.hasProperty(defect, "code")) {
-    return null;
-  }
-
-  if (defect.code === inProgressCode) {
+  if (Predicate.hasProperty(defect, "code") && defect.code === inProgressCode) {
     return new GoogleSignInInProgressError();
   }
 

@@ -9,7 +9,7 @@ export type WellKnownRouteOptions = {
 
 /**
  * Serves the file that lets the API host open the app through Universal
- * Links, for account deletion links only.
+ * Links, for Account deletion links only.
  */
 export const wellKnownRoute = ((
   server,
