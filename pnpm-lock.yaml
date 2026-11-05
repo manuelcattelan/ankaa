@@ -34,8 +34,8 @@ catalogs:
       specifier: 1.0.0-rc.5
       version: 1.0.0-rc.5
     effect:
-      specifier: 4.0.5
-      version: 4.0.5
+      specifier: 4.1.2
+      version: 4.1.2
     eslint:
       specifier: ^10.10.0
       version: 10.10.0
@@ -100,7 +100,7 @@ importers:
         version: link:../../packages/core
       '@better-auth/expo':
         specifier: 'catalog:'
-        version: 1.7.16(1d0b9691ffdb00c3e1de9c48d10c4a96)
+        version: 1.7.16(33fd612367c75a2a0647e6efc4485b5e)
       '@expo/ui':
         specifier: ~58.0.27
         version: 58.0.27(@babel/core@7.29.7(supports-color@8.1.1))(expo@58.0.23)(react-dom@19.3.0(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
@@ -118,10 +118,10 @@ importers:
         version: 11.19.0(typescript@6.0.3)
       better-auth:
         specifier: 'catalog:'
-        version: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7))(pg@8.23.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@5.0.5(@types/node@26.4.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1)))
+        version: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7))(pg@8.23.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@5.0.5(@types/node@26.4.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1)))
       effect:
         specifier: 'catalog:'
-        version: 4.0.5
+        version: 4.1.2
       expo:
         specifier: ~58.0.23
         version: 58.0.23(@babel/core@7.29.7(supports-color@8.1.1))(@expo/dom-webview@58.0.2)(@expo/metro-runtime@58.0.17)(expo-router@58.0.30)(react-dom@19.3.0(react@19.3.0))(react-native-web@0.21.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1)(typescript@6.0.3)
@@ -266,13 +266,13 @@ importers:
         version: 11.19.0(typescript@6.0.3)
       better-auth:
         specifier: 'catalog:'
-        version: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(jsdom@20.0.3(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))
+        version: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(jsdom@20.0.3(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))
       close-with-grace:
         specifier: ^2.5.0
         version: 2.5.0
       effect:
         specifier: 'catalog:'
-        version: 4.0.5
+        version: 4.1.2
       fastify:
         specifier: ^5.12.8
         version: 5.12.8
@@ -327,13 +327,13 @@ importers:
         version: 11.19.0(typescript@6.0.3)
       better-auth:
         specifier: 'catalog:'
-        version: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(jsdom@20.0.3(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))
+        version: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(jsdom@20.0.3(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)))
       drizzle-orm:
         specifier: 'catalog:'
-        version: 1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
+        version: 1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
       effect:
         specifier: 'catalog:'
-        version: 4.0.5
+        version: 4.1.2
       pino:
         specifier: ^10.3.1
         version: 10.3.1
@@ -376,19 +376,19 @@ importers:
         version: link:../email
       '@better-auth/drizzle-adapter':
         specifier: 'catalog:'
-        version: 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))
+        version: 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))
       '@better-auth/expo':
         specifier: 'catalog:'
-        version: 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(better-auth@1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0))))(expo-constants@57.0.19)(expo-linking@57.0.10)(expo-network@57.0.2(expo@58.0.23)(react@19.2.3))(expo-secure-store@57.0.4(expo@58.0.23))(expo-web-browser@57.0.3(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1)))
+        version: 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(better-auth@1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0))))(expo-constants@57.0.19)(expo-linking@57.0.10)(expo-network@57.0.2(expo@58.0.23)(react@19.2.3))(expo-secure-store@57.0.4(expo@58.0.23))(expo-web-browser@57.0.3(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1)))
       better-auth:
         specifier: 'catalog:'
-        version: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0)))
+        version: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0)))
       drizzle-orm:
         specifier: 'catalog:'
-        version: 1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
+        version: 1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
       effect:
         specifier: 'catalog:'
-        version: 4.0.5
+        version: 4.1.2
       pg:
         specifier: 'catalog:'
         version: 8.23.0
@@ -410,7 +410,7 @@ importers:
         version: 8.23.1
       auth:
         specifier: 'catalog:'
-        version: 1.7.16(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3)(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@8.1.1)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0)))
+        version: 1.7.16(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3)(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@8.1.1)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0)))
       eslint:
         specifier: 'catalog:'
         version: 10.10.0(jiti@2.7.0)(supports-color@8.1.1)
@@ -428,7 +428,7 @@ importers:
     dependencies:
       effect:
         specifier: 'catalog:'
-        version: 4.0.5
+        version: 4.1.2
     devDependencies:
       '@ankaa/eslint':
         specifier: workspace:*
@@ -461,14 +461,14 @@ importers:
         specifier: workspace:*
         version: link:../core
       '@effect/sql-pg':
-        specifier: 4.0.5
-        version: 4.0.5(effect@4.0.5)
+        specifier: 4.1.2
+        version: 4.1.2(effect@4.1.2)
       drizzle-orm:
         specifier: 'catalog:'
-        version: 1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.4)
+        version: 1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.4)
       effect:
         specifier: 'catalog:'
-        version: 4.0.5
+        version: 4.1.2
       pg:
         specifier: 'catalog:'
         version: 8.23.0
@@ -517,7 +517,7 @@ importers:
     dependencies:
       effect:
         specifier: 'catalog:'
-        version: 4.0.5
+        version: 4.1.2
       resend:
         specifier: ^6.28.1
         version: 6.28.1
@@ -1188,14 +1188,8 @@ packages:
       '@better-auth/utils': ^0.4.2 || ^0.5.0
       '@better-fetch/fetch': 1.3.3
 
-  '@better-auth/utils@0.5.0':
-    resolution: {integrity: sha512-BL8W4EfIZFwlu0r54m3v1ztjDhu6dDe/amLTm0xybmbZaNgYUqhD3SjpAsnq0q8YD6/ki4iwIgxJNLP/N3TxiA==}
-
   '@better-auth/utils@0.5.1':
     resolution: {integrity: sha512-WETqw5vQ52uQ/xwWR4E8rTgT6fDEr/wnS+otDNkBCa/69281FCF32OKDdQUcahMCnjsvqXBNiEvAQHFB0EVRRg==}
-
-  '@better-fetch/fetch@1.3.2':
-    resolution: {integrity: sha512-Gs7n99b5tqUC6cQAPbV0uED3IraHB6xQbHLQ/C3l7ZFafHScOx9pQ+DYmP5blbLFShVWLqxNUlI9wi4xU/X+ow==}
 
   '@better-fetch/fetch@1.3.3':
     resolution: {integrity: sha512-U6SlDt/GUWtK2JAxS/NhdoYTEim+EL1G5byz2TUj83KjLZBUpYzb5SmX0aXaCnbGkAjFKnV/o/0+cyXMbEcqqg==}
@@ -1263,10 +1257,10 @@ packages:
   '@drizzle-team/brocli@0.12.1':
     resolution: {integrity: sha512-yHwomvolVafvUXhy5TdiJVkuNCxXn+bKOs2aWiWEQh/5YaV97Oa/abJz3dmx7lxgIUsUlS1Jl4mEfvJPo3YsVw==}
 
-  '@effect/sql-pg@4.0.5':
-    resolution: {integrity: sha512-F9tG76H+aryhYcp5pvgd+MwWrNltv3XAuLcZSBsOOX6q+PEl+IM4zkQKzx0TF9OsEMH/SQ+3gZRdYWOsDF+vJQ==}
+  '@effect/sql-pg@4.1.2':
+    resolution: {integrity: sha512-0UehR7B5W8dC+dX6fDeWStLbVbBb2M4pk4HBATEeH0cmV4Odl2lckTg0jFmLuadekTLa4OyB+bZQo1yTG1y2Mw==}
     peerDependencies:
-      effect: ^4.0.5
+      effect: ^4.1.2
 
   '@emnapi/core@1.10.0':
     resolution: {integrity: sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw==}
@@ -3803,11 +3797,6 @@ packages:
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
-  baseline-browser-mapping@2.11.20:
-    resolution: {integrity: sha512-H0ulySigv6icDJ1F7SjtdCD6PrhTpdYCmP0CactWy1+ekh0AFd0o1Wn5T8b+hnTmdBx19u9yhL6wvCylXMY7zw==}
-    engines: {node: '>=6.0.0'}
-    hasBin: true
-
   baseline-browser-mapping@2.11.34:
     resolution: {integrity: sha512-Aqr8mA1kIvyJ3UY5YAY7ib8LSo1DmDMbMnVqGPtsKW1LxaFQFwn9Eb3yvq2fUKJsRvaXjnAV7R5osqETapzNiA==}
     engines: {node: '>=6.0.0'}
@@ -3922,11 +3911,6 @@ packages:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
     engines: {node: '>=8'}
 
-  browserslist@4.28.8:
-    resolution: {integrity: sha512-V2NpofLblG64mfOtSgDhOJESZEGogzDMBv/q+W6oc4LXWP/q75eOXoOaaOu1EOadB9U4Bwx/e0yzbvwKH8zalA==}
-    engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
-    hasBin: true
-
   browserslist@4.29.5:
     resolution: {integrity: sha512-khTmKu5NGYTotqcYo8Bew2k4RAE9PuXRSFRXG2lQBrCEQHyeQ/vX6gKMxfokwywBsLiXZMnHsmWMG1pnO8J7uQ==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
@@ -4026,9 +4010,6 @@ packages:
   camelcase@6.3.0:
     resolution: {integrity: sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==}
     engines: {node: '>=10'}
-
-  caniuse-lite@1.0.30001810:
-    resolution: {integrity: sha512-TITQPUkaz+aVk5GL6NhOdwk1aEaNTSDPsGFWrTuhKGtjTF70jL/Oht2W4c6rXUe5fu7Ie19VIahAXHIIiWWNeg==}
 
   caniuse-lite@1.0.30001819:
     resolution: {integrity: sha512-LFUqIIAwpzsIuevnKnsR9qnStBcgzPShTX61lBwN9uFkkf8o8zLiebEjbW8AYtZiF+1YKDWfdt/pWDtMuG8Xwg==}
@@ -4604,11 +4585,8 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
-  effect@4.0.5:
-    resolution: {integrity: sha512-BY4/28NlpOd99yzmV741xbVGmp+1U7tks4oB7F/Png64bTa5tm5eCA6W0RiXsnuLDDoJpjfVSo4Dnq4BZb/89Q==}
-
-  electron-to-chromium@1.5.418:
-    resolution: {integrity: sha512-UzS26r3AEbG5wSoGVpJKqwHIU9zwQN7LHdVIThDrJpS0I5KdlXFMEb8543fhc9dVnIIAST6ar8rhwa00AL5MlA==}
+  effect@4.1.2:
+    resolution: {integrity: sha512-d3Oah1WyKxFLFh19yWheS5IXIVaITzxZ71JkE1rkUozq/6EcJSU5nPk5bF2QrSygZ3SQoiNQB8TsxFriyMeMaQ==}
 
   electron-to-chromium@1.5.467:
     resolution: {integrity: sha512-Nw9X371rtZmYcBSnEijnCDONILjs93biCZO34juC7MBOmK8E+GFnyD4T/WvyrlJkppul7oxg6TwvtKst9SODTw==}
@@ -5291,9 +5269,6 @@ packages:
 
   fast-wrap-ansi@0.2.2:
     resolution: {integrity: sha512-7F2Fl+TjRSenLqlU3UjSH0iyqopqoZIu7eZVpEirP2g1GtWa2G/ecEmBdgz31+Mxr+ELclgg6sokpSFIQiZ02Q==}
-
-  fastify-plugin@6.0.0:
-    resolution: {integrity: sha512-fZOty7z3O7vOliF6d8bHE3wiEh1KcNnKEQensSgTk9C1DvN6nRLS++XVd86v33Hw/8u9Un8A1zDrQ8ujcQDHEg==}
 
   fastify-plugin@6.0.1:
     resolution: {integrity: sha512-4wW4RxSmvPXLrh5mgQEiu43qU3bw44N2ss4FTkTkQIbprUhE+/s43QX0j/ttcztdWK7PEkHqVthdc5GdEGDvjA==}
@@ -6795,10 +6770,6 @@ packages:
   node-int64@0.4.0:
     resolution: {integrity: sha512-O5lz91xSOeoXP6DulyHfllpq+Eg00MWitZIbtPfoSEvqIHdl5gfcY6hYzDWnj0qD5tz52PI08u9qUvSVeUBeHw==}
 
-  node-releases@2.0.54:
-    resolution: {integrity: sha512-YHs7BmmcsdAI5Ozuf8JZo6PT0mv2GIWC9vMfvUC3dp65M8hn7Ux8CPL+2oBI7juNuj9d0ndhTcznq2ODBps9cQ==}
-    engines: {node: '>=18'}
-
   node-releases@2.0.60:
     resolution: {integrity: sha512-OmO8+GM1JUZqXET720VrJCwkjUCXmCMQm0Z3UDDRbfNLHS4NEAvY60j5jiFv0tkKw2PNNlqOLhahVmwJIOLDIQ==}
     engines: {node: '>=18'}
@@ -8165,12 +8136,6 @@ packages:
   unrs-resolver@1.12.2:
     resolution: {integrity: sha512-dmlRxBJJayXjqTwC+JtF1HhJmgf3ftQ3YejFcZrf4+KKtJv0qDsK1pjqaaVjG7wJ5NJ6UVP1OqRMQ71Z4C3rxQ==}
 
-  update-browserslist-db@1.3.2:
-    resolution: {integrity: sha512-UQ+MSxlhRm1bzjhU+DcuXfjFO1FzNtqhK5+9Yvlp90ItDLk5vT932A0rFu619nf7RVS+Y/VeaUW1jaRDqZ8VJw==}
-    hasBin: true
-    peerDependencies:
-      browserslist: '>= 4.21.0'
-
   update-browserslist-db@1.3.4:
     resolution: {integrity: sha512-t8wonIOdQyOjtPd2VktlBu6QjTVTks6v8bSi7kd0r2Vll8TK1JYDZtRRdbmCHOAMphkZgrzK+L+vXK4pyZ8t4A==}
     hasBin: true
@@ -9134,39 +9099,39 @@ snapshots:
       nanostores: 1.5.3
       zod: 4.6.7
 
-  '@better-auth/drizzle-adapter@1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))':
+  '@better-auth/drizzle-adapter@1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))':
     dependencies:
       '@better-auth/core': 1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3)
       '@better-auth/utils': 0.5.1
     optionalDependencies:
-      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
+      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
 
-  '@better-auth/drizzle-adapter@1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7))':
+  '@better-auth/drizzle-adapter@1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7))':
     dependencies:
       '@better-auth/core': 1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3)
       '@better-auth/utils': 0.5.1
     optionalDependencies:
-      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7)
+      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7)
 
-  '@better-auth/drizzle-adapter@1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))':
+  '@better-auth/drizzle-adapter@1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))':
     dependencies:
       '@better-auth/core': 1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3)
       '@better-auth/utils': 0.5.1
     optionalDependencies:
-      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
+      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
 
-  '@better-auth/drizzle-adapter@1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4))':
+  '@better-auth/drizzle-adapter@1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4))':
     dependencies:
       '@better-auth/core': 1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3)
       '@better-auth/utils': 0.5.1
     optionalDependencies:
-      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
+      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
 
-  '@better-auth/expo@1.7.16(1d0b9691ffdb00c3e1de9c48d10c4a96)':
+  '@better-auth/expo@1.7.16(33fd612367c75a2a0647e6efc4485b5e)':
     dependencies:
       '@better-auth/core': 1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3)
       '@better-fetch/fetch': 1.3.3
-      better-auth: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7))(pg@8.23.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@5.0.5(@types/node@26.4.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1)))
+      better-auth: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7))(pg@8.23.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@5.0.5(@types/node@26.4.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1)))
       better-call: 1.4.5(zod@4.6.7)
       zod: 4.6.7
     optionalDependencies:
@@ -9176,11 +9141,11 @@ snapshots:
       expo-secure-store: 58.0.2(expo@58.0.23)
       expo-web-browser: 58.0.7(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))
 
-  '@better-auth/expo@1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(better-auth@1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0))))(expo-constants@57.0.19)(expo-linking@57.0.10)(expo-network@57.0.2(expo@58.0.23)(react@19.2.3))(expo-secure-store@57.0.4(expo@58.0.23))(expo-web-browser@57.0.3(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1)))':
+  '@better-auth/expo@1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(better-auth@1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0))))(expo-constants@57.0.19)(expo-linking@57.0.10)(expo-network@57.0.2(expo@58.0.23)(react@19.2.3))(expo-secure-store@57.0.4(expo@58.0.23))(expo-web-browser@57.0.3(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1)))':
     dependencies:
       '@better-auth/core': 1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3)
       '@better-fetch/fetch': 1.3.3
-      better-auth: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0)))
+      better-auth: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0)))
       better-call: 1.4.5(zod@4.6.7)
       zod: 4.6.7
     optionalDependencies:
@@ -9246,15 +9211,9 @@ snapshots:
       '@better-auth/utils': 0.5.1
       '@better-fetch/fetch': 1.3.3
 
-  '@better-auth/utils@0.5.0':
-    dependencies:
-      '@noble/hashes': 2.4.0
-
   '@better-auth/utils@0.5.1':
     dependencies:
       '@noble/hashes': 2.4.0
-
-  '@better-fetch/fetch@1.3.2': {}
 
   '@better-fetch/fetch@1.3.3': {}
 
@@ -9321,9 +9280,9 @@ snapshots:
 
   '@drizzle-team/brocli@0.12.1': {}
 
-  '@effect/sql-pg@4.0.5(effect@4.0.5)':
+  '@effect/sql-pg@4.1.2(effect@4.1.2)':
     dependencies:
-      effect: 4.0.5
+      effect: 4.1.2
 
   '@emnapi/core@1.10.0':
     dependencies:
@@ -10267,7 +10226,7 @@ snapshots:
 
   '@fastify/helmet@13.2.0':
     dependencies:
-      fastify-plugin: 6.0.0
+      fastify-plugin: 6.0.1
       helmet: 8.3.0
 
   '@fastify/merge-json-schemas@0.2.1':
@@ -10282,14 +10241,14 @@ snapshots:
   '@fastify/rate-limit@11.2.2':
     dependencies:
       '@lukeed/ms': 2.0.2
-      fastify-plugin: 6.0.0
+      fastify-plugin: 6.0.1
       ip-address: 10.7.2
       toad-cache: 3.7.4
 
   '@fastify/under-pressure@9.2.1':
     dependencies:
       '@fastify/error': 4.2.0
-      fastify-plugin: 6.0.0
+      fastify-plugin: 6.0.1
 
   '@felipecrs/decompress-tarxz@5.0.4(supports-color@8.1.1)':
     dependencies:
@@ -12124,7 +12083,7 @@ snapshots:
 
   atomic-sleep@1.0.0: {}
 
-  auth@1.7.16(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3)(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@8.1.1)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0))):
+  auth@1.7.16(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3)(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@8.1.1)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0))):
     dependencies:
       '@babel/core': 7.29.7(supports-color@8.1.1)
       '@babel/preset-react': 7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1)
@@ -12134,7 +12093,7 @@ snapshots:
       '@better-auth/utils': 0.5.1
       '@clack/prompts': 1.8.0
       '@mrleebo/prisma-ast': 0.16.0
-      better-auth: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0)))
+      better-auth: 1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0)))
       c12: 4.0.0-rc.1(dotenv@17.4.2)(jiti@2.7.0)
       chalk: 5.6.2
       commander: 15.0.0
@@ -12412,18 +12371,16 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  baseline-browser-mapping@2.11.20: {}
-
   baseline-browser-mapping@2.11.34: {}
 
   bcrypt-pbkdf@1.0.2:
     dependencies:
       tweetnacl: 0.14.5
 
-  better-auth@1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7))(pg@8.23.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@5.0.5(@types/node@26.4.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))):
+  better-auth@1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7))(pg@8.23.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@5.0.5(@types/node@26.4.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))):
     dependencies:
       '@better-auth/core': 1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3)
-      '@better-auth/drizzle-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7))
+      '@better-auth/drizzle-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7))
       '@better-auth/kysely-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(kysely@0.29.5)
       '@better-auth/memory-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)
       '@better-auth/mongo-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)
@@ -12441,7 +12398,7 @@ snapshots:
       zod: 4.6.7
     optionalDependencies:
       drizzle-kit: 1.0.0-rc.4
-      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7)
+      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7)
       pg: 8.23.0
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
@@ -12449,10 +12406,10 @@ snapshots:
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  better-auth@1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(jsdom@20.0.3(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))):
+  better-auth@1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(jsdom@20.0.3(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))):
     dependencies:
       '@better-auth/core': 1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3)
-      '@better-auth/drizzle-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))
+      '@better-auth/drizzle-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))
       '@better-auth/kysely-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(kysely@0.29.5)
       '@better-auth/memory-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)
       '@better-auth/mongo-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)
@@ -12470,7 +12427,7 @@ snapshots:
       zod: 4.6.7
     optionalDependencies:
       drizzle-kit: 1.0.0-rc.4
-      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
+      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
       pg: 8.23.0
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
@@ -12478,10 +12435,10 @@ snapshots:
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  better-auth@1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0))):
+  better-auth@1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(vite@8.3.4(@types/node@26.4.1)(jiti@2.7.0))):
     dependencies:
       '@better-auth/core': 1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3)
-      '@better-auth/drizzle-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))
+      '@better-auth/drizzle-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4))
       '@better-auth/kysely-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(kysely@0.29.5)
       '@better-auth/memory-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)
       '@better-auth/mongo-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.4))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)
@@ -12499,7 +12456,7 @@ snapshots:
       zod: 4.6.7
     optionalDependencies:
       drizzle-kit: 1.0.0-rc.4
-      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
+      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
       pg: 8.23.0
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
@@ -12507,10 +12464,10 @@ snapshots:
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  better-auth@1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(jsdom@20.0.3(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))):
+  better-auth@1.7.16(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4))(pg@8.23.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@5.0.5(@types/node@26.4.1)(jsdom@20.0.3(supports-color@8.1.1))(vite@8.3.4(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))):
     dependencies:
       '@better-auth/core': 1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3)
-      '@better-auth/drizzle-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4))
+      '@better-auth/drizzle-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4))
       '@better-auth/kysely-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)(kysely@0.29.5)
       '@better-auth/memory-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)
       '@better-auth/mongo-adapter': 1.7.16(@better-auth/core@1.7.16(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-call@1.4.5(zod@4.6.7))(jose@6.2.12)(kysely@0.29.5)(nanostores@1.5.3))(@better-auth/utils@0.5.1)
@@ -12528,7 +12485,7 @@ snapshots:
       zod: 4.6.7
     optionalDependencies:
       drizzle-kit: 1.0.0-rc.4
-      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
+      drizzle-orm: 1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4)
       pg: 8.23.0
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
@@ -12538,8 +12495,8 @@ snapshots:
 
   better-call@1.4.5(zod@4.6.4):
     dependencies:
-      '@better-auth/utils': 0.5.0
-      '@better-fetch/fetch': 1.3.2
+      '@better-auth/utils': 0.5.1
+      '@better-fetch/fetch': 1.3.3
       rou3: 0.9.2
       set-cookie-parser: 3.1.2
     optionalDependencies:
@@ -12547,8 +12504,8 @@ snapshots:
 
   better-call@1.4.5(zod@4.6.7):
     dependencies:
-      '@better-auth/utils': 0.5.0
-      '@better-fetch/fetch': 1.3.2
+      '@better-auth/utils': 0.5.1
+      '@better-fetch/fetch': 1.3.3
       rou3: 0.9.2
       set-cookie-parser: 3.1.2
     optionalDependencies:
@@ -12597,14 +12554,6 @@ snapshots:
   braces@3.0.3:
     dependencies:
       fill-range: 7.1.1
-
-  browserslist@4.28.8:
-    dependencies:
-      baseline-browser-mapping: 2.11.20
-      caniuse-lite: 1.0.30001810
-      electron-to-chromium: 1.5.418
-      node-releases: 2.0.54
-      update-browserslist-db: 1.3.2(browserslist@4.28.8)
 
   browserslist@4.29.5:
     dependencies:
@@ -12698,8 +12647,6 @@ snapshots:
   camelcase@5.3.1: {}
 
   camelcase@6.3.0: {}
-
-  caniuse-lite@1.0.30001810: {}
 
   caniuse-lite@1.0.30001819: {}
 
@@ -12856,7 +12803,7 @@ snapshots:
 
   core-js-compat@3.50.0:
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.5
 
   core-util-is@1.0.3: {}
 
@@ -13123,44 +13070,44 @@ snapshots:
       get-tsconfig: 4.14.3
       jiti: 2.7.0
 
-  drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7):
+  drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.7):
     optionalDependencies:
-      '@effect/sql-pg': 4.0.5(effect@4.0.5)
+      '@effect/sql-pg': 4.1.2(effect@4.1.2)
       '@sinclair/typebox': 0.34.52
       '@types/pg': 8.23.1
-      effect: 4.0.5
+      effect: 4.1.2
       expo-sqlite: 57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       pg: 8.23.0
       zod: 4.6.7
     optional: true
 
-  drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4):
+  drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(pg@8.23.0)(zod@4.6.4):
     optionalDependencies:
-      '@effect/sql-pg': 4.0.5(effect@4.0.5)
+      '@effect/sql-pg': 4.1.2(effect@4.1.2)
       '@sinclair/typebox': 0.34.52
       '@types/pg': 8.23.1
-      effect: 4.0.5
+      effect: 4.1.2
       expo-sqlite: 57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)
       pg: 8.23.0
       zod: 4.6.4
     optional: true
 
-  drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.4):
+  drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(pg@8.23.0)(zod@4.6.4):
     optionalDependencies:
-      '@effect/sql-pg': 4.0.5(effect@4.0.5)
+      '@effect/sql-pg': 4.1.2(effect@4.1.2)
       '@sinclair/typebox': 0.34.52
       '@types/pg': 8.23.1
-      effect: 4.0.5
+      effect: 4.1.2
       expo-sqlite: 57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       pg: 8.23.0
       zod: 4.6.4
 
-  drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.0.5(effect@4.0.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.0.5)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4):
+  drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.2(effect@4.1.2))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.2)(expo-sqlite@57.0.4(react@19.2.3))(pg@8.23.0)(zod@4.6.4):
     optionalDependencies:
-      '@effect/sql-pg': 4.0.5(effect@4.0.5)
+      '@effect/sql-pg': 4.1.2(effect@4.1.2)
       '@sinclair/typebox': 0.34.52
       '@types/pg': 8.23.1
-      effect: 4.0.5
+      effect: 4.1.2
       expo-sqlite: 57.0.4(expo@58.0.23)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)
       pg: 8.23.0
       zod: 4.6.4
@@ -13175,9 +13122,7 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  effect@4.0.5: {}
-
-  electron-to-chromium@1.5.418: {}
+  effect@4.1.2: {}
 
   electron-to-chromium@1.5.467: {}
 
@@ -14337,8 +14282,6 @@ snapshots:
   fast-wrap-ansi@0.2.2:
     dependencies:
       fast-string-width: 3.0.2
-
-  fastify-plugin@6.0.0: {}
 
   fastify-plugin@6.0.1: {}
 
@@ -16542,8 +16485,6 @@ snapshots:
 
   node-int64@0.4.0: {}
 
-  node-releases@2.0.54: {}
-
   node-releases@2.0.60: {}
 
   normalize-path@3.0.0: {}
@@ -18292,12 +18233,6 @@ snapshots:
       '@unrs/resolver-binding-win32-arm64-msvc': 1.12.2
       '@unrs/resolver-binding-win32-ia32-msvc': 1.12.2
       '@unrs/resolver-binding-win32-x64-msvc': 1.12.2
-
-  update-browserslist-db@1.3.2(browserslist@4.28.8):
-    dependencies:
-      browserslist: 4.28.8
-      escalade: 3.2.0
-      picocolors: 1.1.1
 
   update-browserslist-db@1.3.4(browserslist@4.29.5):
     dependencies:

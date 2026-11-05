@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@ankaa/core": "workspace:*",
-    "@effect/sql-pg": "4.0.5",
+    "@effect/sql-pg": "4.1.2",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "pg": "catalog:"
