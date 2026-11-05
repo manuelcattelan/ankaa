@@ -1,6 +1,6 @@
 ---
 name: bump
-description: Upgrades the dependencies that Renovate's Dependency Dashboard issue lists, vulnerability fixes included, on one branch and pull request, following Expo's procedure for the mobile app. Use when the maintainer asks to upgrade, bump or update dependencies.
+description: Upgrades the dependencies that Renovate's Dependency Dashboard issue lists, vulnerability fixes included, on one branch, following Expo's procedure for the mobile app. Use when the maintainer asks to upgrade, bump or update dependencies.
 disable-model-invocation: true
 ---
 
@@ -19,7 +19,7 @@ gh issue view <number>
 
 - **Pending Approval** lists the updates to make. An entry that ends in `[security]` fixes a known vulnerability: make it even when the rest of the session stops short.
 - **Pending Status Checks** lists releases still inside Renovate's 3-day `minimumReleaseAge`. Skip them, because they move to Pending Approval once they're old enough.
-- **Abandoned Dependencies** lists packages with no release for a long time. Don't replace one: name it in the pull request, because replacing a dependency is the maintainer's decision.
+- **Abandoned Dependencies** lists packages with no release for a long time. Don't replace one: tell the maintainer, because replacing a dependency is the maintainer's decision.
 - **Detected Dependencies** is the inventory of every dependency and where it's declared. Use it to find each file that a package's version lives in.
 
 Never tick a checkbox and never edit or close the issue. A ticked checkbox makes Renovate open its own branch and pull request, which would conflict with this branch. An entry leaves the dashboard by itself once Renovate's next run sees the upgrade on `main`.
@@ -42,7 +42,7 @@ Expo decides the versions of the mobile app's packages, and its versions win ove
   Then read that SDK's changelog and upgrade guide, and Expo Router's migration guide, and adapt the code to every breaking change.
 
 - Install every other mobile package with `pnpm --filter @ankaa/mobile exec expo install <package>@<version>`, as `apps/mobile/AGENTS.md` requires.
-- Leave a dashboard entry whose version is above what the SDK allows, such as a `react-native-*` version a later SDK pins, and name it in the pull request. It stays on the dashboard until a later SDK allows it.
+- Leave a dashboard entry whose version is above what the SDK allows, such as a `react-native-*` version a later SDK pins, and tell the maintainer. It stays on the dashboard until a later SDK allows it.
 - pnpm waits 1 day before it installs a new release. When `expo install --fix` asks for a version younger than that, stop and tell the maintainer to run the session again the next day, and never lower `minimumReleaseAge`.
 - When a package with native code changes, or the SDK does, build the app with `pnpm --filter @ankaa/mobile exec expo prebuild --clean` and `pnpm --filter @ankaa/mobile exec expo run:ios --no-bundler`, because CI doesn't build it, and a version off the SDK can pass every test and still break the native build.
 
@@ -54,27 +54,4 @@ Expo decides the versions of the mobile app's packages, and its versions win ove
 
 Keep `pnpm-lock.yaml` one YAML document. If a `packageManagerDependencies` document comes back at its top, `pmOnFail: ignore` has been lost from `pnpm-workspace.yaml`, and GitHub's dependency graph, and with it Renovate's vulnerability data, stops reading the lockfile.
 
-When an upgrade breaks something you can't fix within the session, revert that group, leave its entry on the dashboard, and name it in the pull request with what broke.
-
-## Check
-
-Start Docker before the tests. Every check must pass:
-
-- `pnpm format`, `pnpm lint --continue`, `pnpm check-types --continue` and `pnpm test --continue`.
-- `pnpm check-versions:mobile`, the check that CI's `quality` job runs.
-- `cd apps/mobile && pnpm dlx expo-doctor`, when a mobile package moved.
-- `pnpm install --frozen-lockfile`, which must leave `pnpm-lock.yaml` unchanged.
-- The development build, when native code changed.
-
-## Open the pull request
-
-Push the branch and open a pull request against `main`. Its description has these sections, as [#184](https://github.com/manuelcattelan/ankaa/pull/184) does:
-
-- **What moves**: each group of packages, from its old version to its new one.
-- **Changes for the breaking changes**: each code change, with the breaking change it answers and a link to its source.
-- **Decisions to review**: anything the maintainer should confirm, such as a lint rule turned off.
-- **Not in this pull request**: every dashboard entry left, with its reason: still under 3 days old, above what the SDK allows, broken, or abandoned.
-- **Checked**: the checks above and their results.
-- **After merging**: rebuild the development build when native code changed.
-
-Never deploy the server or the app, because `INFRASTRUCTURE.md` allows a deploy only when the maintainer asks.
+When an upgrade breaks something you can't fix within the session, revert that group, leave its entry on the dashboard, and tell the maintainer what broke.
