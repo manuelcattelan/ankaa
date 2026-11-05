@@ -23,7 +23,7 @@ const typeDeclarationTypes = new Set<string>([
 ]);
 
 export const filenameMatchExport = createRule({
-  create: (context) => ({
+  create: (context: FilenameMatchExportContext) => ({
     Program: (program) => {
       const exportedNames = program.body.flatMap((statement) =>
         getExportedNames({ context, statement }),
@@ -55,7 +55,6 @@ export const filenameMatchExport = createRule({
       }
     },
   }),
-  defaultOptions: [],
   meta: {
     docs: {
       description:

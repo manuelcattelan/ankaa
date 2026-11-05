@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "effect": "catalog:",
-    "resend": "^6.28.1"
+    "resend": "^6.37.0"
   },
   "devDependencies": {
     "@ankaa/eslint": "workspace:*",
