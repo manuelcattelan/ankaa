@@ -68,7 +68,7 @@ const STATEMENT_SLOTS_BY_TYPE: Partial<Record<string, Slot>> = {
 };
 
 export const componentOrder = createRule({
-  create: (context) => ({
+  create: (context: ComponentOrderContext) => ({
     ArrowFunctionExpression: (node) => {
       checkComponentOrder({ context, node });
     },
@@ -79,7 +79,6 @@ export const componentOrder = createRule({
       checkComponentOrder({ context, node });
     },
   }),
-  defaultOptions: [],
   meta: {
     docs: {
       description:
