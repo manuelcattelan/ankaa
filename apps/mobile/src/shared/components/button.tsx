@@ -1,9 +1,9 @@
 import * as ReactNative from "react-native";
 
 import { Text } from "#/shared/components/text.tsx";
-import { MINIMUM_TOUCH_TARGET_SIZE } from "#/shared/constants/minimum-touch-target-size.ts";
 import { color } from "#/shared/tokens/color.ts";
 import { opacity } from "#/shared/tokens/opacity.ts";
+import { sizing } from "#/shared/tokens/sizing.ts";
 
 export function Button({
   disabled,
@@ -35,7 +35,7 @@ export function Button({
 }
 
 const styles = ReactNative.StyleSheet.create({
-  button: { minHeight: MINIMUM_TOUCH_TARGET_SIZE },
+  button: { minHeight: sizing.minimumHitTarget },
   disabled: { opacity: opacity.disabled },
   title: { color: color.accentForeground },
 });

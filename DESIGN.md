@@ -53,7 +53,7 @@ These settings aren't Modifiers:
 The design system lives in `apps/mobile/src/shared/`, with no package and no barrel. No documented default; chosen for Ankaa under the root `AGENTS.md`'s Structure rules, and Expo's skill defers to a project's own system ([#227](https://github.com/manuelcattelan/ankaa/issues/227)).
 
 - `tokens/` holds one file per family, named after it, such as `tokens/color.ts`, and no `…-primitives` file.
-- `core/` holds the Resolver: `mergeTokenSets`, `resolveReferences`, `resolveColors` and `composeColor`. Lint lets only `tokens/` and the Resolver's tests import these module-load files.
+- `core/` holds the Resolver: `mergeTokenSets`, `resolveReferences`, `resolveColors`, `composeColor` and `computeConcentricRadius`. Lint lets only `tokens/` and the Resolver's tests import these module-load files.
 
 Tokens are typed TypeScript objects that mirror DTCG's sets, Modifiers, Contexts, Resolution order and references, resolved at module load by Ankaa's pure Core Resolver, which throws on a missing input. A reference is typed as the name of a primitive, so a broken one fails to compile. No documented default; chosen for Ankaa because DTCG specifies only JSON, Terrazzo is async and unverified on Hermes, and Style Dictionary doesn't fully support 2025.10.
 
@@ -111,11 +111,31 @@ Until values are chosen, the roles the migration uses (`color.foreground`, `colo
 
 ## Spacing
 
+- Spacing is one scale of [Scale steps](#scale-step) on a 4-point grid, from `spacing.xs` to `spacing.xxxl`, which may grow non-linearly at the large end and never scales with text size. This follows Expo's [`expo-design-system`](https://github.com/expo/skills/blob/main/plugins/expo/skills/expo-design-system/SKILL.md) skill, plus Carbon's and Atlassian's large steps: containers grow because their text does, and no system scales spacing.
+- The two [Screen margins](#screen-margin), `spacing.horizontalScreenMargin` and `spacing.verticalScreenMargin`, are applied as `contentContainerStyle` padding on top of the insets iOS reserves, and safe-area insets are never tokens. The shared `ScrollView` applies both as its default `contentContainerStyle`, which a caller may override, and keeps `contentInsetAdjustmentBehavior="automatic"`. For the vertical margin there's no documented default; chosen for Ankaa because `automatic` insets alone let content touch the bars.
+- Siblings use `gap`, and insets use `padding`, as Expo's `expo-design-system` and `expo-native-ui` skills prescribe.
+- No setting changes a spacing, so spacing has no Contexts, and code may use a spacing primitive, such as `spacing.md`, when no [Pattern token](#pattern-token) fits.
+
 ## Sizing
+
+- The [Hit target](#hit-target) is `sizing.minimumHitTarget`, at Apple's 44 pt. A control meets it through its own `minHeight` and `minWidth`, as `Button` and `TextInput` do, and takes `hitSlop` only when the layout can't fit it, because `hitSlop` stops at the parent's bounds. The HIG asks for "a hit region of at least 44x44 pt".
+- A sizing token for something that holds text is applied as `minHeight`, never `height`, so the container grows with its text.
+- A scalable sizing token pairs with one [Text style](#text-style) and scales by its growth, as icons do, with no cap. The Hit target and minimum sizes never scale. This follows Apple's `@ScaledMetric(relativeTo:)`.
+- There's no layout-direction token and no stacking pattern. Every component works at every text size, as Apple requires, and a component that needs a switch reads whether the text size is an [Accessibility category](#accessibility-category), since Apple's components react in opposite directions on that flag.
+- A third-party view that takes a fixed `height`, such as Apple's sign-in button, keeps a local constant until it's rebuilt.
 
 ## Borders
 
+- Border widths are `borders.hairlineWidth`, bound to `StyleSheet.hairlineWidth`, plus t-shirt [Scale steps](#scale-step), with two Semantic tokens: `borders.separatorWidth` (the hairline), paired with `color.separator`, and `borders.width` (the default), paired with `color.border`, like Atlassian's `border.width`. Until values are chosen, `borders.width` is the hairline, the width of today's text field outline.
+- There are no border style tokens, every border is solid, and widths take no Modifier: no system tokenizes style, dashed and dotted borders lose continuous corners, and Apple's Increase Contrast guidance covers only colors.
+
 ## Radius
+
+- `radius.capsule` draws a [Capsule](#capsule). It's a large number that React Native clamps to half the view's shorter side, never a percentage, because `'50%'` draws an ellipse on a view that isn't square.
+- A [Concentric radius](#concentric-radius) is a Semantic token computed at module load with `computeConcentricRadius`, as `max(parent radius − padding, fallback radius)`, its [Fallback radius](#fallback-radius) being the floor. This is Apple's formula ([WWDC25 356](https://developer.apple.com/videos/play/wwdc2025/356/)), which React Native has no API for.
+- Every non-zero radius except `radius.capsule` pairs with `borderCurve: 'continuous'`, following Expo's `expo-native-ui` skill, so corners curve as Apple's do.
+- A shape that floats near the screen's edge is a Capsule with extra margin, per WWDC25 356.
+- No setting changes a radius, so radius has no Contexts, and code may use a radius primitive, such as `radius.md`.
 
 ## Shadows
 

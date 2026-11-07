@@ -62,6 +62,11 @@ const COLOR_KEY_PATTERN = "/^(?:c|.+C)olor$/";
 
 const NATIVE_COLOR_API_PATTERN = "/^(?:DynamicColorIOS|PlatformColor)$/";
 
+const HORIZONTAL_SIDE_KEY_PATTERN =
+  "/^(?:left|right|(?:margin|padding)(?:Left|Right)|border(?:Left|Right)(?:Color|Width)|border(?:Top|Bottom)(?:Left|Right)Radius)$/";
+
+const RADIUS_KEY_PATTERN = "/^border(?:[A-Z][a-z]*)*Radius$/";
+
 const DESIGN_SYSTEM_RESTRICTED_SYNTAX = [
   {
     message:
@@ -78,6 +83,26 @@ const DESIGN_SYSTEM_RESTRICTED_SYNTAX = [
       "Use DynamicColorIOS and PlatformColor only in #/shared/tokens/, so every native color is a color token that Ankaa's palette owns (DESIGN.md).",
     selector: `ImportSpecifier[imported.name=${NATIVE_COLOR_API_PATTERN}], MemberExpression[property.name=${NATIVE_COLOR_API_PATTERN}]`,
   },
+  {
+    message:
+      "Use the start or end key instead of this left or right key, such as marginStart, so the layout mirrors natively in a right-to-left language (DESIGN.md).",
+    selector: `Property[key.name=${HORIZONTAL_SIDE_KEY_PATTERN}], Property[key.value=${HORIZONTAL_SIDE_KEY_PATTERN}]`,
+  },
+  {
+    message:
+      "Take this radius from radius in #/shared/tokens/radius.ts instead of a percentage, because '50%' draws an ellipse on a view that isn't square, and radius.capsule draws a Capsule (DESIGN.md).",
+    selector: `Property[key.name=${RADIUS_KEY_PATTERN}] > :matches(Literal[value=/%$/], TemplateLiteral).value`,
+  },
+  {
+    message:
+      "Leave borderStyle unset or 'solid', because every border is solid, and dashed and dotted borders lose continuous corners (DESIGN.md).",
+    selector: "Property[key.name='borderStyle']:not([value.value='solid'])",
+  },
+  {
+    message:
+      "Set borderCurve: 'continuous' beside this radius, so its corners curve as Apple's do. Only radius.capsule goes without it (DESIGN.md).",
+    selector: `ObjectExpression:not(:has(> Property[key.name='borderCurve'][value.value='continuous'])) > Property[key.name=${RADIUS_KEY_PATTERN}]:not([value.object.name='radius'][value.property.name='capsule'])`,
+  },
 ];
 
 const TOKEN_FILES = ["src/shared/tokens/**"];
@@ -86,6 +111,7 @@ const TOKEN_FILES = ["src/shared/tokens/**"];
 // lookup, isAccessibilityCategory and getColorVariant stay open to any file.
 const MODULE_LOAD_RESOLVER_FILE_NAMES = [
   "compose-color",
+  "compute-concentric-radius",
   "merge-token-sets",
   "resolve-colors",
   "resolve-references",
@@ -126,7 +152,7 @@ const WRAPPED_PRIMITIVES_IMPORT = {
 const PRESSABLE_IMPORT = {
   importNames: ["Pressable"],
   message:
-    "Use Button from #/shared/components, so every pressable has the button role, the minimum touch target, and the disabled and busy looks.",
+    "Use Button from #/shared/components, so every pressable has the button role, the hit target, and the disabled and busy looks.",
   name: "react-native",
 };
 
