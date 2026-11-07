@@ -67,7 +67,19 @@ const HORIZONTAL_SIDE_KEY_PATTERN =
 
 const RADIUS_KEY_PATTERN = "/^border(?:[A-Z][a-z]*)*Radius$/";
 
+const COLOR_VARIANTS_RESTRICTION = {
+  message:
+    "Take an animated color from useColorVariant() in #/shared/hooks/use-color-variant.ts, and every other color from color, so a plain color is read only where it follows appearance and Increase Contrast (DESIGN.md).",
+  selector: [
+    "MemberExpression[object.name='color']:matches([property.name='variants'], [property.value='variants'])",
+    "VariableDeclarator[init.name='color'] > ObjectPattern > Property[key.name='variants']",
+  ].join(", "),
+};
+
+const COLOR_VARIANT_HOOK_FILE = "src/shared/hooks/use-color-variant.ts";
+
 const DESIGN_SYSTEM_RESTRICTED_SYNTAX = [
+  COLOR_VARIANTS_RESTRICTION,
   {
     message:
       "Take this color from color in #/shared/tokens/color.ts instead of a literal, so every color comes from the palette and follows appearance and Increase Contrast. Where nothing is painted, set no color (DESIGN.md).",
@@ -289,6 +301,20 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
           ...RESTRICTED_SYNTAX,
           ...MOBILE_RESTRICTED_SYNTAX,
           ...DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+        ],
+      },
+    },
+    // useColorVariant is the one reader of the Color variants (DESIGN.md).
+    {
+      files: [COLOR_VARIANT_HOOK_FILE],
+      rules: {
+        "no-restricted-syntax": [
+          "error",
+          ...RESTRICTED_SYNTAX,
+          ...MOBILE_RESTRICTED_SYNTAX,
+          ...DESIGN_SYSTEM_RESTRICTED_SYNTAX.filter(
+            (restriction) => restriction !== COLOR_VARIANTS_RESTRICTION,
+          ),
         ],
       },
     },

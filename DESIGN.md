@@ -53,15 +53,29 @@ These settings aren't Modifiers:
 The design system lives in `apps/mobile/src/shared/`, with no package and no barrel. No documented default; chosen for Ankaa under the root `AGENTS.md`'s Structure rules, and Expo's skill defers to a project's own system ([#227](https://github.com/manuelcattelan/ankaa/issues/227)).
 
 - `tokens/` holds one file per family, named after it, such as `tokens/color.ts`, and no `…-primitives` file.
-- `core/` holds the Resolver: `mergeTokenSets`, `resolveReferences`, `resolveColors`, `composeColor` and `computeConcentricRadius`. Lint lets only `tokens/` and the Resolver's tests import these module-load files.
+- `core/` holds the Resolver: `mergeTokenSets`, `resolveReferences`, `resolveColors`, `composeColor` and `computeConcentricRadius`. Lint lets only `tokens/` and the Resolver's tests import these module-load files. `getColorVariant` stays open to any file.
+- `providers/` and `hooks/` hold the live state: `TokenProvider`, `useTokens` and `useColorVariant`.
 
 Tokens are typed TypeScript objects that mirror DTCG's sets, Modifiers, Contexts, Resolution order and references, resolved at module load by Ankaa's pure Core Resolver, which throws on a missing input. A reference is typed as the name of a primitive, so a broken one fails to compile. No documented default; chosen for Ankaa because DTCG specifies only JSON, Terrazzo is async and unverified on Hermes, and Style Dictionary doesn't fully support 2025.10.
 
 - Source objects are `CONSTANT_CASE` literals, such as `COLOR_PRIMITIVES` and `COLOR_SETS`, and each family is exported through the Resolver as a `lowerCamelCase` object named after it, such as `color.foreground` and `opacity.disabled`. The exports are created at runtime, under the root `AGENTS.md`'s Constants rule, so code reads like the token names.
 - The primitives of color, typography and iconography stay unexported, so TypeScript blocks them. Other families export theirs, such as `opacity.percent40`.
 - A Core function returns each color Semantic token's plain `{ light, dark, highContrastLight, highContrastDark }`, and the color token file calls `DynamicColorIOS` on it, because Core lint bans React Native imports ([#229](https://github.com/manuelcattelan/ankaa/issues/229)).
-- Static tokens go into a module-level `StyleSheet.create`, as in `styles.title = { color: color.accentForeground }`.
+- Every Context is precomputed at module load, and live flags only select one. On a change, iOS switches colors itself, and the provider re-renders consumers. A running animation finishes with its config. No documented default; chosen for Ankaa because stable references come for free, which Reanimated's `exiting`/`layout` rely on, and React Compiler doesn't memoize module-level code.
+- Static tokens go into a module-level `StyleSheet.create`, as in `styles.title = { color: color.accentForeground }`. Live tokens from `useTokens()` are appended to the style array after them, and both may share a file. A `fontScale` value becomes a small style object built in render, as `Button`'s title style is. No static style holds a hook value, which is what Expo's "never mix" rule targets.
 - Any component, screens included, may import any token family, and each holds its styling inside its own perimeter: the maintainer doesn't want to force a flow of information.
+
+The live flags are Bold Text, Reduce Motion and Increase Contrast, which iOS can change while the app runs:
+
+- The `Accessibility` Service reads each one (`isBoldTextEnabled`, `isReduceMotionEnabled` and `isDarkerSystemColorsEnabled`, React Native's name for Increase Contrast), where a rejected read counts as off, and gives one change stream for each, built with `Stream.callback`, which removes its listener when the stream ends.
+- `TokenProvider`, in the Composition root, forks a module-level program in its `useEffect` and interrupts it on cleanup. The program subscribes to the three change streams before its first reads, so no change between a read and its subscription is lost, and the provider shares the flags through a React context. React recommends context for theming, `TESTING.md` swaps behavior only through Layers, and the same pattern applies to the existing Service. Tests set the flags on the `Accessibility` Fake Layer.
+- The color scheme and `fontScale` come from React Native's own hooks, `useColorScheme` and `useWindowDimensions`.
+- `SplashScreenController` keeps the splash screen up until the first reads of the three flags settle, as well as the session, Expo's `preventAutoHideAsync` pattern, so the first frame has the right settings.
+- There's no `ReducedMotionConfig` until a third-party component animating with `ReduceMotion.System` is adopted, because Reanimated reads Reduce Motion only once, at startup.
+
+`useTokens()` gives each family with a live Modifier in the Context the live flags select, and re-renders its caller when a flag changes. Families with a live Modifier export their Contexts by name, such as `typography.boldTextOff` and `typography.boldTextOn`. `useTokens()` selects them everywhere except module level, where code names its Context, as in `SlideInDown.springify(motion.reduceMotionOff.enter.duration)`. The static families have flat exports. No documented default; chosen for Ankaa so `withSpring(x, motion.move)` can't silently ignore Reduce Motion.
+
+A [Color variant](#color-variant) holds the plain colors of every color Role in one Context of appearance, because Reanimated can't animate a `DynamicColorIOS`, and never animating a color would rule out common interactions. The color token file exports the four as `color.variants[variant]`, and only `useColorVariant()` reads them, which returns the plain colors of the Color variant iOS shows now. It's built on the pure `getColorVariant()`, which combines `useColorScheme()` with live Increase Contrast into `light`, `dark`, `lightHighContrast` or `darkHighContrast`. Every color that isn't animated takes its `DynamicColorIOS` from `color`. No documented default; chosen for Ankaa: `contexts` would read like React context, and the maintainer rejected `plainValues`.
 
 Ankaa follows Expo's [`expo-design-system`](https://github.com/expo/skills/blob/main/plugins/expo/skills/expo-design-system/SKILL.md) and `expo-native-ui` skills by reference, and departs from them here:
 

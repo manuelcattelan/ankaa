@@ -195,17 +195,33 @@ const COLOR_SETS = {
   },
 } satisfies TokenSets<ColorSet>;
 
+const resolvedColors = resolveColors({
+  opacityPrimitives: opacity,
+  primitives: COLOR_PRIMITIVES,
+  sets: COLOR_SETS,
+});
+
 /**
  * The color Token family: each Role is one `DynamicColorIOS`, which iOS
  * switches between light and dark appearance, with or without Increase
  * Contrast, with no re-render. The primitives stay in this file, because a
- * primitive never follows appearance.
+ * primitive never follows appearance. `variants` holds the plain colors of
+ * every Role in each Color variant, for animated colors, which only
+ * `useColorVariant()` reads, because Reanimated can't animate a
+ * `DynamicColorIOS`.
  */
-export const color = Record.map(
-  resolveColors({
-    opacityPrimitives: opacity,
-    primitives: COLOR_PRIMITIVES,
-    sets: COLOR_SETS,
-  }),
-  (variants) => DynamicColorIOS(variants),
-);
+export const color = {
+  ...Record.map(resolvedColors, (variants) => DynamicColorIOS(variants)),
+  variants: {
+    dark: Record.map(resolvedColors, (variants) => variants.dark),
+    darkHighContrast: Record.map(
+      resolvedColors,
+      (variants) => variants.highContrastDark,
+    ),
+    light: Record.map(resolvedColors, (variants) => variants.light),
+    lightHighContrast: Record.map(
+      resolvedColors,
+      (variants) => variants.highContrastLight,
+    ),
+  },
+};

@@ -20,6 +20,7 @@ import { Text } from "#/shared/components/text.tsx";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 import { AuthClientContext } from "#/shared/providers/auth-client-context.ts";
 import { RuntimeContext } from "#/shared/providers/runtime-context.ts";
+import { TokenProvider } from "#/shared/providers/token-provider.tsx";
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 import { SplashScreenController } from "#/splash-screen-controller.tsx";
 
@@ -56,22 +57,24 @@ export default function RootLayout() {
 
   return (
     <RuntimeContext value={application.runtime}>
-      <AuthClientContext
-        value={
-          Context.get(application.context, AuthenticationClient).authClient
-        }
-      >
-        <KeyboardProvider>
-          <QueryClientProvider client={queryClient}>
-            <QueryCacheController />
-            <ThemeProvider value={getNavigationTheme(colorScheme)}>
-              <SplashScreenController />
-              <RootNavigator />
-              <StatusBar style="auto" />
-            </ThemeProvider>
-          </QueryClientProvider>
-        </KeyboardProvider>
-      </AuthClientContext>
+      <TokenProvider>
+        <AuthClientContext
+          value={
+            Context.get(application.context, AuthenticationClient).authClient
+          }
+        >
+          <KeyboardProvider>
+            <QueryClientProvider client={queryClient}>
+              <QueryCacheController />
+              <ThemeProvider value={getNavigationTheme(colorScheme)}>
+                <SplashScreenController />
+                <RootNavigator />
+                <StatusBar style="auto" />
+              </ThemeProvider>
+            </QueryClientProvider>
+          </KeyboardProvider>
+        </AuthClientContext>
+      </TokenProvider>
     </RuntimeContext>
   );
 }
