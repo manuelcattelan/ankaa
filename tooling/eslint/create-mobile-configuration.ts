@@ -121,6 +121,47 @@ const TYPOGRAPHY_FILE = "src/shared/tokens/typography.ts";
 
 const GROWTH_LOOKUP_FILE = "src/shared/core/get-text-style-growth.ts";
 
+const REDUCE_MOTION_SYSTEM_RESTRICTION = {
+  message:
+    "Pass the reduceMotion of this animation's motion Role instead of ReduceMotion.System, because Reanimated reads ReduceMotion.System only once, at startup, so it misses a change to Reduce Motion while the app runs (DESIGN.md).",
+  selector:
+    "MemberExpression[object.name='ReduceMotion']:matches([property.name='System'], [property.value='System'])",
+};
+
+const HAPTIC_ENUM_PATTERN =
+  "/^(?:ImpactFeedbackStyle|NotificationFeedbackType)$/";
+
+const HAPTIC_ENUM_RESTRICTION = {
+  message:
+    "Take this haptic from haptics in #/shared/tokens/haptics.ts, which names each of Apple's Haptic patterns by its meaning (DESIGN.md).",
+  selector: `ImportSpecifier[imported.name=${HAPTIC_ENUM_PATTERN}], MemberExpression[property.name=${HAPTIC_ENUM_PATTERN}]`,
+};
+
+const LAYOUT_ANIMATION_PROP_PATTERN = "/^(?:entering|exiting)$/";
+
+const LAYOUT_ANIMATION_PROP_RESTRICTION = {
+  message:
+    "Pass entering and exiting only to AnimatedView from #/shared/components/animated-view.tsx, because it swaps them for a fade while Reduce Motion is on (DESIGN.md).",
+  selector: [
+    `JSXAttribute[name.name=${LAYOUT_ANIMATION_PROP_PATTERN}]`,
+    `JSXSpreadAttribute Property[key.name=${LAYOUT_ANIMATION_PROP_PATTERN}]`,
+  ].join(", "),
+};
+
+const TRANSITION_KEY_PATTERN =
+  "/^transition(?:Behavior|Delay|Duration|TimingFunction)$/";
+
+const EFFECT_KEY_PATTERN = "/^(?:opacity|(?:c|.+C)olor)$/";
+
+const MOVEMENT_KEY_PATTERN =
+  "/^(?:bottom|end|height|inset\\w*|margin\\w*|(?:max|min)(?:Height|Width)|start|top|transform|width)$/";
+
+const ANIMATED_VIEW_FILE = "src/shared/components/animated-view.tsx";
+
+const ANIMATED_VIEW_TEST_FILE = "src/shared/components/animated-view.test.tsx";
+
+const HAPTICS_FILE = "src/shared/tokens/haptics.ts";
+
 const DESIGN_SYSTEM_RESTRICTED_SYNTAX = [
   COLOR_VARIANTS_RESTRICTION,
   NAMED_CONTEXT_RESTRICTION,
@@ -174,6 +215,32 @@ const DESIGN_SYSTEM_RESTRICTED_SYNTAX = [
     selector: [
       "Property[key.name='boxShadow'] > :matches(Literal[raw=/^[\"']/], TemplateLiteral).value",
       "Property[key.value='boxShadow'] > :matches(Literal[raw=/^[\"']/], TemplateLiteral).value",
+    ].join(", "),
+  },
+  REDUCE_MOTION_SYSTEM_RESTRICTION,
+  HAPTIC_ENUM_RESTRICTION,
+  LAYOUT_ANIMATION_PROP_RESTRICTION,
+  {
+    message:
+      "Set a transitionProperty that lists only opacity or colors beside this transition* key, because an omitted transitionProperty means 'all', and a CSS-style animation can't follow Reduce Motion, so it animates only opacity and color. Animate movement with withSpring and its motion Role (DESIGN.md).",
+    selector: [
+      `ObjectExpression:not(:has(> Property[key.name='transitionProperty'])) > Property[key.name=${TRANSITION_KEY_PATTERN}]`,
+      `Property[key.name='transitionProperty'] > :not(Literal[value=${EFFECT_KEY_PATTERN}], ArrayExpression).value`,
+      `Property[key.name='transitionProperty'] > ArrayExpression.value > :not(Literal[value=${EFFECT_KEY_PATTERN}])`,
+    ].join(", "),
+  },
+  {
+    message:
+      "Set each transition* key on its own instead of the transition shorthand, with a transitionProperty that lists only opacity or colors, because a CSS-style animation can't follow Reduce Motion (DESIGN.md).",
+    selector:
+      "Property[key.name='transition'], Property[key.value='transition']",
+  },
+  {
+    message:
+      "Animate only opacity and colors in a CSS-style animation, and movement with withSpring and its motion Role, because a CSS-style animation can't follow Reduce Motion (DESIGN.md).",
+    selector: [
+      `Property[key.name='animationName'] Property[key.name=${MOVEMENT_KEY_PATTERN}]`,
+      `CallExpression[callee.object.name='css'][callee.property.name='keyframes'] Property[key.name=${MOVEMENT_KEY_PATTERN}]`,
     ].join(", "),
   },
 ];
@@ -394,6 +461,21 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
         ],
       },
     },
+    // AnimatedView is the one view that takes entering and exiting
+    // (DESIGN.md).
+    {
+      files: [ANIMATED_VIEW_FILE],
+      rules: {
+        "no-restricted-syntax": [
+          "error",
+          ...RESTRICTED_SYNTAX,
+          ...MOBILE_RESTRICTED_SYNTAX,
+          ...DESIGN_SYSTEM_RESTRICTED_SYNTAX.filter(
+            (restriction) => restriction !== LAYOUT_ANIMATION_PROP_RESTRICTION,
+          ),
+        ],
+      },
+    },
     // A token file holds the raw values that the value rules keep out of
     // every other file (DESIGN.md).
     {
@@ -401,16 +483,19 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
       rules: { "@typescript-eslint/no-magic-numbers": "off" },
     },
     // Only the typography file holds text style keys, and it never sets a
-    // letter spacing of 0 (DESIGN.md).
+    // letter spacing of 0. Only the haptics file names expo-haptics' values,
+    // and no token file passes ReduceMotion.System (DESIGN.md).
     {
       files: TOKEN_FILES,
-      ignores: [TYPOGRAPHY_FILE],
+      ignores: [TYPOGRAPHY_FILE, HAPTICS_FILE],
       rules: {
         "no-restricted-syntax": [
           "error",
           ...RESTRICTED_SYNTAX,
           ...MOBILE_RESTRICTED_SYNTAX,
           TYPOGRAPHY_KEY_RESTRICTION,
+          REDUCE_MOTION_SYSTEM_RESTRICTION,
+          HAPTIC_ENUM_RESTRICTION,
         ],
       },
     },
@@ -422,6 +507,20 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
           ...RESTRICTED_SYNTAX,
           ...MOBILE_RESTRICTED_SYNTAX,
           ZERO_LETTER_SPACING_RESTRICTION,
+          REDUCE_MOTION_SYSTEM_RESTRICTION,
+          HAPTIC_ENUM_RESTRICTION,
+        ],
+      },
+    },
+    {
+      files: [HAPTICS_FILE],
+      rules: {
+        "no-restricted-syntax": [
+          "error",
+          ...RESTRICTED_SYNTAX,
+          ...MOBILE_RESTRICTED_SYNTAX,
+          TYPOGRAPHY_KEY_RESTRICTION,
+          REDUCE_MOTION_SYSTEM_RESTRICTION,
         ],
       },
     },
@@ -514,6 +613,21 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
           "error",
           ...RESTRICTED_SYNTAX,
           ...MOBILE_RESTRICTED_SYNTAX,
+          ...TEST_RESTRICTED_SYNTAX,
+        ],
+      },
+    },
+    // AnimatedView's test checks which entering and exiting it passes on.
+    {
+      files: [ANIMATED_VIEW_TEST_FILE],
+      rules: {
+        "no-restricted-syntax": [
+          "error",
+          ...RESTRICTED_SYNTAX,
+          ...MOBILE_RESTRICTED_SYNTAX,
+          ...DESIGN_SYSTEM_RESTRICTED_SYNTAX.filter(
+            (restriction) => restriction !== LAYOUT_ANIMATION_PROP_RESTRICTION,
+          ),
           ...TEST_RESTRICTED_SYNTAX,
         ],
       },

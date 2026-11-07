@@ -348,11 +348,17 @@ function resolveTypographyToken(token: TypographyToken) {
  */
 export const typography = {
   boldTextOff: Record.map(
-    mergeTokenSets({ inputs: { boldText: "boldTextOff" }, sets: TYPOGRAPHY_SETS }),
+    mergeTokenSets({
+      inputs: { boldText: "boldTextOff" },
+      sets: TYPOGRAPHY_SETS,
+    }),
     resolveTypographyToken,
   ),
   boldTextOn: Record.map(
-    mergeTokenSets({ inputs: { boldText: "boldTextOn" }, sets: TYPOGRAPHY_SETS }),
+    mergeTokenSets({
+      inputs: { boldText: "boldTextOn" },
+      sets: TYPOGRAPHY_SETS,
+    }),
     resolveTypographyToken,
   ),
 };

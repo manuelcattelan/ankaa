@@ -1,6 +1,7 @@
 import { use } from "react";
 
 import { AccessibilityFlagsContext } from "#/shared/providers/accessibility-flags-context.ts";
+import { motion } from "#/shared/tokens/motion.ts";
 import { typography } from "#/shared/tokens/typography.ts";
 
 /**
@@ -14,6 +15,10 @@ export function useTokens() {
   const accessibilityFlags = use(AccessibilityFlagsContext);
 
   return {
+    motion:
+      accessibilityFlags?.isReduceMotionEnabled === true
+        ? motion.reduceMotionOn
+        : motion.reduceMotionOff,
     typography:
       accessibilityFlags?.isBoldTextEnabled === true
         ? typography.boldTextOn

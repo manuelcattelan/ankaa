@@ -3,6 +3,7 @@
   "ignoreBinaries": ["fly", "ngrok"],
   "ignoreDependencies": ["expo-updates", "pino-pretty", "shellcheck"],
   "ignoreIssues": {
+    "apps/mobile/src/shared/components/animated-view.tsx": ["exports"],
     "apps/mobile/src/shared/core/compute-concentric-radius.ts": ["files"],
     "apps/mobile/src/shared/core/get-text-style-growth.ts": ["exports"],
     "apps/mobile/src/shared/core/is-accessibility-category.ts": ["files"],
@@ -14,7 +15,9 @@
     "apps/mobile": {
       "entry": [
         "src/**/*.test-d.ts",
-        "src/shared/hooks/use-{color-variant,tokens}.ts!"
+        "src/shared/components/animated-view.tsx!",
+        "src/shared/hooks/use-{color-variant,tokens}.ts!",
+        "src/shared/tokens/haptics.ts!"
       ],
       "project": ["**/*.{ts,tsx}!", "!src/**/testing/**!"]
     },

@@ -55,6 +55,7 @@ The design system lives in `apps/mobile/src/shared/`, with no package and no bar
 - `tokens/` holds one file per family, named after it, such as `tokens/color.ts`, and no `…-primitives` file.
 - `core/` holds the Resolver: `mergeTokenSets`, `resolveReferences`, `resolveColors`, `composeColor` and `computeConcentricRadius`. Lint lets only `tokens/` and the Resolver's tests import these module-load files. The growth lookup `getTextStyleGrowth`, `isAccessibilityCategory` and `getColorVariant` stay open to any file.
 - `providers/` and `hooks/` hold the live state: `TokenProvider`, `useTokens` and `useColorVariant`.
+- `components/` holds `AnimatedView`, the one view that takes `entering` and `exiting` (see Motion).
 
 Tokens are typed TypeScript objects that mirror DTCG's sets, Modifiers, Contexts, Resolution order and references, resolved at module load by Ankaa's pure Core Resolver, which throws on a missing input. A reference is typed as the name of a primitive, so a broken one fails to compile. No documented default; chosen for Ankaa because DTCG specifies only JSON, Terrazzo is async and unverified on Hermes, and Style Dictionary doesn't fully support 2025.10.
 
@@ -204,7 +205,30 @@ Ankaa draws its own Chrome from documented, official React Native and Expo compo
 
 ## Motion
 
+- Motion tokens cover every animation Ankaa writes with Reanimated. Screen transitions stay the system's, and react-native-screens' presets aren't used until needed, because system transitions follow Reduce Motion on their own and the presets don't ([#225](https://github.com/manuelcattelan/ankaa/issues/225)).
+- Springs animate movement, and timing (a duration plus an easing) animates opacity and color, because springs keep velocity and are Apple's default, and M3's effects "should not be overshot".
+- Prefer `withTiming`, `withSpring` and `Easing`. A CSS-style `transition*` or `animation*` style may animate only opacity and color, because a CSS-style animation can't carry `reduceMotion`, while Apple's reduced motion keeps fades and color changes. No documented default; chosen for Ankaa. Lint flags a `transition*` key without a `transitionProperty` that lists only opacity or colors, since an omitted `transitionProperty` means `'all'`, the `transition` shorthand, and a movement key in `animationName` or `css.keyframes`.
+- Springs use the duration form (`duration`, `dampingRatio`), whose duration is perceptual: the spring lasts 1.5× as long. Both forms draw the same curves, and this one is Apple's model. A gesture spring may use the physics form as a local tune.
+- Easing primitives are cubic Béziers, resolved to `Easing.bezier`, or to `cubicBezier` for a CSS-style animation: the one form both take, and DTCG's. The one easing is `motion.standardEasing`, and a step joins it on its second use.
+- The duration [Scale steps](#scale-step) are `motion.shortDuration`, `motion.mediumDuration` and `motion.longDuration`, adding `extraShort` and `extraLong` when needed, and the damping-ratio steps are `motion.smoothDampingRatio`, `motion.snappyDampingRatio` and `motion.bouncyDampingRatio`, with bouncy under about 0.4 bounce. A spring combines one duration step with one damping-ratio step. No documented default; chosen for Ankaa because Apple tunes pacing first, then bounce. The words are M3's, Primer's and SwiftUI's. Every motion value is a placeholder until values are chosen.
+- The motion [Roles](#role) are `motion.enter`, `motion.exit`, `motion.move` (a spring for position, size or scale in place) and `motion.stateChange` (timing for opacity or color). These are Primer's roles without hover, split where Reduce Motion differs. A variant such as `quickMove` is added on its second use.
+- A Role fixes only the timing, the `reduceMotion` and the [Reduced motion form](#reduced-motion-form). Every animation starts from its Role and may be tuned freely with other primitives or a commented local constant, and motion is exempt from rule 2 of Tiers and value placement. A tuned animation overrides only its full-motion values, as Apple says: "You can take a preset and specify that its duration should be different".
+- Reduce Motion is a [Modifier](#modifier), so motion exports its two [Contexts](#context) by name, `motion.reduceMotionOff` and `motion.reduceMotionOn`, each with the four Roles as configs `withSpring` or `withTiming` takes. A component takes motion from `useTokens()`, and only module-level code names a Context (see Tokens in code). A Role is a spring in one Context and a timing in the other, and resolving it throws when its sets hold the other kind, a defect in the token file, like the Resolver's throw on a missing input.
+- The Reduced motion forms follow the HIG's "Replacing transitions in x-, y-, and z-axes with fades" and "Tightening animation springs":
+  - `enter` and `exit` become a fade timed like `stateChange`, with `ReduceMotion.Never`.
+  - `move` keeps its movement with the smooth damping ratio, with `ReduceMotion.Never`. A scale or zoom jumps to its end instead: it passes `ReduceMotion.Always` itself while Reduce Motion is on.
+  - `stateChange` is unchanged, with `ReduceMotion.Never`.
+- Every animation that moves something passes its Role's explicit `reduceMotion`, never `ReduceMotion.System`, because Reanimated reads `ReduceMotion.System` and `useReducedMotion()` only once, at startup ([#216](https://github.com/manuelcattelan/ankaa/issues/216)). Lint flags `ReduceMotion.System`. The explicit `reduceMotion` stays a rule of this file, because a selector would flag `withSpring(x, motion.move)`.
+- `AnimatedView` in `components/` is the one view that takes `entering` and `exiting`, and lint flags them anywhere else. While Reduce Motion is on, it swaps each one it's given for its Role's Reduced motion form, a `FadeIn` or `FadeOut` with `ReduceMotion.Never`, because Reanimated reads `entering` only when a view mounts and ignores `.duration(0)`.
+- Build a layout animation once at module level from `motion.reduceMotionOff`, as `SlideInDown.springify(duration).dampingRatio(dampingRatio)`, and never call a modifier on a shared instance, because an instance modifier changes the builder for every view that uses it. Every timing passes an easing.
+- The first loop adds its Role in the same change: `motion.ambient`, which is decorative and removed when Reduce Motion is on, or `motion.loading`, which becomes an opacity pulse. No documented default; chosen for Ankaa because a Role carries Reduce Motion behavior, an exception to rule 3 of Tiers and value placement. "Progress" is avoided because the root glossary uses it for a Workout.
+
 ## Haptics
+
+- The haptics family is one tier of Apple's nine [Haptic patterns](#haptic-pattern), named by meaning: `haptics.success`, `haptics.warning`, `haptics.error`, `haptics.selection`, `haptics.lightImpact`, `haptics.mediumImpact`, `haptics.heavyImpact`, `haptics.rigidImpact` and `haptics.softImpact`. The HIG ties each pattern to one meaning, so a semantic tier would only rename them.
+- Each pattern resolves to the expo-haptics value that plays it, with its kind, because expo-haptics plays each kind through its own function: `notificationAsync(type)`, `impactAsync(style)` and `selectionAsync()`, which takes no value. Lint flags `NotificationFeedbackType` and `ImpactFeedbackStyle` outside `tokens/haptics.ts`.
+- Haptics are optional only through the system setting, so the family has no Contexts. Apple says to "trust the system".
+- A haptic is never the only feedback, because people must "still enjoy your app … without them", never goes on a control that plays system haptics, and matches the intensity of the animation it accompanies, because Apple says "Avoid overusing haptics".
 
 ## Accessibility
 
