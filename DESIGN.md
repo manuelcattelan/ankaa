@@ -53,7 +53,7 @@ These settings aren't Modifiers:
 The design system lives in `apps/mobile/src/shared/`, with no package and no barrel. No documented default; chosen for Ankaa under the root `AGENTS.md`'s Structure rules, and Expo's skill defers to a project's own system ([#227](https://github.com/manuelcattelan/ankaa/issues/227)).
 
 - `tokens/` holds one file per family, named after it, such as `tokens/color.ts`, and no `…-primitives` file.
-- `core/` holds the Resolver: `mergeTokenSets`, `resolveReferences`, `resolveColors`, `composeColor` and `computeConcentricRadius`. Lint lets only `tokens/` and the Resolver's tests import these module-load files. `getColorVariant` stays open to any file.
+- `core/` holds the Resolver: `mergeTokenSets`, `resolveReferences`, `resolveColors`, `composeColor` and `computeConcentricRadius`. Lint lets only `tokens/` and the Resolver's tests import these module-load files. The growth lookup `getTextStyleGrowth`, `isAccessibilityCategory` and `getColorVariant` stay open to any file.
 - `providers/` and `hooks/` hold the live state: `TokenProvider`, `useTokens` and `useColorVariant`.
 
 Tokens are typed TypeScript objects that mirror DTCG's sets, Modifiers, Contexts, Resolution order and references, resolved at module load by Ankaa's pure Core Resolver, which throws on a missing input. A reference is typed as the name of a primitive, so a broken one fails to compile. No documented default; chosen for Ankaa because DTCG specifies only JSON, Terrazzo is async and unverified on Hermes, and Style Dictionary doesn't fully support 2025.10.
@@ -73,7 +73,7 @@ The live flags are Bold Text, Reduce Motion and Increase Contrast, which iOS can
 - `SplashScreenController` keeps the splash screen up until the first reads of the three flags settle, as well as the session, Expo's `preventAutoHideAsync` pattern, so the first frame has the right settings.
 - There's no `ReducedMotionConfig` until a third-party component animating with `ReduceMotion.System` is adopted, because Reanimated reads Reduce Motion only once, at startup.
 
-`useTokens()` gives each family with a live Modifier in the Context the live flags select, and re-renders its caller when a flag changes. Families with a live Modifier export their Contexts by name, such as `typography.boldTextOff` and `typography.boldTextOn`. `useTokens()` selects them everywhere except module level, where code names its Context, as in `SlideInDown.springify(motion.reduceMotionOff.enter.duration)`. The static families have flat exports. No documented default; chosen for Ankaa so `withSpring(x, motion.move)` can't silently ignore Reduce Motion.
+`useTokens()` gives each family with a live Modifier in the Context the live flags select, and re-renders its caller when a flag changes. Families with a live Modifier export their Contexts by name, such as `typography.boldTextOff` and `typography.boldTextOn`. `useTokens()` selects them everywhere except module level, where code names its Context, as in `SlideInDown.springify(motion.reduceMotionOff.enter.duration)`. Lint flags a named Context read inside any function but `useTokens`. The static families have flat exports. No documented default; chosen for Ankaa so `withSpring(x, motion.move)` can't silently ignore Reduce Motion.
 
 A [Color variant](#color-variant) holds the plain colors of every color Role in one Context of appearance, because Reanimated can't animate a `DynamicColorIOS`, and never animating a color would rule out common interactions. The color token file exports the four as `color.variants[variant]`, and only `useColorVariant()` reads them, which returns the plain colors of the Color variant iOS shows now. It's built on the pure `getColorVariant()`, which combines `useColorScheme()` with live Increase Contrast into `light`, `dark`, `lightHighContrast` or `darkHighContrast`. Every color that isn't animated takes its `DynamicColorIOS` from `color`. No documented default; chosen for Ankaa: `contexts` would read like React context, and the maintainer rejected `plainValues`.
 
@@ -121,6 +121,36 @@ Until values are chosen, the roles the migration uses (`color.foreground`, `colo
 
 ## Typography
 
+Semantic tokens:
+
+- The typography Semantic tokens are Apple's 11 [Text styles](#text-style), named after their `dynamicTypeRamp` values: `typography.largeTitle`, `title1`, `title2`, `title3`, `headline`, `body`, `callout`, `subheadline`, `footnote`, `caption1` and `caption2`. Each carries its own ramp and holds only its values at the default text size, and iOS grows it on that ramp's curve at every other size. The ramp has one value per style, so any other set of styles would borrow another style's curve, and the names follow the root `AGENTS.md`'s rule for library constructs.
+- Every Text style has an [Emphasized text style](#emphasized-text-style), such as `emphasizedBody`, at Apple's emphasized weight, so no component overrides `fontWeight` by hand. Apple gives every style an emphasized weight. For Headline it's Semibold, its default weight, so `emphasizedHeadline` differs from `headline` only under Bold Text.
+- A token resolves to `{ style, props }`: `style` holds `fontFamily`, `fontWeight`, `fontSize`, `lineHeight` and `letterSpacing` for `Text`'s style array, and `props` holds `dynamicTypeRamp`, which is a `Text` prop, not a style.
+- A token holds `letterSpacing: number | null`, and `null` leaves the style key unset. No letter spacing is ever `0`, because `0` turns pair kerning off. Apple: "If this attribute is set to 0.0, no kerning is done at all".
+- No Text style carries `maxFontSizeMultiplier`, because the HIG says "Make sure your app's layout adapts to all font sizes". A UI that can't grow, such as a custom bar, caps its text with `maxFontSizeMultiplier` as a [Pattern token](#pattern-token) and shows the Large Content Viewer instead (WWDC24 10074).
+
+Bold Text:
+
+- Bold Text is a [Modifier](#modifier), so typography exports its two [Contexts](#context) by name, `typography.boldTextOff` and `typography.boldTextOn`, each with every Text style and Emphasized text style. A component takes typography from `useTokens()`, which selects the Context from the live flag, and only module-level code names a Context (see Tokens in code).
+- Each Text style, emphasized ones included, names its own Bold Text weight primitive: the next weight the font ships, at least one step up. No documented default; chosen for Ankaa because React Native never reads Bold Text in its font code, a custom font is coming, and Apple documents no mapping beyond Semibold for a Regular custom symbol.
+
+Primitives:
+
+- The primitives are the font family, named after the font, such as `systemFontFamily`; the font weights, with Apple's names, such as `semiboldFontWeight`; the font sizes and line heights in points, with t-shirt steps, such as `mdFontSize`; and the letter spacings `tighterLetterSpacing`, `tightLetterSpacing`, `looseLetterSpacing` and `looserLetterSpacing`, around an unnamed normal that is `null`. Primer and Polaris split primitives this way. For letter spacing there's no documented default; chosen for Ankaa because the names read in both directions.
+- They stay unexported, so no component reaches a raw size or weight, and lint keeps `fontFamily`, `fontWeight`, `fontSize`, `lineHeight` and `letterSpacing` inside the typography file.
+
+The font:
+
+- The custom font is embedded with the expo-font config plugin's `ios.fonts` in `app.config.ts`, with every face in one family, its files in `apps/mobile/assets/fonts/`, and no `useFonts`. This is Expo SDK 58's recommendation, and iOS selects a face by `fontWeight`, as [Expo's font docs](https://docs.expo.dev/develop/user-interface/fonts/) say, departing from the `expo-design-system` skill's `fontFamily` per weight.
+- Until the font is chosen, the plugin lists no file, the font family primitive is the system font, which React Native names `System`, and the other values are placeholders: Apple's sizes, line heights and weights at the default text size, and the next weight up under Bold Text, since the system font ships every weight.
+
+Text size:
+
+- Text size isn't a Modifier. `fontScale` is a number applied after resolution, outside DTCG's model, because DTCG's inputs are strings and `UIFontMetrics` can't be reached from React Native.
+- `getTextStyleGrowth` in `core/` is the one growth lookup: Apple's per-style size table, keyed by the 12 `fontScale` values iOS reports, one per text size, returns how much a Text style grows over its default size. It exists because each Text style grows on its own curve: at AX5, `fontScale` is 3.571, while Body grows to 53 pt, 3.118 times its 17 pt, and Large Title to 60 pt, 1.765 times its 34 pt. Icons and scalable sizing scale by it (see Sizing). No documented default; chosen for Ankaa because it's the only way to match Apple's per-style curves from JS.
+- `isAccessibilityCategory` in `core/` tells whether `fontScale` is an [Accessibility category](#accessibility-category), from AX1's 1.786 up, so the threshold lives in one place. No documented default; chosen for Ankaa because React Native has no content-size-category API ([#224](https://github.com/manuelcattelan/ankaa/issues/224)).
+- `Text` doesn't take Text styles yet: the migration keeps its default text, and screens move to Text styles when they're refined.
+
 ## Iconography
 
 ## Spacing
@@ -134,7 +164,7 @@ Until values are chosen, the roles the migration uses (`color.foreground`, `colo
 
 - The [Hit target](#hit-target) is `sizing.minimumHitTarget`, at Apple's 44 pt. A control meets it through its own `minHeight` and `minWidth`, as `Button` and `TextInput` do, and takes `hitSlop` only when the layout can't fit it, because `hitSlop` stops at the parent's bounds. The HIG asks for "a hit region of at least 44x44 pt".
 - A sizing token for something that holds text is applied as `minHeight`, never `height`, so the container grows with its text.
-- A scalable sizing token pairs with one [Text style](#text-style) and scales by its growth, as icons do, with no cap. The Hit target and minimum sizes never scale. This follows Apple's `@ScaledMetric(relativeTo:)`.
+- A scalable sizing token pairs with one [Text style](#text-style) and scales by its growth, as icons do, with no cap: sizing exports its default size, and the component multiplies it by `getTextStyleGrowth` for the current `fontScale` in a small style object built in render. The Hit target and minimum sizes never scale. This follows Apple's `@ScaledMetric(relativeTo:)`.
 - There's no layout-direction token and no stacking pattern. Every component works at every text size, as Apple requires, and a component that needs a switch reads whether the text size is an [Accessibility category](#accessibility-category), since Apple's components react in opposite directions on that flag.
 - A third-party view that takes a fixed `height`, such as Apple's sign-in button, keeps a local constant until it's rebuilt.
 

@@ -80,8 +80,51 @@ const COLOR_VARIANTS_RESTRICTION = {
 
 const COLOR_VARIANT_HOOK_FILE = "src/shared/hooks/use-color-variant.ts";
 
+const TYPOGRAPHY_KEY_PATTERN =
+  "/^(?:fontFamily|fontSize|fontWeight|letterSpacing|lineHeight)$/";
+
+const TYPOGRAPHY_KEY_RESTRICTION = {
+  message:
+    "Take this text style from a Text style of typography in #/shared/tokens/typography.ts, so every text grows with Dynamic Type and follows Bold Text (DESIGN.md).",
+  selector: `Property[key.name=${TYPOGRAPHY_KEY_PATTERN}], Property[key.value=${TYPOGRAPHY_KEY_PATTERN}]`,
+};
+
+const LETTER_SPACING_KEY_PATTERN = "/^(?:letterSpacing|\\w+LetterSpacing)$/";
+
+const ZERO_LETTER_SPACING_RESTRICTION = {
+  message:
+    "Use null instead of a letter spacing of 0, which leaves letterSpacing unset, because 0 turns pair kerning off (DESIGN.md).",
+  selector: [
+    `Property[key.name=${LETTER_SPACING_KEY_PATTERN}] > Literal.value[value=0]`,
+    `Property[key.name=${LETTER_SPACING_KEY_PATTERN}] > UnaryExpression.value[argument.value=0]`,
+  ].join(", "),
+};
+
+const LIVE_MODIFIER_FAMILY_PATTERN = "/^(?:iconography|motion|typography)$/";
+
+const NAMED_CONTEXT_PATTERN = "/^(?:boldText|reduceMotion)O(?:ff|n)$/";
+
+const NAMED_CONTEXT_RESTRICTION = {
+  message:
+    "Take this Token family from useTokens() in #/shared/hooks/use-tokens.ts, which selects its Context from the live flags. Name a Context only at module level (DESIGN.md).",
+  selector: [
+    `:function MemberExpression[object.name=${LIVE_MODIFIER_FAMILY_PATTERN}]:matches([property.name=${NAMED_CONTEXT_PATTERN}], [property.value=${NAMED_CONTEXT_PATTERN}])`,
+    `:function VariableDeclarator[init.name=${LIVE_MODIFIER_FAMILY_PATTERN}] > ObjectPattern > Property[key.name=${NAMED_CONTEXT_PATTERN}]`,
+  ].join(", "),
+};
+
+const TOKENS_HOOK_FILE = "src/shared/hooks/use-tokens.ts";
+
+const TOKENS_HOOK_TEST_FILE = "src/shared/hooks/use-tokens.test.tsx";
+
+const TYPOGRAPHY_FILE = "src/shared/tokens/typography.ts";
+
+const GROWTH_LOOKUP_FILE = "src/shared/core/get-text-style-growth.ts";
+
 const DESIGN_SYSTEM_RESTRICTED_SYNTAX = [
   COLOR_VARIANTS_RESTRICTION,
+  NAMED_CONTEXT_RESTRICTION,
+  TYPOGRAPHY_KEY_RESTRICTION,
   {
     message:
       "Take this color from color in #/shared/tokens/color.ts instead of a literal, so every color comes from the palette and follows appearance and Increase Contrast. Where nothing is painted, set no color (DESIGN.md).",
@@ -336,10 +379,56 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
         ],
       },
     },
+    // useTokens is the one reader of the named Contexts inside a function
+    // (DESIGN.md).
+    {
+      files: [TOKENS_HOOK_FILE],
+      rules: {
+        "no-restricted-syntax": [
+          "error",
+          ...RESTRICTED_SYNTAX,
+          ...MOBILE_RESTRICTED_SYNTAX,
+          ...DESIGN_SYSTEM_RESTRICTED_SYNTAX.filter(
+            (restriction) => restriction !== NAMED_CONTEXT_RESTRICTION,
+          ),
+        ],
+      },
+    },
     // A token file holds the raw values that the value rules keep out of
     // every other file (DESIGN.md).
     {
       files: TOKEN_FILES,
+      rules: { "@typescript-eslint/no-magic-numbers": "off" },
+    },
+    // Only the typography file holds text style keys, and it never sets a
+    // letter spacing of 0 (DESIGN.md).
+    {
+      files: TOKEN_FILES,
+      ignores: [TYPOGRAPHY_FILE],
+      rules: {
+        "no-restricted-syntax": [
+          "error",
+          ...RESTRICTED_SYNTAX,
+          ...MOBILE_RESTRICTED_SYNTAX,
+          TYPOGRAPHY_KEY_RESTRICTION,
+        ],
+      },
+    },
+    {
+      files: [TYPOGRAPHY_FILE],
+      rules: {
+        "no-restricted-syntax": [
+          "error",
+          ...RESTRICTED_SYNTAX,
+          ...MOBILE_RESTRICTED_SYNTAX,
+          ZERO_LETTER_SPACING_RESTRICTION,
+        ],
+      },
+    },
+    // The growth lookup holds Apple's table of Text style sizes, one number
+    // per text size, which a name per number would only repeat.
+    {
+      files: [GROWTH_LOOKUP_FILE],
       rules: { "@typescript-eslint/no-magic-numbers": "off" },
     },
     createRestrictedImportsConfiguration({
@@ -425,6 +514,21 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
           "error",
           ...RESTRICTED_SYNTAX,
           ...MOBILE_RESTRICTED_SYNTAX,
+          ...TEST_RESTRICTED_SYNTAX,
+        ],
+      },
+    },
+    // useTokens's test checks which named Context it returns.
+    {
+      files: [TOKENS_HOOK_TEST_FILE],
+      rules: {
+        "no-restricted-syntax": [
+          "error",
+          ...RESTRICTED_SYNTAX,
+          ...MOBILE_RESTRICTED_SYNTAX,
+          ...DESIGN_SYSTEM_RESTRICTED_SYNTAX.filter(
+            (restriction) => restriction !== NAMED_CONTEXT_RESTRICTION,
+          ),
           ...TEST_RESTRICTED_SYNTAX,
         ],
       },
