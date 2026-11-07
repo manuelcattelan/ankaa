@@ -8,12 +8,25 @@ import type {
 import { composeColor } from "#/shared/core/compose-color.ts";
 import { mergeTokenSets } from "#/shared/core/merge-token-sets.ts";
 
+/**
+ * What a color Semantic token points at in a Context: a color primitive, or a
+ * color primitive and the opacity primitive to compose it with.
+ */
 export type ColorReference<
   ColorPrimitiveName extends string,
   OpacityPrimitiveName extends string,
 > =
   | ColorPrimitiveName
   | { color: ColorPrimitiveName; opacity: OpacityPrimitiveName };
+
+// The Context of the appearance Modifier for each key that DynamicColorIOS
+// takes (https://reactnative.dev/docs/dynamiccolorios).
+const DYNAMIC_COLOR_APPEARANCES = {
+  dark: "dark",
+  highContrastDark: "darkHighContrast",
+  highContrastLight: "lightHighContrast",
+  light: "light",
+} satisfies Record<string, ModifierContexts["appearance"]>;
 
 /**
  * Resolves each color Semantic token to its plain colors in the four Contexts
@@ -38,37 +51,13 @@ export function resolveColors<
     Record<Role, ColorReference<ColorPrimitiveName, OpacityPrimitiveName>>
   >;
 }) {
-  const light = resolveColorVariant({
-    appearance: "light",
-    opacityPrimitives,
-    primitives,
-    sets,
-  });
-  const dark = resolveColorVariant({
-    appearance: "dark",
-    opacityPrimitives,
-    primitives,
-    sets,
-  });
-  const lightHighContrast = resolveColorVariant({
-    appearance: "lightHighContrast",
-    opacityPrimitives,
-    primitives,
-    sets,
-  });
-  const darkHighContrast = resolveColorVariant({
-    appearance: "darkHighContrast",
-    opacityPrimitives,
-    primitives,
-    sets,
-  });
+  const colorVariants = Record.map(DYNAMIC_COLOR_APPEARANCES, (appearance) =>
+    resolveColorVariant({ appearance, opacityPrimitives, primitives, sets }),
+  );
 
-  return Record.map(light, (lightColor, role) => ({
-    dark: dark[role],
-    highContrastDark: darkHighContrast[role],
-    highContrastLight: lightHighContrast[role],
-    light: lightColor,
-  }));
+  return Record.map(colorVariants.light, (lightColor, role) =>
+    Record.map(colorVariants, (colorVariant) => colorVariant[role]),
+  );
 }
 
 function resolveColorVariant<

@@ -11,56 +11,65 @@ import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { AccessibilityFlagsContext } from "#/shared/providers/accessibility-flags-context.ts";
 import { Accessibility } from "#/shared/services/accessibility.ts";
 
-// Subscribes to each change stream before the first reads, as React Native's
-// AccessibilityInfo example adds its listeners before it reads
+// Subscribes to the flag's change stream before its first read, as React
+// Native's AccessibilityInfo example adds its listeners before it reads
 // (https://reactnative.dev/docs/accessibilityinfo), so no change is lost
-// between a read and its subscription. Stream.toPull starts each stream's
+// between the read and the subscription. Stream.toPull starts the stream's
 // listener before it returns.
-const program = Effect.fn("watchAccessibilityFlags")(function* (
+function watchAccessibilityFlag({
+  changes,
+  read,
+}: {
+  changes: Stream.Stream<boolean>;
+  read: Effect.Effect<boolean>;
+}) {
+  return Effect.gen(function* () {
+    const pull = yield* Stream.toPull(changes);
+    const isEnabled = yield* read;
+
+    return Stream.fromPull(Effect.succeed(pull)).pipe(
+      Stream.prepend([isEnabled]),
+    );
+  });
+}
+
+const program = Effect.fn("accessibilityFlagsWatch")(function* (
   onChange: (accessibilityFlags: AccessibilityFlags) => void,
 ) {
   const accessibility = yield* Accessibility;
 
-  const boldTextChanges = yield* Stream.toPull(accessibility.boldTextChanges);
-  const darkerSystemColorsChanges = yield* Stream.toPull(
-    accessibility.darkerSystemColorsChanges,
-  );
-  const reduceMotionChanges = yield* Stream.toPull(
-    accessibility.reduceMotionChanges,
-  );
-
-  const [
-    isBoldTextEnabled,
-    isDarkerSystemColorsEnabled,
-    isReduceMotionEnabled,
-  ] = yield* Effect.all(
+  const flagStreams = yield* Effect.all(
     [
-      accessibility.isBoldTextEnabled(),
-      accessibility.isDarkerSystemColorsEnabled(),
-      accessibility.isReduceMotionEnabled(),
+      watchAccessibilityFlag({
+        changes: accessibility.boldTextChanges,
+        read: accessibility.isBoldTextEnabled(),
+      }),
+      watchAccessibilityFlag({
+        changes: accessibility.darkerSystemColorsChanges,
+        read: accessibility.isDarkerSystemColorsEnabled(),
+      }),
+      watchAccessibilityFlag({
+        changes: accessibility.reduceMotionChanges,
+        read: accessibility.isReduceMotionEnabled(),
+      }),
     ],
     { concurrency: "unbounded" },
   );
 
-  yield* Stream.zipLatestAll(
-    Stream.fromPull(Effect.succeed(boldTextChanges)).pipe(
-      Stream.prepend([isBoldTextEnabled]),
-    ),
-    Stream.fromPull(Effect.succeed(darkerSystemColorsChanges)).pipe(
-      Stream.prepend([isDarkerSystemColorsEnabled]),
-    ),
-    Stream.fromPull(Effect.succeed(reduceMotionChanges)).pipe(
-      Stream.prepend([isReduceMotionEnabled]),
-    ),
-  ).pipe(
-    Stream.runForEach(([isBoldText, isDarkerSystemColors, isReduceMotion]) =>
-      Effect.sync(() => {
-        onChange({
-          isBoldTextEnabled: isBoldText,
-          isDarkerSystemColorsEnabled: isDarkerSystemColors,
-          isReduceMotionEnabled: isReduceMotion,
-        });
-      }),
+  yield* Stream.zipLatestAll(...flagStreams).pipe(
+    Stream.runForEach(
+      ([
+        isBoldTextEnabled,
+        isDarkerSystemColorsEnabled,
+        isReduceMotionEnabled,
+      ]) =>
+        Effect.sync(() => {
+          onChange({
+            isBoldTextEnabled,
+            isDarkerSystemColorsEnabled,
+            isReduceMotionEnabled,
+          });
+        }),
     ),
   );
 }, Effect.scoped);

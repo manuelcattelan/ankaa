@@ -211,17 +211,17 @@ const resolvedColors = resolveColors({
  * `DynamicColorIOS`.
  */
 export const color = {
-  ...Record.map(resolvedColors, (variants) => DynamicColorIOS(variants)),
+  ...Record.map(resolvedColors, (colors) => DynamicColorIOS(colors)),
   variants: {
-    dark: Record.map(resolvedColors, (variants) => variants.dark),
+    dark: Record.map(resolvedColors, (colors) => colors.dark),
     darkHighContrast: Record.map(
       resolvedColors,
-      (variants) => variants.highContrastDark,
+      (colors) => colors.highContrastDark,
     ),
-    light: Record.map(resolvedColors, (variants) => variants.light),
+    light: Record.map(resolvedColors, (colors) => colors.light),
     lightHighContrast: Record.map(
       resolvedColors,
-      (variants) => variants.highContrastLight,
+      (colors) => colors.highContrastLight,
     ),
   },
 };

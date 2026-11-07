@@ -20,7 +20,7 @@ Place every value by these rules ([#220](https://github.com/manuelcattelan/ankaa
 4. When similar components share a decision, such as the padding of controls, make it a pattern token: a semantic token named after the pattern, such as `spacing.controlPadding`, as Primer's `control-*` tokens do.
 5. Keep a truly local value, such as an icon's optical nudge, as a module-level `CONSTANT_CASE` constant in the file that uses it, with a comment saying why it's off the scale.
 
-Use a semantic token whenever one fits. Use a primitive token only when none fits, and only from a family with no contexts, such as `spacing.md`: a primitive never changes with a setting, so a color primitive would ignore Dark Mode and Increase Contrast. That's why the primitives of color, typography and iconography aren't exported.
+Use a semantic token whenever one fits. Use a primitive token only when none fits, and only from a family with no contexts, such as `spacing.md`: a primitive never changes with a setting, so a color primitive would ignore Dark Mode and Increase Contrast. That's why the primitives of color, typography and iconography aren't exported. Motion is the one exception: an animation starts from its Role, which carries Reduce Motion, and may be tuned with other motion primitives (see Motion).
 
 [Contexts](#context) exist only at the semantic tier, never in token names, and a [Token family](#token-family) has a semantic tier only where it has Contexts or [Roles](#role): M3 themes at its system tier, Fluent's alias tokens hold light and dark, and DTCG stacks a set per Context over unchanging tokens. A dimension family can be its scale plus [Pattern tokens](#pattern-token).
 
@@ -54,7 +54,7 @@ The design system lives in `apps/mobile/src/shared/`, with no package and no bar
 
 - `tokens/` holds one file per family, named after it, such as `tokens/color.ts`, and no `…-primitives` file.
 - `core/` holds the Resolver: `mergeTokenSets`, `resolveReferences`, `resolveColors`, `composeColor` and `computeConcentricRadius`. Lint lets only `tokens/` and the Resolver's tests import these module-load files. The growth lookup `getTextStyleGrowth`, `snapFontScale`, `isAccessibilityCategory` and `getColorVariant` stay open to any file.
-- `providers/` and `hooks/` hold the live state: `TokenProvider`, `useTokens` and `useColorVariant`.
+- `providers/` and `hooks/` hold the live state: `TokenProvider`, `useAccessibilityFlags`, `useTokens` and `useColorVariant`.
 - `components/` holds `AnimatedView`, the one view that takes `entering` and `exiting` (see Motion), and `Icon`, which renders every icon (see Iconography).
 - `icons/` holds the Nucleo `.svg` files. Metro reads them through react-native-svg-transformer, set in `apps/mobile/metro.config.ts`, TypeScript through the `*.svg` module typing in `apps/mobile/svg.d.ts`, and Jest through a `moduleNameMapper` stub.
 
@@ -69,8 +69,8 @@ Tokens are typed TypeScript objects that mirror DTCG's sets, Modifiers, Contexts
 
 The live flags are Bold Text, Reduce Motion and Increase Contrast, which iOS can change while the app runs:
 
-- The `Accessibility` Service reads each one (`isBoldTextEnabled`, `isReduceMotionEnabled` and `isDarkerSystemColorsEnabled`, React Native's name for Increase Contrast), where a rejected read counts as off, and gives one change stream for each, built with `Stream.callback`, which removes its listener when the stream ends.
-- `TokenProvider`, in the Composition root, forks a module-level program in its `useEffect` and interrupts it on cleanup. The program subscribes to the three change streams before its first reads, so no change between a read and its subscription is lost, and the provider shares the flags through a React context. React recommends context for theming, `TESTING.md` swaps behavior only through Layers, and the same pattern applies to the existing Service. Tests set the flags on the `Accessibility` Fake Layer.
+- The `Accessibility` Service reads each one (`isBoldTextEnabled`, `isReduceMotionEnabled` and `isDarkerSystemColorsEnabled`, React Native's name for Increase Contrast), where a rejected read counts as off, as the Core function `isAccessibilitySettingEnabled` decides, and gives one change stream for each, built with `Stream.callback`, which removes its listener when the stream ends.
+- `TokenProvider`, in the Composition root, forks a module-level program in its `useEffect` and interrupts it on cleanup. The program subscribes to the three change streams before its first reads, so no change between a read and its subscription is lost, and the provider shares the flags through a React context, which `useAccessibilityFlags()` reads with each flag off until its first read settles. React recommends context for theming, `TESTING.md` swaps behavior only through Layers, and the same pattern applies to the existing Service. Tests set the flags on the `Accessibility` Fake Layer.
 - The color scheme and `fontScale` come from React Native's own hooks, `useColorScheme` and `useWindowDimensions`.
 - `SplashScreenController` keeps the splash screen up until the first reads of the three flags settle, as well as the session, Expo's `preventAutoHideAsync` pattern, so the first frame has the right settings.
 - There's no `ReducedMotionConfig` until a third-party component animating with `ReduceMotion.System` is adopted, because Reanimated reads Reduce Motion only once, at startup.
@@ -84,6 +84,7 @@ Ankaa follows Expo's [`expo-design-system`](https://github.com/expo/skills/blob/
 - Tokens live in `src/shared/tokens/`, with no barrel.
 - The Resolver's exports are `lowerCamelCase`.
 - Styles go into `StyleSheet.create`, not inline as `expo-native-ui` advises, and Ankaa writes none of its Android or web fallbacks.
+- iOS selects a font's face by `fontWeight`, not by a `fontFamily` name per weight (see Typography).
 
 ## Color
 
@@ -126,7 +127,7 @@ Until values are chosen, the roles the migration uses (`color.foreground`, `colo
 Semantic tokens:
 
 - The typography Semantic tokens are Apple's 11 [Text styles](#text-style), named after their `dynamicTypeRamp` values: `typography.largeTitle`, `title1`, `title2`, `title3`, `headline`, `body`, `callout`, `subheadline`, `footnote`, `caption1` and `caption2`. Each carries its own ramp and holds only its values at the default text size, and iOS grows it on that ramp's curve at every other size. The ramp has one value per style, so any other set of styles would borrow another style's curve, and the names follow the root `AGENTS.md`'s rule for library constructs.
-- Every Text style has an [Emphasized text style](#emphasized-text-style), such as `emphasizedBody`, at Apple's emphasized weight, so no component overrides `fontWeight` by hand. Apple gives every style an emphasized weight. For Headline it's Semibold, its default weight, so `emphasizedHeadline` differs from `headline` only under Bold Text.
+- Every Text style has an [Emphasized text style](#emphasized-text-style), such as `emphasizedBody`, at Apple's emphasized weight, so no component overrides `fontWeight` by hand. Apple gives every style an emphasized weight. For Headline it's Semibold, its default weight, so `emphasizedHeadline` equals `headline` in both Bold Text Contexts, following Apple's table.
 - A token resolves to `{ style, props }`: `style` holds `fontFamily`, `fontWeight`, `fontSize`, `lineHeight` and `letterSpacing` for `Text`'s style array, and `props` holds `dynamicTypeRamp`, which is a `Text` prop, not a style.
 - A token holds `letterSpacing: number | null`, and `null` leaves the style key unset. No letter spacing is ever `0`, because `0` turns pair kerning off. Apple: "If this attribute is set to 0.0, no kerning is done at all".
 - No Text style carries `maxFontSizeMultiplier`, because the HIG says "Make sure your app's layout adapts to all font sizes". A UI that can't grow, such as a custom bar, caps its text with `maxFontSizeMultiplier` as a [Pattern token](#pattern-token) and shows the Large Content Viewer instead (WWDC24 10074).
@@ -246,7 +247,7 @@ Ankaa draws its own Chrome from documented, official React Native and Expo compo
 - Springs use the duration form (`duration`, `dampingRatio`), whose duration is perceptual: the spring lasts 1.5× as long. Both forms draw the same curves, and this one is Apple's model. A gesture spring may use the physics form as a local tune.
 - Easing primitives are cubic Béziers, resolved to `Easing.bezier`, or to `cubicBezier` for a CSS-style animation: the one form both take, and DTCG's. The one easing is `motion.standardEasing`, and a step joins it on its second use.
 - The duration [Scale steps](#scale-step) are `motion.shortDuration`, `motion.mediumDuration` and `motion.longDuration`, adding `extraShort` and `extraLong` when needed, and the damping-ratio steps are `motion.smoothDampingRatio`, `motion.snappyDampingRatio` and `motion.bouncyDampingRatio`, with bouncy under about 0.4 bounce. A spring combines one duration step with one damping-ratio step. No documented default; chosen for Ankaa because Apple tunes pacing first, then bounce. The words are M3's, Primer's and SwiftUI's. Every motion value is a placeholder until values are chosen.
-- The motion [Roles](#role) are `motion.enter`, `motion.exit`, `motion.move` (a spring for position, size or scale in place) and `motion.stateChange` (timing for opacity or color). These are Primer's roles without hover, split where Reduce Motion differs. A variant such as `quickMove` is added on its second use.
+- The motion [Roles](#role) are `motion.enter`, `motion.exit`, `motion.move` (a spring for position, size or scale in place) and `motion.stateChange` (timing for opacity or color). These are Primer's roles without hover, split where Reduce Motion differs. A Role such as `quickMove` is added on its second use.
 - A Role fixes only the timing, the `reduceMotion` and the [Reduced motion form](#reduced-motion-form). Every animation starts from its Role and may be tuned freely with other primitives or a commented local constant, and motion is exempt from rule 2 of Tiers and value placement. A tuned animation overrides only its full-motion values, as Apple says: "You can take a preset and specify that its duration should be different".
 - Reduce Motion is a [Modifier](#modifier), so motion exports its two [Contexts](#context) by name, `motion.reduceMotionOff` and `motion.reduceMotionOn`, each with the four Roles as configs `withSpring` or `withTiming` takes. A component takes motion from `useTokens()`, and only module-level code names a Context (see Tokens in code). A Role is a spring in one Context and a timing in the other, and resolving it throws when its sets hold the other kind, a defect in the token file, like the Resolver's throw on a missing input.
 - The Reduced motion forms follow the HIG's "Replacing transitions in x-, y-, and z-axes with fades" and "Tightening animation springs":
@@ -268,6 +269,7 @@ Ankaa draws its own Chrome from documented, official React Native and Expo compo
 ## Accessibility
 
 - Every Role carries a cue beyond color for each state and meaning, such as an icon or a label beside a Status role's color, because Grayscale and Color Filters change every color on the screen, and the HIG says "Avoid relying solely on color".
+- Every component is usable at every text size, [Accessibility categories](#accessibility-category) included, as Apple requires (see Sizing).
 - Set `accessibilityIgnoresInvertColors` on every photo, video and app-icon image, because Smart Invert can't be read from React Native, and iOS would otherwise invert them.
 - Check the contrast targets in Color on composited colors with throwaway checks when values are chosen, with no CI test, at the maintainer's choice.
 

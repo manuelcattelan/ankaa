@@ -1,3 +1,5 @@
+import type { Linter } from "eslint";
+
 import { fixupConfigRules } from "@eslint/compat";
 import eslintConfigExpoFlat from "eslint-config-expo/flat";
 import { createNodeResolver } from "eslint-plugin-import-x";
@@ -247,6 +249,14 @@ const DESIGN_SYSTEM_RESTRICTED_SYNTAX = [
   },
 ];
 
+// The design system's restrictions that hold in the token files, except in the
+// one file whose values a restriction keeps there.
+const TOKEN_FILE_RESTRICTED_SYNTAX = [
+  TYPOGRAPHY_KEY_RESTRICTION,
+  REDUCE_MOTION_SYSTEM_RESTRICTION,
+  HAPTIC_ENUM_RESTRICTION,
+];
+
 const TOKEN_FILES = ["src/shared/tokens/**"];
 
 // The Resolver's Core files that resolve tokens at module load. The growth
@@ -322,6 +332,33 @@ const eslintConfigExpoFixedUp = fixupConfigRules(eslintConfigExpoFlat).map(
         },
 );
 
+type SyntaxRestriction = { message: string; selector: string };
+
+function createRestrictedSyntaxRule({
+  restrictions,
+}: {
+  restrictions: readonly SyntaxRestriction[];
+}) {
+  return [
+    "error",
+    ...RESTRICTED_SYNTAX,
+    ...MOBILE_RESTRICTED_SYNTAX,
+    ...restrictions,
+  ] satisfies Linter.RuleEntry;
+}
+
+function omitRestriction({
+  restriction,
+  restrictions,
+}: {
+  restriction: SyntaxRestriction;
+  restrictions: readonly SyntaxRestriction[];
+}) {
+  return restrictions.filter(
+    (otherRestriction) => otherRestriction !== restriction,
+  );
+}
+
 export function createMobileConfiguration({ basePath }: { basePath: string }) {
   const featureNames = getFeatureNames(basePath);
 
@@ -393,11 +430,9 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
         // it misses every enum of expo-notifications re-exported through
         // `export *`, such as `SchedulableTriggerInputTypes`.
         "import/namespace": "off",
-        "no-restricted-syntax": [
-          "error",
-          ...RESTRICTED_SYNTAX,
-          ...MOBILE_RESTRICTED_SYNTAX,
-        ],
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: [],
+        }),
         "react-hooks/todo": "error",
         "react/jsx-boolean-value": ["error", "never"],
         "react/jsx-fragments": ["error", "syntax"],
@@ -426,26 +461,21 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
       files: ["src/**"],
       ignores: TOKEN_FILES,
       rules: {
-        "no-restricted-syntax": [
-          "error",
-          ...RESTRICTED_SYNTAX,
-          ...MOBILE_RESTRICTED_SYNTAX,
-          ...DESIGN_SYSTEM_RESTRICTED_SYNTAX,
-        ],
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+        }),
       },
     },
     // useColorVariant is the one reader of the Color variants (DESIGN.md).
     {
       files: [COLOR_VARIANT_HOOK_FILE],
       rules: {
-        "no-restricted-syntax": [
-          "error",
-          ...RESTRICTED_SYNTAX,
-          ...MOBILE_RESTRICTED_SYNTAX,
-          ...DESIGN_SYSTEM_RESTRICTED_SYNTAX.filter(
-            (restriction) => restriction !== COLOR_VARIANTS_RESTRICTION,
-          ),
-        ],
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: omitRestriction({
+            restriction: COLOR_VARIANTS_RESTRICTION,
+            restrictions: DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+          }),
+        }),
       },
     },
     // useTokens is the one reader of the named Contexts inside a function
@@ -453,14 +483,12 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
     {
       files: [TOKENS_HOOK_FILE],
       rules: {
-        "no-restricted-syntax": [
-          "error",
-          ...RESTRICTED_SYNTAX,
-          ...MOBILE_RESTRICTED_SYNTAX,
-          ...DESIGN_SYSTEM_RESTRICTED_SYNTAX.filter(
-            (restriction) => restriction !== NAMED_CONTEXT_RESTRICTION,
-          ),
-        ],
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: omitRestriction({
+            restriction: NAMED_CONTEXT_RESTRICTION,
+            restrictions: DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+          }),
+        }),
       },
     },
     // AnimatedView is the one view that takes entering and exiting
@@ -468,14 +496,12 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
     {
       files: [ANIMATED_VIEW_FILE],
       rules: {
-        "no-restricted-syntax": [
-          "error",
-          ...RESTRICTED_SYNTAX,
-          ...MOBILE_RESTRICTED_SYNTAX,
-          ...DESIGN_SYSTEM_RESTRICTED_SYNTAX.filter(
-            (restriction) => restriction !== LAYOUT_ANIMATION_PROP_RESTRICTION,
-          ),
-        ],
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: omitRestriction({
+            restriction: LAYOUT_ANIMATION_PROP_RESTRICTION,
+            restrictions: DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+          }),
+        }),
       },
     },
     // A token file holds the raw values that the value rules keep out of
@@ -491,39 +517,34 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
       files: TOKEN_FILES,
       ignores: [TYPOGRAPHY_FILE, HAPTICS_FILE],
       rules: {
-        "no-restricted-syntax": [
-          "error",
-          ...RESTRICTED_SYNTAX,
-          ...MOBILE_RESTRICTED_SYNTAX,
-          TYPOGRAPHY_KEY_RESTRICTION,
-          REDUCE_MOTION_SYSTEM_RESTRICTION,
-          HAPTIC_ENUM_RESTRICTION,
-        ],
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: TOKEN_FILE_RESTRICTED_SYNTAX,
+        }),
       },
     },
     {
       files: [TYPOGRAPHY_FILE],
       rules: {
-        "no-restricted-syntax": [
-          "error",
-          ...RESTRICTED_SYNTAX,
-          ...MOBILE_RESTRICTED_SYNTAX,
-          ZERO_LETTER_SPACING_RESTRICTION,
-          REDUCE_MOTION_SYSTEM_RESTRICTION,
-          HAPTIC_ENUM_RESTRICTION,
-        ],
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: [
+            ...omitRestriction({
+              restriction: TYPOGRAPHY_KEY_RESTRICTION,
+              restrictions: TOKEN_FILE_RESTRICTED_SYNTAX,
+            }),
+            ZERO_LETTER_SPACING_RESTRICTION,
+          ],
+        }),
       },
     },
     {
       files: [HAPTICS_FILE],
       rules: {
-        "no-restricted-syntax": [
-          "error",
-          ...RESTRICTED_SYNTAX,
-          ...MOBILE_RESTRICTED_SYNTAX,
-          TYPOGRAPHY_KEY_RESTRICTION,
-          REDUCE_MOTION_SYSTEM_RESTRICTION,
-        ],
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: omitRestriction({
+            restriction: HAPTIC_ENUM_RESTRICTION,
+            restrictions: TOKEN_FILE_RESTRICTED_SYNTAX,
+          }),
+        }),
       },
     },
     // The growth lookup holds Apple's table of Text style sizes, one number
@@ -604,13 +625,12 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
         "jest/no-restricted-jest-methods": ["error", RESTRICTED_MOCK_METHODS],
         "jest/no-restricted-matchers": ["error", restrictedCallMatchers],
         "jest/require-top-level-describe": "error",
-        "no-restricted-syntax": [
-          "error",
-          ...RESTRICTED_SYNTAX,
-          ...MOBILE_RESTRICTED_SYNTAX,
-          ...DESIGN_SYSTEM_RESTRICTED_SYNTAX,
-          ...TEST_RESTRICTED_SYNTAX,
-        ],
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: [
+            ...DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+            ...TEST_RESTRICTED_SYNTAX,
+          ],
+        }),
       },
     },
     // The Resolver's tests pass it raw values, as the token files do.
@@ -619,42 +639,39 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
         (fileName) => `src/shared/core/${fileName}.test.ts`,
       ),
       rules: {
-        "no-restricted-syntax": [
-          "error",
-          ...RESTRICTED_SYNTAX,
-          ...MOBILE_RESTRICTED_SYNTAX,
-          ...TEST_RESTRICTED_SYNTAX,
-        ],
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: TEST_RESTRICTED_SYNTAX,
+        }),
       },
     },
     // AnimatedView's test checks which entering and exiting it passes on.
     {
       files: [ANIMATED_VIEW_TEST_FILE],
       rules: {
-        "no-restricted-syntax": [
-          "error",
-          ...RESTRICTED_SYNTAX,
-          ...MOBILE_RESTRICTED_SYNTAX,
-          ...DESIGN_SYSTEM_RESTRICTED_SYNTAX.filter(
-            (restriction) => restriction !== LAYOUT_ANIMATION_PROP_RESTRICTION,
-          ),
-          ...TEST_RESTRICTED_SYNTAX,
-        ],
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: [
+            ...omitRestriction({
+              restriction: LAYOUT_ANIMATION_PROP_RESTRICTION,
+              restrictions: DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+            }),
+            ...TEST_RESTRICTED_SYNTAX,
+          ],
+        }),
       },
     },
     // useTokens's test checks which named Context it returns.
     {
       files: [TOKENS_HOOK_TEST_FILE],
       rules: {
-        "no-restricted-syntax": [
-          "error",
-          ...RESTRICTED_SYNTAX,
-          ...MOBILE_RESTRICTED_SYNTAX,
-          ...DESIGN_SYSTEM_RESTRICTED_SYNTAX.filter(
-            (restriction) => restriction !== NAMED_CONTEXT_RESTRICTION,
-          ),
-          ...TEST_RESTRICTED_SYNTAX,
-        ],
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: [
+            ...omitRestriction({
+              restriction: NAMED_CONTEXT_RESTRICTION,
+              restrictions: DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+            }),
+            ...TEST_RESTRICTED_SYNTAX,
+          ],
+        }),
       },
     },
     {

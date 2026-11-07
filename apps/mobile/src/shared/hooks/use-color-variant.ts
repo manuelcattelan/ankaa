@@ -1,8 +1,7 @@
-import { use } from "react";
 import { useColorScheme } from "react-native";
 
 import { getColorVariant } from "#/shared/core/get-color-variant.ts";
-import { AccessibilityFlagsContext } from "#/shared/providers/accessibility-flags-context.ts";
+import { useAccessibilityFlags } from "#/shared/hooks/use-accessibility-flags.ts";
 import { color } from "#/shared/tokens/color.ts";
 
 /**
@@ -12,13 +11,13 @@ import { color } from "#/shared/tokens/color.ts";
  */
 export function useColorVariant() {
   const colorScheme = useColorScheme();
-  const accessibilityFlags = use(AccessibilityFlagsContext);
+  const accessibilityFlags = useAccessibilityFlags();
 
   return color.variants[
     getColorVariant({
       colorScheme,
       isDarkerSystemColorsEnabled:
-        accessibilityFlags?.isDarkerSystemColorsEnabled ?? false,
+        accessibilityFlags.isDarkerSystemColorsEnabled,
     })
   ];
 }

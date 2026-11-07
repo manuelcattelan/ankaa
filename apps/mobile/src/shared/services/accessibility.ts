@@ -5,6 +5,7 @@ import * as Queue from "effect/Queue";
 import * as Stream from "effect/Stream";
 import { AccessibilityInfo } from "react-native";
 
+import { isAccessibilitySettingEnabled } from "#/shared/core/is-accessibility-setting-enabled.ts";
 import { shouldAnnounceMessage } from "#/shared/core/should-announce-message.ts";
 
 export class Accessibility extends Context.Service<
@@ -52,16 +53,16 @@ export class Accessibility extends Context.Service<
   );
 }
 
-// AccessibilityInfo rejects a read when its native module is missing, and the
-// setting then counts as off.
 function readSetting(isSettingEnabled: () => Promise<boolean>) {
   return Effect.tryPromise(isSettingEnabled).pipe(
-    Effect.orElseSucceed(() => false),
+    Effect.result,
+    Effect.map((read) => isAccessibilitySettingEnabled({ read })),
   );
 }
 
 // Removes the listener when the stream ends, as Effect's own
-// Stream.fromEventListener does.
+// Stream.fromEventListener does
+// (https://github.com/Effect-TS/effect/blob/7f524e25cfb49a71ac39b0f44278d08d40dda5de/packages/effect/src/Stream.ts#L1466-L1487).
 function createChangeStream(
   eventName:
     "boldTextChanged" | "darkerSystemColorsChanged" | "reduceMotionChanged",
