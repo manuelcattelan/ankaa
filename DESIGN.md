@@ -10,11 +10,100 @@ The values live in `apps/mobile/src/shared/tokens/`, and none is chosen yet. The
 
 ## Tiers and value placement
 
+Every [Design token](#design-token) is a [Primitive token](#primitive-token) or a [Semantic token](#semantic-token), and there's no component tier. No documented default; chosen for Ankaa because with one maintainer and one implementation per component, a component's own `StyleSheet` does a component tier's job. Established systems use two to four tiers ([#219](https://github.com/manuelcattelan/ankaa/issues/219)): Spectrum keeps component tokens "intentionally limited", and M3's "should point to a system or reference token".
+
+Place every value by these rules ([#220](https://github.com/manuelcattelan/ankaa/issues/220), [#229](https://github.com/manuelcattelan/ankaa/issues/229)):
+
+1. Write a raw value only in a primitive token, and make every semantic token point at a primitive, so each value is defined once.
+2. When a value falls between two steps of a scale, use the nearest step, because "The grid is the point" ([Expo](https://github.com/expo/skills/blob/main/plugins/expo/skills/expo-design-system/SKILL.md)). Motion is exempt: see Motion.
+3. When an off-scale value is needed a second time, add it to its scale as a new step instead of repeating it, as the root `AGENTS.md` shares code from its second copy.
+4. When similar components share a decision, such as the padding of controls, make it a pattern token: a semantic token named after the pattern, such as `spacing.controlPadding`, as Primer's `control-*` tokens do.
+5. Keep a truly local value, such as an icon's optical nudge, as a module-level `CONSTANT_CASE` constant in the file that uses it, with a comment saying why it's off the scale.
+
+Use a semantic token whenever one fits. Use a primitive token only when none fits, and only from a family with no contexts, such as `spacing.md`: a primitive never changes with a setting, so a color primitive would ignore Dark Mode and Increase Contrast. That's why the primitives of color, typography and iconography aren't exported.
+
+[Contexts](#context) exist only at the semantic tier, never in token names, and a [Token family](#token-family) has a semantic tier only where it has Contexts or [Roles](#role): M3 themes at its system tier, Fluent's alias tokens hold light and dark, and DTCG stacks a set per Context over unchanging tokens. A dimension family can be its scale plus [Pattern tokens](#pattern-token).
+
+A token's name is the family, then modifiers, then the head, and a state is a modifier, as in `color.secondaryForeground` and `color.pressedAccentFill`. No documented default; chosen for Ankaa because it's Apple's order (`secondaryLabel`) and the root `AGENTS.md`'s Composition rule, and the family object already does the grouping that web systems' general-to-specific order serves.
+
+- The family part is the family's name, never a synonym, such as `spacing.md` and never `space.md`.
+- Emphasis levels use the ordinal rank with the default unmarked: `color.foreground`, `color.secondaryForeground`, `color.tertiaryForeground`. This is Apple's, Carbon's and Polaris's vocabulary, and words such as `muted` don't show their order.
+- A color primitive is a hue plus a lightness number, such as `blue500`, because every system researched numbers color steps by lightness.
+
 ## Resolution
+
+The [Resolver](#resolver) follows DTCG's [Resolver Module 2025.10](https://www.designtokens.org/tr/2025.10/resolver/), a published standard and the maintainer's preference ([#221](https://github.com/manuelcattelan/ankaa/issues/221)). A family's Semantic tokens are a base set plus, for each [Modifier](#modifier), one set per Context that holds only the tokens the Context changes. The Resolver merges the base set and the selected Contexts in the [Resolution order](#resolution-order), a later set replacing a token an earlier one holds, and only then follows each Semantic token's reference (DTCG's alias) to its Primitive token.
+
+- The Modifiers are appearance, Reduce Motion and Bold Text, and the Resolution order is base, appearance, Reduce Motion, Bold Text. Modifiers are orthogonal and meet only through references, so the order never decides a value: DTCG says "a modifier MUST NOT reference any other modifier".
+- Appearance is one Modifier with four Contexts, `light`, `dark`, `lightHighContrast` and `darkHighContrast`. This is DTCG's own theme-by-contrast example, and it matches the HIG's "light and dark variants, and an increased contrast option for each variant" and the four keys `DynamicColorIOS` takes.
+- Appearance resolves natively. The Resolver resolves all four Contexts at module load and packs each color Semantic token into one `DynamicColorIOS`, which iOS switches with no JS state or re-render. This is React Native's [documented mechanism](https://reactnative.dev/docs/dynamiccolorios), and React Native warns against approximating native colors in JS.
+- Every family resolves to values React Native or Reanimated take directly, so no adapter sits between a token and a style. No documented default; chosen for Ankaa to keep adapters out. Color resolves to a `ColorValue`, typography to a style part and a `Text` props part, the dimension families and opacity to numbers, shadows to `boxShadow` object arrays, motion to Reanimated configs, and haptics to expo-haptics values.
+- The Resolver throws when a Modifier of a family has no input, as DTCG requires of a Modifier with no default. The root glossary's [Core](GLOSSARY.md#core) never throws, because it returns an Outcome for every decision, but tokens resolve at module load: a missing input is a defect in the token files that must stop the app from starting, and no caller could act on an Outcome.
+
+These settings aren't Modifiers:
+
+- Grayscale, Color Filters and Classic Invert: iOS applies them to the whole screen. Color requires a cue beyond color, and media ignores invert (see Accessibility).
+- VoiceOver: no value depends on it.
+- Right-to-left: it changes only on reload, and `start`/`end` mirror natively.
+- Prefer Cross-Fade: no documented default; chosen for Ankaa because Apple gives it no meaning beyond Reduce Motion, whose reduced Context already fades.
+- Reduce Transparency: nothing translucent reacts to it, since Apple scopes it to "(mainly window) backgrounds". A material added later brings it back ([#226](https://github.com/manuelcattelan/ankaa/issues/226)).
 
 ## Tokens in code
 
+The design system lives in `apps/mobile/src/shared/`, with no package and no barrel. No documented default; chosen for Ankaa under the root `AGENTS.md`'s Structure rules, and Expo's skill defers to a project's own system ([#227](https://github.com/manuelcattelan/ankaa/issues/227)).
+
+- `tokens/` holds one file per family, named after it, such as `tokens/color.ts`, and no `…-primitives` file.
+- `core/` holds the Resolver: `mergeTokenSets`, `resolveReferences`, `resolveColors` and `composeColor`. Lint lets only `tokens/` and the Resolver's tests import these module-load files.
+
+Tokens are typed TypeScript objects that mirror DTCG's sets, Modifiers, Contexts, Resolution order and references, resolved at module load by Ankaa's pure Core Resolver, which throws on a missing input. A reference is typed as the name of a primitive, so a broken one fails to compile. No documented default; chosen for Ankaa because DTCG specifies only JSON, Terrazzo is async and unverified on Hermes, and Style Dictionary doesn't fully support 2025.10.
+
+- Source objects are `CONSTANT_CASE` literals, such as `COLOR_PRIMITIVES` and `COLOR_SETS`, and each family is exported through the Resolver as a `lowerCamelCase` object named after it, such as `color.foreground` and `opacity.disabled`. The exports are created at runtime, under the root `AGENTS.md`'s Constants rule, so code reads like the token names.
+- The primitives of color, typography and iconography stay unexported, so TypeScript blocks them. Other families export theirs, such as `opacity.percent40`.
+- A Core function returns each color Semantic token's plain `{ light, dark, highContrastLight, highContrastDark }`, and the color token file calls `DynamicColorIOS` on it, because Core lint bans React Native imports ([#229](https://github.com/manuelcattelan/ankaa/issues/229)).
+- Static tokens go into a module-level `StyleSheet.create`, as in `styles.title = { color: color.accentForeground }`.
+- Any component, screens included, may import any token family, and each holds its styling inside its own perimeter: the maintainer doesn't want to force a flow of information.
+
+Ankaa follows Expo's [`expo-design-system`](https://github.com/expo/skills/blob/main/plugins/expo/skills/expo-design-system/SKILL.md) and `expo-native-ui` skills by reference, and departs from them here:
+
+- Tokens live in `src/shared/tokens/`, with no barrel.
+- The Resolver's exports are `lowerCamelCase`.
+- Styles go into `StyleSheet.create`, not inline as `expo-native-ui` advises, and Ankaa writes none of its Android or web fallbacks.
+
 ## Color
+
+Ankaa owns its whole palette, and no iOS system color appears in a token. No documented default; chosen for Ankaa because the maintainer wants Ankaa's own palette. Apple permits custom colors with four variants, as Fluent UI Apple does ([#220](https://github.com/manuelcattelan/ankaa/issues/220), [#222](https://github.com/manuelcattelan/ankaa/issues/222)).
+
+Primitives:
+
+- A primitive takes an absolute lightness number on Tailwind's 50–950 scale, with one neutral [Color ramp](#color-ramp) for both appearances. No documented default for the numbering; chosen for Ankaa because invariant primitives rule out contrast-relative numbering (Radix, Primer), and agents know Tailwind best. Tailwind, Carbon, M3 and Fluent share one neutral ramp.
+- `white` and `black` are standalone primitives, and `transparent` exists nowhere: where nothing is painted, code sets no color, and React Native views paint nothing by default.
+- Ramps exist only where a Role points: the neutral ramp, the [Accent](#accent)'s hue, and one hue each for danger, warning and success. `info` uses the Accent's ramp.
+- A translucent color is a color primitive composed with an opacity primitive, with no alpha ramps, as in Primer, M3 and Fluent. Contrast is measured on the composite.
+
+Roles:
+
+- The [Foreground](#foreground) roles, shared by text and icons, are `color.foreground`, `color.secondaryForeground`, `color.tertiaryForeground` and `color.placeholderForeground`. Apple, Primer, Fluent and M3 share these roles, `text` would misname icons, and `label` collides with accessibility labels. Every level must meet 4.5:1, which leaves room for about three levels.
+- [Backgrounds](#background) come in three standard levels (`color.background`, `color.secondaryBackground`, `color.tertiaryBackground`) and three grouped levels (`color.groupedBackground`, `color.secondaryGroupedBackground`, `color.tertiaryGroupedBackground`), as Apple's do, with depth from opaque lightness steps.
+- Every Background level has an [Elevated background](#elevated-background), such as `color.elevatedBackground` or `color.secondaryElevatedGroupedBackground`, equal to its base in light appearance and brighter in dark, for full-height presented screens, `Modal` and `formSheet`. Apple elevates sheets and alerts, but `DynamicColorIOS` can't switch base to elevated, and Fluent UI Apple has an elevated slot for every color.
+- `formSheet` is painted with Elevated backgrounds, not left to Liquid Glass. No documented default; chosen for Ankaa, against Apple's "remove any custom backgrounds", so the palette covers every surface.
+- `color.separator` is for decorative dividers ([Separator](#separator)) with no contrast minimum, and `color.border` is for control boundaries ([Border](#border)) at 3:1, following WCAG 1.4.11 and Primer's ADR-010.
+- Three translucent neutral [Fills](#fill) follow Apple's meanings: `color.fill` for thin shapes, `color.secondaryFill` for medium shapes, and `color.tertiaryFill` for input fields and gray buttons. Fills need no contrast minimum while each filled control carries text or an icon that meets the targets. No documented default; chosen for Ankaa because Apple's fills are faint by design.
+- `color.overlay` dims content behind overlays ([Overlay](#overlay)), composed from `black` and an opacity, like Atlassian's `blanket` and M3's `scrim`.
+- `color.shadow` is `black` with an opacity, with four variants so dark and high contrast can be stronger, and every [Shadow](#shadow) uses it ([#226](https://github.com/manuelcattelan/ankaa/issues/226)).
+- The Accent is `accent`, and the [Status roles](#status-role) are `danger` (destructive or failed), `warning`, `success` and `info`. `tint` collides with `tintColor`, `primary` collides with the emphasis rank, and `danger` follows Fluent, Primer and Atlassian.
+- Accent and every Status role have a [Role kit](#role-kit): `…Fill`, `…FillForeground`, `…Foreground`, `…Background`, `…Border`, and `pressed…Fill` on accent and danger only, such as `color.accentFill` and `color.pressedAccentFill`. No documented default; chosen for Ankaa because it covers Apple's `plain()`, `tinted()` and `filled()` buttons, and the border matches Primer, Atlassian and Polaris. A text-like button's title, such as `Button`'s, takes `color.accentForeground`.
+- There's no link role, no vibrant token, and `pressed` is the only state in color. Ankaa has no inline links, vibrancy can't be expressed in this stack, and iPhone has no hover. Disabled is `opacity.disabled`, since WCAG exempts inactive components.
+
+These contrast targets apply to composited colors:
+
+| Variants      | Text and icons | Text at 18pt or bold | `border` and role borders |
+| ------------- | -------------- | -------------------- | ------------------------- |
+| Default       | 4.5:1          | 3:1                  | 3:1                       |
+| High contrast | 7:1            | 7:1                  | 4.5:1                     |
+
+The defaults follow the HIG and WCAG. The high-contrast targets follow M3 and Primer, since Apple gives no number. 7:1 in Dark Mode is an aim, not a gate.
+
+Until values are chosen, the roles the migration uses (`color.foreground`, `color.accentForeground`, `color.border`, `color.background`, `color.separator` and `color.dangerFill`) take the light and dark colors of today's navigation theme, each high-contrast variant equals its base, and every other token holds an arbitrary placeholder, so the app looks the same until then.
 
 ## Typography
 
@@ -32,11 +121,19 @@ The values live in `apps/mobile/src/shared/tokens/`, and none is chosen yet. The
 
 ## Opacity
 
+- The opacity Roles are `opacity.disabled` and `opacity.pressed`, applied to the whole control. Plain controls show pressed with `opacity.pressed`, and filled controls keep their `pressed…Fill`. For `pressed` there's no documented default; chosen for Ankaa because it mirrors Apple's "drawn lighter" and `TouchableOpacity`. Dimming isn't an opacity: it's `color.overlay`.
+- No setting changes an opacity Role, so opacity has no Contexts, and code may use an opacity primitive when no Role fits. Apple and WCAG say nothing about these values.
+- Opacity primitives are named by percent, such as `opacity.percent40`. No documented default; chosen for Ankaa following Atlassian and Tailwind, and `opacity[40]` would fail `no-magic-numbers`.
+
 ## Motion
 
 ## Haptics
 
 ## Accessibility
+
+- Every Role carries a cue beyond color for each state and meaning, such as an icon or a label beside a Status role's color, because Grayscale and Color Filters change every color on the screen, and the HIG says "Avoid relying solely on color".
+- Set `accessibilityIgnoresInvertColors` on every photo, video and app-icon image, because Smart Invert can't be read from React Native, and iOS would otherwise invert them.
+- Check the contrast targets in Color on composited colors with throwaway checks when values are chosen, with no CI test, at the maintainer's choice.
 
 ## Glossary
 

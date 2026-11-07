@@ -58,6 +58,39 @@ const MOBILE_RESTRICTED_SYNTAX = [
   },
 ];
 
+const COLOR_KEY_PATTERN = "/^(?:c|.+C)olor$/";
+
+const NATIVE_COLOR_API_PATTERN = "/^(?:DynamicColorIOS|PlatformColor)$/";
+
+const DESIGN_SYSTEM_RESTRICTED_SYNTAX = [
+  {
+    message:
+      "Take this color from color in #/shared/tokens/color.ts instead of a literal, so every color comes from the palette and follows appearance and Increase Contrast. Where nothing is painted, set no color (DESIGN.md).",
+    selector: [
+      `Property[key.name=${COLOR_KEY_PATTERN}] > :matches(Literal[raw=/^["']/], TemplateLiteral).value`,
+      `Property[key.value=${COLOR_KEY_PATTERN}] > :matches(Literal[raw=/^["']/], TemplateLiteral).value`,
+      `JSXAttribute[name.name=${COLOR_KEY_PATTERN}] > Literal`,
+      `JSXAttribute[name.name=${COLOR_KEY_PATTERN}] > JSXExpressionContainer > :matches(Literal[raw=/^["']/], TemplateLiteral)`,
+    ].join(", "),
+  },
+  {
+    message:
+      "Use DynamicColorIOS and PlatformColor only in #/shared/tokens/, so every native color is a color token that Ankaa's palette owns (DESIGN.md).",
+    selector: `ImportSpecifier[imported.name=${NATIVE_COLOR_API_PATTERN}], MemberExpression[property.name=${NATIVE_COLOR_API_PATTERN}]`,
+  },
+];
+
+const TOKEN_FILES = ["src/shared/tokens/**"];
+
+// The Resolver's Core files that resolve tokens at module load. The growth
+// lookup, isAccessibilityCategory and getColorVariant stay open to any file.
+const MODULE_LOAD_RESOLVER_FILE_NAMES = [
+  "compose-color",
+  "merge-token-sets",
+  "resolve-colors",
+  "resolve-references",
+];
+
 const RESOLVED_FILE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".json"];
 
 const ROUTE_FILES = ["./src/app/!(_layout.tsx)", "./src/app/*/**"];
@@ -142,6 +175,21 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
     target: ROUTE_FILES,
   };
 
+  const moduleLoadResolverZone = {
+    from: MODULE_LOAD_RESOLVER_FILE_NAMES.map(
+      (fileName) => `./src/shared/core/${fileName}.ts`,
+    ),
+    message:
+      "Import the Resolver's module-load Core files only in #/shared/tokens/, and take the resolved tokens from there, so components never reach token values not meant for them (DESIGN.md).",
+    target: [
+      "./src/*",
+      "./src/!(shared)/**",
+      "./src/shared/*",
+      "./src/shared/!(core|tokens)/**",
+      `./src/shared/core/!(${[...MODULE_LOAD_RESOLVER_FILE_NAMES, "*.test"].join("|")}).ts`,
+    ],
+  };
+
   return defineConfig([
     baseConfiguration,
     { extends: [eslintConfigExpoFixedUp], files: JAVASCRIPT_FILES },
@@ -161,7 +209,14 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
         "@typescript-eslint/no-redeclare": "off",
         "import-x/no-restricted-paths": [
           "error",
-          { basePath, zones: [...featureIsolationZones, routeZone] },
+          {
+            basePath,
+            zones: [
+              ...featureIsolationZones,
+              routeZone,
+              moduleLoadResolverZone,
+            ],
+          },
         ],
         // eslint-config-expo enables import/namespace, which repeats a check
         // that TypeScript itself makes
@@ -196,6 +251,26 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
           }),
         ],
       },
+    },
+    // The design system's value rules cover the app's code, and leave out
+    // app.config.ts, whose splash color the native build reads.
+    {
+      files: ["src/**"],
+      ignores: TOKEN_FILES,
+      rules: {
+        "no-restricted-syntax": [
+          "error",
+          ...RESTRICTED_SYNTAX,
+          ...MOBILE_RESTRICTED_SYNTAX,
+          ...DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+        ],
+      },
+    },
+    // A token file holds the raw values that the value rules keep out of
+    // every other file (DESIGN.md).
+    {
+      files: TOKEN_FILES,
+      rules: { "@typescript-eslint/no-magic-numbers": "off" },
     },
     createRestrictedImportsConfiguration({
       files: JAVASCRIPT_FILES,
@@ -261,6 +336,21 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
         "jest/no-restricted-jest-methods": ["error", RESTRICTED_MOCK_METHODS],
         "jest/no-restricted-matchers": ["error", restrictedCallMatchers],
         "jest/require-top-level-describe": "error",
+        "no-restricted-syntax": [
+          "error",
+          ...RESTRICTED_SYNTAX,
+          ...MOBILE_RESTRICTED_SYNTAX,
+          ...DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+          ...TEST_RESTRICTED_SYNTAX,
+        ],
+      },
+    },
+    // The Resolver's tests pass it raw values, as the token files do.
+    {
+      files: MODULE_LOAD_RESOLVER_FILE_NAMES.map(
+        (fileName) => `src/shared/core/${fileName}.test.ts`,
+      ),
+      rules: {
         "no-restricted-syntax": [
           "error",
           ...RESTRICTED_SYNTAX,

@@ -3,6 +3,7 @@
   "ignoreBinaries": ["fly", "ngrok"],
   "ignoreDependencies": ["expo-updates", "pino-pretty", "shellcheck"],
   "ignoreIssues": {
+    "apps/mobile/src/shared/tokens/**": ["exports", "types"],
     "packages/authentication/better-auth.config.ts": ["exports"]
   },
   "workspaces": {
