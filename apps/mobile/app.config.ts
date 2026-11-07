@@ -160,6 +160,11 @@ export default function appConfig() {
         "expo-dev-client",
         { addGeneratedScheme: appVariantConfig.addGeneratedScheme },
       ],
+      // Embeds every face of the font family from ./assets/fonts/ at build
+      // time, so no useFonts loads them, and iOS picks a face by fontWeight
+      // (https://docs.expo.dev/develop/user-interface/fonts/). It lists no
+      // file until the font is chosen.
+      ["expo-font", { ios: { fonts: [] } }],
     ],
     scheme: appVariantConfig.scheme,
     userInterfaceStyle: "automatic",

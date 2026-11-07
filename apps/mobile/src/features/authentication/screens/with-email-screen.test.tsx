@@ -77,7 +77,7 @@ describe("WithEmailScreen", () => {
     await renderScreen({
       initialUrl: "/sign-in/with-email",
       testRuntimeLayers: {
-        accessibility: fakeAccessibilityLayer(announcedMessages),
+        accessibility: fakeAccessibilityLayer({ announcedMessages }),
       },
     });
 

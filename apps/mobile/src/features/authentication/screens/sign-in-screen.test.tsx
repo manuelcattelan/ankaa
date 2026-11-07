@@ -96,7 +96,7 @@ describe("SignInScreen", () => {
     await renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        accessibility: fakeAccessibilityLayer(announcedMessages),
+        accessibility: fakeAccessibilityLayer({ announcedMessages }),
         appleSignIn: fakeAppleSignInLayer({}),
         crypto: fakeCryptoLayer,
       },
@@ -319,7 +319,7 @@ describe("SignInScreen", () => {
     await renderScreen({
       initialUrl: "/sign-in",
       testRuntimeLayers: {
-        accessibility: fakeAccessibilityLayer(announcedMessages),
+        accessibility: fakeAccessibilityLayer({ announcedMessages }),
         authenticationClient: fakeAuthenticationClientLayer({
           "/sign-in/social": () =>
             Response.json(

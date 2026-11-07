@@ -8,6 +8,7 @@ paths:
   - "apps/mobile/eas.json"
   - "apps/server/Dockerfile"
   - "apps/server/fly.toml"
+  - "knip.json"
   - "renovate.json"
 ---
 
@@ -80,6 +81,7 @@ These steps run once, outside the repository, in this order.
 
 - Every pull request against `main` runs `CI`, and it merges, with a merge commit, only once its `quality` and `test` jobs pass on a branch up to date with `main`. Nobody bypasses the ruleset, the maintainer included, because agents act with the maintainer's credentials.
 - When you rename a job that the ruleset requires, or add a job that must pass, change the ruleset's required checks in the same change, because the ruleset lives outside the repository, and a required check that no job reports leaves every pull request waiting.
+- `pnpm lint` runs knip, which fails on an unused file, export or dependency. Its `knip.json` skips unused files and exports in `apps/mobile/src/shared/tokens/`, because a token file exports a whole Token family before any component uses it, as `DESIGN.md` decides, skips `computeConcentricRadius`'s file until a radius token nests a shape, skips `isAccessibilityCategory`'s file until a scalable size or a component that switches its layout reads it, lists `useTokens`, `useColorVariant`, `AnimatedView` and `Icon` as entry files whose exports it skips, because they exist before any component reads a live token, animates a color, enters and exits or shows an icon, lists the haptics token file as an entry file, so knip counts expo-haptics as used before any component plays a haptic, and counts react-native-svg as used in production mode, because only the components that react-native-svg-transformer builds from `.svg` files import it at runtime, and knip reads no `.svg` file. When you add a design-system file or dependency that nothing uses yet, extend that exception in the same change, and never for other code.
 - Pin each action to a full commit SHA with its version in a comment, as in `uses: actions/checkout@<sha> # v7.0.1`, because a tag can move to other code, and the repository's settings fail every workflow that pins an action otherwise ([GitHub](https://docs.github.com/en/actions/reference/security/secure-use)).
 
 ## Updating dependencies

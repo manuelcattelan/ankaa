@@ -1,3 +1,4 @@
+import type { Theme } from "expo-router";
 import type { ColorSchemeName } from "react-native";
 
 import {
@@ -6,7 +7,7 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import * as Context from "effect/Context";
-import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router";
+import { DefaultTheme, ThemeProvider } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { AppState, useColorScheme } from "react-native";
@@ -20,8 +21,32 @@ import { Text } from "#/shared/components/text.tsx";
 import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 import { AuthClientContext } from "#/shared/providers/auth-client-context.ts";
 import { RuntimeContext } from "#/shared/providers/runtime-context.ts";
+import { TokenProvider } from "#/shared/providers/token-provider.tsx";
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
+import { color } from "#/shared/tokens/color.ts";
 import { SplashScreenController } from "#/splash-screen-controller.tsx";
+
+// Spreading DefaultTheme keeps the system fonts, which nothing Ankaa renders
+// reads, because every Stack hides its header.
+const lightNavigationTheme = {
+  ...DefaultTheme,
+  colors: {
+    background: color.background,
+    border: color.separator,
+    card: color.background,
+    notification: color.dangerFill,
+    primary: color.accentForeground,
+    text: color.foreground,
+  },
+  dark: false,
+} satisfies Theme;
+
+// Each color follows appearance on its own, so this theme differs only in
+// `dark`, which then never tells a reader the wrong appearance.
+const darkNavigationTheme = {
+  ...lightNavigationTheme,
+  dark: true,
+} satisfies Theme;
 
 export function ErrorBoundary() {
   const colorScheme = useColorScheme();
@@ -56,22 +81,24 @@ export default function RootLayout() {
 
   return (
     <RuntimeContext value={application.runtime}>
-      <AuthClientContext
-        value={
-          Context.get(application.context, AuthenticationClient).authClient
-        }
-      >
-        <KeyboardProvider>
-          <QueryClientProvider client={queryClient}>
-            <QueryCacheController />
-            <ThemeProvider value={getNavigationTheme(colorScheme)}>
-              <SplashScreenController />
-              <RootNavigator />
-              <StatusBar style="auto" />
-            </ThemeProvider>
-          </QueryClientProvider>
-        </KeyboardProvider>
-      </AuthClientContext>
+      <TokenProvider>
+        <AuthClientContext
+          value={
+            Context.get(application.context, AuthenticationClient).authClient
+          }
+        >
+          <KeyboardProvider>
+            <QueryClientProvider client={queryClient}>
+              <QueryCacheController />
+              <ThemeProvider value={getNavigationTheme(colorScheme)}>
+                <SplashScreenController />
+                <RootNavigator />
+                <StatusBar style="auto" />
+              </ThemeProvider>
+            </QueryClientProvider>
+          </KeyboardProvider>
+        </AuthClientContext>
+      </TokenProvider>
     </RuntimeContext>
   );
 }
@@ -85,5 +112,5 @@ function createQueryClient() {
 }
 
 function getNavigationTheme(colorScheme: ColorSchemeName | null) {
-  return colorScheme === "dark" ? DarkTheme : DefaultTheme;
+  return colorScheme === "dark" ? darkNavigationTheme : lightNavigationTheme;
 }

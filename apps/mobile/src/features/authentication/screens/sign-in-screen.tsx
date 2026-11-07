@@ -12,11 +12,14 @@ import { googleSignInMutationOptions } from "#/features/authentication/mutations
 import { LinkButton } from "#/shared/components/link-button.tsx";
 import { ScrollView } from "#/shared/components/scroll-view.tsx";
 import { StatusMessage } from "#/shared/components/status-message.tsx";
-import { MINIMUM_TOUCH_TARGET_SIZE } from "#/shared/constants/minimum-touch-target-size.ts";
 import { useAuthenticationSession } from "#/shared/hooks/use-authentication-session.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 
 const APPLE_BUTTON_CORNER_RADIUS = 8;
+
+// Apple's button takes a fixed height, not a minimum, so it keeps today's
+// height until both sign-in buttons are rebuilt as custom buttons (DESIGN.md).
+const APPLE_BUTTON_HEIGHT = 48;
 
 /**
  * Signs the User in with Apple or Google, or leads them to sign in with their
@@ -107,5 +110,5 @@ export function SignInScreen({
 }
 
 const styles = StyleSheet.create({
-  appleButton: { height: MINIMUM_TOUCH_TARGET_SIZE, width: "100%" },
+  appleButton: { height: APPLE_BUTTON_HEIGHT, width: "100%" },
 });
