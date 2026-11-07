@@ -153,6 +153,19 @@ Until values are chosen, the roles the migration uses (`color.foreground`, `colo
 
 ## Shadows
 
+The family is `shadows`, which DTCG's `shadow` type and Expo's `shadows` name so. "Elevation" appears in no token, and "elevated" belongs only to [Elevated backgrounds](#elevated-background): with Liquid Glass and blur out, the family holds only [Shadows](#shadow) ([#226](https://github.com/manuelcattelan/ankaa/issues/226)).
+
+- One Role, `shadows.floating` ([Floating](#floating)), covers every surface that floats above content, such as a menu, a toast, an alert or a floating button. The custom [Chrome](#chrome) makes floating surfaces certain, and Ankaa has no resting surfaces.
+- A Shadow is a `boxShadow` object array matching DTCG's Shadow type, never the string form or the legacy `shadow*` props, because only the object form carries a `DynamicColorIOS` that follows appearance. Lint flags a `shadowColor`, `shadowOffset`, `shadowOpacity` or `shadowRadius` key and a string `boxShadow` outside `tokens/`.
+- A shadow primitive is a colorless geometry composite named by t-shirt size, such as `shadows.md`, created only where a Role points, and `shadows.floating` combines it with `color.shadow`. No documented default; chosen for Ankaa to keep rule 1 of Tiers and value placement, mirroring how Text styles split into primitives. A shadow built from a primitive where no Role fits takes `color.shadow` too, because every Shadow uses it.
+- iOS draws a `boxShadow`'s blur at half the given `blurRadius` ([React Native](https://github.com/facebook/react-native/blob/v0.88.1/packages/react-native/React/Fabric/Utils/RCTBoxShadow.mm#L67)).
+- Under Increase Contrast only `color.shadow`'s variants change, never a Shadow's shape. No documented default; chosen for Ankaa to keep native switching with no re-render. A floating surface that proves hard to see gets a permanent `color.border` outline.
+
+Ankaa draws its own Chrome from documented, official React Native and Expo components only, painted opaque: bars with `color.background` or `color.secondaryBackground`, and floating overlays with `color.elevatedBackground` and `shadows.floating`, with no Liquid Glass and no blur. This is the maintainer's choice of look: glass can't be opted out of from the iOS 27 SDK on, a blur can't take Ankaa's palette, asks for vibrancy this stack can't reach, and neither library checks Reduce Transparency ([#226](https://github.com/manuelcattelan/ankaa/issues/226)). The keyboard, the share sheet, permission prompts, Sign in with Apple and the status bar stay drawn by iOS. The Chrome is built in the component library effort, and follows Apple for its controls:
+
+- "Always include a press state for a custom button" ([HIG Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons)), such as `opacity.pressed` on a plain control or a `pressed…Fill` on a filled one.
+- A custom Back or Close button keeps the standard symbol and no text label that says Back or Close: "If you create a custom version of either, make sure it still looks the same, behaves as people expect, and matches the rest of your interface, and ensure you consistently implement it throughout your app or game" ([HIG Toolbars](https://developer.apple.com/design/human-interface-guidelines/toolbars)).
+
 ## Opacity
 
 - The opacity Roles are `opacity.disabled` and `opacity.pressed`, applied to the whole control. Plain controls show pressed with `opacity.pressed`, and filled controls keep their `pressed…Fill`. For `pressed` there's no documented default; chosen for Ankaa because it mirrors Apple's "drawn lighter" and `TouchableOpacity`. Dimming isn't an opacity: it's `color.overlay`.

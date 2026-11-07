@@ -60,6 +60,8 @@ const MOBILE_RESTRICTED_SYNTAX = [
 
 const COLOR_KEY_PATTERN = "/^(?:c|.+C)olor$/";
 
+const LEGACY_SHADOW_KEY_PATTERN = "/^shadow(?:Color|Offset|Opacity|Radius)$/";
+
 const NATIVE_COLOR_API_PATTERN = "/^(?:DynamicColorIOS|PlatformColor)$/";
 
 const HORIZONTAL_SIDE_KEY_PATTERN =
@@ -114,6 +116,22 @@ const DESIGN_SYSTEM_RESTRICTED_SYNTAX = [
     message:
       "Set borderCurve: 'continuous' beside this radius, so its corners curve as Apple's do. Only radius.capsule goes without it (DESIGN.md).",
     selector: `ObjectExpression:not(:has(> Property[key.name='borderCurve'][value.value='continuous'])) > Property[key.name=${RADIUS_KEY_PATTERN}]:not([value.object.name='radius'][value.property.name='capsule'])`,
+  },
+  {
+    message:
+      "Take this shadow from shadows in #/shared/tokens/shadows.ts as a boxShadow, because the legacy shadow* props can't take a color that follows appearance and Increase Contrast (DESIGN.md).",
+    selector: [
+      `Property[key.name=${LEGACY_SHADOW_KEY_PATTERN}]`,
+      `Property[key.value=${LEGACY_SHADOW_KEY_PATTERN}]`,
+    ].join(", "),
+  },
+  {
+    message:
+      "Take this shadow from shadows in #/shared/tokens/shadows.ts instead of a string, because only boxShadow's object form takes a color that follows appearance and Increase Contrast (DESIGN.md).",
+    selector: [
+      "Property[key.name='boxShadow'] > :matches(Literal[raw=/^[\"']/], TemplateLiteral).value",
+      "Property[key.value='boxShadow'] > :matches(Literal[raw=/^[\"']/], TemplateLiteral).value",
+    ].join(", "),
   },
 ];
 
