@@ -1,19 +1,4 @@
-// The fontScale that React Native reports on iOS for each text size Users can
-// pick, from xSmall to AX5, Large being 1
-// (https://github.com/facebook/react-native/blob/v0.88.1/packages/react-native/React/CoreModules/RCTAccessibilityManager.mm).
-type FontScale =
-  | 0.823
-  | 0.882
-  | 0.941
-  | 1
-  | 1.118
-  | 1.235
-  | 1.353
-  | 1.786
-  | 2.143
-  | 2.643
-  | 3.143
-  | 3.571;
+import type { FontScale } from "#/shared/core/snap-font-scale.ts";
 
 // Apple's point size of each Text style at each text size, from the HIG's
 // iOS Dynamic Type sizes

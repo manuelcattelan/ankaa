@@ -162,6 +162,8 @@ const ANIMATED_VIEW_TEST_FILE = "src/shared/components/animated-view.test.tsx";
 
 const HAPTICS_FILE = "src/shared/tokens/haptics.ts";
 
+const FONT_SCALE_SNAP_FILE = "src/shared/core/snap-font-scale.ts";
+
 const DESIGN_SYSTEM_RESTRICTED_SYNTAX = [
   COLOR_VARIANTS_RESTRICTION,
   NAMED_CONTEXT_RESTRICTION,
@@ -525,9 +527,10 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
       },
     },
     // The growth lookup holds Apple's table of Text style sizes, one number
-    // per text size, which a name per number would only repeat.
+    // per text size, and snapFontScale the fontScale of each text size,
+    // which a name per number would only repeat.
     {
-      files: [GROWTH_LOOKUP_FILE],
+      files: [GROWTH_LOOKUP_FILE, FONT_SCALE_SNAP_FILE],
       rules: { "@typescript-eslint/no-magic-numbers": "off" },
     },
     createRestrictedImportsConfiguration({
@@ -561,6 +564,13 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
           { case: "kebabCase", ignore: [DYNAMIC_ROUTE_FILE_NAME_PATTERN] },
         ],
       },
+    },
+    // An .svg file imports as a default export
+    // (https://github.com/kristerkari/react-native-svg-transformer#using-typescript),
+    // so its module typing and its Jest stub declare one.
+    {
+      files: ["svg.d.ts", "src/testing/svg-stub.tsx"],
+      rules: { "import-x/no-default-export": "off" },
     },
     createRestrictedImportsConfiguration({
       files: ["src/app/**"],

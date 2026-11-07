@@ -53,9 +53,10 @@ These settings aren't Modifiers:
 The design system lives in `apps/mobile/src/shared/`, with no package and no barrel. No documented default; chosen for Ankaa under the root `AGENTS.md`'s Structure rules, and Expo's skill defers to a project's own system ([#227](https://github.com/manuelcattelan/ankaa/issues/227)).
 
 - `tokens/` holds one file per family, named after it, such as `tokens/color.ts`, and no `…-primitives` file.
-- `core/` holds the Resolver: `mergeTokenSets`, `resolveReferences`, `resolveColors`, `composeColor` and `computeConcentricRadius`. Lint lets only `tokens/` and the Resolver's tests import these module-load files. The growth lookup `getTextStyleGrowth`, `isAccessibilityCategory` and `getColorVariant` stay open to any file.
+- `core/` holds the Resolver: `mergeTokenSets`, `resolveReferences`, `resolveColors`, `composeColor` and `computeConcentricRadius`. Lint lets only `tokens/` and the Resolver's tests import these module-load files. The growth lookup `getTextStyleGrowth`, `snapFontScale`, `isAccessibilityCategory` and `getColorVariant` stay open to any file.
 - `providers/` and `hooks/` hold the live state: `TokenProvider`, `useTokens` and `useColorVariant`.
-- `components/` holds `AnimatedView`, the one view that takes `entering` and `exiting` (see Motion).
+- `components/` holds `AnimatedView`, the one view that takes `entering` and `exiting` (see Motion), and `Icon`, which renders every icon (see Iconography).
+- `icons/` holds the Nucleo `.svg` files. Metro reads them through react-native-svg-transformer, set in `apps/mobile/metro.config.ts`, TypeScript through the `*.svg` module typing in `apps/mobile/svg.d.ts`, and Jest through a `moduleNameMapper` stub.
 
 Tokens are typed TypeScript objects that mirror DTCG's sets, Modifiers, Contexts, Resolution order and references, resolved at module load by Ankaa's pure Core Resolver, which throws on a missing input. A reference is typed as the name of a primitive, so a broken one fails to compile. No documented default; chosen for Ankaa because DTCG specifies only JSON, Terrazzo is async and unverified on Hermes, and Style Dictionary doesn't fully support 2025.10.
 
@@ -148,11 +149,45 @@ The font:
 Text size:
 
 - Text size isn't a Modifier. `fontScale` is a number applied after resolution, outside DTCG's model, because DTCG's inputs are strings and `UIFontMetrics` can't be reached from React Native.
-- `getTextStyleGrowth` in `core/` is the one growth lookup: Apple's per-style size table, keyed by the 12 `fontScale` values iOS reports, one per text size, returns how much a Text style grows over its default size. It exists because each Text style grows on its own curve: at AX5, `fontScale` is 3.571, while Body grows to 53 pt, 3.118 times its 17 pt, and Large Title to 60 pt, 1.765 times its 34 pt. Icons and scalable sizing scale by it (see Sizing). No documented default; chosen for Ankaa because it's the only way to match Apple's per-style curves from JS.
+- `getTextStyleGrowth` in `core/` is the one growth lookup: Apple's per-style size table, keyed by the 12 `fontScale` values iOS reports, one per text size, returns how much a Text style grows over its default size. It exists because each Text style grows on its own curve: at AX5, `fontScale` is 3.571, while Body grows to 53 pt, 3.118 times its 17 pt, and Large Title to 60 pt, 1.765 times its 34 pt. Icons and scalable sizing scale by it (see Iconography and Sizing). No documented default; chosen for Ankaa because it's the only way to match Apple's per-style curves from JS.
+- `snapFontScale` in `core/` gives the nearest of those 12 values to any `fontScale`, which a caller passes to the growth lookup, so a value iOS doesn't report, such as Jest's 2, still finds a text size: 2 snaps to AX2's 2.143. No documented default; the maintainer's choice.
 - `isAccessibilityCategory` in `core/` tells whether `fontScale` is an [Accessibility category](#accessibility-category), from AX1's 1.786 up, so the threshold lives in one place. No documented default; chosen for Ankaa because React Native has no content-size-category API ([#224](https://github.com/manuelcattelan/ankaa/issues/224)).
 - `Text` doesn't take Text styles yet: the migration keeps its default text, and screens move to Text styles when they're refined.
 
 ## Iconography
+
+Icons:
+
+- Icons are Nucleo icons drawn with react-native-svg, and no native bar component is used. It's the only route where `strokeWidth` and `color` apply at runtime, matching Nucleo's `stroke="currentColor"`, and expo-router's native tabs and toolbars take no SVG.
+- The repository holds at most 100 Nucleo icons, because Nucleo's [license](https://nucleoapp.com/license) allows "up to 100 Nucleo icons in publicly accessible source files", and the repository is public. Count every icon added or removed here. **Nucleo icons in the repository: 0.**
+- Each icon is a Nucleo `.svg` file in `apps/mobile/src/shared/icons/`, kept as downloaded and imported as a component through react-native-svg-transformer, react-native-svg's documented route, under a camelCase name such as `chevronIcon`. The transformer's SVGO config in `icons/.svgrrc` strips every shape's `stroke-width`, so the shapes take the [Stroke](#stroke) that `Icon` sets on the root.
+- Render every icon with the shared `Icon`, as in `<Icon color={color.secondaryForeground} icon={chevronIcon} name="body" />`. It sets the size from its token grown by its Text style's growth, `color` from the Foreground token it's given, and `strokeWidth` from the token in the current Bold Text Context, and passes `style`, `opacity` and accessibility props through.
+
+Semantic tokens:
+
+- An iconography token holds a size and a Stroke, and an icon's color comes from the [Foreground](#foreground) roles of color. No system researched tokenizes stroke; it's tokenized at the maintainer's request.
+- Every iconography token has an [Icon pairing](#icon-pairing) with exactly one [Text style](#text-style), whose name it carries, Emphasized text styles included, as in `iconography.body` and `iconography.emphasizedBody`, so an icon beside text takes that text's style's token. This follows Apple's `SymbolConfiguration(textStyle:)` and Carbon's and Atlassian's fixed pairing of icon and text sizes. An Emphasized text style's token has its base style's size and the Stroke of its emphasized weight.
+- An icon's size grows by its paired Text style's growth, with no cap: `Icon` multiplies the token's size by `getTextStyleGrowth` for the current `fontScale`. No documented default; chosen for Ankaa because it's the only way to match Apple's per-style curves from JS, and raw `fontScale` would grow a Large Title icon about twice as much as its text.
+- Bold Text is a [Modifier](#modifier), so iconography exports its two [Contexts](#context) by name, `iconography.boldTextOff` and `iconography.boldTextOn`. `Icon` takes iconography from `useTokens()`, and only module-level code names a Context (see Tokens in code).
+
+Primitives:
+
+- A Stroke is in the units of the icon's own grid, so it grows with the icon, as SF Symbols' strokes grow with their point size. The Stroke primitives are named after the font weight they match, such as `semiboldStroke`, and each token takes the Stroke of its Text style's weight, and under Bold Text the Stroke of its Text style's Bold Text weight. This is SF Symbols' model, and a single Stroke would make a Headline icon look lighter than its Semibold text.
+- Stroke values stay at or below Nucleo's own strokes, which are already their family's maximum ("up to 1.5px" on the 18-unit grid of UI icons), so the heaviest weight still fits.
+- The size primitives are in points, with t-shirt steps, such as `mdSize`. Until values are chosen, each is the font size of the Text styles it pairs with, and the Strokes are placeholders.
+- The primitives stay unexported, so no component reaches a raw size or Stroke.
+
+Right-to-left:
+
+- There's no mirroring field, and a per-icon flip flag waits for the first right-to-left language, because right-to-left isn't a Modifier and Nucleo has no right-to-left variants. When it comes, follow Apple's four flip rules ([HIG Right to left](https://developer.apple.com/design/human-interface-guidelines/right-to-left)):
+  1. "Flip interface icons that represent text or reading direction".
+  2. "Flip an interface icon that shows forward or backward motion".
+  3. "Don't flip logos or universal signs and marks".
+  4. "avoid flipping interface icons that depict real-world objects".
+
+Custom bars:
+
+- There are no bar tokens yet. When Ankaa's custom bars are built, as part of its [Chrome](#chrome), they take [Pattern tokens](#pattern-token): their text is capped with `maxFontSizeMultiplier`, their icons don't scale, and every bar item sets `accessibilityShowsLargeContentViewer` and `accessibilityLargeContentTitle`, because WWDC24 10074 says "if you choose to implement custom bars or views, consider adopting the large content viewer". Until then, every iconography token pairs with a Text style and grows with it.
 
 ## Spacing
 
