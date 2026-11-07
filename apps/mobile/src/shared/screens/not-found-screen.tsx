@@ -8,12 +8,7 @@ import { SHARED_MESSAGES } from "#/shared/messages/shared-messages.ts";
 export function NotFoundScreen() {
   return (
     <ScrollView>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          title: SHARED_MESSAGES.notFoundScreenTitle,
-        }}
-      />
+      <Stack.Screen options={{ title: SHARED_MESSAGES.notFoundScreenTitle }} />
       <Text>{SHARED_MESSAGES.notFoundScreenBody}</Text>
       <LinkButton href="/" title={SHARED_MESSAGES.goHomeButton} />
     </ScrollView>

@@ -117,7 +117,7 @@ These contrast targets apply to composited colors:
 
 The defaults follow the HIG and WCAG. The high-contrast targets follow M3 and Primer, since Apple gives no number. 7:1 in Dark Mode is an aim, not a gate.
 
-Until values are chosen, the roles the migration uses (`color.foreground`, `color.accentForeground`, `color.border`, `color.background`, `color.separator` and `color.dangerFill`) take the light and dark colors of today's navigation theme, each high-contrast variant equals its base, and every other token holds an arbitrary placeholder, so the app looks the same until then.
+Until values are chosen, the roles the migration uses (`color.foreground`, `color.accentForeground`, `color.border`, `color.background`, `color.separator` and `color.dangerFill`) take the light and dark colors of expo-router's `DefaultTheme` and `DarkTheme`, the navigation theme the app had before them, each high-contrast variant equals its base, and every other token holds an arbitrary placeholder, so the app looks the same until then.
 
 ## Typography
 

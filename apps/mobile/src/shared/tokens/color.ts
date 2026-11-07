@@ -10,9 +10,9 @@ import { opacity } from "#/shared/tokens/opacity.ts";
 
 // Placeholders until values are chosen. The steps that foreground, accent,
 // border, background, separator and dangerFill point at hold the light and
-// dark colors of today's navigation theme (expo-router's DefaultTheme and
-// DarkTheme), so the app looks the same until then, and the other steps hold
-// Tailwind's.
+// dark colors of expo-router's DefaultTheme and DarkTheme, the navigation
+// theme the app had before the tokens, so the app looks the same until then,
+// and the other steps hold Tailwind's.
 const COLOR_PRIMITIVES = {
   amber50: "#fffbeb",
   amber100: "#fef3c7",

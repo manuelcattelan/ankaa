@@ -28,6 +28,7 @@ import { getExerciseNames } from "#/shared/core/get-exercise-names.ts";
 import { useCreateId } from "#/shared/hooks/use-create-id.ts";
 import { useRuntime } from "#/shared/hooks/use-runtime.ts";
 import { exerciseListQueryOptions } from "#/shared/queries/exercise-list-query-options.ts";
+import { color } from "#/shared/tokens/color.ts";
 
 const noExerciseNames: ReadonlyMap<string, string> = new Map();
 
@@ -212,6 +213,7 @@ export function RoutineEditor({
       </ScrollView>
       <Modal
         animationType="slide"
+        backdropColor={color.elevatedBackground}
         onRequestClose={handleDismissExercisePicker}
         presentationStyle="pageSheet"
         visible={exercisePickerTarget !== null}
