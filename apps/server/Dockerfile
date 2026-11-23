@@ -4,7 +4,7 @@ FROM ${NODE_IMAGE} AS base
 # Node.js no longer ships Corepack, so pnpm comes from its own image
 # (https://pnpm.io/docker), tagged with the version that `devEngines` pins,
 # because `pmOnFail: ignore` keeps pnpm from switching to it.
-COPY --from=ghcr.io/pnpm/pnpm:12.16.1@sha256:33081d3d2c96ba582d316cfd630f0f43961d9c60ff919b50edd1835a1462976b /opt/pnpm /opt/pnpm
+COPY --from=ghcr.io/pnpm/pnpm:12.22.0@sha256:81346f048d668195928d441b80efc0df300474ed8bf81789e4554ec0079079d0 /opt/pnpm /opt/pnpm
 RUN for bin in pnpm pn pnpx pnx; do ln -s "/opt/pnpm/$bin" "/usr/local/bin/$bin"; done
 WORKDIR /app
 
