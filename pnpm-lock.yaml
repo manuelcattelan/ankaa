@@ -46,8 +46,8 @@ catalogs:
       specifier: ^8.23.1
       version: 8.23.1
     prettier:
-      specifier: 3.9.10
-      version: 3.9.10
+      specifier: 3.10.1
+      version: 3.10.1
     typescript:
       specifier: ~6.0.3
       version: 6.0.3
@@ -79,10 +79,10 @@ importers:
         version: 6.44.1
       prettier:
         specifier: 'catalog:'
-        version: 3.9.10
+        version: 3.10.1
       prettier-plugin-sh:
         specifier: 0.20.2
-        version: 0.20.2(prettier@3.9.10)
+        version: 0.20.2(prettier@3.10.1)
       shellcheck:
         specifier: 4.1.0
         version: 4.1.0(supports-color@8.1.1)
@@ -6576,8 +6576,8 @@ packages:
     peerDependencies:
       prettier: ^3.6.0
 
-  prettier@3.9.10:
-    resolution: {integrity: sha512-skGHTH1Yb9QvaTC4hWnRTzEYtCpApF0UMBPz+t/0ZPzP8ihefo/btKd+QA7pUE0fEwA1SbS/NmhyEcstdXOIdA==}
+  prettier@3.10.1:
+    resolution: {integrity: sha512-70vp3ZUYoPlFbF9uiTdXHUUCGEIp7d4+6p+8DYbkm2jP7x/3i/paXVF6dopSI3zd/CEitrZN1rc4i85xWmmXlg==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -10859,7 +10859,7 @@ snapshots:
       get-tsconfig: 4.14.3
       jiti: 2.7.0
       open: 11.0.4
-      prettier: 3.9.10
+      prettier: 3.10.1
       prompts: 2.4.2
       semver: 7.8.6
       yocto-spinner: 1.2.2
@@ -14666,13 +14666,13 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-sh@0.20.2(prettier@3.9.10):
+  prettier-plugin-sh@0.20.2(prettier@3.10.1):
     dependencies:
       '@reteps/dockerfmt': 0.5.4
-      prettier: 3.9.10
+      prettier: 3.10.1
       sh-syntax: 0.7.0
 
-  prettier@3.9.10: {}
+  prettier@3.10.1: {}
 
   pretty-format@29.7.0:
     dependencies:
