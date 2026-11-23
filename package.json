@@ -9,13 +9,13 @@
     "prettier": "catalog:",
     "prettier-plugin-sh": "0.20.2",
     "shellcheck": "4.1.0",
-    "turbo": "2.11.10",
+    "turbo": "2.11.13",
     "typescript": "catalog:"
   },
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "12.16.1"
+      "version": "12.22.0"
     },
     "runtime": {
       "name": "node",
