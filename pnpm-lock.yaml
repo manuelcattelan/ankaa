@@ -486,8 +486,8 @@ importers:
         specifier: workspace:*
         version: link:../../tooling/vitest
       '@testcontainers/postgresql':
-        specifier: 12.2.1
-        version: 12.2.1(supports-color@8.1.1)
+        specifier: 12.2.2
+        version: 12.2.2(supports-color@8.1.1)
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.6
@@ -2720,8 +2720,8 @@ packages:
       '@types/react':
         optional: true
 
-  '@testcontainers/postgresql@12.2.1':
-    resolution: {integrity: sha512-MIbI5KjZ9M4SY4+xzxg/w4ZLBeV+Jd6ognXoWn7dh/mhIhBbn7ss0MiZHNg2XbCbu03BW9YQ9+H9xW8PFkJWaA==}
+  '@testcontainers/postgresql@12.2.2':
+    resolution: {integrity: sha512-ePhFeUswU6aHJ1HETznfnVKuR0KYtGkMfqE1DTltgSt21WokXFby/I+c7g/fPXSE9sfxfE+GtyoUeohejpVcSA==}
 
   '@testing-library/react-native@14.1.0':
     resolution: {integrity: sha512-tWOam5U3aUE8XqStdWAN/OuUUdGRzh/vJMg7SfCaqXNKx7orRh04590Jp4JbORctYjORoRYfJSg04I2//wnxYw==}
@@ -10171,7 +10171,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.3.0
 
-  '@testcontainers/postgresql@12.2.1(supports-color@8.1.1)':
+  '@testcontainers/postgresql@12.2.2(supports-color@8.1.1)':
     dependencies:
       testcontainers: 12.2.2(supports-color@8.1.1)
     transitivePeerDependencies:

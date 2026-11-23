@@ -10,7 +10,7 @@
     "@ankaa/eslint": "workspace:*",
     "@ankaa/typescript": "workspace:*",
     "@ankaa/vitest": "workspace:*",
-    "@testcontainers/postgresql": "12.2.1",
+    "@testcontainers/postgresql": "12.2.2",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
     "@types/proper-lockfile": "4.1.4",
