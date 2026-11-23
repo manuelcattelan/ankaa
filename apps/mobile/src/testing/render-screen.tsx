@@ -9,6 +9,7 @@ import type { TestRuntimeLayers } from "#/testing/create-test-runtime.ts";
 import { RootNavigator } from "#/root-navigator.tsx";
 import { AuthClientContext } from "#/shared/providers/auth-client-context.ts";
 import { RuntimeContext } from "#/shared/providers/runtime-context.ts";
+import { TokenProvider } from "#/shared/providers/token-provider.tsx";
 import { AuthenticationClient } from "#/shared/services/authentication-client.ts";
 import { createTestRuntime } from "#/testing/create-test-runtime.ts";
 
@@ -53,11 +54,13 @@ function createTestRootLayout({
   function TestRootLayout() {
     return (
       <RuntimeContext value={runtime}>
-        <AuthClientContext value={authClient}>
-          <QueryClientProvider client={queryClient}>
-            <RootNavigator />
-          </QueryClientProvider>
-        </AuthClientContext>
+        <TokenProvider>
+          <AuthClientContext value={authClient}>
+            <QueryClientProvider client={queryClient}>
+              <RootNavigator />
+            </QueryClientProvider>
+          </AuthClientContext>
+        </TokenProvider>
       </RuntimeContext>
     );
   }

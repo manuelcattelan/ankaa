@@ -4,7 +4,7 @@ import { AUTHENTICATION_MESSAGES } from "#/features/authentication/messages/auth
 
 export function AuthenticationStack() {
   return (
-    <Stack>
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen
         name="sign-in/index"
         options={{ title: AUTHENTICATION_MESSAGES.signInScreenTitle }}

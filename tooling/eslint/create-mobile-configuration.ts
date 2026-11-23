@@ -1,3 +1,5 @@
+import type { Linter } from "eslint";
+
 import { fixupConfigRules } from "@eslint/compat";
 import eslintConfigExpoFlat from "eslint-config-expo/flat";
 import { createNodeResolver } from "eslint-plugin-import-x";
@@ -58,6 +60,215 @@ const MOBILE_RESTRICTED_SYNTAX = [
   },
 ];
 
+const COLOR_KEY_PATTERN = "/^(?:c|.+C)olor$/";
+
+const LEGACY_SHADOW_KEY_PATTERN = "/^shadow(?:Color|Offset|Opacity|Radius)$/";
+
+const NATIVE_COLOR_API_PATTERN = "/^(?:DynamicColorIOS|PlatformColor)$/";
+
+const HORIZONTAL_SIDE_KEY_PATTERN =
+  "/^(?:left|right|(?:margin|padding)(?:Left|Right)|border(?:Left|Right)(?:Color|Width)|border(?:Top|Bottom)(?:Left|Right)Radius)$/";
+
+const RADIUS_KEY_PATTERN = "/^border(?:[A-Z][a-z]*)*Radius$/";
+
+const COLOR_VARIANTS_RESTRICTION = {
+  message:
+    "Take an animated color from useColorVariant() in #/shared/hooks/use-color-variant.ts, and every other color from color, so a plain color is read only where it follows appearance and Increase Contrast (DESIGN.md).",
+  selector: [
+    "MemberExpression[object.name='color']:matches([property.name='variants'], [property.value='variants'])",
+    "VariableDeclarator[init.name='color'] > ObjectPattern > Property[key.name='variants']",
+  ].join(", "),
+};
+
+const COLOR_VARIANT_HOOK_FILE = "src/shared/hooks/use-color-variant.ts";
+
+const TYPOGRAPHY_KEY_PATTERN =
+  "/^(?:fontFamily|fontSize|fontWeight|letterSpacing|lineHeight)$/";
+
+const TYPOGRAPHY_KEY_RESTRICTION = {
+  message:
+    "Take this text style from a Text style of typography in #/shared/tokens/typography.ts, so every text grows with Dynamic Type and follows Bold Text (DESIGN.md).",
+  selector: `Property[key.name=${TYPOGRAPHY_KEY_PATTERN}], Property[key.value=${TYPOGRAPHY_KEY_PATTERN}]`,
+};
+
+const LETTER_SPACING_KEY_PATTERN = "/^(?:letterSpacing|\\w+LetterSpacing)$/";
+
+const ZERO_LETTER_SPACING_RESTRICTION = {
+  message:
+    "Use null instead of a letter spacing of 0, which leaves letterSpacing unset, because 0 turns pair kerning off (DESIGN.md).",
+  selector: [
+    `Property[key.name=${LETTER_SPACING_KEY_PATTERN}] > Literal.value[value=0]`,
+    `Property[key.name=${LETTER_SPACING_KEY_PATTERN}] > UnaryExpression.value[argument.value=0]`,
+  ].join(", "),
+};
+
+const LIVE_MODIFIER_FAMILY_PATTERN = "/^(?:iconography|motion|typography)$/";
+
+const NAMED_CONTEXT_PATTERN = "/^(?:boldText|reduceMotion)O(?:ff|n)$/";
+
+const NAMED_CONTEXT_RESTRICTION = {
+  message:
+    "Take this Token family from useTokens() in #/shared/hooks/use-tokens.ts, which selects its Context from the live flags. Name a Context only at module level (DESIGN.md).",
+  selector: [
+    `:function MemberExpression[object.name=${LIVE_MODIFIER_FAMILY_PATTERN}]:matches([property.name=${NAMED_CONTEXT_PATTERN}], [property.value=${NAMED_CONTEXT_PATTERN}])`,
+    `:function VariableDeclarator[init.name=${LIVE_MODIFIER_FAMILY_PATTERN}] > ObjectPattern > Property[key.name=${NAMED_CONTEXT_PATTERN}]`,
+  ].join(", "),
+};
+
+const TOKENS_HOOK_FILE = "src/shared/hooks/use-tokens.ts";
+
+const TOKENS_HOOK_TEST_FILE = "src/shared/hooks/use-tokens.test.tsx";
+
+const TYPOGRAPHY_FILE = "src/shared/tokens/typography.ts";
+
+const GROWTH_LOOKUP_FILE = "src/shared/core/get-text-style-growth.ts";
+
+const REDUCE_MOTION_SYSTEM_RESTRICTION = {
+  message:
+    "Pass the reduceMotion of this animation's motion Role instead of ReduceMotion.System, because Reanimated reads ReduceMotion.System only once, at startup, so it misses a change to Reduce Motion while the app runs (DESIGN.md).",
+  selector:
+    "MemberExpression[object.name='ReduceMotion']:matches([property.name='System'], [property.value='System'])",
+};
+
+const HAPTIC_ENUM_PATTERN =
+  "/^(?:ImpactFeedbackStyle|NotificationFeedbackType)$/";
+
+const HAPTIC_ENUM_RESTRICTION = {
+  message:
+    "Take this haptic from haptics in #/shared/tokens/haptics.ts, which names each of Apple's Haptic patterns by its meaning (DESIGN.md).",
+  selector: `ImportSpecifier[imported.name=${HAPTIC_ENUM_PATTERN}], MemberExpression[property.name=${HAPTIC_ENUM_PATTERN}]`,
+};
+
+const LAYOUT_ANIMATION_PROP_PATTERN = "/^(?:entering|exiting)$/";
+
+const LAYOUT_ANIMATION_PROP_RESTRICTION = {
+  message:
+    "Pass entering and exiting only to AnimatedView from #/shared/components/animated-view.tsx, because it swaps them for a fade while Reduce Motion is on (DESIGN.md).",
+  selector: [
+    `JSXAttribute[name.name=${LAYOUT_ANIMATION_PROP_PATTERN}]`,
+    `JSXSpreadAttribute Property[key.name=${LAYOUT_ANIMATION_PROP_PATTERN}]`,
+  ].join(", "),
+};
+
+const TRANSITION_KEY_PATTERN =
+  "/^transition(?:Behavior|Delay|Duration|TimingFunction)$/";
+
+const EFFECT_KEY_PATTERN = "/^(?:opacity|(?:c|.+C)olor)$/";
+
+const MOVEMENT_KEY_PATTERN =
+  "/^(?:bottom|end|height|inset\\w*|margin\\w*|(?:max|min)(?:Height|Width)|start|top|transform|width)$/";
+
+const ANIMATED_VIEW_FILE = "src/shared/components/animated-view.tsx";
+
+const ANIMATED_VIEW_TEST_FILE = "src/shared/components/animated-view.test.tsx";
+
+const HAPTICS_FILE = "src/shared/tokens/haptics.ts";
+
+const FONT_SCALE_SNAP_FILE = "src/shared/core/snap-font-scale.ts";
+
+const DESIGN_SYSTEM_RESTRICTED_SYNTAX = [
+  COLOR_VARIANTS_RESTRICTION,
+  NAMED_CONTEXT_RESTRICTION,
+  TYPOGRAPHY_KEY_RESTRICTION,
+  {
+    message:
+      "Take this color from color in #/shared/tokens/color.ts instead of a literal, so every color comes from the palette and follows appearance and Increase Contrast. Where nothing is painted, set no color (DESIGN.md).",
+    selector: [
+      `Property[key.name=${COLOR_KEY_PATTERN}] > :matches(Literal[raw=/^["']/], TemplateLiteral).value`,
+      `Property[key.value=${COLOR_KEY_PATTERN}] > :matches(Literal[raw=/^["']/], TemplateLiteral).value`,
+      `JSXAttribute[name.name=${COLOR_KEY_PATTERN}] > Literal`,
+      `JSXAttribute[name.name=${COLOR_KEY_PATTERN}] > JSXExpressionContainer > :matches(Literal[raw=/^["']/], TemplateLiteral)`,
+    ].join(", "),
+  },
+  {
+    message:
+      "Use DynamicColorIOS and PlatformColor only in #/shared/tokens/, so every native color is a color token that Ankaa's palette owns (DESIGN.md).",
+    selector: `ImportSpecifier[imported.name=${NATIVE_COLOR_API_PATTERN}], MemberExpression[property.name=${NATIVE_COLOR_API_PATTERN}]`,
+  },
+  {
+    message:
+      "Use the start or end key instead of this left or right key, such as marginStart, so the layout mirrors natively in a right-to-left language (DESIGN.md).",
+    selector: `Property[key.name=${HORIZONTAL_SIDE_KEY_PATTERN}], Property[key.value=${HORIZONTAL_SIDE_KEY_PATTERN}]`,
+  },
+  {
+    message:
+      "Take this radius from radius in #/shared/tokens/radius.ts instead of a percentage, because '50%' draws an ellipse on a view that isn't square, and radius.capsule draws a Capsule (DESIGN.md).",
+    selector: `Property[key.name=${RADIUS_KEY_PATTERN}] > :matches(Literal[value=/%$/], TemplateLiteral).value`,
+  },
+  {
+    message:
+      "Leave borderStyle unset or 'solid', because every border is solid, and dashed and dotted borders lose continuous corners (DESIGN.md).",
+    selector: "Property[key.name='borderStyle']:not([value.value='solid'])",
+  },
+  {
+    message:
+      "Set borderCurve: 'continuous' beside this radius, so its corners curve as Apple's do. Only radius.capsule goes without it (DESIGN.md).",
+    selector: `ObjectExpression:not(:has(> Property[key.name='borderCurve'][value.value='continuous'])) > Property[key.name=${RADIUS_KEY_PATTERN}]:not([value.object.name='radius'][value.property.name='capsule'])`,
+  },
+  {
+    message:
+      "Take this shadow from shadows in #/shared/tokens/shadows.ts as a boxShadow, because the legacy shadow* props can't take a color that follows appearance and Increase Contrast (DESIGN.md).",
+    selector: [
+      `Property[key.name=${LEGACY_SHADOW_KEY_PATTERN}]`,
+      `Property[key.value=${LEGACY_SHADOW_KEY_PATTERN}]`,
+    ].join(", "),
+  },
+  {
+    message:
+      "Take this shadow from shadows in #/shared/tokens/shadows.ts instead of a string, because only boxShadow's object form takes a color that follows appearance and Increase Contrast (DESIGN.md).",
+    selector: [
+      "Property[key.name='boxShadow'] > :matches(Literal[raw=/^[\"']/], TemplateLiteral).value",
+      "Property[key.value='boxShadow'] > :matches(Literal[raw=/^[\"']/], TemplateLiteral).value",
+    ].join(", "),
+  },
+  REDUCE_MOTION_SYSTEM_RESTRICTION,
+  HAPTIC_ENUM_RESTRICTION,
+  LAYOUT_ANIMATION_PROP_RESTRICTION,
+  {
+    message:
+      "Set a transitionProperty that lists only opacity or colors beside this transition* key, because an omitted transitionProperty means 'all', and a CSS-style animation can't follow Reduce Motion, so it animates only opacity and color. Animate movement with withSpring and its motion Role (DESIGN.md).",
+    selector: [
+      `ObjectExpression:not(:has(> Property[key.name='transitionProperty'])) > Property[key.name=${TRANSITION_KEY_PATTERN}]`,
+      `Property[key.name='transitionProperty'] > :not(Literal[value=${EFFECT_KEY_PATTERN}], ArrayExpression).value`,
+      `Property[key.name='transitionProperty'] > ArrayExpression.value > :not(Literal[value=${EFFECT_KEY_PATTERN}])`,
+    ].join(", "),
+  },
+  {
+    message:
+      "Set each transition* key on its own instead of the transition shorthand, with a transitionProperty that lists only opacity or colors, because a CSS-style animation can't follow Reduce Motion (DESIGN.md).",
+    selector:
+      "Property[key.name='transition'], Property[key.value='transition']",
+  },
+  {
+    message:
+      "Animate only opacity and colors in a CSS-style animation, and movement with withSpring and its motion Role, because a CSS-style animation can't follow Reduce Motion (DESIGN.md).",
+    selector: [
+      `Property[key.name='animationName'] Property[key.name=${MOVEMENT_KEY_PATTERN}]`,
+      `CallExpression[callee.object.name='css'][callee.property.name='keyframes'] Property[key.name=${MOVEMENT_KEY_PATTERN}]`,
+    ].join(", "),
+  },
+];
+
+// The design system's restrictions that hold in the token files, except in the
+// one file whose values a restriction keeps there.
+const TOKEN_FILE_RESTRICTED_SYNTAX = [
+  TYPOGRAPHY_KEY_RESTRICTION,
+  REDUCE_MOTION_SYSTEM_RESTRICTION,
+  HAPTIC_ENUM_RESTRICTION,
+];
+
+const TOKEN_FILES = ["src/shared/tokens/**"];
+
+// The Resolver's Core files that resolve tokens at module load. The growth
+// lookup, isAccessibilityCategory and getColorVariant stay open to any file.
+const MODULE_LOAD_RESOLVER_FILE_NAMES = [
+  "compose-color",
+  "compute-concentric-radius",
+  "merge-token-sets",
+  "resolve-colors",
+  "resolve-references",
+];
+
 const RESOLVED_FILE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".json"];
 
 const ROUTE_FILES = ["./src/app/!(_layout.tsx)", "./src/app/*/**"];
@@ -93,7 +304,7 @@ const WRAPPED_PRIMITIVES_IMPORT = {
 const PRESSABLE_IMPORT = {
   importNames: ["Pressable"],
   message:
-    "Use Button from #/shared/components, so every pressable has the button role, the minimum touch target, and the disabled and busy looks.",
+    "Use Button from #/shared/components, so every pressable has the button role, the hit target, and the disabled and busy looks.",
   name: "react-native",
 };
 
@@ -121,6 +332,33 @@ const eslintConfigExpoFixedUp = fixupConfigRules(eslintConfigExpoFlat).map(
         },
 );
 
+type SyntaxRestriction = { message: string; selector: string };
+
+function createRestrictedSyntaxRule({
+  restrictions,
+}: {
+  restrictions: readonly SyntaxRestriction[];
+}) {
+  return [
+    "error",
+    ...RESTRICTED_SYNTAX,
+    ...MOBILE_RESTRICTED_SYNTAX,
+    ...restrictions,
+  ] satisfies Linter.RuleEntry;
+}
+
+function omitRestriction({
+  restriction,
+  restrictions,
+}: {
+  restriction: SyntaxRestriction;
+  restrictions: readonly SyntaxRestriction[];
+}) {
+  return restrictions.filter(
+    (otherRestriction) => otherRestriction !== restriction,
+  );
+}
+
 export function createMobileConfiguration({ basePath }: { basePath: string }) {
   const featureNames = getFeatureNames(basePath);
 
@@ -142,6 +380,21 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
     target: ROUTE_FILES,
   };
 
+  const moduleLoadResolverZone = {
+    from: MODULE_LOAD_RESOLVER_FILE_NAMES.map(
+      (fileName) => `./src/shared/core/${fileName}.ts`,
+    ),
+    message:
+      "Import the Resolver's module-load Core files only in #/shared/tokens/, and take the resolved tokens from there, so components never reach token values not meant for them (DESIGN.md).",
+    target: [
+      "./src/*",
+      "./src/!(shared)/**",
+      "./src/shared/*",
+      "./src/shared/!(core|tokens)/**",
+      `./src/shared/core/!(${[...MODULE_LOAD_RESOLVER_FILE_NAMES, "*.test"].join("|")}).ts`,
+    ],
+  };
+
   return defineConfig([
     baseConfiguration,
     { extends: [eslintConfigExpoFixedUp], files: JAVASCRIPT_FILES },
@@ -161,7 +414,14 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
         "@typescript-eslint/no-redeclare": "off",
         "import-x/no-restricted-paths": [
           "error",
-          { basePath, zones: [...featureIsolationZones, routeZone] },
+          {
+            basePath,
+            zones: [
+              ...featureIsolationZones,
+              routeZone,
+              moduleLoadResolverZone,
+            ],
+          },
         ],
         // eslint-config-expo enables import/namespace, which repeats a check
         // that TypeScript itself makes
@@ -170,11 +430,9 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
         // it misses every enum of expo-notifications re-exported through
         // `export *`, such as `SchedulableTriggerInputTypes`.
         "import/namespace": "off",
-        "no-restricted-syntax": [
-          "error",
-          ...RESTRICTED_SYNTAX,
-          ...MOBILE_RESTRICTED_SYNTAX,
-        ],
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: [],
+        }),
         "react-hooks/todo": "error",
         "react/jsx-boolean-value": ["error", "never"],
         "react/jsx-fragments": ["error", "syntax"],
@@ -196,6 +454,105 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
           }),
         ],
       },
+    },
+    // The design system's value rules cover the app's code, and leave out
+    // app.config.ts, whose splash color the native build reads.
+    {
+      files: ["src/**"],
+      ignores: TOKEN_FILES,
+      rules: {
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+        }),
+      },
+    },
+    // useColorVariant is the one reader of the Color variants (DESIGN.md).
+    {
+      files: [COLOR_VARIANT_HOOK_FILE],
+      rules: {
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: omitRestriction({
+            restriction: COLOR_VARIANTS_RESTRICTION,
+            restrictions: DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+          }),
+        }),
+      },
+    },
+    // useTokens is the one reader of the named Contexts inside a function
+    // (DESIGN.md).
+    {
+      files: [TOKENS_HOOK_FILE],
+      rules: {
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: omitRestriction({
+            restriction: NAMED_CONTEXT_RESTRICTION,
+            restrictions: DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+          }),
+        }),
+      },
+    },
+    // AnimatedView is the one view that takes entering and exiting
+    // (DESIGN.md).
+    {
+      files: [ANIMATED_VIEW_FILE],
+      rules: {
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: omitRestriction({
+            restriction: LAYOUT_ANIMATION_PROP_RESTRICTION,
+            restrictions: DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+          }),
+        }),
+      },
+    },
+    // A token file holds the raw values that the value rules keep out of
+    // every other file (DESIGN.md).
+    {
+      files: TOKEN_FILES,
+      rules: { "@typescript-eslint/no-magic-numbers": "off" },
+    },
+    // Only the typography file holds text style keys, and it never sets a
+    // letter spacing of 0. Only the haptics file names expo-haptics' values,
+    // and no token file passes ReduceMotion.System (DESIGN.md).
+    {
+      files: TOKEN_FILES,
+      ignores: [TYPOGRAPHY_FILE, HAPTICS_FILE],
+      rules: {
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: TOKEN_FILE_RESTRICTED_SYNTAX,
+        }),
+      },
+    },
+    {
+      files: [TYPOGRAPHY_FILE],
+      rules: {
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: [
+            ...omitRestriction({
+              restriction: TYPOGRAPHY_KEY_RESTRICTION,
+              restrictions: TOKEN_FILE_RESTRICTED_SYNTAX,
+            }),
+            ZERO_LETTER_SPACING_RESTRICTION,
+          ],
+        }),
+      },
+    },
+    {
+      files: [HAPTICS_FILE],
+      rules: {
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: omitRestriction({
+            restriction: HAPTIC_ENUM_RESTRICTION,
+            restrictions: TOKEN_FILE_RESTRICTED_SYNTAX,
+          }),
+        }),
+      },
+    },
+    // The growth lookup holds Apple's table of Text style sizes, one number
+    // per text size, and snapFontScale the fontScale of each text size,
+    // which a name per number would only repeat.
+    {
+      files: [GROWTH_LOOKUP_FILE, FONT_SCALE_SNAP_FILE],
+      rules: { "@typescript-eslint/no-magic-numbers": "off" },
     },
     createRestrictedImportsConfiguration({
       files: JAVASCRIPT_FILES,
@@ -229,6 +586,13 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
         ],
       },
     },
+    // An .svg file imports as a default export
+    // (https://github.com/kristerkari/react-native-svg-transformer#using-typescript),
+    // so its module typing and its Jest stub declare one.
+    {
+      files: ["svg.d.ts", "src/testing/svg-stub.tsx"],
+      rules: { "import-x/no-default-export": "off" },
+    },
     createRestrictedImportsConfiguration({
       files: ["src/app/**"],
       ignores: ["src/app/_layout.tsx"],
@@ -261,12 +625,53 @@ export function createMobileConfiguration({ basePath }: { basePath: string }) {
         "jest/no-restricted-jest-methods": ["error", RESTRICTED_MOCK_METHODS],
         "jest/no-restricted-matchers": ["error", restrictedCallMatchers],
         "jest/require-top-level-describe": "error",
-        "no-restricted-syntax": [
-          "error",
-          ...RESTRICTED_SYNTAX,
-          ...MOBILE_RESTRICTED_SYNTAX,
-          ...TEST_RESTRICTED_SYNTAX,
-        ],
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: [
+            ...DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+            ...TEST_RESTRICTED_SYNTAX,
+          ],
+        }),
+      },
+    },
+    // The Resolver's tests pass it raw values, as the token files do.
+    {
+      files: MODULE_LOAD_RESOLVER_FILE_NAMES.map(
+        (fileName) => `src/shared/core/${fileName}.test.ts`,
+      ),
+      rules: {
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: TEST_RESTRICTED_SYNTAX,
+        }),
+      },
+    },
+    // AnimatedView's test checks which entering and exiting it passes on.
+    {
+      files: [ANIMATED_VIEW_TEST_FILE],
+      rules: {
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: [
+            ...omitRestriction({
+              restriction: LAYOUT_ANIMATION_PROP_RESTRICTION,
+              restrictions: DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+            }),
+            ...TEST_RESTRICTED_SYNTAX,
+          ],
+        }),
+      },
+    },
+    // useTokens's test checks which named Context it returns.
+    {
+      files: [TOKENS_HOOK_TEST_FILE],
+      rules: {
+        "no-restricted-syntax": createRestrictedSyntaxRule({
+          restrictions: [
+            ...omitRestriction({
+              restriction: NAMED_CONTEXT_RESTRICTION,
+              restrictions: DESIGN_SYSTEM_RESTRICTED_SYNTAX,
+            }),
+            ...TEST_RESTRICTED_SYNTAX,
+          ],
+        }),
       },
     },
     {

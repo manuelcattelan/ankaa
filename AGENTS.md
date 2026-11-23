@@ -2,7 +2,7 @@
 
 These rules cover what the code, ESLint, TypeScript and Prettier can't show. Lint checks everything else, and each lint message states its reason.
 
-Before you work in a workspace, read its `AGENTS.md`. Before you write or change a test, read `TESTING.md` at the root of the repository. Before you add or change a setting, or anything that CI, hosting or a deploy runs, read `INFRASTRUCTURE.md`.
+Before you work in a workspace, read its `AGENTS.md`. Before you write or change a test, read `TESTING.md` at the root of the repository. Before you add or change a setting, or anything that CI, hosting or a deploy runs, read `INFRASTRUCTURE.md`. Before you change anything Users see or feel in the mobile app, such as a style, a token, an icon, a font, an animation or a haptic, read `DESIGN.md` at the root of the repository.
 
 Ankaa targets iOS only for now. Android comes later and web isn't planned, so write no Android or web code, config, settings or assets in any workspace.
 
@@ -19,7 +19,7 @@ When a change makes a document wrong, update the document in the same change. Do
 
 Names follow the rules of Deißenböck and Pizka's [Concise and Consistent Naming](https://doi.org/10.1007/s11219-006-9219-1), because they give the same name every time. The Google TypeScript Style Guide and lint cover everything else about names, such as casing and abbreviations.
 
-Every name stands for a **concept**: a unit of meaning from the product, the architecture, a library or plain English. `GLOSSARY.md` holds the product and architecture concepts. Add a concept only when the code must tell it apart from another, because every concept lengthens the names that carry it.
+Every name stands for a **concept**: a unit of meaning from the product, the architecture, a library or plain English. `GLOSSARY.md` holds the product and architecture concepts, and the glossary of `DESIGN.md` the design system's. Add a concept only when the code must tell it apart from another, because every concept lengthens the names that carry it.
 
 - **Consistency.** Give each concept exactly one name, and each name exactly one concept, with no synonyms and no homonyms. Before you name something, search the code for the name its concept already has. When a concept's name changes, rename every identifier of it in the same change, because each old name left behind becomes a synonym.
 
@@ -92,4 +92,4 @@ Both apps follow one architecture: the Core makes every decision in plain TypeSc
 
 ## Glossary
 
-`GLOSSARY.md` defines this project's ubiquitous language, the one vocabulary that conversations, specs, code, and documentation all share, and the glossaries listed in its `Glossary tree` section add the terms for their directories. Before you answer a question, explain something, or write code or documentation that involves a project concept, read them, and then use only their terms, even when the user or the code uses another word: when a word is on an entry's `Avoid` line, write that entry's term instead. Never use a term from a `## Deprecated` group in new code or documentation. When its `Deprecated` line names a replacement, use that term instead; when it names none, the concept no longer exists: leave the term out, and leave any remaining use of it to `/upkeep` instead of raising it with the user. When a concept you need has no entry, say so instead of coining a term.
+`GLOSSARY.md` defines this project's ubiquitous language, the one vocabulary that conversations, specs, code, and documentation all share, and the glossaries listed in its `Glossary tree` section add the terms for their directories, or, as the glossary of `DESIGN.md` does, for their subject. Before you answer a question, explain something, or write code or documentation that involves a project concept, read them, and then use only their terms, even when the user or the code uses another word: when a word is on an entry's `Avoid` line, write that entry's term instead. Never use a term from a `## Deprecated` group in new code or documentation. When its `Deprecated` line names a replacement, use that term instead; when it names none, the concept no longer exists: leave the term out, and leave any remaining use of it to `/upkeep` instead of raising it with the user. When a concept you need has no entry, say so instead of coining a term.

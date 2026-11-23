@@ -2,6 +2,10 @@
 
 A mobile app where [Users](#user) plan their strength training and record the [Workouts](#workout) they do.
 
+## Glossary tree
+
+- [Design system](DESIGN.md#glossary): the tokens, contexts and roles that style the mobile app.
+
 ## Accounts
 
 ### Account

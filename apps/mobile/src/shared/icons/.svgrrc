@@ -1,0 +1,23 @@
+{
+  "svgoConfig": {
+    "plugins": [
+      {
+        "name": "preset-default",
+        "params": {
+          "overrides": {
+            "convertColors": false,
+            "inlineStyles": { "onlyMatchedOnce": false },
+            "removeUnknownsAndDefaults": false,
+            "removeViewBox": false
+          }
+        }
+      },
+      {
+        "name": "removeAttrs",
+        "params": {
+          "attrs": "(circle|ellipse|line|path|polygon|polyline|rect):stroke-width"
+        }
+      }
+    ]
+  }
+}

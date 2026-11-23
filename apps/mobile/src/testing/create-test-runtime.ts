@@ -40,7 +40,7 @@ export type TestRuntimeLayers = {
 export function createTestRuntime(layers: TestRuntimeLayers) {
   return createRuntime(
     Layer.mergeAll(
-      layers.accessibility ?? fakeAccessibilityLayer([]),
+      layers.accessibility ?? fakeAccessibilityLayer({}),
       layers.currentTimeZone ??
         DateTime.layerCurrentZone(DateTime.zoneMakeNamedUnsafe("UTC")),
       AuthenticationApplicationService.layerNoDeps.pipe(

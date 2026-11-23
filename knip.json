@@ -3,11 +3,24 @@
   "ignoreBinaries": ["fly", "ngrok"],
   "ignoreDependencies": ["expo-updates", "pino-pretty", "shellcheck"],
   "ignoreIssues": {
+    "apps/mobile/src/shared/components/animated-view.tsx": ["exports"],
+    "apps/mobile/src/shared/components/icon.tsx": ["exports"],
+    "apps/mobile/src/shared/core/compute-concentric-radius.ts": ["files"],
+    "apps/mobile/src/shared/core/is-accessibility-category.ts": ["files"],
+    "apps/mobile/src/shared/hooks/use-{color-variant,tokens}.ts": ["exports"],
+    "apps/mobile/src/shared/tokens/**": ["exports", "files", "types"],
     "packages/authentication/better-auth.config.ts": ["exports"]
   },
   "workspaces": {
     "apps/mobile": {
-      "entry": ["src/**/*.test-d.ts"],
+      "entry": [
+        "src/**/*.test-d.ts",
+        "src/shared/components/animated-view.tsx!",
+        "src/shared/components/icon.tsx!",
+        "src/shared/hooks/use-{color-variant,tokens}.ts!",
+        "src/shared/tokens/haptics.ts!"
+      ],
+      "ignoreDependencies": ["react-native-svg!"],
       "project": ["**/*.{ts,tsx}!", "!src/**/testing/**!"]
     },
     "packages/*": {
