@@ -13,11 +13,11 @@ catalogs:
       specifier: ^1.7.27
       version: 1.7.27
     '@trpc/client':
-      specifier: 11.22.1
-      version: 11.22.1
+      specifier: 11.29.5
+      version: 11.29.5
     '@trpc/server':
-      specifier: 11.22.1
-      version: 11.22.1
+      specifier: 11.29.5
+      version: 11.29.5
     '@types/node':
       specifier: ^26.6.6
       version: 26.6.6
@@ -112,10 +112,10 @@ importers:
         version: 5.105.3(@types/react@19.3.0)(react@19.3.0)
       '@trpc/client':
         specifier: 'catalog:'
-        version: 11.22.1(@trpc/server@11.22.1(typescript@6.0.3))(typescript@6.0.3)
+        version: 11.29.5(@trpc/server@11.29.5(fastify@5.12.8)(typescript@6.0.3))(typescript@6.0.3)
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.22.1(typescript@6.0.3)
+        version: 11.29.5(fastify@5.12.8)(typescript@6.0.3)
       better-auth:
         specifier: 'catalog:'
         version: 1.7.27(drizzle-kit@1.0.0-rc.5(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.5(effect@4.1.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.5)(pg@8.23.1)(zod@4.6.7)))(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.5(effect@4.1.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.5)(pg@8.23.1)(zod@4.6.7))(pg@8.23.1)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@5.0.5(@types/node@26.6.6)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.3.5(@types/node@26.6.6)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)))
@@ -266,7 +266,7 @@ importers:
         version: 9.2.2
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.22.1(typescript@6.0.3)
+        version: 11.29.5(fastify@5.12.8)(typescript@6.0.3)
       better-auth:
         specifier: 'catalog:'
         version: 1.7.27(drizzle-kit@1.0.0-rc.5(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.5(effect@4.1.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.5)(pg@8.23.1)(zod@4.6.7)))(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.5(effect@4.1.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.5)(pg@8.23.1)(zod@4.6.7))(pg@8.23.1)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@5.0.5(@types/node@26.6.6)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.3.5(@types/node@26.6.6)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)))
@@ -327,7 +327,7 @@ importers:
         version: link:../database
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.22.1(typescript@6.0.3)
+        version: 11.29.5(fastify@5.12.8)(typescript@6.0.3)
       better-auth:
         specifier: 'catalog:'
         version: 1.7.27(drizzle-kit@1.0.0-rc.5(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.5(effect@4.1.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.5)(pg@8.23.1)(zod@4.6.7)))(drizzle-orm@1.0.0-rc.5(@effect/sql-pg@4.1.5(effect@4.1.5))(@sinclair/typebox@0.34.52)(@types/pg@8.23.1)(effect@4.1.5)(pg@8.23.1)(zod@4.6.7))(pg@8.23.1)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@5.0.5(@types/node@26.6.6)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.3.5(@types/node@26.6.6)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)))
@@ -2742,18 +2742,32 @@ packages:
   '@tokenizer/token@0.3.0':
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
 
-  '@trpc/client@11.22.1':
-    resolution: {integrity: sha512-flkAwF8bzzNCVJ5xcTMS+Az6Go/XK30ZIOGT94UJBYAmMq1w2tY7gk7+CIMiRUdvHzOYAVPitX2H+20qcIIomA==}
-    hasBin: true
+  '@trpc/client@11.29.5':
+    resolution: {integrity: sha512-EGebaRjt/rDHt7gJ6nv262nLRPalzwSyI/dEMYtA+PBEy/HxhoVUW3bQqyE34cozJNj2HAgB+TqXVe76pWGk+Q==}
     peerDependencies:
-      '@trpc/server': 11.22.1
+      '@trpc/server': 11.29.5
       typescript: '>=5.7.2'
 
-  '@trpc/server@11.22.1':
-    resolution: {integrity: sha512-9SjWTS5iwENHOVPqpTjm0I1Os/CtuT6p8kDlovyEm00pXhpHX55tQM2vszJTEpcQhm/JfUz4ut/7Y9JZZQZo6A==}
-    hasBin: true
+  '@trpc/server@11.29.5':
+    resolution: {integrity: sha512-8ET3fqBo4byVkjLNU047NFwmT3JQIjZCVpdJwanb6Tpv7b5P3M9pjN7JofqGyDQZaDR5XLkWX2hWrsIpjtt5wA==}
     peerDependencies:
+      '@types/aws-lambda': '*'
+      '@types/express': '*'
+      '@types/ws': '*'
+      fastify: '*'
+      next: '*'
       typescript: '>=5.7.2'
+    peerDependenciesMeta:
+      '@types/aws-lambda':
+        optional: true
+      '@types/express':
+        optional: true
+      '@types/ws':
+        optional: true
+      fastify:
+        optional: true
+      next:
+        optional: true
 
   '@tsconfig/node-ts@23.6.5':
     resolution: {integrity: sha512-Wi2qMgKqBddhC/rN1CfYAB+Ayk5KxR8i8bVOQGPI26+2URbY435D9f28pRKmplWOIR0Ii/MmyWPDH12P38pRXw==}
@@ -10202,14 +10216,16 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
-  '@trpc/client@11.22.1(@trpc/server@11.22.1(typescript@6.0.3))(typescript@6.0.3)':
+  '@trpc/client@11.29.5(@trpc/server@11.29.5(fastify@5.12.8)(typescript@6.0.3))(typescript@6.0.3)':
     dependencies:
-      '@trpc/server': 11.22.1(typescript@6.0.3)
+      '@trpc/server': 11.29.5(fastify@5.12.8)(typescript@6.0.3)
       typescript: 6.0.3
 
-  '@trpc/server@11.22.1(typescript@6.0.3)':
+  '@trpc/server@11.29.5(fastify@5.12.8)(typescript@6.0.3)':
     dependencies:
       typescript: 6.0.3
+    optionalDependencies:
+      fastify: 5.12.8
 
   '@tsconfig/node-ts@23.6.5': {}
 
