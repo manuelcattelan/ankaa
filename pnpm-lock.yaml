@@ -607,11 +607,11 @@ importers:
   tooling/typescript:
     dependencies:
       '@tsconfig/node-ts':
-        specifier: ^23.6.4
-        version: 23.6.4
+        specifier: ^23.6.5
+        version: 23.6.5
       '@tsconfig/node26':
-        specifier: ^26.0.1
-        version: 26.0.1
+        specifier: ^26.0.2
+        version: 26.0.2
 
   tooling/vitest:
     dependencies:
@@ -2755,11 +2755,11 @@ packages:
     peerDependencies:
       typescript: '>=5.7.2'
 
-  '@tsconfig/node-ts@23.6.4':
-    resolution: {integrity: sha512-37BMJvNQZ+vTgd1xG2TGBkJ6ENeT4eO4Wh2CHrnn0IwH7ybLFCzh4Uc//kc7UIvqiRac4uGdIc1meKOjMSlKzw==}
+  '@tsconfig/node-ts@23.6.5':
+    resolution: {integrity: sha512-Wi2qMgKqBddhC/rN1CfYAB+Ayk5KxR8i8bVOQGPI26+2URbY435D9f28pRKmplWOIR0Ii/MmyWPDH12P38pRXw==}
 
-  '@tsconfig/node26@26.0.1':
-    resolution: {integrity: sha512-NQT8JUFDKeAIWpR1dakeF534msQAsoSLr1WpKdRDt3sCvk2fsFK3EVKUBG5xKYVamiRO6yTfniiyvCaqOGgn/g==}
+  '@tsconfig/node26@26.0.2':
+    resolution: {integrity: sha512-RIBSoNGQxUQ8r4hSrEzS6TrUneoKaCuX6BjL4zF3wqttGq2w06zCea4d8P1gRvM/HZyDT1FQJ8trZSyy/63oMg==}
 
   '@turbo/darwin-64@2.11.10':
     resolution: {integrity: sha512-By4idRap5+nLnMuRzLB4qkOPRlvNdyY1ne4VJYDyUoUB11H94k7uif9mbe3JT8JSNXs1D68uMcBj6hJ/jMQRvA==}
@@ -10211,9 +10211,9 @@ snapshots:
     dependencies:
       typescript: 6.0.3
 
-  '@tsconfig/node-ts@23.6.4': {}
+  '@tsconfig/node-ts@23.6.5': {}
 
-  '@tsconfig/node26@26.0.1': {}
+  '@tsconfig/node26@26.0.2': {}
 
   '@turbo/darwin-64@2.11.10':
     optional: true
