@@ -3,14 +3,14 @@ packages:
   - "packages/*"
   - "tooling/*"
 catalog:
-  "@better-auth/drizzle-adapter": ^1.7.15
-  "@better-auth/expo": ^1.7.15
+  "@better-auth/drizzle-adapter": ^1.7.27
+  "@better-auth/expo": ^1.7.27
   "@trpc/client": 11.22.1
   "@trpc/server": 11.22.1
   "@types/node": ^26.6.6
   "@types/pg": ^8.23.1
-  auth: ^1.7.15
-  better-auth: ^1.7.15
+  auth: ^1.7.27
+  better-auth: ^1.7.27
   drizzle-orm: 1.0.0-rc.5
   effect: 4.1.2
   eslint: ^10.14.0
